@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Globalization;
 using System.Threading.Tasks;
 using System.Web;
 using Kudu.Contracts.Settings;
@@ -13,13 +14,16 @@ namespace Kudu.Services.ServiceHookHandlers
 {
     public class OneDriveHandler : IServiceHookHandler
     {
-        private readonly OneDriveHelper _oneDriveHelper;
+        private OneDriveHelper _oneDriveHelper { get; set; }
 
+        private IDeploymentSettingsManager _settings;
         public OneDriveHandler(ITracer tracer,
-                              IDeploymentSettingsManager settings,
-                              IEnvironment environment)
+                               IDeploymentStatusManager status,
+                               IDeploymentSettingsManager settings,
+                               IEnvironment environment)
         {
-            _oneDriveHelper = new OneDriveHelper(tracer, settings, environment);
+            _settings = settings;
+            _oneDriveHelper = new OneDriveHelper(tracer, status, settings, environment);
         }
 
         public DeployAction TryParseDeploymentInfo(HttpRequestBase request, JObject payload, string targetBranch, out DeploymentInfo deploymentInfo)
@@ -38,12 +42,25 @@ namespace Kudu.Services.ServiceHookHandlers
                     "AccessToken": "xxx"
                  }
              */
-            deploymentInfo = new OneDriveInfo()
+            string accessToken = payload.Value<string>("AccessToken");
+
+            // keep email and name, so that can be re-used in later commit
+            OneDriveInfo oneDriveInfo = new OneDriveInfo()
             {
                 Deployer = "OneDrive",
                 RepositoryUrl = url,
-                AccessToken = payload.Value<string>("AccessToken")
+                AccessToken = accessToken,
+                AuthorName = _settings.GetValue("authorName"),
+                AuthorEmail = _settings.GetValue("authorEmail")
             };
+
+            deploymentInfo = oneDriveInfo;
+
+            deploymentInfo.TargetChangeset = DeploymentManager.CreateTemporaryChangeSet(
+                authorName: oneDriveInfo.AuthorName,
+                authorEmail: oneDriveInfo.AuthorEmail,
+                message: String.Format(CultureInfo.CurrentUICulture, Resources.OneDrive_Synchronizing)
+            );
 
             return DeployAction.ProcessDeployment;
         }
@@ -52,7 +69,7 @@ namespace Kudu.Services.ServiceHookHandlers
         {
             var oneDriveInfo = (OneDriveInfo)deploymentInfo;
             _oneDriveHelper.Logger = logger;
-            await _oneDriveHelper.Sync(oneDriveInfo);
+            oneDriveInfo.TargetChangeset = await _oneDriveHelper.Sync(oneDriveInfo, repository);
         }
     }
 }

@@ -12,6 +12,7 @@ using Kudu.Contracts.Tracing;
 using Kudu.Core;
 using Kudu.Core.Deployment;
 using Kudu.Core.Infrastructure;
+using Kudu.Core.SourceControl;
 using Kudu.Core.Tracing;
 
 namespace Kudu.Services.FetchHelpers
@@ -28,8 +29,12 @@ namespace Kudu.Services.FetchHelpers
         private const int MaxFilesPerSeconds = 5;
 
         private readonly ITracer _tracer;
+        private readonly IDeploymentStatusManager _status;
         private readonly IDeploymentSettingsManager _settings;
         private readonly IEnvironment _environment;
+        private int _failedCount = 0;
+        private int _successCount = 0;
+        private int _totals = 0;
 
         internal ILogger Logger
         {
@@ -38,16 +43,19 @@ namespace Kudu.Services.FetchHelpers
         }
 
         public OneDriveHelper(ITracer tracer,
-            IDeploymentSettingsManager settings,
-            IEnvironment environment)
+                              IDeploymentStatusManager status,
+                              IDeploymentSettingsManager settings,
+                              IEnvironment environment)
         {
             _tracer = tracer;
+            _status = status;
             _settings = settings;
             _environment = environment;
         }
 
-        internal async Task Sync(OneDriveInfo info)
+        internal async Task<ChangeSet> Sync(OneDriveInfo info, IRepository repository)
         {
+            ChangeSet changeSet = null;
             string cursor = _settings.GetValue(CursorKey);
             ChangesResult changes = null;
             using (_tracer.Step("Getting delta changes with cursor: {0} ...", cursor))
@@ -59,12 +67,15 @@ namespace Kudu.Services.FetchHelpers
             {
                 _tracer.Trace("No changes need to be applied.");
                 LogMessage(Resources.OneDriveNoChangesFound);
-                return;
+                return changeSet;
             }
+
+            _totals = changes.Count;
 
             string hoststarthtml = Path.Combine(_environment.WebRootPath, Constants.HostingStartHtml);
             FileSystemHelpers.DeleteFileSafe(hoststarthtml);
 
+            using (new Timer(UpdateStatusFile, state: info.TargetChangeset.Id, dueTime: TimeSpan.FromSeconds(5), period: TimeSpan.FromSeconds(5)))
             using (_tracer.Step("Applying {0} changes ...", changes.Count))
             {
                 LogMessage(Resources.OneDriveApplyingChanges, changes.Count);
@@ -75,25 +86,46 @@ namespace Kudu.Services.FetchHelpers
                 //  (new) dir  /a/b
                 //  if created dir first then create file. file creation will trigger folder timestamp change.
                 //  which will result in "/a/b" has timestamp from the monent of file creation instead of the timestamp value from server, where value supposed to be set by code specifically.
-                ApplyResult deletionResult = await ApplyChangesParallel(changes.DeletionChanges, info.AccessToken, maxParallelCount: 1);
-                ApplyResult fileChangeResult = await ApplyChangesParallel(changes.FileChanges, info.AccessToken, maxParallelCount: System.Environment.ProcessorCount);
+                await ApplyChangesParallel(changes.DeletionChanges, info.AccessToken, maxParallelCount: 1);
+                await ApplyChangesParallel(changes.FileChanges, info.AccessToken, maxParallelCount: System.Environment.ProcessorCount);
                 // apply folder changes at last to maintain same timestamp as in OneDrive
-                ApplyResult directoryChangeResult = await ApplyChangesParallel(changes.DirectoryChanges, info.AccessToken, maxParallelCount: 1);
+                await ApplyChangesParallel(changes.DirectoryChanges, info.AccessToken, maxParallelCount: 1);
 
-                int totalSuccessCount = deletionResult.SuccessCount + fileChangeResult.SuccessCount + directoryChangeResult.SuccessCount;
-                int totalFailCount = deletionResult.FailureCount + fileChangeResult.FailureCount + directoryChangeResult.FailureCount;
-                _tracer.Trace("{0} successed, {1} failed", totalSuccessCount, totalFailCount);
-                LogMessage(Resources.OneDriveApplyResult, totalSuccessCount, totalFailCount);
+                _tracer.Trace("{0} succeeded, {1} failed", _successCount, _failedCount);
+                LogMessage(Resources.OneDriveApplyResult, _successCount, _failedCount);
 
-                if (totalFailCount > 0)
+                string message = _failedCount > 0 ?
+                    string.Format(CultureInfo.CurrentCulture, Resources.OneDrive_SynchronizedWithFailure, _successCount, changes.Count, _failedCount) :
+                    string.Format(CultureInfo.CurrentCulture, Resources.OneDrive_Synchronized, changes.Count);
+
+                // Commit anyway even partial change
+                if (repository.Commit(message, info.AuthorName, info.AuthorEmail))
+                {
+                    changeSet = repository.GetChangeSet("HEAD");
+                }
+
+                if (_failedCount > 0)
                 {
                     // signal deployment failied
-                    throw new Exception(string.Format(CultureInfo.CurrentUICulture, Resources.OneDriveApplyResult, totalSuccessCount, totalFailCount));
+                    throw new Exception(string.Format(CultureInfo.CurrentCulture, Resources.OneDriveApplyResult, _successCount, _failedCount));
                 }
             }
 
             // finally keep a copy of the new cursor
             _settings.SetValue(CursorKey, changes.Cursor);
+
+            return changeSet;
+        }
+
+        private void UpdateStatusFile(object state)
+        {
+            string changeset = (string)state;
+            IDeploymentStatusFile statusFile = _status.Open(changeset);
+            statusFile.UpdateProgress(string.Format(CultureInfo.CurrentCulture,
+                                        _failedCount == 0 ? Resources.OneDrive_SynchronizingProgress : Resources.OneDrive_SynchronizingProgressWithFailure,
+                                        ((_successCount + _failedCount) * 100) / _totals,
+                                        _totals,
+                                        _failedCount));
         }
 
         private void LogMessage(string format, params object[] args)
@@ -145,7 +177,7 @@ namespace Kudu.Services.FetchHelpers
             var uriTokens = requestUri.Split(new string[] { "/special/" }, StringSplitOptions.None);
             if (uriTokens.Length != 2)
             {
-                throw new ArgumentException(string.Format(CultureInfo.CurrentUICulture, Resources.OneDriveInvalidRequestUri, requestUri));
+                throw new ArgumentException(string.Format(CultureInfo.CurrentCulture, Resources.OneDriveInvalidRequestUri, requestUri));
             }
 
             return uriTokens[0];
@@ -195,7 +227,7 @@ namespace Kudu.Services.FetchHelpers
                     {
                         if (string.IsNullOrEmpty(next))
                         {
-                            throw new InvalidOperationException(string.Format(CultureInfo.CurrentUICulture, Resources.OneDriveUnableToSync, changes["@changes.resync"]));
+                            throw new InvalidOperationException(string.Format(CultureInfo.CurrentCulture, Resources.OneDriveUnableToSync, changes["@changes.resync"]));
                         }
 
                         // resync
@@ -284,12 +316,10 @@ namespace Kudu.Services.FetchHelpers
             }
         }
 
-        private async Task<ApplyResult> ApplyChangesParallel(OneDriveModel.OneDriveChangeCollection changes, string accessToken, int maxParallelCount)
+        private async Task ApplyChangesParallel(OneDriveModel.OneDriveChangeCollection changes, string accessToken, int maxParallelCount)
         {
             List<Task> tasks = new List<Task>();
             string wwwroot = _environment.WebRootPath;
-            int failureCount = 0;
-            int successCount = 0;
 
             using (var sem = new SemaphoreSlim(initialCount: maxParallelCount, maxCount: maxParallelCount))
             using (var filesPerSecLimiter = new RateLimiter(MaxFilesPerSeconds, TimeSpan.FromSeconds(1)))
@@ -305,11 +335,11 @@ namespace Kudu.Services.FetchHelpers
                             bool applied = await ProcessChangeWithRetry(change, accessToken, wwwroot);
                             if (applied)
                             {
-                                Interlocked.Increment(ref successCount);
+                                Interlocked.Increment(ref _successCount);
                             }
                             else
                             {
-                                Interlocked.Increment(ref failureCount);
+                                Interlocked.Increment(ref _failedCount);
                             }
                         }
                         finally
@@ -321,12 +351,6 @@ namespace Kudu.Services.FetchHelpers
 
                 await Task.WhenAll(tasks);
             }
-
-            return new ApplyResult()
-            {
-                FailureCount = failureCount,
-                SuccessCount = successCount
-            };
         }
 
         private async Task<bool> ProcessChangeWithRetry(OneDriveModel.OneDriveChange change, string accessToken, string wwwroot)
@@ -509,12 +533,6 @@ namespace Kudu.Services.FetchHelpers
             }
 
             return null;
-        }
-
-        internal class ApplyResult
-        {
-            internal int FailureCount { get; set; }
-            internal int SuccessCount { get; set; }
         }
 
         internal class ChangesResult

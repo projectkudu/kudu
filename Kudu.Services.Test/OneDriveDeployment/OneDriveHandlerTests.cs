@@ -1,6 +1,13 @@
-﻿using Kudu.Contracts.Settings;
+﻿using System;
+using System.IO;
+using System.Net.Http;
+using System.Text;
+using System.Threading.Tasks;
+using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
 using Kudu.Core;
+using Kudu.Core.Deployment;
+using Kudu.Services.FetchHelpers;
 using Kudu.Services.ServiceHookHandlers;
 using Kudu.TestHarness.Xunit;
 using Moq;
@@ -15,7 +22,7 @@ namespace Kudu.Services.Test.OneDriveDeployment
         [Fact]
         public void TryParseDeploymentInfoShouldReturnUnknownPayload()
         {
-            var oneDriveHandler = new OneDriveHandler(Mock.Of<ITracer>(), Mock.Of<IDeploymentSettingsManager>(), Mock.Of<IEnvironment>());
+            var oneDriveHandler = new OneDriveHandler(Mock.Of<ITracer>(), Mock.Of<IDeploymentStatusManager>(), Mock.Of<IDeploymentSettingsManager>(), Mock.Of<IEnvironment>());
             JObject payload = JObject.FromObject(new { });
             DeploymentInfo deploymentInfo = null;
 
@@ -26,7 +33,7 @@ namespace Kudu.Services.Test.OneDriveDeployment
         [Fact]
         public void TryParseDeploymentInfoShouldReturnProcessDeployment()
         {
-            var oneDriveHandler = new OneDriveHandler(Mock.Of<ITracer>(), Mock.Of<IDeploymentSettingsManager>(), Mock.Of<IEnvironment>());
+            var oneDriveHandler = new OneDriveHandler(Mock.Of<ITracer>(), Mock.Of<IDeploymentStatusManager>(), Mock.Of<IDeploymentSettingsManager>(), Mock.Of<IEnvironment>());
             JObject payload = JObject.FromObject(new { RepositoryUrl = "https://api.onedrive.com", AccessToken = "one-drive-access-token" });
             DeploymentInfo deploymentInfo = null;
 

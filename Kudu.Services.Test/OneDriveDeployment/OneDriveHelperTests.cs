@@ -12,6 +12,7 @@ using Kudu.Contracts.Tracing;
 using Kudu.Core;
 using Kudu.Core.Deployment;
 using Kudu.Core.Infrastructure;
+using Kudu.Core.SourceControl;
 using Kudu.Services.FetchHelpers;
 using Kudu.TestHarness.Xunit;
 using Moq;
@@ -31,6 +32,7 @@ namespace Kudu.Services.Test.OneDriveDeployment
             mockTracer
                 .Setup(m => m.Trace(It.IsAny<string>(), It.IsAny<IDictionary<string, string>>()));
 
+            var repository = Mock.Of<IRepository>();
             var fileSystem = new Mock<IFileSystem>();
             var fileBase = new Mock<FileBase>();
             var fileInfoFactory = new Mock<IFileInfoFactory>();
@@ -65,6 +67,7 @@ namespace Kudu.Services.Test.OneDriveDeployment
             var info = new OneDriveInfo();
             info.AccessToken = "fake-token";
             info.RepositoryUrl = "https://api.onedrive.com/v1.0/drive/special/approot:/fake-folder";
+            info.TargetChangeset = new ChangeSet("id", "authorName", "authorEmail", "message", DateTime.UtcNow);
 
             // prepare http handler
             var handler = new TestMessageHandler((HttpRequestMessage message) =>
@@ -96,7 +99,7 @@ namespace Kudu.Services.Test.OneDriveDeployment
 
             // perform action
             OneDriveHelper helper = CreateMockOneDriveHelper(handler: handler, tracer: mockTracer.Object);
-            await helper.Sync(info);
+            await helper.Sync(info, repository);
 
             // verification
             /*
@@ -136,7 +139,7 @@ namespace Kudu.Services.Test.OneDriveDeployment
         {
             var envMock = new Mock<IEnvironment>();
             envMock.Setup(e => e.WebRootPath).Returns(DefaultWebRoot);
-            var helper = new Mock<OneDriveHelper>(tracer, settings ?? Mock.Of<IDeploymentSettingsManager>(), env ?? envMock.Object);
+            var helper = new Mock<OneDriveHelper>(tracer, Mock.Of<IDeploymentStatusManager>(), settings ?? Mock.Of<IDeploymentSettingsManager>(), env ?? envMock.Object);
 
             helper.CallBase = true;
             helper.Object.Logger = Mock.Of<ILogger>();

@@ -246,6 +246,21 @@
   <data name="Dropbox_Committing" xml:space="preserve">
     <value>Committing {0} change(s) from Dropbox.</value>
   </data>
+  <data name="OneDrive_SynchronizingProgressWithFailure" xml:space="preserve">
+    <value>Synchronizing {0}% of {1} change(s) from OneDrive with {2} failure(s).</value>
+  </data>
+  <data name="OneDrive_SynchronizingProgress" xml:space="preserve">
+    <value>Synchronizing {0}% of {1} change(s) from OneDrive.</value>
+  </data>
+  <data name="OneDrive_Synchronizing" xml:space="preserve">
+    <value>Synchronizing changes from OneDrive.</value>
+  </data>
+  <data name="OneDrive_SynchronizedWithFailure" xml:space="preserve">
+    <value>Synchronized {0} of {1} change(s) from OneDrive with {2} failure(s).</value>
+  </data>
+  <data name="OneDrive_Synchronized" xml:space="preserve">
+    <value>Synchronized {0} change(s) from OneDrive.</value>
+  </data>
   <data name="VfsScmController_DeploymentError" xml:space="preserve">
     <value>Deployment failed with status: '{0}'. Please retry operation.</value>
   </data>
