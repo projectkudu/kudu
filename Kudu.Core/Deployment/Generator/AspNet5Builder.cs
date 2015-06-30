@@ -11,13 +11,13 @@ namespace Kudu.Core.Deployment.Generator
     class AspNet5Builder : GeneratorSiteBuilder
     {
         private readonly string _projectPath;
+        private readonly string _sourcePath;
 
         public AspNet5Builder(IEnvironment environment, IDeploymentSettingsManager settings, IBuildPropertyProvider propertyProvider, string sourcePath, string projectPath)
             : base(environment, settings, propertyProvider, sourcePath)
         {
             _projectPath = projectPath;
-            var properties = propertyProvider.GetProperties();
-            properties[WellKnownEnvironmentVariables.DnxVersion] = AspNet5Helper.GetAspNet5RuntimeVersion(sourcePath);
+            _sourcePath = sourcePath;
         }
 
         protected override string ScriptGeneratorCommandArguments
@@ -25,7 +25,7 @@ namespace Kudu.Core.Deployment.Generator
             get
             {
                 var commandArguments = new StringBuilder();
-                commandArguments.AppendFormat("--aspNet5 \"{0}\"", _projectPath);
+                commandArguments.AppendFormat("--aspNet5 \"{0}\" --aspNet5Runtime \"{1}\"", _projectPath, AspNet5Helper.GetAspNet5RuntimeVersion(_sourcePath));
                 return commandArguments.ToString();
             }
         }
