@@ -85,11 +85,11 @@ namespace Kudu.Core.Deployment.Generator
 
             // Add the msbuild path and git path to the %PATH% so more tools are available
             var toolsPaths = new List<string> {
+                _environment.ScriptPath,
                 Path.GetDirectoryName(PathUtility.ResolveMSBuildPath()),
                 Path.GetDirectoryName(PathUtility.ResolveGitPath()),
                 Path.GetDirectoryName(PathUtility.ResolveVsTestPath()),
-                Path.GetDirectoryName(PathUtility.ResolveSQLCmdPath()),
-                _environment.ScriptPath
+                Path.GetDirectoryName(PathUtility.ResolveSQLCmdPath())
             };
 
             toolsPaths.AddRange(PathUtility.ResolveNodeNpmPaths());
