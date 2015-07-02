@@ -1,12 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
+using System.Globalization;
 using System.Linq;
-using System.Threading;
 using Kudu.Contracts.Jobs;
+using Kudu.Contracts.Settings;
 using Kudu.Core.Hooks;
-using Kudu.Core.Infrastructure;
 using Kudu.Core.Tracing;
 
 namespace Kudu.Core.Jobs
@@ -19,16 +17,18 @@ namespace Kudu.Core.Jobs
         private readonly ITriggeredJobsManager _triggeredJobsManager;
         private readonly ITraceFactory _traceFactory;
         private readonly IEnvironment _environment;
+        private readonly IDeploymentSettingsManager _settings;
 
         private readonly Dictionary<string, TriggeredJobSchedule> _triggeredJobsSchedules = new Dictionary<string, TriggeredJobSchedule>(StringComparer.OrdinalIgnoreCase);
 
         private JobsFileWatcher _jobsFileWatcher;
 
-        public TriggeredJobsScheduler(ITriggeredJobsManager triggeredJobsManager, ITraceFactory traceFactory, IAnalytics analytics, IEnvironment environment)
+        public TriggeredJobsScheduler(ITriggeredJobsManager triggeredJobsManager, ITraceFactory traceFactory, IAnalytics analytics, IEnvironment environment, IDeploymentSettingsManager settings)
         {
             _triggeredJobsManager = triggeredJobsManager;
             _traceFactory = traceFactory;
             _environment = environment;
+            _settings = settings;
 
             _jobsFileWatcher = new JobsFileWatcher(triggeredJobsManager.JobsBinariesPath, OnJobChanged, JobSettings.JobSettingsFileName, ListJobNames, traceFactory, analytics);
         }
@@ -48,6 +48,7 @@ namespace Kudu.Core.Jobs
             _triggeredJobsSchedules.TryGetValue(jobName, out triggeredJobSchedule);
 
             TriggeredJob triggeredJob = _triggeredJobsManager.GetJob(jobName);
+
             if (triggeredJob != null)
             {
                 string cronExpression = triggeredJob.Settings != null ? triggeredJob.Settings.GetSchedule() : null;
@@ -55,7 +56,17 @@ namespace Kudu.Core.Jobs
                 {
                     var logger = new TriggeredJobSchedulerLogger(triggeredJob.Name, _environment, _traceFactory);
 
-                    Schedule schedule = Schedule.BuildSchedule(cronExpression, logger);
+                    Schedule schedule = null;
+                    // before init schedule, check site SKU if site is allowed to have scheduled WebJob
+                    if (string.Equals(_settings.GetWebSiteSku(), Constants.BasicSKU, StringComparison.OrdinalIgnoreCase))
+                    {
+                        logger.LogInformation(string.Format(CultureInfo.InvariantCulture, "'{0}' tier website doesn`t support scheduled WebJob.", Constants.BasicSKU));
+                    }
+                    else
+                    {
+                        schedule = Schedule.BuildSchedule(cronExpression, logger);
+                    }
+
                     if (schedule != null)
                     {
                         if (triggeredJobSchedule == null)

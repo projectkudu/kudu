@@ -84,5 +84,8 @@ namespace Kudu
         public const string SiteExtensionProvisioningStateNotFoundMessageFormat = "'{0}' not found.";
         public const string SiteExtensionProvisioningStateDownloadFailureMessageFormat = "'{0}' download failure.";
         public const string SiteExtensionProvisioningStateInvalidPackageMessageFormat = "Invalid '{0}' package.";
+
+        public const string FreeSKU = "Free";
+        public const string BasicSKU = "Basic";
     }
 }

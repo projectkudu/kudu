@@ -10,7 +10,6 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Web.Http;
-using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
 using Kudu.Core;
@@ -24,8 +23,6 @@ namespace Kudu.Services.Performance
 {
     public class ProcessController : ApiController
     {
-        private const string FreeSiteSku = "Free";
-
         private readonly ITracer _tracer;
         private readonly IEnvironment _environment;
         private readonly IDeploymentSettingsManager _settings;
@@ -152,7 +149,7 @@ namespace Kudu.Services.Performance
                 }
 
                 string siteSku = _settings.GetWebSiteSku();
-                if ((MINIDUMP_TYPE)dumpType == MINIDUMP_TYPE.WithFullMemory && siteSku.Equals(FreeSiteSku, StringComparison.OrdinalIgnoreCase))
+                if ((MINIDUMP_TYPE)dumpType == MINIDUMP_TYPE.WithFullMemory && siteSku.Equals(Constants.FreeSKU, StringComparison.OrdinalIgnoreCase))
                 {
                     return Request.CreateErrorResponse(HttpStatusCode.InternalServerError,
                         String.Format(CultureInfo.CurrentCulture, Resources.Error_FullMiniDumpNotSupported, siteSku));
