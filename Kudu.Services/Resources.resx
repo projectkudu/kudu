@@ -309,4 +309,7 @@
   <data name="OneDriveNoChangesFound" xml:space="preserve">
     <value>No changes found.</value>
   </data>
+  <data name="Vso_Synchronizing" xml:space="preserve">
+    <value>Synchronizing changes from VSO ...</value>
+  </data>
 </root>
