@@ -23,6 +23,8 @@ namespace Kudu.Core.Infrastructure
 
         private Stream _lockStream;
 
+        private static string _tmpFolder = System.Environment.ExpandEnvironmentVariables(@"%WEBROOT_PATH%\data\Temp");
+
         public LockFile(string path)
             : this(path, NullTracerFactory.Instance)
         {
@@ -80,6 +82,16 @@ namespace Kudu.Core.Infrastructure
                     // just hanging there for no reason
                     using (FileSystemHelpers.OpenFile(_path, FileMode.Open, FileAccess.Write, FileShare.Read)) { }
                 }
+                catch (UnauthorizedAccessException)
+                {
+                    // if it is ReadOnly file system, we will skip the lock
+                    // which will enable all read action
+                    // for write action, it will fail with UnauthorizedAccessException when perform actual write operation
+                    //      There is one drawback, previously for write action, even acquire lock will fail with UnauthorizedAccessException,
+                    //      there will be retry within given timeout. so if exception is temporary, previous`s implementation will still go thru.
+                    //      While right now will end up failure. But it is a extreem edge case, should be ok to ignored.
+                    return IsFileSystemReadOnly();
+                }
                 catch (Exception ex)
                 {
                     TraceIfUnknown(ex);
@@ -111,6 +123,16 @@ namespace Kudu.Core.Infrastructure
                 lockStream = null;
 
                 return true;
+            }
+            catch (UnauthorizedAccessException)
+            {
+                // if it is ReadOnly file system, we will skip the lock
+                // which will enable all read action
+                // for write action, it will fail with UnauthorizedAccessException when perform actual write operation
+                //      There is one drawback, previously for write action, even acquire lock will fail with UnauthorizedAccessException,
+                //      there will be retry within given timeout. so if exception is temporary, previous`s implementation will still go thru.
+                //      While right now will end up failure. But it is a extreem edge case, should be ok to ignored.
+                return IsFileSystemReadOnly();
             }
             catch (Exception ex)
             {
@@ -244,6 +266,27 @@ namespace Kudu.Core.Infrastructure
                         Release();
                     }
                 }
+            }
+        }
+
+        private static bool IsFileSystemReadOnly()
+        {
+            if (string.IsNullOrWhiteSpace(_tmpFolder))
+            {
+                // not able to check, return false since by default we are expecting none readonly file system
+                return false;
+            }
+
+            try
+            {
+                string folder = Path.Combine(_tmpFolder, Guid.NewGuid().ToString());
+                FileSystemHelpers.CreateDirectory(folder);
+                FileSystemHelpers.DeleteDirectorySafe(folder, ignoreErrors: false);
+                return false;
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return true;
             }
         }
 
