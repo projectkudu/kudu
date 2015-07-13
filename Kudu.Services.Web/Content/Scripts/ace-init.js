@@ -38,12 +38,13 @@ editor.setOptions({
 // Hook the little pencil glyph and apply Ace syntax mode based on file extension
 $('#fileList').on('click', '.glyphicon-pencil', function () {
     if ($('.edit-view').is(':visible')) {
+        var filename;
         try {
-            var filename = (window.viewModel.fileEdit.peek()).name();
+            filename = (window.viewModel.fileEdit.peek()).name();
         }
         catch (e) {
             if (typeof console == 'object') {
-                    console.log('Can\'t get filename. ' + e);
+                console.log('Can\'t get filename. ' + e);
             }
         }
         finally {
