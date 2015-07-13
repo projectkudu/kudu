@@ -38,22 +38,30 @@ editor.setOptions({
 // Hook the little pencil glyph and apply Ace syntax mode based on file extension
 $('#fileList').on('click', '.glyphicon-pencil', function () {
     if ($('.edit-view').is(':visible')) {
-        var filename = (window.viewModel.fileEdit.peek()).name();
-	if (typeof filename !== 'undefined') {
-            var modelist = ace.require('ace/ext/modelist');
-	    var mode = modelist.getModeForPath(filename).mode;
-            if (mode === 'ace/mode/text') {
-	        mode = getCustomMode(filename);
-	    }
-            // Apply computed syntax mode or default to 'ace/mode/text'
-            editor.session.setMode(mode);
-	}
-	// Initial Ace resize (in height)
-        resizeAce();
-	// Attach event handler to set new Ace height on browser resize
-        $(window).on('resize', function () {
+        try {
+            var filename = (window.viewModel.fileEdit.peek()).name();
+        }
+        catch (e) {
+            if (typeof console == 'object') {
+                    console.log('Can\'t get filename. ' + e);
+            }
+        }
+        finally {
+            if (typeof filename !== 'undefined') {
+                var modelist = ace.require('ace/ext/modelist');
+                var mode = modelist.getModeForPath(filename).mode;
+                if (mode === 'ace/mode/text') {
+                    mode = getCustomMode(filename);
+                }
+                // Apply computed syntax mode or default to 'ace/mode/text'
+                editor.session.setMode(mode);
+            }
+            // Set Ace height
             resizeAce();
-        });
+            // Attach event handler to set new Ace height on browser resize
+            $(window).on('resize', function () {
+                resizeAce();
+            });
+        }
     }
 });
-
