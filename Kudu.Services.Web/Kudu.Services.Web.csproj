@@ -162,6 +162,8 @@
     <Content Include="Content\Styles\ProcessExplorer.css" />
     <Content Include="Content\Styles\SiteExtensions.css" />
     <Content Include="Content\Scripts\jquery.signalR-2.1.1.min.js" />
+    <Content Include="Content\Scripts\knockout-ace.js" />
+    <Content Include="Content\Scripts\ace-init.js" />
     <Content Include="Web.config">
       <SubType>Designer</SubType>
     </Content>
