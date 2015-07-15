@@ -89,8 +89,15 @@ namespace Kudu.Core.Infrastructure
                     // for write action, it will fail with UnauthorizedAccessException when perform actual write operation
                     //      There is one drawback, previously for write action, even acquire lock will fail with UnauthorizedAccessException,
                     //      there will be retry within given timeout. so if exception is temporary, previous`s implementation will still go thru.
-                    //      While right now will end up failure. But it is a extreem edge case, should be ok to ignored.
-                    return IsFileSystemReadOnly();
+                    //      While right now will end up failure. But it is a extreem edge case, should be ok to ignore.
+                    try
+                    {
+                        return !IsFileSystemReadOnly();
+                    }
+                    catch
+                    {
+                        return true;
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -131,8 +138,19 @@ namespace Kudu.Core.Infrastructure
                 // for write action, it will fail with UnauthorizedAccessException when perform actual write operation
                 //      There is one drawback, previously for write action, even acquire lock will fail with UnauthorizedAccessException,
                 //      there will be retry within given timeout. so if exception is temporary, previous`s implementation will still go thru.
-                //      While right now will end up failure. But it is a extreem edge case, should be ok to ignored.
-                return IsFileSystemReadOnly();
+                //      While right now will end up failure. But it is a extreem edge case, should be ok to ignore.
+                try
+                {
+                    return IsFileSystemReadOnly();
+                }
+                catch
+                {
+                    if (lockStream != null)
+                    {
+                        lockStream.Close();
+                    }
+                    return false;
+                }
             }
             catch (Exception ex)
             {
@@ -271,7 +289,7 @@ namespace Kudu.Core.Infrastructure
 
         private static bool IsFileSystemReadOnly()
         {
-            if (string.IsNullOrWhiteSpace(_tmpFolder))
+            if (_tmpFolder.StartsWith("%WEBROOT_PATH%", StringComparison.OrdinalIgnoreCase))
             {
                 // not able to check, return false since by default we are expecting none readonly file system
                 return false;
