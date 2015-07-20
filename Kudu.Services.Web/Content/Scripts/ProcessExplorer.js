@@ -158,6 +158,7 @@ var Utilities = (function () {
             iframe.style.display = "none";
             document.body.appendChild(iframe);
         }
+        
         iframe.src = url;
     };
 
@@ -201,6 +202,7 @@ var Utilities = (function () {
 })();
 
 var Process = (function () {
+    var webSiteSku;
     function Process(json) {
         this._json = json;
         this._json.threads = Utilities.getArrayFromJson(json.threads, function (t) {
@@ -214,6 +216,10 @@ var Process = (function () {
         });
 
         this._json.environment_variables = Utilities.getArrayFromJsonObject(json.environment_variables, function (key, value) {
+            if (key === "WEBSITE_SKU") {
+                webSiteSku = value;
+            }
+
             return new EnvironmentVariable(key, value);
         });
     }
@@ -302,6 +308,14 @@ var Process = (function () {
         configurable: true
     });
 
+    Object.defineProperty(Process.prototype, "WebSiteSku", {
+        get: function () {
+            return webSiteSku;
+        },
+        enumerable: true,
+        configurable: true
+    });
+
     Process.prototype.tableRow = function (level) {
         var _this = this;
         var tr = document.createElement('tr');
@@ -334,6 +348,18 @@ var Process = (function () {
             _this.dialog().dialog("open");
             $("li").blur();
         }, false)));
+        
+        var profilingButton = Utilities.getButton("ui-button-info", this._json.id + "-Profiling", this._json.is_profile_running ? "Stop Profiling" : "Start Profiling", function (e) {
+            handleProfilingEvents(e, _this._json.id);
+        }, false);
+        $(profilingButton).css("width", "138px");
+        if (Process.prototype.WebSiteSku === "Free" || Process.prototype.WebSiteSku === "Shared") {
+            $(profilingButton).attr("disabled", true);
+            $(profilingButton).addClass("ui-state-disabled");
+            $(profilingButton).attr("title", "Profiling is not supported for Free/Shared sites.");
+            $(profilingButton).tooltip();
+        }
+        tr.appendChild(Utilities.ToTd(profilingButton));
         return $(tr);
     };
 
@@ -866,6 +892,50 @@ function searchForHandle() {
     } else {
         $("#handle-result").html(Utilities.errorDiv("No handle found").outerHTML);
     }
+}
+
+function handleProfilingEvents(e, processId) {
+    if (!e || !e.target || typeof e.target.textContent === "undefined") {
+        return;
+    }
+
+    if (e.target.textContent.indexOf("Stop") === 0) {
+        stopProfiling(e, processId);
+    }
+    else if(e.target.textContent.indexOf("Starting") !== 0) {
+        e.target.textContent = "Starting Profiler...";
+        startProfiling(e, processId);
+    }
+}
+
+function postProfileRequest(action, processId) {
+    var uri = "/api/processes/" + processId + "/profile/" + action;
+    var request = {
+            method: "POST",
+            contentType: "application/json",
+        };
+    return $.ajax(uri, request);
+}
+
+function startProfiling(e, processId) {
+    var request = postProfileRequest("start", processId);
+    request.done(function (resp) {
+        e.target.title = "";
+        e.target.textContent = "Stop Profiling";
+    });
+    request.fail(function (resp) {
+        var obj = JSON.parse(resp.responseText);
+        alert(obj["Message"]);
+        e.target.textContent = "Start Profiling";
+    });
+}
+
+function stopProfiling(e, processId) {
+    var uri = window.location.protocol + "//" + window.location.host + "/api/processes/" + processId + "/profile/stop";
+    Utilities.downloadURL(uri);
+    e.target.textContent = "Start Profiling";
+    // TODO: we need to find a better way to handle this.
+    e.target.title = "It may take a few seconds for the download profile dialog to appear";
 }
 
 window.onload = function () {

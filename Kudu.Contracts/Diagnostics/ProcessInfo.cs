@@ -27,6 +27,9 @@ namespace Kudu.Core.Diagnostics
         [JsonProperty(PropertyName = "minidump", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public Uri MiniDump { get; set; }
 
+        [JsonProperty(PropertyName = "is_profile_running", DefaultValueHandling = DefaultValueHandling.Ignore)]
+        public bool IsProfileRunning { get; set; }
+
         [JsonProperty(PropertyName = "parent", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public Uri Parent { get; set; }
 

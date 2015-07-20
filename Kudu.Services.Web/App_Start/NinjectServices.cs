@@ -446,6 +446,8 @@ namespace Kudu.Services.Web.App_Start
             routes.MapHttpProcessesRoute("one-process-get", "/{id}", new { controller = "Process", action = "GetProcess" }, new { verb = new HttpMethodConstraint("GET") });
             routes.MapHttpProcessesRoute("one-process-delete", "/{id}", new { controller = "Process", action = "KillProcess" }, new { verb = new HttpMethodConstraint("DELETE") });
             routes.MapHttpProcessesRoute("one-process-dump", "/{id}/dump", new { controller = "Process", action = "MiniDump" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpProcessesRoute("start-process-profile", "/{id}/profile/start", new { controller = "Process", action = "StartProfileAsync" }, new { verb = new HttpMethodConstraint("POST") });
+            routes.MapHttpProcessesRoute("stop-process-profile", "/{id}/profile/stop", new { controller = "Process", action = "StopProfileAsync" }, new { verb = new HttpMethodConstraint("GET") });
             routes.MapHttpProcessesRoute("all-threads", "/{id}/threads", new { controller = "Process", action = "GetAllThreads" }, new { verb = new HttpMethodConstraint("GET") });
             routes.MapHttpProcessesRoute("one-process-thread", "/{processId}/threads/{threadId}", new { controller = "Process", action = "GetThread" }, new { verb = new HttpMethodConstraint("GET") });
             routes.MapHttpProcessesRoute("all-modules", "/{id}/modules", new { controller = "Process", action = "GetAllModules" }, new { verb = new HttpMethodConstraint("GET") });

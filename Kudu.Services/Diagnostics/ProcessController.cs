@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
@@ -18,11 +19,23 @@ using Kudu.Core.Infrastructure;
 using Kudu.Core.Tracing;
 using Kudu.Services.Arm;
 using Kudu.Services.Infrastructure;
+using System.Threading.Tasks;
+using System.Text;
+using System.Threading;
 
 namespace Kudu.Services.Performance
 {
     public class ProcessController : ApiController
     {
+        private const int ProcessExitTimeoutInSeconds = 20;
+
+        private static ConcurrentDictionary<int, ProfileInfo> _profilingList = new ConcurrentDictionary<int, ProfileInfo>();
+        private static object _lockObject = new object();
+        
+        // The profiling session timeout, this is temp fix before VS2015 Update 1.
+        private static readonly TimeSpan _profilingTimeout = TimeSpan.FromMinutes(15);
+        private static Timer _profilingIdleTimer;
+
         private readonly ITracer _tracer;
         private readonly IEnvironment _environment;
         private readonly IDeploymentSettingsManager _settings;
@@ -34,6 +47,7 @@ namespace Kudu.Services.Performance
             _tracer = tracer;
             _environment = environment;
             _settings = settings;
+            EnsureIdleTimer();
         }
 
         [HttpGet]
@@ -222,6 +236,198 @@ namespace Kudu.Services.Performance
             }
         }
 
+        [HttpPost]
+        public async Task<HttpResponseMessage> StartProfileAsync(int id)
+        {
+            using (_tracer.Step("ProcessController.StartProfileAsync"))
+            {
+                var process = GetProcessById(id);
+
+                // Check if the profiling is already running for the given process. If it does, then just return with 200.
+                if (_profilingList.ContainsKey(process.Id))
+                {
+                    return Request.CreateResponse(HttpStatusCode.OK);
+                }
+
+                // Profiling service supports up to 255 concurrent profiling sessions.
+                if (_profilingList.Count >= 255)
+                {
+                    _tracer.TraceError("Too many profiling sessions are currently running.");
+                    return Request.CreateErrorResponse(HttpStatusCode.ServiceUnavailable, "Too many profiling sessions are currently running. Please try again later.");
+                }
+
+                int profilingSessionId = GetNextProfilingSessionId();
+
+                string processName = System.Environment.ExpandEnvironmentVariables("%SystemDrive%\\msvsmon\\profiler\\VSStandardCollector.Dev14.exe");
+                string arguments = System.Environment.ExpandEnvironmentVariables(string.Format("start {0} /attach:{1} /loadAgent:4EA90761-2248-496C-B854-3C0399A591A4;DiagnosticsHub.CpuAgent.dll  /scratchLocation:%LOCAL_EXPANDED%\\Temp", profilingSessionId, id));
+
+                var profileProcessResponse = await HandleProfilingProcessAsync(processName, arguments);
+
+                if (!profileProcessResponse.IsSuccessStatusCode)
+                {
+                    return profileProcessResponse;
+                }
+
+                // This may fail if we got 2 requests at the same time to start a profiling session
+                // in that case, only 1 will be added and the other one will be stopped.
+                if(!_profilingList.TryAdd(process.Id, new ProfileInfo(profilingSessionId)))
+                {
+                    _tracer.TraceWarning("A profiling session was already running for process {0}, stopping profiling session {1}", process.Id, profilingSessionId);
+                    await StopProfileAsync(process.Id, false, profilingSessionId);
+                    return Request.CreateResponse(HttpStatusCode.OK);
+                }
+
+                _tracer.Step("started session id: {0} for pid: {1}", profilingSessionId, process.Id);
+
+                return Request.CreateResponse(HttpStatusCode.OK);
+            }
+        }
+
+        [HttpGet]
+        public async Task<HttpResponseMessage> StopProfileAsync(int id, bool sendResponse = true, int profilingSessionId = -1)
+        {
+            using (_tracer.Step("ProcessController.StopProfileAsync"))
+            {
+                // check if the process Ids exists in the sandbox. If it doesn't, this methid returns a 404 and we are done.
+                var process = GetProcessById(id);
+
+                // check if the profiling is running for the given process. If it doesn't return 404.
+                if (profilingSessionId == -1)
+                {
+                    if (!_profilingList.ContainsKey(process.Id))
+                    {
+                        return Request.CreateErrorResponse(HttpStatusCode.NotFound, string.Format("Profiling for process '{0}' is not running.", process.Id));
+                    }
+                    else
+                    {
+                        profilingSessionId = _profilingList[process.Id].SessionId;
+                    }
+                }
+
+                string processName = System.Environment.ExpandEnvironmentVariables("%SystemDrive%\\msvsmon\\profiler\\VSStandardCollector.Dev14.exe");
+                string profileFileName = string.Format("profile_{0}_{1}_{2}.diagsession", InstanceIdUtility.GetShortInstanceId(), process.ProcessName, process.Id);
+                string profileFileFullPath = System.Environment.ExpandEnvironmentVariables("%LOCAL_EXPANDED%\\Temp\\" + profileFileName);
+                string arguments = string.Format("stop {0} /output:{1}", profilingSessionId, profileFileFullPath);
+
+                var profileProcessResponse = await HandleProfilingProcessAsync(processName, arguments);
+
+                ProfileInfo removedId;
+                if (!profileProcessResponse.IsSuccessStatusCode)
+                {
+                    _profilingList.TryRemove(process.Id, out removedId);
+                    return profileProcessResponse;
+                }
+
+                FileSystemHelpers.EnsureDirectory(Path.GetDirectoryName(profileFileFullPath));
+                _tracer.Step("profile was saved to {0} successfully.", profileFileFullPath);
+
+                _profilingList.TryRemove(process.Id, out removedId);
+
+                if (sendResponse)
+                {
+                    HttpResponseMessage response = Request.CreateResponse();
+                    response.Content = new StreamContent(FileStreamWrapper.OpenRead(profileFileFullPath));
+                    response.Content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+                    response.Content.Headers.ContentDisposition = new ContentDispositionHeaderValue("attachment");
+                    response.Content.Headers.ContentDisposition.FileName = profileFileName;
+                    return response;
+                }
+                else
+                {
+                    try
+                    {
+                        FileSystemHelpers.DeleteFile(profileFileFullPath);
+                    }
+                    catch
+                    {
+                    }
+
+                    return null;
+                }
+            }
+        }
+
+        private async Task<HttpResponseMessage> HandleProfilingProcessAsync(string processName, string arguments)
+        {
+            MemoryStream outputStream = null;
+            MemoryStream errorStream = null;
+            try
+            {
+                _tracer.Step("ProcessName:" + processName + "   arguments:" + arguments );
+                var exe = new Executable(processName, Path.GetDirectoryName(processName), TimeSpan.FromSeconds(ProcessExitTimeoutInSeconds));
+
+                outputStream = new MemoryStream();
+                errorStream = new MemoryStream();
+
+                _tracer.Step("Path:" + exe.Path + " working directory:" + exe.WorkingDirectory);
+
+                int exitCode = await exe.ExecuteAsync(_tracer, arguments, outputStream, errorStream);
+
+                string output = GetString(outputStream);
+                string error = GetString(errorStream);
+
+                _tracer.Step(output);
+
+                if (exitCode != 0)
+                {
+                    _tracer.TraceError(string.Format(CultureInfo.InvariantCulture, "Starting process {0} failed with the following error code '{1}'.", processName, exitCode));
+                    return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, "Profiling process failed with the following error code: " + exitCode);
+                }
+                else if (!string.IsNullOrEmpty(error))
+                {
+                    _tracer.TraceError(error);
+                    return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, "Profiling process failed with the following error: " + error);
+                }
+
+                _tracer.Step(output);
+                return Request.CreateResponse(HttpStatusCode.OK);
+            }
+            catch(Exception ex)
+            {
+                _tracer.TraceError(ex);
+                return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, ex.Message);
+            }
+            finally
+            {
+                if(outputStream != null)
+                {
+                    outputStream.Dispose();
+                }
+
+                if (errorStream != null)
+                {
+                    errorStream.Dispose();
+                }
+            }
+        }
+
+        private static int GetNextProfilingSessionId()
+        {
+            // TODO: This is not a good way to track active profiling sessions, but as of VS2015 RTM, the profiling service does not provide any API to track the current active sessions.  
+            // This is planned to be fixed in VS2015 Update 1.
+            var r = new Random();
+
+            int sessionId = r.Next(1, 255);
+            List<ProfileInfo> list = _profilingList.Values.ToList<ProfileInfo>();
+
+            while ( list.Exists(item => item.SessionId == sessionId ))
+            {
+                sessionId = r.Next(1, 255);
+            }
+
+            return sessionId;
+        }
+
+        private static string GetString(MemoryStream stream)
+        {
+            if (stream.Length > 0)
+            {
+                return Encoding.UTF8.GetString(stream.GetBuffer(), 0, (int)stream.Length);
+            }
+
+            return String.Empty;
+        }
+
         private static string GetResponseFileName(string prefix, string ext)
         {
             return String.Format(CultureInfo.InvariantCulture, "{0}-{1}-{2:MM-dd-HH-mm-ss}.{3}", prefix, InstanceIdUtility.GetShortInstanceId(), DateTime.UtcNow, ext);
@@ -305,7 +511,7 @@ namespace Kudu.Services.Performance
                 threadInfo.PriviledgedProcessorTime = SafeGetValue(() => thread.PrivilegedProcessorTime, TimeSpan.FromSeconds(-1));
                 threadInfo.StartAddress = "0x" + thread.StartAddress.ToInt64().ToString("X");
 
-                if (thread.ThreadState == ThreadState.Wait)
+                if (thread.ThreadState == System.Diagnostics.ThreadState.Wait)
                 {
                     threadInfo.WaitReason = thread.WaitReason.ToString();
                 }
@@ -395,7 +601,7 @@ namespace Kudu.Services.Performance
                 info.TimeStamp = DateTime.UtcNow;
                 info.EnvironmentVariables = SafeGetValue(process.GetEnvironmentVariables, null);
                 info.CommandLine = SafeGetValue(process.GetCommandLine, null);
-
+                info.IsProfileRunning = _profilingList.ContainsKey(process.Id);
                 SetEnvironmentInfo(info);
             }
 
@@ -443,6 +649,48 @@ namespace Kudu.Services.Performance
             return defaultValue;
         }
 
+        private void EnsureIdleTimer()
+        {
+            lock (_lockObject)
+            {
+                if (_profilingIdleTimer == null)
+                {
+                    _profilingIdleTimer = new Timer(_ => SafeInvoke(() => OnIdleTimer()), null, _profilingTimeout, _profilingTimeout);
+                }
+            }
+        }
+
+        private void OnIdleTimer()
+        {
+            lock (_lockObject)
+            {
+                if(_profilingList.Count > 0)
+                {
+                    // Manually stop any profiling session which has exceeded the timeout period.
+                    // TODO: VS 2015 Update 1 should have a better way to handle this.
+                    foreach(var item in _profilingList)
+                    {
+                        if(DateTime.UtcNow - item.Value.StartTime > _profilingTimeout)
+                        {
+                            Task.Run(() => StopProfileAsync(item.Key, false));
+                        }
+                    }
+                }
+            }
+        }
+
+        private static void SafeInvoke(Action func)
+        {
+            try
+            {
+                func();
+            }
+            catch (Exception)
+            {
+                // no-op
+            }
+        }
+
         public enum DumpFormat
         {
             Raw,
@@ -476,5 +724,19 @@ namespace Kudu.Services.Performance
                 return new FileStreamWrapper(path);
             }
         }
+        
+        private class ProfileInfo
+        {
+            public ProfileInfo(int SessionId)
+            {
+                this.SessionId = SessionId;
+                this.StartTime = DateTime.UtcNow;
+            }
+
+            public int SessionId { get; set; }
+
+            public DateTime StartTime { get; set; }
+        }
+
     }
 }
