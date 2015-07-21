@@ -15,6 +15,7 @@ using Kudu.Services.Performance;
 using Moq;
 using Newtonsoft.Json.Linq;
 using Xunit;
+using System.Web.Http;
 
 namespace Kudu.Core.Test
 {
@@ -249,5 +250,38 @@ namespace Kudu.Core.Test
             // Assert
             Assert.Equal(userName, identity.Name);
         }
+
+        [Fact]
+        public async Task StartProfileAsync_InvalidProcess()
+        {
+            var settings = new Mock<IDeploymentSettingsManager>();
+            var controller = new Mock<ProcessController>(Mock.Of<ITracer>(), null, settings.Object);
+
+            // Setup
+            controller.Object.Request = new HttpRequestMessage();
+
+            // Test
+            var ex = await Assert.ThrowsAsync<HttpResponseException>(() => controller.Object.StartProfileAsync(100));
+
+            // Assert
+            Assert.Equal(HttpStatusCode.NotFound, ex.Response.StatusCode);
+        }
+
+        [Fact]
+        public async Task StopProfileAsync_InvalidProcess()
+        {
+            var settings = new Mock<IDeploymentSettingsManager>();
+            var controller = new Mock<ProcessController>(Mock.Of<ITracer>(), null, settings.Object);
+
+            // Setup
+            controller.Object.Request = new HttpRequestMessage();
+
+            // Test
+            var ex = await Assert.ThrowsAsync<HttpResponseException>(() => controller.Object.StopProfileAsync(100));
+
+            // Assert
+            Assert.Equal(HttpStatusCode.NotFound, ex.Response.StatusCode);
+        }
+
     }
 }

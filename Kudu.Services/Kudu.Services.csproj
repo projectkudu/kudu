@@ -103,6 +103,7 @@
     <Compile Include="Deployment\DeploymentController.cs" />
     <Compile Include="Diagnostics\LogStreamHandler.cs" />
     <Compile Include="Diagnostics\LogStreamManager.cs" />
+    <Compile Include="Diagnostics\ProfileManager.cs" />
     <Compile Include="EnsureRequestIdHandlerAttribute.cs" />
     <Compile Include="Error404Controller.cs" />
     <Compile Include="FetchHelpers\OneDriveHelper.cs" />
