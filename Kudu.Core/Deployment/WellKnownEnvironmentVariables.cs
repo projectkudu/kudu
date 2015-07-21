@@ -31,10 +31,7 @@
         public const string WebJobsCommandArguments = "WEBJOBS_COMMAND_ARGUMENTS";
 
         public const string CommitId = "SCM_COMMIT_ID";
-        public const string DnxVersion = "SCM_DNX_VERSION";
-        public const string DnxClr = "SCM_DNX_CLR";
         public const string DnvmPath = "SCM_DNVM_PS_PATH";
-        public const string DnxBitness = "SCM_DNX_ARCH";
 
         public const string SiteBitness = "SITE_BITNESS";
 
