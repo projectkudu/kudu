@@ -210,7 +210,12 @@ namespace Kudu.Services.Deployment
                 try
                 {
                     var details = _deploymentManager.GetLogEntryDetails(id, logId).ToList();
-                    return Request.CreateResponse(HttpStatusCode.OK, ArmUtils.AddEnvelopeOnArmRequest(details, Request));
+                    return details.Any()
+                        ? Request.CreateResponse(HttpStatusCode.OK, ArmUtils.AddEnvelopeOnArmRequest(details, Request))
+                        : Request.CreateErrorResponse(HttpStatusCode.NotFound, String.Format(CultureInfo.CurrentCulture,
+                        Resources.Error_LogDetailsNotFound,
+                        logId,
+                        id));
                 }
                 catch (FileNotFoundException ex)
                 {

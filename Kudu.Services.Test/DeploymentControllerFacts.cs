@@ -13,6 +13,7 @@ using Kudu.Core.SourceControl;
 using Kudu.Services.Deployment;
 using Moq;
 using Xunit;
+using System.Linq;
 
 namespace Kudu.Services.Test
 {
@@ -60,6 +61,27 @@ namespace Kudu.Services.Test
             Assert.Equal(HttpStatusCode.NotFound, response.Response.StatusCode);
             Assert.Equal(@"{""Message"":""Deployment '1234' not found.""}", await response.Response.Content.ReadAsStringAsync());
         }
+
+        [Fact]
+        public async Task GetLogEntryDetailsReturns404IfLogEntryDetailsDoesNotExist()
+        {
+            // Arrange
+            var deploymentManager = new Mock<IDeploymentManager>();
+            deploymentManager
+                .Setup(d => d.GetLogEntryDetails(It.IsAny<string>(), It.IsAny<string>()))
+                .Returns(Enumerable.Empty<LogEntry>());
+            var controller = new DeploymentController(Mock.Of<ITracer>(), deploymentManager.Object, Mock.Of<IDeploymentStatusManager>(),
+                                                      Mock.Of<IOperationLock>(), Mock.Of<IRepositoryFactory>(), Mock.Of<IAutoSwapHandler>());
+            controller.Request = GetRequest();
+
+            // Act
+            var response = controller.GetLogEntryDetails("deplymentId", "logId");
+
+            // Assert
+            Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+            Assert.Equal(@"{""Message"":""LogId 'logId' was not found in Deployment 'deplymentId'.""}", await response.Content.ReadAsStringAsync());
+        }
+
 
         private static HttpRequestMessage GetRequest()
         {

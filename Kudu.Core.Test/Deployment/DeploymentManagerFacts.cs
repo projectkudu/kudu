@@ -166,6 +166,33 @@ namespace Kudu.Core.Test.Deployment
             }
         }
 
+        [Fact]
+        public void ReturnEmptyCollectionOnLogEntryIdDoesntExist()
+        {
+            //Arrage
+            var fileSystem = GetMockFileSystem(@"x:\deployment\deploymentId\log.xml", () => @"<?xml version=""1.0"" encoding=""utf-8""?>
+<entries>
+    <entry time=""2015-07-22T19:42:24.1462725Z"" id=""validId"" type=""0"">
+        <message>Test message</message>
+    </entry>
+</entries>");
+
+            var environment = new Mock<IEnvironment>();
+            environment
+                .Setup(s => s.DeploymentsPath)
+                .Returns(@"x:\deployment");
+
+            var trace = NullTracerFactory.Instance;
+
+            var deploymentManager = CreateDeploymentManager(fileSystem: fileSystem, traceFactory: trace, environment: environment.Object);
+
+            //Act
+            var result = deploymentManager.GetLogEntryDetails("deploymentId", "invalid");
+
+            //Assert
+            Assert.Empty(result);
+        }
+
         public static IEnumerable<object[]> DeploymentStatusFileScenarios
         {
             get

@@ -62,10 +62,17 @@ namespace Kudu.Core.Deployment
                 document = GetDocument();
             }
 
-            return from e in document.Root.Elements("entry").Where(s => s.Attribute("id").Value == entryId).First().Elements("entry")
-                   let time = DateTime.Parse(e.Attribute("time").Value).ToUniversalTime()
-                   let type = (LogEntryType)Int32.Parse(e.Attribute("type").Value)
-                   select new LogEntry(time, e.Attribute("id").Value, e.Element("message").Value, type);
+            return document.Root.Elements("entry")
+                .Where(s => s.Attribute("id").Value == entryId)
+                .Select(s => s.Elements("entry"))
+                .Select(s => s.Select(e =>
+                {
+                    var time = DateTime.Parse(e.Attribute("time").Value).ToUniversalTime();
+                    var type = (LogEntryType)Int32.Parse(e.Attribute("type").Value);
+                    return new LogEntry(time, e.Attribute("id").Value, e.Element("message").Value, type);
+                }))
+                .FirstOrDefault() ?? Enumerable.Empty<LogEntry>();
+            ;
         }
 
         public string GetFirstErrorEntryMessage()
