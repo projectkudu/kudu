@@ -9,6 +9,9 @@ namespace Kudu.Core.Infrastructure
 {
     public static class FileSystemHelpers
     {
+        [SuppressMessage("Microsoft.Usage", "CA2211:Non-constant fields should not be visible", Justification = "Make accessable for testing")]
+        public static string TmpFolder = System.Environment.ExpandEnvironmentVariables(@"%WEBROOT_PATH%\data\Temp");
+
         public static IFileSystem Instance { get; set; }
 
         static FileSystemHelpers()
@@ -288,6 +291,27 @@ namespace Kudu.Core.Infrastructure
         public static void DeleteDirectoryContentsSafe(string path, bool ignoreErrors = true)
         {
             DeleteDirectoryContentsSafe(Instance.DirectoryInfo.FromDirectoryName(path), ignoreErrors);
+        }
+
+        public static bool IsFileSystemReadOnly()
+        {
+            if (TmpFolder.StartsWith("%WEBROOT_PATH%", StringComparison.OrdinalIgnoreCase))
+            {
+                // not able to check, return false since by default we are expecting none readonly file system
+                return false;
+            }
+
+            try
+            {
+                string folder = Path.Combine(TmpFolder, Guid.NewGuid().ToString());
+                CreateDirectory(folder);
+                DeleteDirectorySafe(folder, ignoreErrors: false);
+                return false;
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return true;
+            }
         }
 
         private static void DeleteDirectoryContentsSafe(DirectoryInfoBase directoryInfo, bool ignoreErrors)
