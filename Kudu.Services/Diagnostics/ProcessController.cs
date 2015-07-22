@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.Concurrent;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
@@ -20,9 +19,6 @@ using Kudu.Core.Tracing;
 using Kudu.Services.Arm;
 using Kudu.Services.Infrastructure;
 using System.Threading.Tasks;
-using System.Text;
-using System.Threading;
-using Kudu.Services.Diagnostics;
 
 namespace Kudu.Services.Performance
 {
@@ -451,7 +447,7 @@ namespace Kudu.Services.Performance
                 info.TimeStamp = DateTime.UtcNow;
                 info.EnvironmentVariables = SafeGetValue(process.GetEnvironmentVariables, null);
                 info.CommandLine = SafeGetValue(process.GetCommandLine, null);
-                info.IsProfileRunning = ProfileManager.IsProfileRunnig(process.Id);
+                info.IsProfileRunning = ProfileManager.IsProfileRunning(process.Id);
                 SetEnvironmentInfo(info);
             }
 

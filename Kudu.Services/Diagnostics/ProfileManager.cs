@@ -11,13 +11,12 @@ using System.Net;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Web.Http;
 
 namespace Kudu.Services.Performance
 {
     internal static class ProfileManager
     {
-        private const int ProcessExitTimeoutInSeconds = 20;
+        private const int ProcessExitTimeoutInSeconds = 300;
 
         private static ConcurrentDictionary<int, ProfileInfo> _profilingList = new ConcurrentDictionary<int, ProfileInfo>();
         private static object _lockObject = new object();
@@ -28,22 +27,22 @@ namespace Kudu.Services.Performance
 
         private static string _processName = System.Environment.ExpandEnvironmentVariables("%SystemDrive%\\msvsmon\\profiler\\VSStandardCollector.Dev14.exe");
 
-        internal static async Task<HttpResponseInfo> StartProfileAsync(int processId, ITracer tracer = null)
+        internal static async Task<ProfileResultInfo> StartProfileAsync(int processId, ITracer tracer = null)
         {
             tracer = tracer ?? NullTracer.Instance;
-            using (tracer.Step("ProcessController.StartProfileAsync"))
+            using (tracer.Step("ProfileManager.StartProfileAsync"))
             {
                 // Check if the profiling is already running for the given process. If it does, then just return with 200.
                 if (_profilingList.ContainsKey(processId))
                 {
-                    return new HttpResponseInfo(HttpStatusCode.OK, string.Empty);
+                    return new ProfileResultInfo(HttpStatusCode.OK, string.Empty);
                 }
 
                 // Profiling service supports up to 12 concurrent profiling sessions.
                 if (_profilingList.Count >= 12)
                 {
                     tracer.TraceError("Too many profiling sessions are currently running.");
-                    return new HttpResponseInfo(HttpStatusCode.ServiceUnavailable, "Too many profiling sessions are currently running. Please try again later.");
+                    return new ProfileResultInfo(HttpStatusCode.ServiceUnavailable, "Too many profiling sessions are currently running. Please try again later.");
                 }
 
                 int profilingSessionId = GetNextProfilingSessionId();
@@ -63,28 +62,28 @@ namespace Kudu.Services.Performance
                 {
                     tracer.TraceWarning("A profiling session was already running for process {0}, stopping profiling session {1}", processId, profilingSessionId);
                     await StopProfileInternalAsync(processId, profilingSessionId, true, tracer);
-                    return new HttpResponseInfo(HttpStatusCode.OK, string.Empty);
+                    return new ProfileResultInfo(HttpStatusCode.OK, string.Empty);
                 }
 
                 tracer.Step("started session id: {0} for pid: {1}", profilingSessionId, processId);
 
                 EnsureIdleTimer();
 
-                return new HttpResponseInfo(HttpStatusCode.OK, string.Empty);
+                return new ProfileResultInfo(HttpStatusCode.OK, string.Empty);
             }
         }
 
-        internal static async Task<HttpResponseInfo> StopProfileAsync(int processId, ITracer tracer = null)
+        internal static async Task<ProfileResultInfo> StopProfileAsync(int processId, ITracer tracer = null)
         {
             int profilingSessionId;
 
             tracer = tracer ?? NullTracer.Instance;
-            using (tracer.Step("ProcessController.StopProfileAsync"))
+            using (tracer.Step("ProfileManager.StopProfileAsync"))
             {
                 // check if the profiling is running for the given process. If it doesn't return 404.
                 if (!_profilingList.ContainsKey(processId))
                 {
-                    return new HttpResponseInfo(HttpStatusCode.NotFound, string.Format("Profiling for process '{0}' is not running.", processId));
+                    return new ProfileResultInfo(HttpStatusCode.NotFound, string.Format("Profiling for process '{0}' is not running.", processId));
                 }
                 else
                 {
@@ -103,16 +102,16 @@ namespace Kudu.Services.Performance
             return System.Environment.ExpandEnvironmentVariables("%LOCAL_EXPANDED%\\Temp\\" + profileFileName);
         }
 
-        internal static bool IsProfileRunnig(int processId)
+        internal static bool IsProfileRunning(int processId)
         {
             return _profilingList.ContainsKey(processId);
         }
 
-        private static async Task<HttpResponseInfo> StopProfileInternalAsync(int processId, int profilingSessionId, bool ignoreProfileFile, ITracer tracer = null)
+        private static async Task<ProfileResultInfo> StopProfileInternalAsync(int processId, int profilingSessionId, bool ignoreProfileFile, ITracer tracer = null)
         {
             tracer = tracer ?? NullTracer.Instance;
 
-            using (tracer.Step("ProcessController.StopProfileAsync"))
+            using (tracer.Step("ProfileManager.StopProfileInternalAsync"))
             {
                 string profileFileFullPath = GetProfilePath(processId);
                 string profileFileName = Path.GetFileName(profileFileFullPath);
@@ -145,11 +144,11 @@ namespace Kudu.Services.Performance
 
                 DisposeTimerIfNecessary();
 
-                return new HttpResponseInfo(HttpStatusCode.OK, string.Empty);
+                return new ProfileResultInfo(HttpStatusCode.OK, string.Empty);
             }
         }
 
-        private static async Task<HttpResponseInfo> ExecuteProfilingCommandAsync(string arguments, ITracer tracer)
+        private static async Task<ProfileResultInfo> ExecuteProfilingCommandAsync(string arguments, ITracer tracer)
         {
             MemoryStream outputStream = null;
             MemoryStream errorStream = null;
@@ -173,20 +172,20 @@ namespace Kudu.Services.Performance
                 if (exitCode != 0)
                 {
                     tracer.TraceError(string.Format(CultureInfo.InvariantCulture, "Starting process {0} failed with the following error code '{1}'.", _processName, exitCode));
-                    return new HttpResponseInfo(HttpStatusCode.InternalServerError, "Profiling process failed with the following error code: " + exitCode);
+                    return new ProfileResultInfo(HttpStatusCode.InternalServerError, "Profiling process failed with the following error code: " + exitCode);
                 }
                 else if (!string.IsNullOrEmpty(error))
                 {
                     tracer.TraceError(error);
-                    return new HttpResponseInfo(HttpStatusCode.InternalServerError, "Profiling process failed with the following error: " + error);
+                    return new ProfileResultInfo(HttpStatusCode.InternalServerError, "Profiling process failed with the following error: " + error);
                 }
 
-                return new HttpResponseInfo(HttpStatusCode.OK, string.Empty);
+                return new ProfileResultInfo(HttpStatusCode.OK, string.Empty);
             }
             catch (Exception ex)
             {
                 tracer.TraceError(ex);
-                return new HttpResponseInfo(HttpStatusCode.InternalServerError, ex.Message);
+                return new ProfileResultInfo(HttpStatusCode.InternalServerError, ex.Message);
             }
             finally
             {
@@ -209,9 +208,9 @@ namespace Kudu.Services.Performance
             var r = new Random();
 
             int sessionId = r.Next(1, 255);
-            List<ProfileInfo> list = _profilingList.Values.ToList<ProfileInfo>();
+            var lookup = new HashSet<int>(_profilingList.Values.Select( v=> v.SessionId));
 
-            while (list.Exists(item => item.SessionId == sessionId))
+            while (lookup.Contains(sessionId))
             {
                 sessionId = r.Next(1, 255);
             }
@@ -246,16 +245,19 @@ namespace Kudu.Services.Performance
             {
                 if (_profilingList.Count > 0)
                 {
+                    var tasks = new List<Task>();
+
                     // Manually stop any profiling session which has exceeded the timeout period.
                     // TODO: VS 2015 Update 1 should have a better way to handle this.
                     foreach (var item in _profilingList)
                     {
                         if (DateTime.UtcNow - item.Value.StartTime > _profilingTimeout)
                         {
-                            Task.Run(() => StopProfileInternalAsync(item.Key, item.Value.SessionId, true));
+                            tasks.Add(Task.Run(() => StopProfileInternalAsync(item.Key, item.Value.SessionId, true)));
                         }
                     }
 
+                    Task.WaitAll(tasks.ToArray());
                     DisposeTimerIfNecessary();
                 }
             }
@@ -285,9 +287,9 @@ namespace Kudu.Services.Performance
             }
         }
 
-        internal class HttpResponseInfo
+        internal class ProfileResultInfo
         {
-            public HttpResponseInfo(HttpStatusCode statusCode, string message)
+            public ProfileResultInfo(HttpStatusCode statusCode, string message)
             {
                 this.StatusCode = statusCode;
                 this.Message = message;
