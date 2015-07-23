@@ -70,7 +70,7 @@ namespace Kudu.Core.Infrastructure
             return false;
         }
 
-        private static string GetDefaultAspNet5RuntimeArchitecture()
+        public static string GetDefaultAspNet5RuntimeArchitecture()
         {
             var bitness = System.Environment.GetEnvironmentVariable(WellKnownEnvironmentVariables.SiteBitness);
             if (bitness == null)
