@@ -257,8 +257,8 @@ $.connection.hub.start().done(function () {
             fileEdit: ko.observable(null),
             editText: ko.observable(""),
             cancelEdit: function () {
-            viewModel.fileEdit(null);
-            statusbarObj.reset();
+                viewModel.fileEdit(null);
+                statusbarObj.reset();
             },
             selectSpecialDir: function (name) {
                 var item = viewModel.specialDirsIndex()[name];
