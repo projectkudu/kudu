@@ -204,6 +204,12 @@ namespace Kudu.Core.Infrastructure
             return ResolveNpmToolsPath("grunt");
         }
 
+        internal static string ResolveFSharpCPath()
+        {
+            string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);
+            return Path.Combine(programFiles, @"Microsoft SDKs", "F#", "3.1", "Framework", "v4.0", "Fsc.exe");
+        }
+
         private static string ResolveNpmToolsPath(string toolName)
         {
             // If there is a TOOLNAME_PATH specified, then use that.

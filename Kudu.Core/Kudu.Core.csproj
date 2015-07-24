@@ -160,6 +160,7 @@
     <Compile Include="Jobs\ContinuousJobLogger.cs" />
     <Compile Include="Jobs\ContinuousJobRunner.cs" />
     <Compile Include="Jobs\DnxScriptHost.cs" />
+    <Compile Include="Jobs\FSharpScriptHost.cs" />
     <Compile Include="Jobs\JobsFileWatcher.cs" />
     <Compile Include="Jobs\ContinuousJobsManager.cs" />
     <Compile Include="Jobs\BaseJobRunner.cs" />

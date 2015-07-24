@@ -87,7 +87,8 @@ namespace Kudu.Core.Deployment.Generator
                 Path.GetDirectoryName(PathUtility.ResolveMSBuildPath()),
                 Path.GetDirectoryName(PathUtility.ResolveGitPath()),
                 Path.GetDirectoryName(PathUtility.ResolveVsTestPath()),
-                Path.GetDirectoryName(PathUtility.ResolveSQLCmdPath())
+                Path.GetDirectoryName(PathUtility.ResolveSQLCmdPath()),
+                Path.GetDirectoryName(PathUtility.ResolveFSharpCPath())
             };
 
             toolsPaths.AddRange(PathUtility.ResolveNodeNpmPaths());
