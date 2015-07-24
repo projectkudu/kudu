@@ -35,6 +35,12 @@ editor.setOptions({
 });
 
 
+// Show a red bar if content has changed
+editor.on('change', function() {
+   $('#statusbar').css('border-left-color', '#f14');
+});
+
+
 // Hook the little pencil glyph and apply Ace syntax mode based on file extension
 $('#fileList').on('click', '.glyphicon-pencil', function () {
     if ($('.edit-view').is(':visible')) {

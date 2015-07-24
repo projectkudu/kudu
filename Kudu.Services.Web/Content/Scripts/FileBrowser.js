@@ -1,4 +1,41 @@
-﻿$.connection.hub.url = appRoot + "api/filesystemhub";
+﻿// Custom status bar for Ace
+var statusbar;
+statusbar = {
+    showFilename:
+        function () {
+            var filename;
+            try {
+                filename = viewModel.fileEdit.peek().name();
+            }
+            catch(e) {
+                filename = e;
+            }
+            finally {
+                $('#statusbar').text(filename);
+                $('#statusbar').css('border-left-color', '#5bc0de');
+            }
+        },
+    reset:
+    function () {
+            $('#statusbar').text('');
+            $('#statusbar').css('border-left-color', '#5bc0de')
+        },
+    SavingChanges:
+    function () {
+            $('#statusbar').text('Saving changes...');
+            $('#statusbar').prepend('<i class="glyphicon glyphicon-cloud-upload" style="margin-right: 6px"></i>');
+         },
+    FetchingChanges:
+        function () {
+            $('#statusbar').css('border-left-color', '#5bc0de')
+            $('#statusbar').text('Fetching changes...');
+            $('#statusbar').prepend('<i class="glyphicon glyphicon-cloud-download" style="margin-right: 6px"></i>');
+        }
+}
+
+statusbarObj = Object.create(statusbar);
+
+$.connection.hub.url = appRoot + "api/filesystemhub";
 var fileSystemHub = $.connection.fileSystemHub;
 fileSystemHub.client.fileExplorerChanged = function () {
     window.viewModel.selected().fetchChildren(true);
@@ -170,13 +207,16 @@ $.connection.hub.start().done(function () {
 
         this.editItem = function () {
             var that = this;
-            viewModel.editText("Fetching changes...");
+            // Blank out the editor before fetching new content
+            viewModel.editText(null);
+            statusbarObj.FetchingChanges();
             viewModel.fileEdit(this);
             if(this.mime == "text/xml")
             {
                 Vfs.getContent(this)
                    .done(function (data) {
                        viewModel.editText(vkbeautify.xml(data));
+                       statusbarObj.showFilename();
                    }).fail(showError);
             }
             else
@@ -184,16 +224,18 @@ $.connection.hub.start().done(function () {
                 Vfs.getContent(this)
                    .done(function (data) {
                        viewModel.editText(data);
+                       statusbarObj.showFilename();
                    }).fail(showError);
             }
         }
 
         this.saveItem = function () {
             var text = viewModel.editText();
-            viewModel.editText("Saving changes...");
+            statusbarObj.SavingChanges();
             Vfs.setContent(this, text)
                 .done(function () {
                     viewModel.fileEdit(null);
+                    statusbarObj.reset();
                 }).fail(function (error) {
                     viewModel.fileEdit(null);
                     showError(error);
@@ -212,7 +254,8 @@ $.connection.hub.start().done(function () {
             fileEdit: ko.observable(null),
             editText: ko.observable(""),
             cancelEdit: function () {
-                viewModel.fileEdit(null);
+            viewModel.fileEdit(null);
+            statusbarObj.reset();
             },
             selectSpecialDir: function (name) {
                 var item = viewModel.specialDirsIndex()[name];
@@ -265,7 +308,7 @@ $.connection.hub.start().done(function () {
                 return { parent: parent, relativePath: childDir.substring(parentPath.length).replace(/^(\/|\\)?(.*)(\/|\\)?$/g, "$2") };
             }
         }
-            
+
         workingDirChanging = true;
         var relativeDir = getRelativePath(viewModel.root, newValue) ||
             getRelativePath(viewModel.specialDirsIndex()["LocalSiteRoot"], newValue) ||

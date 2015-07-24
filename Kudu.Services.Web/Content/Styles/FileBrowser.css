@@ -108,13 +108,13 @@ div.console {
         animation: blink 1s steps(5, start) infinite;
         -webkit-animation: blink 1s steps(5, start) infinite;
     }
-    
+
     @-webkit-keyframes blink {
        to {
             visibility: hidden;
         }
     }
-    
+
     @keyframes blink {
        to {
             visibility: hidden;
@@ -171,4 +171,15 @@ textarea {
 
 .right {
     float: right;
+}
+
+.statusbar {
+    padding: 7px 18px;
+    margin-left: 40px;
+    margin-bottom: 0;
+    border: 2px solid #eee;
+    border-radius: 4px;
+    border-left-width: 4px;
+    border-left-color: #5bc0de;
+    vertical-align: middle;
 }

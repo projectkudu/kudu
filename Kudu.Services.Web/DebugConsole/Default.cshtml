@@ -60,9 +60,9 @@
                                         <i class="glyphicon glyphicon-download-alt" title="Download"></i>
                                     </a>
                                     <!--
-					 Ace hooks an event handler on glyphicon-pencil.
-                                         See ~/content/scripts/ace-init.js
-				    -->
+                                        Ace hooks an event handler on glyphicon-pencil.
+                                        See ~/content/scripts/ace-init.js
+                                    -->
                                     <span data-bind="if: !isDirectory()">
                                         <a data-bind="click: editItem" href="#">
                                             <i class="glyphicon glyphicon-pencil" title="Edit"></i>
@@ -107,6 +107,7 @@
                 <p>
                     <button class="btn btn-primary btn-default" style="margin-right: 10px" data-bind="click: function () { return fileEdit().saveItem(); }">Save</button>
                     <button class="btn" style="margin-right: 10px" data-bind="click: cancelEdit">Cancel</button>
+                    <span id="statusbar" class="statusbar"></span>
                 </p>
                 <!-- Ace editor starts -->
                 <div id="editor" data-bind="ace: editText" style="position: relative; width: inherit"></div>
