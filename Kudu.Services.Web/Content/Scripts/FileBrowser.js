@@ -1,6 +1,6 @@
-﻿// Custom status bar for Ace
-var statusbar;
-statusbar = {
+// Custom status bar for Ace (aka Project Wunderbar)
+var azure = '#5bc0de';
+var statusbar = {
     showFilename:
         function () {
             var filename;
@@ -8,32 +8,35 @@ statusbar = {
                 filename = viewModel.fileEdit.peek().name();
             }
             catch(e) {
-                filename = e;
+                filename = 'Can not get filename. See console for details.';
+                if (typeof console == 'object') {
+                    console.log('Can not get filename: %s', e);
+                }
             }
             finally {
                 $('#statusbar').text(filename);
-                $('#statusbar').css('border-left-color', '#5bc0de');
+                $('#statusbar').css('border-left-color', azure);
             }
         },
     reset:
-    function () {
+        function () {
             $('#statusbar').text('');
-            $('#statusbar').css('border-left-color', '#5bc0de')
+            $('#statusbar').css('border-left-color', azure);
         },
     SavingChanges:
-    function () {
+        function () {
             $('#statusbar').text('Saving changes...');
             $('#statusbar').prepend('<i class="glyphicon glyphicon-cloud-upload" style="margin-right: 6px"></i>');
          },
     FetchingChanges:
         function () {
-            $('#statusbar').css('border-left-color', '#5bc0de')
+            $('#statusbar').css('border-left-color', azure);
             $('#statusbar').text('Fetching changes...');
             $('#statusbar').prepend('<i class="glyphicon glyphicon-cloud-download" style="margin-right: 6px"></i>');
         }
 }
 
-statusbarObj = Object.create(statusbar);
+var statusbarObj = Object.create(statusbar);
 
 $.connection.hub.url = appRoot + "api/filesystemhub";
 var fileSystemHub = $.connection.fileSystemHub;
