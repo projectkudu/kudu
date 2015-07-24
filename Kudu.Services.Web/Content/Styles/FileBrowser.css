@@ -182,4 +182,9 @@ textarea {
     border-left-width: 4px;
     border-left-color: #5bc0de;
     vertical-align: middle;
+    display: inline-block;
+    white-space: nowrap;
+    overflow: hidden;
+    /* text-overflow: ellipsis; */
+    max-width: 800px;
 }
