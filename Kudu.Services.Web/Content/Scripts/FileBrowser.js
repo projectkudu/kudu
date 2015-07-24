@@ -172,7 +172,7 @@ $.connection.hub.start().done(function () {
             var that = this;
             viewModel.editText("Fetching changes...");
             viewModel.fileEdit(this);
-            if(this.mime == "text/xml")
+            if(this.mime === "text/xml")
             {
                 Vfs.getContent(this)
                    .done(function (data) {
