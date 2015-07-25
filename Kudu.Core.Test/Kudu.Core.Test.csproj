@@ -99,6 +99,7 @@
     <Compile Include="Infrastructure\XmlUtilityFacts.cs" />
     <Compile Include="DeploymentSettingsFacts.cs" />
     <Compile Include="Jobs\ContinuousJobRunnerFacts.cs" />
+    <Compile Include="Jobs\ContinuousJobsManagerFacts.cs" />
     <Compile Include="Jobs\ScheduleFacts.cs">
       <SubType>Code</SubType>
     </Compile>

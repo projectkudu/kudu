@@ -6,6 +6,8 @@ using Kudu.Contracts.Jobs;
 using Kudu.Contracts.Settings;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Tracing;
+using System.Net.Sockets;
+using System.Net;
 
 namespace Kudu.Core.Jobs
 {
@@ -54,6 +56,8 @@ namespace Kudu.Core.Jobs
             get { return TimeSpan.MaxValue; }
         }
 
+        internal int WebJobPort { get; private set; }
+
         private void StartJob(ContinuousJob continuousJob)
         {
             // Do not go further if already started or job is disabled
@@ -93,7 +97,8 @@ namespace Kudu.Core.Jobs
                         using (new Timer(LogStillRunning, null, TimeSpan.FromHours(1), TimeSpan.FromHours(12)))
                         {
                             InitializeJobInstance(continuousJob, _continuousJobLogger);
-                            RunJobInstance(continuousJob, _continuousJobLogger, String.Empty, String.Empty);
+                            WebJobPort = GetAvailableJobPort();
+                            RunJobInstance(continuousJob, _continuousJobLogger, String.Empty, String.Empty, WebJobPort);
                         }
 
                         if (_started == 1 && !IsDisabled)
@@ -295,6 +300,20 @@ namespace Kudu.Core.Jobs
                     _continuousJobLogger.Dispose();
                     _continuousJobLogger = null;
                 }
+            }
+        }
+
+        private int GetAvailableJobPort()
+        {
+            var listener = new TcpListener(IPAddress.Loopback, 0);
+            try
+            {
+                listener.Start();
+                return ((IPEndPoint)listener.LocalEndpoint).Port;
+            }
+            finally
+            {
+                listener.Stop();
             }
         }
     }

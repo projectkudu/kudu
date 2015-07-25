@@ -181,7 +181,7 @@ namespace Kudu.Core.Jobs
             }
         }
 
-        protected void RunJobInstance(JobBase job, IJobLogger logger, string runId, string trigger)
+        protected void RunJobInstance(JobBase job, IJobLogger logger, string runId, string trigger, int port = -1)
         {
             string scriptFileName = Path.GetFileName(job.ScriptFilePath);
             string scriptFileFullPath = Path.Combine(WorkingDirectory, job.RunCommand);
@@ -205,6 +205,10 @@ namespace Kudu.Core.Jobs
                     exe.EnvironmentVariables[WellKnownEnvironmentVariables.WebJobsDataPath] = JobDataPath;
                     exe.EnvironmentVariables[WellKnownEnvironmentVariables.WebJobsRunId] = runId;
                     exe.EnvironmentVariables[WellKnownEnvironmentVariables.WebJobsCommandArguments] = job.CommandArguments;
+                    if (port != -1)
+                    {
+                        exe.EnvironmentVariables[WellKnownEnvironmentVariables.WebJobsPort] = port.ToString();
+                    }
 
                     if (_shutdownNotificationFilePath != null)
                     {

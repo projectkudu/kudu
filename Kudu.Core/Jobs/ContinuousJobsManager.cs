@@ -2,17 +2,22 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Text;
 using Kudu.Contracts.Jobs;
 using Kudu.Contracts.Settings;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Tracing;
+using System.Net;
+using System.Threading.Tasks;
+using Kudu.Contracts.Tracing;
 
 namespace Kudu.Core.Jobs
 {
     public class ContinuousJobsManager : JobsManagerBase<ContinuousJob>, IContinuousJobsManager, IDisposable
     {
         private const string StatusFilesSearchPattern = ContinuousJobStatus.FileNamePrefix + "*";
+        private const string Localhost = "127.0.0.1";
 
         private readonly Dictionary<string, ContinuousJobRunner> _continuousJobRunners = new Dictionary<string, ContinuousJobRunner>(StringComparer.OrdinalIgnoreCase);
 
@@ -55,6 +60,39 @@ namespace Kudu.Core.Jobs
             }
 
             continuousJobRunner.EnableJob();
+        }
+
+        public async Task<HttpResponseMessage> HandleRequest(string jobName, string path, HttpRequestMessage request)
+        {
+            using (var client = new HttpClient())
+            {
+                var jobRunner = GetJobRunner(jobName);
+                var forwardRequest = GetForwardRequest(jobRunner.WebJobPort, path, request);
+                return await client.SendAsync(forwardRequest);
+            }
+        }
+
+        public static HttpRequestMessage GetForwardRequest(int port, string path, HttpRequestMessage original)
+        {
+            var webJobBaseUri = new Uri(string.Concat("http://", Localhost, ":", port));
+            var fullUriPath = new Uri(webJobBaseUri, path);
+            var clone = new HttpRequestMessage(original.Method, fullUriPath);
+
+            if (original.Method != HttpMethod.Get)
+            {
+                clone.Content = original.Content;
+            }
+
+            original.Headers.Aggregate(clone.Headers, (a, b) =>
+            {
+                if (!b.Key.Equals("HOST", StringComparison.OrdinalIgnoreCase))
+                {
+                    a.Add(b.Key, b.Value);
+                }
+                return a;
+            });
+
+            return clone;
         }
 
         private ContinuousJobRunner GetJobRunner(string jobName)

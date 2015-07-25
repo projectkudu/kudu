@@ -253,6 +253,20 @@ namespace Kudu.Services.Jobs
             return SetJobSettings(jobName, jobSettings, _triggeredJobsManager);
         }
 
+        [AcceptVerbs("GET", "HEAD", "PUT", "POST", "DELETE", "PATCH")]
+        public async Task<HttpResponseMessage> RequestPassthrough(string jobName, string path)
+        {
+            try
+            {
+                return await _continuousJobsManager.HandleRequest(jobName, path, Request);
+            }
+            catch(Exception e)
+            {
+                _tracer.TraceError(e);
+                return Request.CreateErrorResponse(HttpStatusCode.NotFound, e);
+            }
+        }
+
         private HttpResponseMessage ListJobsResponseBasedOnETag(IEnumerable<JobBase> jobs)
         {
             string etag = GetRequestETag();

@@ -29,6 +29,7 @@
         public const string WebJobsRunId = "WEBJOBS_RUN_ID";
         public const string WebJobsShutdownNotificationFile = "WEBJOBS_SHUTDOWN_FILE";
         public const string WebJobsCommandArguments = "WEBJOBS_COMMAND_ARGUMENTS";
+        public const string WebJobsPort = "WEBJOBS_PORT";
 
         public const string CommitId = "SCM_COMMIT_ID";
         public const string DnvmPath = "SCM_DNVM_PS_PATH";

@@ -31,7 +31,6 @@ namespace Kudu.Contracts.Jobs
                 return GetSetting(JobSettingsKeys.IsSingleton, false);
             }
         }
-
         public TimeSpan GetStoppingWaitTime(long defaultTime)
         {
             return TimeSpan.FromSeconds(GetSetting(JobSettingsKeys.StoppingWaitTime, defaultTime));
@@ -46,5 +45,6 @@ namespace Kudu.Contracts.Jobs
         {
             return GetSetting<string>(JobSettingsKeys.Schedule);
         }
+
     }
 }
