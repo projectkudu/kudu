@@ -103,6 +103,9 @@ namespace Kudu.Core.SiteExtensions
                         FileSystemHelpers.EnsureDirectory(Path.GetDirectoryName(fullPath));
                         using (Stream writeStream = FileSystemHelpers.OpenWrite(fullPath))
                         {
+                            // reset length of file stream
+                            writeStream.SetLength(0);
+
                             // let the thread go with itself, so that once file finsihed writing, doesn`t need to request thread context from main thread
                             await entry.OpenReader().CopyToAsync(writeStream).ConfigureAwait(false);
                         }
@@ -185,6 +188,9 @@ namespace Kudu.Core.SiteExtensions
                             FileSystemHelpers.EnsureDirectory(Path.GetDirectoryName(fullPath));
                             using (Stream writeStream = FileSystemHelpers.OpenWrite(fullPath))
                             {
+                                // reset length of file stream
+                                writeStream.SetLength(0);
+
                                 // let the thread go with itself, so that once file finsihed writing, doesn`t need to request thread context from main thread
                                 await entry.OpenReader().CopyToAsync(writeStream).ConfigureAwait(false);
                             }
@@ -260,6 +266,9 @@ namespace Kudu.Core.SiteExtensions
             FileSystemHelpers.EnsureDirectory(packageFolderPath);
             using (Stream writeStream = FileSystemHelpers.OpenWrite(filePath))
             {
+                // reset length of file stream
+                writeStream.SetLength(0);
+
                 OperationManager.Attempt(() => stream.CopyTo(writeStream));
             }
         }
