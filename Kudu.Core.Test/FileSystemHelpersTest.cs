@@ -1,6 +1,7 @@
-﻿using System.IO.Abstractions;
-using Kudu.Core.Infrastructure;
+﻿using Kudu.Core.Infrastructure;
 using Moq;
+using System;
+using System.IO.Abstractions;
 using Xunit;
 
 namespace Kudu.Core.Test
@@ -66,6 +67,35 @@ namespace Kudu.Core.Test
         public void IsSubfolderOfTests(string parent, string child, bool expected)
         {
             Assert.Equal(expected, FileSystemHelpers.IsSubfolder(parent, child));
+        }
+
+        [Fact]
+        public void IsFileSystemReadOnlyBasicTest()
+        {
+            // With Default TmpFolder value should always return false
+            FileSystemHelpers.TmpFolder = @"%WEBROOT_PATH%\data\Temp";
+            Assert.Equal(false, FileSystemHelpers.IsFileSystemReadOnly());
+
+            // able to create and delete folder, should return false
+            var fileSystem = new Mock<IFileSystem>();
+            var dirBase = new Mock<DirectoryBase>();
+            var dirInfoBase = new Mock<DirectoryInfoBase>();
+            var dirInfoFactory = new Mock<IDirectoryInfoFactory>();
+
+            fileSystem.Setup(f => f.Directory).Returns(dirBase.Object);
+            fileSystem.Setup(f => f.DirectoryInfo).Returns(dirInfoFactory.Object);
+
+            dirBase.Setup(d => d.CreateDirectory(It.IsAny<string>())).Returns(dirInfoBase.Object);
+            dirInfoFactory.Setup(d => d.FromDirectoryName(It.IsAny<string>())).Returns(dirInfoBase.Object);
+
+            FileSystemHelpers.Instance = fileSystem.Object;
+            FileSystemHelpers.TmpFolder = @"D:\";   // value doesn`t really matter, just need to have something other than default value
+
+            Assert.Equal(false, FileSystemHelpers.IsFileSystemReadOnly());
+
+            // Read-Only should return true
+            dirBase.Setup(d => d.CreateDirectory(It.IsAny<string>())).Throws<UnauthorizedAccessException>();
+            Assert.Equal(true, FileSystemHelpers.IsFileSystemReadOnly());
         }
     }
 }

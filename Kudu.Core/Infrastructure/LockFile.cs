@@ -23,8 +23,6 @@ namespace Kudu.Core.Infrastructure
 
         private Stream _lockStream;
 
-        private static string _tmpFolder = System.Environment.ExpandEnvironmentVariables(@"%WEBROOT_PATH%\data\Temp");
-
         public LockFile(string path)
             : this(path, NullTracerFactory.Instance)
         {
@@ -92,7 +90,7 @@ namespace Kudu.Core.Infrastructure
                     //      While right now will end up failure. But it is a extreem edge case, should be ok to ignore.
                     try
                     {
-                        return !IsFileSystemReadOnly();
+                        return !FileSystemHelpers.IsFileSystemReadOnly();
                     }
                     catch
                     {
@@ -141,7 +139,7 @@ namespace Kudu.Core.Infrastructure
                 //      While right now will end up failure. But it is a extreem edge case, should be ok to ignore.
                 try
                 {
-                    return IsFileSystemReadOnly();
+                    return FileSystemHelpers.IsFileSystemReadOnly();
                 }
                 catch
                 {
@@ -284,27 +282,6 @@ namespace Kudu.Core.Infrastructure
                         Release();
                     }
                 }
-            }
-        }
-
-        private static bool IsFileSystemReadOnly()
-        {
-            if (_tmpFolder.StartsWith("%WEBROOT_PATH%", StringComparison.OrdinalIgnoreCase))
-            {
-                // not able to check, return false since by default we are expecting none readonly file system
-                return false;
-            }
-
-            try
-            {
-                string folder = Path.Combine(_tmpFolder, Guid.NewGuid().ToString());
-                FileSystemHelpers.CreateDirectory(folder);
-                FileSystemHelpers.DeleteDirectorySafe(folder, ignoreErrors: false);
-                return false;
-            }
-            catch (UnauthorizedAccessException)
-            {
-                return true;
             }
         }
 

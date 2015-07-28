@@ -2,6 +2,7 @@
 using System.IO;
 using System.Reflection;
 using System.Web;
+using Kudu.Contracts.Settings;
 using Kudu.Services.ServiceHookHandlers;
 using Moq;
 using Newtonsoft.Json;
@@ -18,7 +19,7 @@ namespace Kudu.Services.Test
             // Arrange
             var payload = GetVSOPayload();
             var httpRequest = new Mock<HttpRequestBase>();
-            var handler = new VSOHandler();
+            var handler = new VSOHandler(GetMockDeploymentSettingsMgr());
 
             // Act
             DeploymentInfo deploymentInfo;
@@ -27,12 +28,10 @@ namespace Kudu.Services.Test
             // Assert
             Assert.Equal(DeployAction.ProcessDeployment, result);
             Assert.NotNull(deploymentInfo);
-            Assert.Equal("this_is_latest_commit", deploymentInfo.CommitId);
-            Assert.Equal("this_is_latest_commit", deploymentInfo.TargetChangeset.Id);
-            Assert.Equal("John Smith", deploymentInfo.TargetChangeset.AuthorName);
-            Assert.Equal("test01@hotmail.com", deploymentInfo.TargetChangeset.AuthorEmail);
-            Assert.Equal("commit message", deploymentInfo.TargetChangeset.Message);
-            Assert.Equal(DateTime.Parse("2015-05-08T00:20:59Z"), deploymentInfo.TargetChangeset.Timestamp);
+            Assert.Null(deploymentInfo.CommitId);
+            Assert.Equal("VSO", deploymentInfo.TargetChangeset.AuthorName);
+            Assert.Equal("VSO", deploymentInfo.TargetChangeset.AuthorEmail);
+            Assert.Equal(Resources.Vso_Synchronizing, deploymentInfo.TargetChangeset.Message);
 
             var repositoryUri = new Uri(deploymentInfo.RepositoryUrl);
             Assert.Equal("https", repositoryUri.Scheme);
@@ -42,28 +41,12 @@ namespace Kudu.Services.Test
         }
 
         [Fact]
-        public void VSOHandlerMismatchBranch()
-        {
-            // Arrange
-            var payload = GetVSOPayload();
-            var httpRequest = new Mock<HttpRequestBase>();
-            var handler = new VSOHandler();
-
-            // Act
-            DeploymentInfo deploymentInfo;
-            DeployAction result = handler.TryParseDeploymentInfo(httpRequest.Object, payload: payload, targetBranch: "foo", deploymentInfo: out deploymentInfo);
-
-            // Assert
-            Assert.Equal(DeployAction.NoOp, result);
-        }
-
-        [Fact]
         public void VSOHandlerUnknownPayload()
         {
             // Arrange
             var payload = new JObject();
             var httpRequest = new Mock<HttpRequestBase>();
-            var handler = new VSOHandler();
+            var handler = new VSOHandler(GetMockDeploymentSettingsMgr());
 
             // Act
             DeploymentInfo deploymentInfo;
@@ -80,6 +63,17 @@ namespace Kudu.Services.Test
             {
                 return (JObject)JToken.ReadFrom(new JsonTextReader(reader));
             }
+        }
+
+        private static IDeploymentSettingsManager GetMockDeploymentSettingsMgr()
+        {
+            var mockMgr = new Mock<IDeploymentSettingsManager>();
+            mockMgr.Setup(m => m.GetValue(It.IsAny<string>(), It.IsAny<bool>())).Returns(() =>
+            {
+                return @"https://test01.vsoalm.tfsallin.net/DefaultCollection/_git/testgit01";
+            });
+
+            return mockMgr.Object;
         }
     }
 }

@@ -25,7 +25,12 @@ namespace Kudu.Core.Deployment.Generator
             get
             {
                 var commandArguments = new StringBuilder();
-                commandArguments.AppendFormat("--aspNet5 \"{0}\" --aspNet5Runtime \"{1}\"", _projectPath, AspNet5Helper.GetAspNet5RuntimeVersion(_sourcePath));
+                var aspNetSdk = AspNet5Helper.GetAspNet5Sdk(_sourcePath);
+                commandArguments.AppendFormat("--aspNet5 \"{0}\" --aspNet5Version \"{1}\" --aspNet5Runtime \"{2}\" --aspNet5Architecture \"{3}\"",
+                    _projectPath,
+                    aspNetSdk.Version,
+                    aspNetSdk.Runtime,
+                    aspNetSdk.Architecture);
                 return commandArguments.ToString();
             }
         }

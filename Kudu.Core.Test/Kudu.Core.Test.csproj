@@ -81,6 +81,7 @@
     <Compile Include="AuthUtilityFacts.cs" />
     <Compile Include="AsyncLockFileTests.cs" />
     <Compile Include="DebugConsoleFacts.cs" />
+    <Compile Include="Deployment\AspNet5HelperFacts.cs" />
     <Compile Include="Deployment\PythonSiteEnablerTests.cs" />
     <Compile Include="Deployment\NodeSiteEnablerTests.cs" />
     <Compile Include="Deployment\DeploymentManagerFacts.cs" />
@@ -106,6 +107,7 @@
     <Compile Include="GitRepositoryTest.cs" />
     <Compile Include="IniFileFacts.cs" />
     <Compile Include="LockFileTests.cs" />
+    <Compile Include="MockFileSystem.cs" />
     <Compile Include="NullRepositoryFacts.cs" />
     <Compile Include="OperationLockTests.cs" />
     <Compile Include="PathUtilityFacts.cs" />

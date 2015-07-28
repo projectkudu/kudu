@@ -96,6 +96,7 @@
     <Compile Include="Commands\CommandEventType.cs" />
     <Compile Include="Commands\CommandResult.cs" />
     <Compile Include="Commands\ICommandExecutor.cs" />
+    <Compile Include="Deployment\AspNet5Sdk.cs" />
     <Compile Include="Deployment\DeploymentFailedException.cs" />
     <Compile Include="Deployment\DeployResult.cs" />
     <Compile Include="Deployment\DeployStatus.cs" />

@@ -75,7 +75,7 @@ namespace Kudu.Core.Test.Deployment
 
             var statusFile = Path.Combine(deploymentPath, id, "status.xml");
 
-            FileSystemHelpers.Instance = GetMockFileSystem(statusFile, () =>
+            FileSystemHelpers.Instance = MockFileSystem.GetMockFileSystem(statusFile, () =>
             {
                 stream.Object.Position = 0;
                 return Encoding.UTF8.GetString(stream.Object.GetBuffer(), 0, (int)stream.Object.Length);
@@ -130,7 +130,7 @@ namespace Kudu.Core.Test.Deployment
 
             var statusFile = Path.Combine(deploymentPath, id, "status.xml");
 
-            FileSystemHelpers.Instance = GetMockFileSystem(statusFile, () => content);
+            FileSystemHelpers.Instance = MockFileSystem.GetMockFileSystem(statusFile, () => content);
 
             try
             {
@@ -164,6 +164,33 @@ namespace Kudu.Core.Test.Deployment
             {
                 FileSystemHelpers.Instance = null;
             }
+        }
+
+        [Fact]
+        public void ReturnEmptyCollectionOnLogEntryIdDoesntExist()
+        {
+            //Arrage
+            var fileSystem = MockFileSystem.GetMockFileSystem(@"x:\deployment\deploymentId\log.xml", () => @"<?xml version=""1.0"" encoding=""utf-8""?>
+<entries>
+    <entry time=""2015-07-22T19:42:24.1462725Z"" id=""validId"" type=""0"">
+        <message>Test message</message>
+    </entry>
+</entries>");
+
+            var environment = new Mock<IEnvironment>();
+            environment
+                .Setup(s => s.DeploymentsPath)
+                .Returns(@"x:\deployment");
+
+            var trace = NullTracerFactory.Instance;
+
+            var deploymentManager = CreateDeploymentManager(fileSystem: fileSystem, traceFactory: trace, environment: environment.Object);
+
+            //Act
+            var result = deploymentManager.GetLogEntryDetails("deploymentId", "invalid");
+
+            //Assert
+            Assert.Empty(result);
         }
 
         public static IEnumerable<object[]> DeploymentStatusFileScenarios
@@ -222,54 +249,6 @@ namespace Kudu.Core.Test.Deployment
 </deployment>";
                 yield return new object[] { missingProperty, true, true };
             }
-        }
-
-        private IFileSystem GetMockFileSystem(string file, Func<string> content)
-        {
-            var fileSystem = new Mock<IFileSystem>(MockBehavior.Strict);
-            var fileBase = new Mock<FileBase>(MockBehavior.Strict);
-            var dirBase = new Mock<DirectoryBase>(MockBehavior.Strict);
-            var dirInfoBase = new Mock<DirectoryInfoBase>(MockBehavior.Strict);
-            var dirInfoFactory = new Mock<IDirectoryInfoFactory>(MockBehavior.Strict);
-
-            // Setup
-            fileSystem.Setup(f => f.File)
-              .Returns(fileBase.Object);
-            fileSystem.Setup(f => f.Directory)
-              .Returns(dirBase.Object);
-            fileSystem.Setup(f => f.DirectoryInfo)
-              .Returns(dirInfoFactory.Object);
-
-            fileBase.Setup(f => f.Exists(It.IsAny<string>()))
-                    .Returns((string path) => path == file && content() != null);
-            fileBase.Setup(f => f.OpenRead(It.IsAny<string>()))
-                    .Returns((string path) =>
-                    {
-                        if (path == file)
-                        {
-                            return new MemoryStream(Encoding.UTF8.GetBytes(content()));
-                        }
-
-                        throw new InvalidOperationException("Should not reach here!");
-                    });
-            fileBase.Setup(f => f.WriteAllText(It.IsAny<string>(), It.IsAny<string>()));
-
-            dirInfoFactory.Setup(d => d.FromDirectoryName(It.IsAny<string>()))
-                          .Returns(dirInfoBase.Object);
-
-            dirBase.Setup(d => d.Exists(It.IsAny<string>()))
-                   .Returns((string path) => path == Path.GetDirectoryName(file));
-
-            dirInfoBase.SetupGet(d => d.Exists)
-                       .Returns(true);
-            dirInfoBase.SetupSet(d => d.Attributes = FileAttributes.Normal);
-            dirInfoBase.Setup(d => d.GetFileSystemInfos())
-                       .Returns(new FileSystemInfoBase[0]);
-            dirInfoBase.Setup(d => d.Delete());
-
-            FileSystemHelpers.Instance = fileSystem.Object;
-
-            return fileSystem.Object;
         }
 
         public class TestDeploymentStatusFile : IDeploymentStatusFile

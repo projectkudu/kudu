@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
+using Kudu.Core.Deployment;
 using Newtonsoft.Json.Linq;
 
 namespace Kudu.Core.Infrastructure
@@ -24,23 +25,17 @@ namespace Kudu.Core.Infrastructure
             }
         }
 
-        public static string GetAspNet5RuntimeVersion(string rootPath)
+        public static AspNet5Sdk GetAspNet5Sdk(string rootPath)
         {
-            var runtimeVersion = Constants.DnxDefaultVersion;
-            var globalJson = Path.Combine(rootPath, "global.json");
-            if (File.Exists(globalJson))
+            AspNet5Sdk aspNetSdk;
+            if (!TryGetAspNet5Sdk(rootPath, out aspNetSdk))
             {
-                using (var reader = new StreamReader(globalJson))
+                aspNetSdk = new AspNet5Sdk
                 {
-                    var parsedGlobalJson = JObject.Parse(reader.ReadToEnd());
-                    if (parsedGlobalJson["sdk"] != null &&
-                        parsedGlobalJson["sdk"]["version"] != null)
-                    {
-                        runtimeVersion = parsedGlobalJson["sdk"]["version"].ToString();
-                    }
-                }
+                    Architecture = GetDefaultAspNet5RuntimeArchitecture()
+                };
             }
-            return runtimeVersion;
+            return aspNetSdk;
         }
 
         public static bool TryAspNet5Project(string rootPath, out string projectJsonPath)
@@ -53,6 +48,36 @@ namespace Kudu.Core.Infrastructure
                 return true;
             }
             return false;
+        }
+
+        private static bool TryGetAspNet5Sdk(string rootPath, out AspNet5Sdk aspNetSdk)
+        {
+            aspNetSdk = null;
+            var globalJson = Path.Combine(rootPath, "global.json");
+            if (FileSystemHelpers.FileExists(globalJson))
+            {
+                var parsedGlobalJson = JObject.Parse(FileSystemHelpers.ReadAllText(globalJson));
+                if (parsedGlobalJson["sdk"] != null)
+                {
+                    aspNetSdk = parsedGlobalJson["sdk"].ToObject<AspNet5Sdk>();
+                    if (string.IsNullOrEmpty(aspNetSdk.Architecture))
+                    {
+                        aspNetSdk.Architecture = GetDefaultAspNet5RuntimeArchitecture();
+                    }
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public static string GetDefaultAspNet5RuntimeArchitecture()
+        {
+            var bitness = System.Environment.GetEnvironmentVariable(WellKnownEnvironmentVariables.SiteBitness);
+            if (bitness == null)
+            {
+                return System.Environment.Is64BitProcess ? "x64" : "x86";
+            }
+            return bitness.Equals(Constants.X64Bit, StringComparison.OrdinalIgnoreCase) ? "x64" : "x86";
         }
     }
 }

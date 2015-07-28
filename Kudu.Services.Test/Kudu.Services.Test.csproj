@@ -82,6 +82,7 @@
     <Compile Include="GithubHandlerFacts.cs" />
     <Compile Include="InfoRefsControllerFacts.cs" />
     <Compile Include="Infrastructure\MediaTypeMapTest.cs" />
+    <Compile Include="Jobs\JobsControllerTests.cs" />
     <Compile Include="KilnHgHandlerFacts.cs" />
     <Compile Include="OneDriveDeployment\OneDriveHandlerTests.cs" />
     <Compile Include="OneDriveDeployment\OneDriveHelperTests.cs" />
@@ -118,6 +119,7 @@
       <Name>Kudu.TestHarness</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="..\packages\Microsoft.Bcl.Build.1.0.21\build\Microsoft.Bcl.Build.targets" Condition="Exists('..\packages\Microsoft.Bcl.Build.1.0.21\build\Microsoft.Bcl.Build.targets')" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
