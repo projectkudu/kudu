@@ -266,10 +266,13 @@ namespace Kudu.Core.SiteExtensions
             FileSystemHelpers.EnsureDirectory(packageFolderPath);
             using (Stream writeStream = FileSystemHelpers.OpenWrite(filePath))
             {
-                // reset length of file stream
-                writeStream.SetLength(0);
+                OperationManager.Attempt(() =>
+                {
+                    // reset length of file stream
+                    writeStream.SetLength(0);
 
-                OperationManager.Attempt(() => stream.CopyTo(writeStream));
+                    stream.CopyTo(writeStream);
+                });
             }
         }
 
