@@ -16,7 +16,7 @@ namespace Kudu.Services.Performance
 {
     internal static class ProfileManager
     {
-        private const int ProcessExitTimeoutInSeconds = 300;
+        private const int ProcessExitTimeoutInSeconds = 180;
 
         private static ConcurrentDictionary<int, ProfileInfo> _profilingList = new ConcurrentDictionary<int, ProfileInfo>();
         private static object _lockObject = new object();
@@ -36,13 +36,6 @@ namespace Kudu.Services.Performance
                 if (_profilingList.ContainsKey(processId))
                 {
                     return new ProfileResultInfo(HttpStatusCode.OK, string.Empty);
-                }
-
-                // Profiling service supports up to 12 concurrent profiling sessions.
-                if (_profilingList.Count >= 12)
-                {
-                    tracer.TraceError("Too many profiling sessions are currently running.");
-                    return new ProfileResultInfo(HttpStatusCode.ServiceUnavailable, "Too many profiling sessions are currently running. Please try again later.");
                 }
 
                 int profilingSessionId = GetNextProfilingSessionId();
