@@ -65,6 +65,7 @@ $('#fileList').on('click', '.glyphicon-pencil', function () {
             }
             // Set Ace height
             resizeAce();
+            editor.focus();
             // Attach event handler to set new Ace height on browser resize
             $(window).on('resize', function () {
                 resizeAce();
