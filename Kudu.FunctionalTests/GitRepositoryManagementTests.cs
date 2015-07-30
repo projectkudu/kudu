@@ -1159,7 +1159,7 @@ project = myproject");
                     Assert.Contains("remote: Sleep(4000)", trace);
                     Assert.Contains("remote: Sleep(6000)", trace);
                     Assert.DoesNotContain("remote: Sleep(60000)", trace);
-                    Assert.Contains("remote: Command 'starter.cmd simplesleep.exe ...' aborted due to no output and CPU activity for", trace);
+                    Assert.Contains("remote: Command 'starter.cmd simplesleep.exe ...' was aborted due to no output nor CPU activity for", trace);
                     Assert.False(Process.GetProcesses().Any(p => p.ProcessName.Equals("simplesleep", StringComparison.OrdinalIgnoreCase)), "SimpleSleep should have been terminated!");
                 });
             }
@@ -1189,7 +1189,7 @@ project = myproject");
                     string trace = result.GitTrace;
 
                     Assert.Contains("remote: Insert your input:", trace);
-                    Assert.Contains("remote: Command 'starter.cmd waitforinput.ba ...' aborted due to no output and CPU activity for", trace);
+                    Assert.Contains("remote: Command 'starter.cmd waitforinput.ba ...' was aborted due to no output nor CPU activity for", trace);
                 });
             }
         }

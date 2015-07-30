@@ -172,7 +172,7 @@ namespace Kudu.Core.Test
             process.Verify();
 
             Assert.True(DateTime.UtcNow - startTime >= idleTimeout);
-            Assert.Contains("Command 'Test-Process ' aborted due to no output and CPU activity for", ex.Message);
+            Assert.Contains("Command 'Test-Process ' was aborted due to no output nor CPU activity for", ex.Message);
         }
     }
 }
