@@ -1,3 +1,6 @@
+
+<img src="http://azuredeploy.net/kudu.svg" height="100" width="100">
+
 ### Kudu
 
 Kudu is the engine behind [git deployments in Azure Web Sites](https://www.windowsazure.com/en-us/develop/nodejs/common-tasks/publishing-with-git/). It can also run outside of Azure.
