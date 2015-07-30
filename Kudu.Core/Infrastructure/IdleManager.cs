@@ -135,7 +135,8 @@ namespace Kudu.Core.Infrastructure
             string message = String.Format(Resources.Error_ProcessAborted,
                                 process.Name + " " + arguments, 
                                 totalWaitDuration.TotalSeconds, 
-                                SettingsKeys.CommandIdleTimeout);
+                                SettingsKeys.CommandIdleTimeout,
+                                SettingsKeys.WebJobsIdleTimeoutInSeconds);
             return new CommandLineException(process.Name, process.Arguments, message)
             {
                 ExitCode = -1,

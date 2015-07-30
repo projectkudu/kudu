@@ -145,7 +145,7 @@
     <value>No log found for '{0}'.</value>
   </data>
   <data name="Error_ProcessAborted" xml:space="preserve">
-    <value>Command '{0}' aborted due to no output and CPU activity for {1:0} seconds.  You may increase {2} setting to solve the issue.</value>
+    <value>Command '{0}' was aborted due to no output nor CPU activity for {1:0} seconds. You can increase the {2} app setting (or {3} if this is a WebJob) if needed.</value>
   </data>
   <data name="Error_ProjectDoesNotExist" xml:space="preserve">
     <value>The specified project '{0}' is not valid. It needs to point to either a csproj/vbproj file or to a directory.</value>
