@@ -9,7 +9,7 @@ using Kudu.Core.Tracing;
 
 namespace Kudu.Core.Deployment
 {
-    public class XmlLogger : ILogger
+    public class XmlLogger : IDetailedLogger
     {
         private readonly static object LogLock = new object();
         private readonly string _path;

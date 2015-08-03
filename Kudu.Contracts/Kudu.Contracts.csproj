@@ -106,6 +106,7 @@
     <Compile Include="Deployment\IDeploymentManagerFactory.cs" />
     <Compile Include="Deployment\IDeploymentStatusManager.cs" />
     <Compile Include="Deployment\IDeploymentStatusFile.cs" />
+    <Compile Include="Deployment\IDetailedLogger.cs" />
     <Compile Include="Deployment\ILogger.cs" />
     <Compile Include="Deployment\LogEntry.cs" />
     <Compile Include="Deployment\LogEntryType.cs" />

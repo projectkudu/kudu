@@ -33,7 +33,8 @@ namespace Kudu.Core.Deployment
         private readonly IDeploymentStatusManager _status;
         private readonly IWebHooksManager _hooksManager;
 
-        private const string LogFile = "log.xml";
+        private const string XmlLogFile = "log.xml";
+        private const string TextLogFile = "log.log";
         private const string TemporaryDeploymentIdPrefix = "temp-";
         public const int MaxSuccessDeploymentResults = 10;
 
@@ -94,7 +95,7 @@ namespace Kudu.Core.Deployment
 
                 VerifyDeployment(id, IsDeploying);
 
-                var logger = new XmlLogger(path, _analytics);
+                var logger = GetLoggerForFile(path);
                 List<LogEntry> entries = logger.GetLogEntries().ToList();
 
                 // Determine if there's details to show at all
@@ -121,7 +122,7 @@ namespace Kudu.Core.Deployment
 
                 VerifyDeployment(id, IsDeploying);
 
-                var logger = new XmlLogger(path, _analytics);
+                var logger = GetLoggerForFile(path);
 
                 return logger.GetLogEntryDetails(entryId).ToList();
             }
@@ -792,8 +793,8 @@ namespace Kudu.Core.Deployment
         public ILogger GetLogger(string id)
         {
             var path = GetLogPath(id);
-            var xmlLogger = new XmlLogger(path, _analytics);
-            return new ProgressLogger(id, _status, new CascadeLogger(xmlLogger, _globalLogger));
+            var logger = GetLoggerForFile(path);
+            return new ProgressLogger(id, _status, new CascadeLogger(logger, _globalLogger));
         }
 
         /// <summary>
@@ -834,9 +835,21 @@ namespace Kudu.Core.Deployment
             return Path.Combine(GetRoot(id), Constants.ManifestFileName);
         }
 
+        /// <summary>
+        /// This function handles getting the path for the log file.
+        /// If 'log.xml' exists then use that which will use XmlLogger, this is to support existing log files
+        /// else use 'log.log' which will use TextLogger. Moving forward deployment will always use text logger.
+        /// The logic to get the right logger is in GetLoggerForFile()
+        /// </summary>
+        /// <param name="id">deploymentId which is part of the path for the log file</param>
+        /// <param name="ensureDirectory">Create the directory if it doesn't exist</param>
+        /// <returns>log file path</returns>
         private string GetLogPath(string id, bool ensureDirectory = true)
         {
-            return Path.Combine(GetRoot(id, ensureDirectory), LogFile);
+            var logPath = Path.Combine(GetRoot(id, ensureDirectory), XmlLogFile);
+            return FileSystemHelpers.FileExists(logPath)
+                ? logPath
+                : Path.Combine(GetRoot(id, ensureDirectory), TextLogFile);
         }
 
         private string GetRoot(string id, bool ensureDirectory = true)
@@ -854,6 +867,24 @@ namespace Kudu.Core.Deployment
         private bool IsActive(string id)
         {
             return id.Equals(_status.ActiveDeploymentId, StringComparison.OrdinalIgnoreCase);
+        }
+
+        /// <summary>
+        /// use XmlLogger if the file ends with .xml
+        /// Otherwise use StructuredTextLogger
+        /// </summary>
+        /// <param name="logPath"></param>
+        /// <returns>XmlLogger or StructuredTextLogger</returns>
+        private IDetailedLogger GetLoggerForFile(string logPath)
+        {
+            if (logPath.EndsWith(".xml", StringComparison.OrdinalIgnoreCase))
+            {
+                return new XmlLogger(logPath, _analytics);
+            }
+            else
+            {
+                return new StructuredTextLogger(logPath, _analytics);
+            }
         }
 
         private class DeploymentAnalytics : IDisposable
