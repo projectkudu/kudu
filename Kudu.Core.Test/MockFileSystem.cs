@@ -49,6 +49,11 @@ namespace Kudu.Core.Test
                             return reader.ReadToEnd();
                         }
                     });
+            fileBase.Setup(f => f.ReadAllLines(It.IsAny<string>()))
+                    .Returns((string path) =>
+                    {
+                        return fileBase.Object.ReadAllText(path).Split(new[] { System.Environment.NewLine }, StringSplitOptions.None);
+                    });
 
             dirInfoFactory.Setup(d => d.FromDirectoryName(It.IsAny<string>()))
                           .Returns(dirInfoBase.Object);

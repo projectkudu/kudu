@@ -96,6 +96,11 @@ namespace Kudu.Core.Infrastructure
             return Instance.File.ReadAllText(path);
         }
 
+        public static string[] ReadAllLines(string path)
+        {
+            return Instance.File.ReadAllLines(path);
+        }
+
         /// <summary>
         /// Replaces File.ReadAllText,
         /// Will do the same thing only this can work on files that are already open (and share read/write).

@@ -119,6 +119,8 @@
     <Compile Include="Settings\DeploymentSettingsPrioritiesTests.cs" />
     <Compile Include="Settings\SettingsProvidersTests.cs" />
     <Compile Include="SSHKeyManagerFacts.cs" />
+    <Compile Include="StructuredTextDocumentFacts.cs" />
+    <Compile Include="StructuredTextLoggerFacts.cs" />
     <Compile Include="Tracing\XmlTracerTests.cs" />
     <Compile Include="Tracing\SiteExtensionLogManagerTests.cs" />
     <Compile Include="TraceModuleFacts.cs" />

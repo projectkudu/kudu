@@ -147,6 +147,9 @@
     <Compile Include="Deployment\Generator\NodeSiteBuilder.cs" />
     <Compile Include="Deployment\Generator\NodeSiteEnabler.cs" />
     <Compile Include="Deployment\Generator\SiteBuilderFactory.cs" />
+    <Compile Include="Deployment\StructuredTextDocument.cs" />
+    <Compile Include="Deployment\StructuredTextDocumentEntry.cs" />
+    <Compile Include="Deployment\StructuredTextLogger.cs" />
     <Compile Include="Hooks\WebHooksManager.cs" />
     <Compile Include="Infrastructure\AspNet5Helper.cs" />
     <Compile Include="Infrastructure\InstanceIdUtility.cs" />
