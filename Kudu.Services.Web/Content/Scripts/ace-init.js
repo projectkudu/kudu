@@ -44,9 +44,15 @@ function resizeAce() {
 function getCustomMode(filename) {
     var _config = (/^(web|app).config$/i);
     var _csproj = (/.(cs|vb)proj$/i);
+    var _xdt = (/.xdt$/i);
     var _aspnet = (/.(cshtml|asp|aspx)$/i);
     var syntax_mode = 'ace/mode/text';
-    if (filename.match(_config) || filename.match(_csproj)) {
+    if (
+        filename.match(_config) ||
+        filename.match(_csproj) ||
+        filename.match(_xdt)
+       )
+    {
         syntax_mode = 'ace/mode/xml';
     }
     if (filename.match(_aspnet)) {
@@ -90,7 +96,7 @@ $('#fileList').on('click', '.glyphicon-pencil', function () {
         }
         catch (e) {
             if (typeof console == 'object') {
-                console.log('Can\'t get filename. ' + e);
+                console.log('Can not get filename. ' + e);
             }
         }
         finally {
