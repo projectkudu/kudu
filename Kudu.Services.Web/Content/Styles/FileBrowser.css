@@ -188,3 +188,7 @@ textarea {
     /* text-overflow: ellipsis; */
     max-width: 800px;
 }
+
+.statusbar-red {
+    border-left-color: #f14000;
+}

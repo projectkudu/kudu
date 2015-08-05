@@ -6,7 +6,6 @@ function resizeAce() {
     editor.resize();
 }
 
-
 // Additional syntax highlight logic
 function getCustomMode(filename) {
     var _config = (/^(web|app).config$/i);
@@ -22,7 +21,6 @@ function getCustomMode(filename) {
     return syntax_mode;
 }
 
-
 // Init Ace
 var editor = ace.edit("editor");
 editor.setTheme("ace/theme/github");
@@ -34,12 +32,20 @@ editor.setOptions({
     "fontSize": 14
 });
 
-
 // Show a red bar if content has changed
-editor.on('change', function() {
-   $('#statusbar').css('border-left-color', '#f14');
+var contentHasChanged = false;
+editor.on('change', function () {
+    // (Attempt to) separate user change from programatical
+    // https://github.com/ajaxorg/ace/issues/503
+    if (editor.curOp && editor.curOp.command.name) {
+        if (contentHasChanged) {
+            return;
+        }
+        $('#statusbar').addClass('statusbar-red');
+        // Let's be nice to jQuery and only .addClass() on first change.
+        contentHasChanged = true;
+    }
 });
-
 
 // Hook the little pencil glyph and apply Ace syntax mode based on file extension
 $('#fileList').on('click', '.glyphicon-pencil', function () {
