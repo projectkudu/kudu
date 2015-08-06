@@ -112,9 +112,6 @@ $('#fileList').on('click', '.glyphicon-pencil', function () {
             // Set Ace height
             resizeAce();
             editor.focus();
-            // Workaround for h-scrollbar not showing up
-            // (kudos to github.com/badescuga)
-            editor.session.setScrollLeft(-1);
             // Attach event handler to set new Ace height on browser resize
             $(window).on('resize', function () {
                 resizeAce();
