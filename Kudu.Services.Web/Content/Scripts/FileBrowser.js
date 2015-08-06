@@ -220,6 +220,8 @@ $.connection.hub.start().done(function () {
                    .done(function (data) {
                        viewModel.editText(vkbeautify.xml(data));
                        statusbarObj.showFilename();
+                       // Editor h-scroll workaround
+                       editor.session.setScrollLeft(-1);
                    }).fail(showError);
             }
             else
@@ -228,6 +230,8 @@ $.connection.hub.start().done(function () {
                    .done(function (data) {
                        viewModel.editText(data);
                        statusbarObj.showFilename();
+                       // Editor h-scroll workaround
+                       editor.session.setScrollLeft(-1);
                    }).fail(showError);
             }
         }

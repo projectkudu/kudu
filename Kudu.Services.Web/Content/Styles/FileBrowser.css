@@ -173,6 +173,11 @@ textarea {
     float: right;
 }
 
+div.editor {
+    position: relative;
+    width: inherit;
+}
+
 .statusbar {
     padding: 6px 18px;
     margin-left: 35px;
