@@ -9,7 +9,6 @@
     <script src="//ajax.aspnetcdn.com/ajax/knockout/knockout-2.2.1.js" type="text/javascript"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.1.9/ace.js" type="text/javascript"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.1.9/ext-modelist.js" type="text/javascript"></script>
-    <script src="~/content/scripts/knockout-ace.js" type="text/javascript"></script>
 }
 
 <div id="main" class="container">
@@ -110,7 +109,7 @@
                     <span id="statusbar" class="statusbar"></span>
                 </p>
                 <!-- Ace editor starts -->
-                <div id="editor" data-bind="ace: editText" style="position: relative; width: inherit"></div>
+                <div id="editor" data-bind="ace: editText"></div>
                 <!-- Ace editor ends -->
             </form>
         </div>

@@ -1,5 +1,4 @@
 // Custom status bar for Ace (aka Project Wunderbar)
-var azure = '#5bc0de';
 var statusbar = {
     showFilename:
         function () {
@@ -15,13 +14,15 @@ var statusbar = {
             }
             finally {
                 $('#statusbar').text(filename);
-                $('#statusbar').css('border-left-color', azure);
+                $('#statusbar').removeClass('statusbar-red');
             }
         },
     reset:
         function () {
             $('#statusbar').text('');
-            $('#statusbar').css('border-left-color', azure);
+            $('#statusbar').removeClass('statusbar-red');
+            // Flag from ace-init.js
+            contentHasChanged = false;
         },
     SavingChanges:
         function () {
@@ -30,7 +31,6 @@ var statusbar = {
          },
     FetchingChanges:
         function () {
-            $('#statusbar').css('border-left-color', azure);
             $('#statusbar').text('Fetching changes...');
             $('#statusbar').prepend('<i class="glyphicon glyphicon-cloud-download" style="margin-right: 6px"></i>');
         }
@@ -220,6 +220,8 @@ $.connection.hub.start().done(function () {
                    .done(function (data) {
                        viewModel.editText(vkbeautify.xml(data));
                        statusbarObj.showFilename();
+                       // Editor h-scroll workaround
+                       editor.session.setScrollLeft(-1);
                    }).fail(showError);
             }
             else
@@ -228,6 +230,8 @@ $.connection.hub.start().done(function () {
                    .done(function (data) {
                        viewModel.editText(data);
                        statusbarObj.showFilename();
+                       // Editor h-scroll workaround
+                       editor.session.setScrollLeft(-1);
                    }).fail(showError);
             }
         }

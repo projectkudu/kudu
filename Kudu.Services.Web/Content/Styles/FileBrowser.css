@@ -173,6 +173,11 @@ textarea {
     float: right;
 }
 
+div.editor {
+    position: relative;
+    width: inherit;
+}
+
 .statusbar {
     padding: 6px 18px;
     margin-left: 35px;
@@ -187,4 +192,8 @@ textarea {
     overflow: hidden;
     /* text-overflow: ellipsis; */
     max-width: 800px;
+}
+
+.statusbar-red {
+    border-left-color: #f14000;
 }
