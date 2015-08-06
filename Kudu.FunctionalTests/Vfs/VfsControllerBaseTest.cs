@@ -69,7 +69,9 @@ namespace Kudu.FunctionalTests
             string dirAddress = BaseAddress + _segmentDelimiter + dir;
             string dirAddressWithTerminatingSlash = dirAddress + _segmentDelimiter;
 
-            string file = Guid.NewGuid().ToString("N") + ".txt";
+            // The %2520 is there to test that we can accept those characters. Here, %2520 is the URL encoded form,
+            // and the actual file name has %20 (and not a space character!)
+            string file = Guid.NewGuid().ToString("N") + "%2520" + ".txt";
             string fileAddress = dirAddressWithTerminatingSlash + file;
             string fileAddressWithTerminatingSlash = fileAddress + _segmentDelimiter;
 
