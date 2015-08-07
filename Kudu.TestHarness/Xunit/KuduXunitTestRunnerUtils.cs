@@ -94,6 +94,9 @@ namespace Kudu.TestHarness.Xunit
             finally
             {
                 TestContext.FreeContext();
+
+                // reset FileSystem mockup
+                FileSystemHelpers.Instance = null;
             }
         }
 

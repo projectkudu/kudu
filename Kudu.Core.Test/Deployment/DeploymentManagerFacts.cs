@@ -85,37 +85,30 @@ namespace Kudu.Core.Test.Deployment
             fileBase.Setup(f => f.Create(statusFile))
                     .Returns((string path) => stream.Object);
 
-            try
-            {
-                var deploymentStatus = DeploymentStatusFile.Create(id, environment, statusLock);
-                deploymentStatus.Id = id;
-                deploymentStatus.Status = DeployStatus.Success;
-                deploymentStatus.StatusText = "Success";
-                deploymentStatus.AuthorEmail = "john.doe@live.com";
-                deploymentStatus.Author = "John Doe \x08";
-                deploymentStatus.Message = "Invalid char is \u0010";
-                deploymentStatus.Progress = String.Empty;
-                deploymentStatus.EndTime = DateTime.UtcNow;
-                deploymentStatus.LastSuccessEndTime = DateTime.UtcNow;
-                deploymentStatus.Complete = true;
-                deploymentStatus.IsTemporary = false;
-                deploymentStatus.IsReadOnly = false;
+            var deploymentStatus = DeploymentStatusFile.Create(id, environment, statusLock);
+            deploymentStatus.Id = id;
+            deploymentStatus.Status = DeployStatus.Success;
+            deploymentStatus.StatusText = "Success";
+            deploymentStatus.AuthorEmail = "john.doe@live.com";
+            deploymentStatus.Author = "John Doe \x08";
+            deploymentStatus.Message = "Invalid char is \u0010";
+            deploymentStatus.Progress = String.Empty;
+            deploymentStatus.EndTime = DateTime.UtcNow;
+            deploymentStatus.LastSuccessEndTime = DateTime.UtcNow;
+            deploymentStatus.Complete = true;
+            deploymentStatus.IsTemporary = false;
+            deploymentStatus.IsReadOnly = false;
 
-                // Save
-                deploymentStatus.Save();
+            // Save
+            deploymentStatus.Save();
 
-                // Roundtrip
-                deploymentStatus = DeploymentStatusFile.Open(id, environment, analytics, statusLock);
+            // Roundtrip
+            deploymentStatus = DeploymentStatusFile.Open(id, environment, analytics, statusLock);
 
-                // Assert
-                Assert.Equal(id, deploymentStatus.Id);
-                Assert.Equal("John Doe ", deploymentStatus.Author);
-                Assert.Equal("Invalid char is ", deploymentStatus.Message);
-            }
-            finally
-            {
-                FileSystemHelpers.Instance = null;
-            }
+            // Assert
+            Assert.Equal(id, deploymentStatus.Id);
+            Assert.Equal("John Doe ", deploymentStatus.Author);
+            Assert.Equal("Invalid char is ", deploymentStatus.Message);
         }
 
         [Theory]
@@ -132,37 +125,30 @@ namespace Kudu.Core.Test.Deployment
 
             FileSystemHelpers.Instance = MockFileSystem.GetMockFileSystem(statusFile, () => content);
 
-            try
+            var status = DeploymentStatusFile.Open(id, environment, analytics, statusLock);
+
+            if (expectedNull)
             {
-                var status = DeploymentStatusFile.Open(id, environment, analytics, statusLock);
+                Assert.Null(status);
 
-                if (expectedNull)
-                {
-                    Assert.Null(status);
-
-                    Mock.Get(FileSystemHelpers.Instance.DirectoryInfo.FromDirectoryName(Path.Combine(deploymentPath, id)))
-                        .Verify(d => d.Delete(), content != null ? Times.Once() : Times.Never());
-                }
-                else
-                {
-                    Assert.NotNull(status);
-
-                    Mock.Get(FileSystemHelpers.Instance.DirectoryInfo.FromDirectoryName(Path.Combine(deploymentPath, id)))
-                        .Verify(d => d.Delete(), Times.Never());
-                }
-
-                if (expectedError)
-                {
-                    Mock.Get(analytics).Verify(a => a.UnexpectedException(It.IsAny<Exception>(), true), Times.Once());
-                }
-                else
-                {
-                    Mock.Get(analytics).Verify(a => a.UnexpectedException(It.IsAny<Exception>(), It.IsAny<bool>()), Times.Never());
-                }
+                Mock.Get(FileSystemHelpers.Instance.DirectoryInfo.FromDirectoryName(Path.Combine(deploymentPath, id)))
+                    .Verify(d => d.Delete(), content != null ? Times.Once() : Times.Never());
             }
-            finally
+            else
             {
-                FileSystemHelpers.Instance = null;
+                Assert.NotNull(status);
+
+                Mock.Get(FileSystemHelpers.Instance.DirectoryInfo.FromDirectoryName(Path.Combine(deploymentPath, id)))
+                    .Verify(d => d.Delete(), Times.Never());
+            }
+
+            if (expectedError)
+            {
+                Mock.Get(analytics).Verify(a => a.UnexpectedException(It.IsAny<Exception>(), true), Times.Once());
+            }
+            else
+            {
+                Mock.Get(analytics).Verify(a => a.UnexpectedException(It.IsAny<Exception>(), It.IsAny<bool>()), Times.Never());
             }
         }
 

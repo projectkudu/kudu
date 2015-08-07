@@ -12,11 +12,13 @@ namespace Kudu.Core.Infrastructure
         [SuppressMessage("Microsoft.Usage", "CA2211:Non-constant fields should not be visible", Justification = "Make accessable for testing")]
         public static string TmpFolder = System.Environment.ExpandEnvironmentVariables(@"%WEBROOT_PATH%\data\Temp");
 
-        public static IFileSystem Instance { get; set; }
+        private static IFileSystem _default = new FileSystem();
+        private static IFileSystem _instance;
 
-        static FileSystemHelpers()
-        {
-            Instance = new FileSystem();
+        public static IFileSystem Instance
+        { 
+            get { return _instance ?? _default; }
+            set { _instance = value; }
         }
 
         public static Stream CreateFile(string path)

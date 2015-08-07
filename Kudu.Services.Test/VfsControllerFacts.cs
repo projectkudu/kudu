@@ -172,8 +172,6 @@ namespace Kudu.Services.Test
         [MemberData("MapRouteToLocalPathData")]
         public void MapRouteToLocalPathTests(string requestUri, string expected)
         {
-            FileSystemHelpers.Instance = new FileSystem();
-
             // in case of env variable not exist in certain target machine
             var expanded = System.Environment.ExpandEnvironmentVariables(expected);
             if (expanded.Contains("%"))

@@ -26,29 +26,21 @@ namespace Kudu.Core.Test.Tracing
             var tracer = new XmlTracer(path, TraceLevel.Verbose);
             FileSystemHelpers.Instance = GetMockFileSystem();
 
-            try
+            var total = XmlTracer.MaxXmlFiles + 10;
+            for (int i = 0; i < total; ++i)
             {
-                var total = XmlTracer.MaxXmlFiles + 10;
-                for (int i = 0; i < total; ++i)
-                {
-                    tracer.Trace(Guid.NewGuid().ToString(), new Dictionary<string, string>());
-                }
-
-                var files = FileSystemHelpers.GetFiles(path, "*.xml");
-                Assert.Equal(total, files.Length);
-
-                // wait till interval and write another trace
-                typeof(XmlTracer).GetField("_lastCleanup", BindingFlags.Static | BindingFlags.NonPublic).SetValue(null, DateTime.MinValue);
                 tracer.Trace(Guid.NewGuid().ToString(), new Dictionary<string, string>());
+            }
 
-                files = FileSystemHelpers.GetFiles(path, "*.xml");
-                Assert.True(files.Length < XmlTracer.MaxXmlFiles);
-            }
-            catch (Exception)
-            {
-                FileSystemHelpers.Instance = null;
-                throw;
-            }
+            var files = FileSystemHelpers.GetFiles(path, "*.xml");
+            Assert.Equal(total, files.Length);
+
+            // wait till interval and write another trace
+            typeof(XmlTracer).GetField("_lastCleanup", BindingFlags.Static | BindingFlags.NonPublic).SetValue(null, DateTime.MinValue);
+            tracer.Trace(Guid.NewGuid().ToString(), new Dictionary<string, string>());
+
+            files = FileSystemHelpers.GetFiles(path, "*.xml");
+            Assert.True(files.Length < XmlTracer.MaxXmlFiles);
         }
 
         [Theory]
@@ -60,46 +52,38 @@ namespace Kudu.Core.Test.Tracing
             var tracer = new XmlTracer(path, traceLevel);
             FileSystemHelpers.Instance = GetMockFileSystem();
 
-            try
+            foreach (var request in requests)
             {
-                foreach (var request in requests)
+                Dictionary<string, string> attribs = new Dictionary<string, string>
                 {
-                    Dictionary<string, string> attribs = new Dictionary<string, string>
-                    {
-                        { "type", "request" },
-                        { "url", request.Url },
-                        { "method", "GET" },
-                        { "statusCode", ((int)request.StatusCode).ToString() },
-                    };
+                    { "type", "request" },
+                    { "url", request.Url },
+                    { "method", "GET" },
+                    { "statusCode", ((int)request.StatusCode).ToString() },
+                };
 
-                    using (tracer.Step("Incoming Request", attribs))
-                    {
-                        tracer.Trace("Outgoing response", attribs);
-                    }
-                }
-
-                var traces = new List<RequestInfo>();
-                foreach (var file in FileSystemHelpers.GetFiles(path, "*s.xml").OrderBy(n => n))
+                using (tracer.Step("Incoming Request", attribs))
                 {
-                    var document = XDocument.Load(FileSystemHelpers.OpenRead(file));
-                    var trace = new RequestInfo { Url = document.Root.Attribute("url").Value };
-                    var elapsed = document.Root.Nodes().Last();
-
-                    // Assert
-                    Assert.Equal(XmlNodeType.Comment, elapsed.NodeType);
-                    Assert.Contains("duration:", ((XComment)elapsed).Value);
-
-                    traces.Add(trace);
+                    tracer.Trace("Outgoing response", attribs);
                 }
+            }
+
+            var traces = new List<RequestInfo>();
+            foreach (var file in FileSystemHelpers.GetFiles(path, "*s.xml").OrderBy(n => n))
+            {
+                var document = XDocument.Load(FileSystemHelpers.OpenRead(file));
+                var trace = new RequestInfo { Url = document.Root.Attribute("url").Value };
+                var elapsed = document.Root.Nodes().Last();
 
                 // Assert
-                Assert.Equal(requests.Where(r => r.Traced), traces, RequestInfoComparer.Instance);
+                Assert.Equal(XmlNodeType.Comment, elapsed.NodeType);
+                Assert.Contains("duration:", ((XComment)elapsed).Value);
+
+                traces.Add(trace);
             }
-            catch (Exception)
-            {
-                FileSystemHelpers.Instance = null;
-                throw;
-            }
+
+            // Assert
+            Assert.Equal(requests.Where(r => r.Traced), traces, RequestInfoComparer.Instance);
         }
 
         [Theory]

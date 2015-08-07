@@ -23,8 +23,6 @@ namespace Kudu.Core.Test.Jobs
 
         public ContinuousJobRunnerFacts()
         {
-            FileSystemHelpers.Instance = new FileSystem();
-
             _job = new ContinuousJob
             {
                 Name = "testjob",

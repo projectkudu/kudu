@@ -45,8 +45,6 @@ namespace Kudu.Core.Test
         [Fact]
         public void LockFileConcurrentTest()
         {
-            FileSystemHelpers.Instance = new FileSystem();
-
             // Mock
             var file = Path.Combine(Path.GetTempPath(), Path.GetTempFileName());
             var lockFile = new LockFile(file, NullTracerFactory.Instance);
@@ -163,8 +161,6 @@ namespace Kudu.Core.Test
         [Fact]
         public void LockFailOnLockAcquiredTest()
         {
-            FileSystemHelpers.Instance = new FileSystem();
-
             // Mock
             var file = Path.Combine(Path.GetTempPath(), Path.GetTempFileName());
             var lockFile = new FailOnLockAcquiredLock(file);
