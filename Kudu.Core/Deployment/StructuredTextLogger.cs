@@ -72,7 +72,9 @@ namespace Kudu.Core.Deployment
         {
             try
             {
-                return _structuredTextDocument.GetDocument().Select(e => e.LogEntry);
+                var logEntries = _structuredTextDocument.GetDocument();
+                ChildTypeFix(logEntries);
+                return logEntries.Select(e => e.LogEntry);
             }
             catch(Exception e)
             {
@@ -86,15 +88,50 @@ namespace Kudu.Core.Deployment
             try
             {
                 var entry = _structuredTextDocument.GetDocument().FirstOrDefault(s => s.LogEntry.Id.Equals(entryId, StringComparison.OrdinalIgnoreCase));
-                return entry == null
-                    ? Enumerable.Empty<LogEntry>()
-                    : entry.Children.Select(e => e.LogEntry);
+                if (entry == null)
+                {
+                    return Enumerable.Empty<LogEntry>();
+                }
+                else
+                {
+                    ChildTypeFix(entry.Children);
+                    return entry.Children.Select(e => e.LogEntry);
+                }
+
             }
             catch(Exception e)
             {
                 _analytics.UnexpectedException(e);
                 throw;
             }
+        }
+
+        /// <summary>
+        /// StructuredTextDocument does pure File Append for each new message. This is not sufficient to replicate the behacior of XmlLogger
+        /// XmlLogger would set the Type of the parent LogEntry to be the Max of all the Types of the sub entries.
+        /// Since this logger only does append, we don't have a change to update the parent while writing the file, so will do it on reading here.
+        /// LogEntryType is an Enum with Message = 0, Warning = 1, and Error = 2.
+        /// When reading the tree of StructuredTextDocumentEntry, we need to fix the parent to equal the max of the all the children's Type.
+        /// </summary>
+        /// <param name="tree">A StructuredTextDocumentEntry tree to fix all the nodes in</param>
+        /// <returns></returns>
+        private LogEntryType ChildTypeFix(IEnumerable<StructuredTextDocumentEntry<LogEntry>> tree)
+        {
+            var maxEntryType = LogEntryType.Message;
+            foreach (var node in tree)
+            {
+                var childMaxType = ChildTypeFix(node.Children);
+                if (childMaxType > node.LogEntry.Type)
+                {
+                    node.LogEntry.Type = childMaxType;
+                }
+
+                if (node.LogEntry.Type > maxEntryType)
+                {
+                    maxEntryType = node.LogEntry.Type;
+                }
+            }
+            return maxEntryType;
         }
 
         private static string SanitizeValue(string value)
