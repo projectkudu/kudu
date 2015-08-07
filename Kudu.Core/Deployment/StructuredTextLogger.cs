@@ -17,8 +17,7 @@ namespace Kudu.Core.Deployment
         private static IEnumerable<KeyValuePair<string, string>> EscapeChars = new Dictionary<string, string>
         {
             { ",", "&comma;" }
-        }
-        .Union(StructuredTextDocument.NotAllowedSequances);
+        };
 
         public StructuredTextLogger(string path, IAnalytics analytics)
         {
@@ -100,7 +99,7 @@ namespace Kudu.Core.Deployment
 
         private static string SanitizeValue(string value)
         {
-            foreach (var pair in EscapeChars)
+            foreach (var pair in EscapeChars.Union(StructuredTextDocument.NotAllowedSequences))
             {
                 if (value.Contains(pair.Key))
                 {

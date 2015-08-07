@@ -102,7 +102,7 @@ namespace Kudu.Core.Deployment
                     StructuredTextDocument.PrintableLeadingCharacter));
             }
 
-            foreach (var pair in StructuredTextDocument.NotAllowedSequances)
+            foreach (var pair in StructuredTextDocument.NotAllowedSequences)
             {
                 if (message.IndexOf(pair.Key, StringComparison.OrdinalIgnoreCase) != -1)
                 {
@@ -120,7 +120,7 @@ namespace Kudu.Core.Deployment
     {
         public const string LeadingCharacter = "\t";
         public const string PrintableLeadingCharacter = "\\t";
-        public static readonly IDictionary<string, string> NotAllowedSequances = new Dictionary<string, string> {  { "\r\n", "\\r\\n" }, { "\r", "\\r" }, { "\n", "\\n" }};
+        public static readonly IDictionary<string, string> NotAllowedSequences = new Dictionary<string, string> {  { "\r\n", "\\r\\n" }, { "\r", "\\r" }, { "\n", "\\n" }};
         public static int GetEntryDepth(string entry)
         {
             return entry.TakeWhile(c => LeadingCharacter.Equals(c.ToString())).Count();
