@@ -1,11 +1,8 @@
-﻿using System;
+﻿using Kudu.Core.SourceControl;
+using Newtonsoft.Json.Linq;
+using System;
 using System.Linq;
 using System.Web;
-using Kudu.Core;
-using Kudu.Core.SourceControl;
-using Kudu.Core.SourceControl.Git;
-using Kudu.Core.Tracing;
-using Newtonsoft.Json.Linq;
 
 namespace Kudu.Services.ServiceHookHandlers
 {
@@ -15,7 +12,7 @@ namespace Kudu.Services.ServiceHookHandlers
         {
             deploymentInfo = null;
             if (request.UserAgent != null &&
-                request.UserAgent.StartsWith("Bitbucket", StringComparison.OrdinalIgnoreCase))
+                request.UserAgent.StartsWith("Bitbucket.org", StringComparison.OrdinalIgnoreCase))
             {
                 deploymentInfo = GetDeploymentInfo(payload, targetBranch);
                 return deploymentInfo == null ? DeployAction.NoOp : DeployAction.ProcessDeployment;
@@ -47,7 +44,7 @@ namespace Kudu.Services.ServiceHookHandlers
                                         orderby TryParseCommitStamp(commit.Value<string>("utctimestamp")) descending
                                         select (JObject)commit).FirstOrDefault();
 
-                
+
                 if (targetCommit == null)
                 {
                     return null;
@@ -60,7 +57,7 @@ namespace Kudu.Services.ServiceHookHandlers
                     timestamp: TryParseCommitStamp(targetCommit.Value<string>("utctimestamp"))
                 );
             }
-            else 
+            else
             {
                 info.TargetChangeset = new ChangeSet(id: String.Empty, authorName: null,
                                         authorEmail: null, message: null, timestamp: DateTime.UtcNow);
@@ -78,25 +75,32 @@ namespace Kudu.Services.ServiceHookHandlers
             // private repo, use SSH
             if (isPrivate)
             {
-                var uri = new UriBuilder(info.RepositoryUrl);
-                if (uri.Scheme.StartsWith("http", StringComparison.OrdinalIgnoreCase))
-                {
-                    uri.Scheme = "ssh";
-                    uri.Port = -1;
-                    uri.Host = (info.RepositoryType == RepositoryType.Mercurial ? "hg@" : "git@") + uri.Host;
-
-                    // Private repo paths are of the format ssh://git@bitbucket.org/accountname/reponame.git
-                    info.RepositoryUrl = uri.ToString();
-                }
+                info.RepositoryUrl = GetPrivateRepoUrl(info.RepositoryUrl, info.RepositoryType);
             }
 
             return info;
         }
 
-        private static DateTimeOffset TryParseCommitStamp(string value)
+        internal static DateTimeOffset TryParseCommitStamp(string value)
         {
             DateTimeOffset dateTime;
             return DateTimeOffset.TryParse(value, out dateTime) ? dateTime : DateTimeOffset.MinValue;
+        }
+
+        internal static string GetPrivateRepoUrl(string publicRepoUrl, RepositoryType repoType)
+        {
+            var uri = new UriBuilder(publicRepoUrl);
+            if (uri.Scheme.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+            {
+                uri.Scheme = "ssh";
+                uri.Port = -1;
+                uri.Host = (repoType == RepositoryType.Mercurial ? "hg@" : "git@") + uri.Host;
+
+                // Private repo paths are of the format ssh://git@bitbucket.org/accountname/reponame.git
+                return uri.ToString();
+            }
+
+            return publicRepoUrl;
         }
     }
 }

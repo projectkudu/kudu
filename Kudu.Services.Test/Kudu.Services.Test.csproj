@@ -69,7 +69,8 @@
   <ItemGroup>
     <Compile Include="ApplicationLogsReaderFacts.cs" />
     <Compile Include="ArmUtilsFacts.cs" />
-    <Compile Include="BitbucketHandlerFacts.cs" />
+    <Compile Include="BitbucketDeployment\BitbucketHandlerV2Facts.cs" />
+    <Compile Include="BitbucketDeployment\BitbucketHandlerFacts.cs" />
     <Compile Include="CodeBaseHqFacts.cs" />
     <Compile Include="CodePlexHandlerFacts.cs" />
     <Compile Include="CustomGitRepositoryHandlerFacts.cs" />
@@ -98,6 +99,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
+    <EmbeddedResource Include="BitbucketDeployment\BitbucketV2Payload.json" />
     <None Include="packages.config" />
     <EmbeddedResource Include="vsopayload.json" />
   </ItemGroup>

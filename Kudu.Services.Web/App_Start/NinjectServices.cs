@@ -289,6 +289,7 @@ namespace Kudu.Services.Web.App_Start
             kernel.Bind<IServiceHookHandler>().To<GenericHandler>().InRequestScope();
             kernel.Bind<IServiceHookHandler>().To<GitHubHandler>().InRequestScope();
             kernel.Bind<IServiceHookHandler>().To<BitbucketHandler>().InRequestScope();
+            kernel.Bind<IServiceHookHandler>().To<BitbucketHandlerV2>().InRequestScope();
             kernel.Bind<IServiceHookHandler>().To<DropboxHandler>().InRequestScope();
             kernel.Bind<IServiceHookHandler>().To<CodePlexHandler>().InRequestScope();
             kernel.Bind<IServiceHookHandler>().To<CodebaseHqHandler>().InRequestScope();
