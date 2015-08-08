@@ -364,6 +364,7 @@ namespace Kudu.FunctionalTests
     public class MvcAppWithTypeScriptTests : GitDeploymentTests
     {
         [Fact]
+        [KuduXunitTest(PrivateOnly = true)]
         public void PushAndDeployMvcAppWithTypeScript()
         {
             PushAndDeployApps("MvcAppWithTypeScript", "master", "Hello, TypeScript Footer!", HttpStatusCode.OK, "Deployment successful", resourcePath: "/Scripts/ts/FooterUpdater.js");
@@ -424,6 +425,7 @@ namespace Kudu.FunctionalTests
     public class CSharp6WebTests : GitDeploymentTests
     {
         [Fact]
+        [KuduXunitTest(PrivateOnly = true)]
         public void PushAndDeployCSharp6Web()
         {
             PushAndDeployApps("CSharp6Web", "master", "ASP.NET is a free web framework", HttpStatusCode.OK, "Deployment successful");

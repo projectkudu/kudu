@@ -1,4 +1,5 @@
-﻿using System.Threading;
+﻿using System.Configuration;
+using System.Threading;
 using System.Threading.Tasks;
 using Xunit.Sdk;
 
@@ -23,6 +24,11 @@ namespace Kudu.TestHarness.Xunit
             var test = new XunitTest(TestCase, DisplayName);
             var aggregator = new ExceptionAggregator(Aggregator);
             var disableRetry = ((KuduXunitTestCase)TestCase).DisableRetry;
+            if (!disableRetry)
+            {
+                var value = ConfigurationManager.AppSettings["DisableRetry"];
+                disableRetry = string.IsNullOrEmpty(value) || bool.Parse(value);
+            }
             var runner = new XunitTestRunner(test, MessageBus, TestClass, ConstructorArguments, TestMethod, TestMethodArguments, SkipReason, BeforeAfterAttributes, aggregator, CancellationTokenSource);
             return await KuduXunitTestRunnerUtils.RunTestAsync(runner, MessageBus, aggregator, disableRetry);
         }

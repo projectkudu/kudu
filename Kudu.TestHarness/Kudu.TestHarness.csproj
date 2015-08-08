@@ -97,6 +97,7 @@
     <Compile Include="Xunit\KuduXunitTheoryTestCase.cs" />
     <Compile Include="Xunit\KuduTraceMessageBus.cs" />
     <Compile Include="Xunit\KuduXunitExtensions.cs" />
+    <Compile Include="Xunit\KuduXunitTestAttribute.cs" />
     <Compile Include="Xunit\KuduXunitTestCaseRunner.cs" />
     <Compile Include="Xunit\KuduXunitTestClassAttribute.cs" />
     <Compile Include="Xunit\KuduXunitTestCase.cs" />

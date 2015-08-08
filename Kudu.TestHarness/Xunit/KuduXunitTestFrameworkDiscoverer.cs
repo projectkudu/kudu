@@ -8,6 +8,7 @@ namespace Kudu.TestHarness.Xunit
 {
     class KuduXunitTestFrameworkDiscoverer : XunitTestFrameworkDiscoverer
     {
+        private bool _privateEnv;
 
         public KuduXunitTestFrameworkDiscoverer(IAssemblyInfo assemblyInfo,
                                                 ISourceInformationProvider sourceProvider,
@@ -15,6 +16,7 @@ namespace Kudu.TestHarness.Xunit
                                                 IXunitTestCollectionFactory collectionFactory = null)
             : base(assemblyInfo, sourceProvider, diagnosticMessageSink, collectionFactory)
         {
+            _privateEnv = typeof(KuduXunitTestFrameworkDiscoverer).Assembly.GetType("Kudu.TestHarness.Antares.AntaresEnvironment") != null;
         }
 
         // src\xunit.execution\Sdk\Frameworks\XunitTestFrameworkDiscoverer.cs
@@ -35,6 +37,11 @@ namespace Kudu.TestHarness.Xunit
 
             var discoverer = GetDiscoverer(discovererType);
             if (discoverer == null)
+                return true;
+
+            // in non-private env, we will skip test marked with PrivateOnly.
+            var methodAttribute = testMethod.Method.GetCustomAttributes(typeof(KuduXunitTestAttribute)).FirstOrDefault();
+            if (methodAttribute != null && !_privateEnv && methodAttribute.GetNamedArgument<bool>("PrivateOnly"))
                 return true;
 
             var methodDisplay = discoveryOptions.MethodDisplayOrDefault();
