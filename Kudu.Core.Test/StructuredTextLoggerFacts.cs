@@ -16,7 +16,7 @@ namespace Kudu.Core.Test
         [Theory]
         [InlineData("This message is clean from any illegal characters", LogEntryType.Message)]
         [InlineData("This message has \"double quotes\" in it.", LogEntryType.Error)]
-        [InlineData("This message has \n new lines \r\n in it", LogEntryType.Warning)]
+        [InlineData("This message has, commas, in, it.", LogEntryType.Warning)]
         public void StructuredTextLoggerLogFunction(string message, LogEntryType type)
         {
             //Arrange
