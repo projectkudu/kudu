@@ -6,7 +6,7 @@
 <div class="container">
     <h3>About</h3>
     Urls can be registered as web hooks. Information is posted to them when events occur.<br />
-    Only "PostDeployment" event is supported for now.
+    Only the "PostDeployment" and "TriggeredJobFinished" events are supported for now.
 </div>
 
 <div class="container">
@@ -15,6 +15,10 @@
         <div class="form-group" id="urlInput">
             <input type="url" class="form-control" id="urlTextBox" placeholder="Subscriber Url"
                    data-bind="value: newHookUrl">
+            <select class="form-control" id="eventDropdown" data-bind="value: newHookEvent">
+                <option>PostDeployment</option>
+                <option>TriggeredJobFinished</option>
+            </select>
         </div>
         <button type="button" class="btn btn-default" data-bind="click: addHook">Add Url</button>
     </form>
@@ -54,6 +58,7 @@
         var self = this;
         self.hooks = ko.observableArray([]);
         self.newHookUrl = ko.observable();
+        self.newHookEvent = ko.observable();
 
         // Operations
         self.populateHooks = function () {
@@ -77,7 +82,7 @@
                 type: "POST",
                 url: "hooks",
                 contentType: "application/json",
-                data: JSON.stringify({ url: self.newHookUrl(), event: "PostDeployment" }),
+                data: JSON.stringify({ url: self.newHookUrl(), event: self.newHookEvent() }),
                 success: function () {
                     self.newHookUrl("");
                 },
