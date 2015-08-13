@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using Kudu.Contracts.Jobs;
+using System.Linq;
 
 namespace Kudu.Core.Jobs
 {
@@ -15,12 +16,15 @@ namespace Kudu.Core.Jobs
         {
             HostPath = hostPath;
             ArgumentsFormat = argumentsFormat;
+            SupportedExtensions = Enumerable.Empty<string>();
+            SupportedFileNames = Enumerable.Empty<string>();
         }
 
         public string HostPath { get; private set; }
 
         public string ArgumentsFormat { get; private set; }
 
-        public abstract IEnumerable<string> SupportedExtensions { get; }
+        public virtual IEnumerable<string> SupportedExtensions { get; private set; }
+        public virtual IEnumerable<string> SupportedFileNames { get; private set; }
     }
 }

@@ -159,6 +159,7 @@
     <Compile Include="Infrastructure\ZipArchiveExtensions.cs" />
     <Compile Include="Jobs\ContinuousJobLogger.cs" />
     <Compile Include="Jobs\ContinuousJobRunner.cs" />
+    <Compile Include="Jobs\DnxScriptHost.cs" />
     <Compile Include="Jobs\JobsFileWatcher.cs" />
     <Compile Include="Jobs\ContinuousJobsManager.cs" />
     <Compile Include="Jobs\BaseJobRunner.cs" />
@@ -327,6 +328,9 @@
       <SubType>Designer</SubType>
     </Content>
     <None Include="Scripts\dnvm.ps1">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="Scripts\runDnxWebJob.cmd">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>

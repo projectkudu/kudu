@@ -25,7 +25,8 @@ namespace Kudu.Core.Jobs
             new BashScriptHost(),
             new PythonScriptHost(),
             new PhpScriptHost(),
-            new NodeScriptHost()
+            new NodeScriptHost(),
+            new DnxScriptHost()
         };
 
         public static bool IsUsingSdk(string specificJobDataPath)
@@ -493,6 +494,16 @@ namespace Kudu.Core.Jobs
                             scriptHostFound = scriptHost;
                             secondaryScriptFound = supportedFiles.First().FullName;
                         }
+                    }
+                }
+
+                foreach (var supportedFileName in scriptHost.SupportedFileNames)
+                {
+                    var supportedFiles = files.Where(f => String.Equals(f.Name, supportedFileName, StringComparison.OrdinalIgnoreCase));
+                    if (supportedFiles.Any())
+                    {
+                        scriptHostFound = scriptHost;
+                        return supportedFiles.First().FullName;
                     }
                 }
             }

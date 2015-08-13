@@ -1060,9 +1060,26 @@ function dnvm-install {
         [switch]$Persistent,
 
         [Parameter(Mandatory=$false)]
-        [switch]$Unstable)
+        [switch]$Unstable,
+
+        [Parameter(Mandatory=$false)]
+        [string]$File)
 
     $selectedFeed = ""
+
+    if ($File) {
+        $json = (Get-Content $File -Raw) | ConvertFrom-Json
+        if ($json.sdk -and $json.sdk.version -and $json.sdk.architecture -and $json.sdk.runtime) {
+            $VersionNuPkgOrAlias = $json.sdk.version
+            $Architecture = $json.sdk.architecture
+            $Runtime = $json.sdk.runtime
+        } else {
+            _WriteOut "A version, architecture, and runtime must be provided in the file."
+            dnvm-help install
+            $Script:ExitCode = $ExitCodes.InvalidArguments
+            return
+        }
+    }
 
     if($Unstable) {
         $selectedFeed = $ActiveUnstableFeed

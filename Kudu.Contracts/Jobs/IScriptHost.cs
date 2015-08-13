@@ -9,5 +9,6 @@ namespace Kudu.Contracts.Jobs
         string ArgumentsFormat { get; }
 
         IEnumerable<string> SupportedExtensions { get; }
+        IEnumerable<string> SupportedFileNames { get; }
     }
 }
