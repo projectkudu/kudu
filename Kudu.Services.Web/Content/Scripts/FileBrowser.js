@@ -23,6 +23,11 @@ var statusbar = {
             $('#statusbar').removeClass('statusbar-red');
             // Flag from ace-init.js
             contentHasChanged = false;
+            // Clear search box
+            if (editor.searchBox) {
+                editor.searchBox.activeInput.value = '';
+                editor.searchBox.hide();
+            }
         },
     SavingChanges:
         function () {
