@@ -40,5 +40,10 @@ namespace Kudu.Core.Deployment
             Message = message;
             Type = type;
         }
+
+        public override string ToString()
+        {
+            return Message;
+        }
     }
 }
