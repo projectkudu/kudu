@@ -200,8 +200,8 @@ project = myproject");
                     Assert.Equal(1, results.Count);
                     Assert.Equal(DeployStatus.Failed, results[0].Status);
                     Assert.Null(results[0].LastSuccessEndTime);
-                    KuduAssert.VerifyLogOutput(appManager, results[0].Id, "Warning as Error: The variable 'x' is declared but never used");
-                    Assert.True(deployResult.GitTrace.Contains("Warning as Error: The variable 'x' is declared but never used"));
+                    KuduAssert.VerifyLogOutput(appManager, results[0].Id, "error CS0168: The variable 'x' is declared but never used");
+                    Assert.True(deployResult.GitTrace.Contains("error CS0168: The variable 'x' is declared but never used"));
                     Assert.True(deployResult.GitTrace.Contains("Error - Changes committed to remote repository but deployment to website failed"));
                 });
             }
