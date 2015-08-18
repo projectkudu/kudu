@@ -375,6 +375,16 @@ namespace Kudu.SiteManagement
                 kuduAppPool.ManagedRuntimeVersion = "v4.0";
                 kuduAppPool.AutoStart = true;
                 kuduAppPool.ProcessModel.LoadUserProfile = true;
+
+                // We've seen strange errors after switching to VS 2015 msbuild when using App Pool Identity.
+                // The errors look like:
+                // error CS0041 : Unexpected error writing debug information -- 'Retrieving the COM class factory for component with CLSID {0AE2DEB0-F901-478B-BB9F-881EE8066788} failed due to the following error : 800703fa Illegal operation attempted on a registry key that has been marked for deletion. (Exception from HRESULT: 0x800703FA).'
+                // To work around this, we're using NetworkService. But it would be good to understand the root
+                // cause of the issue.
+                if (ConfigurationManager.AppSettings["UseNetworkServiceIdentity"] == "true")
+                {
+                    kuduAppPool.ProcessModel.IdentityType = ProcessModelIdentityType.NetworkService;
+                }
             }
 
             EnsureDefaultDocument(iis);
