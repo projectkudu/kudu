@@ -570,7 +570,8 @@ namespace Kudu.Core.Deployment
                 }
 
                 // Create a directory for the script output temporary artifacts
-                buildTempPath = Path.Combine(_environment.TempPath, Guid.NewGuid().ToString());
+                // Use tick count (in hex) instead of guid to keep the path for getting to long
+                buildTempPath = Path.Combine(_environment.TempPath, DateTime.UtcNow.Ticks.ToString("x"));
                 FileSystemHelpers.EnsureDirectory(buildTempPath);
 
                 var context = new DeploymentContext
