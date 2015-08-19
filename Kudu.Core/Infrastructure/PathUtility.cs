@@ -108,8 +108,8 @@ namespace Kudu.Core.Infrastructure
 
         internal static string ResolveMSBuildPath()
         {
-            string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);
-            return Path.Combine(programFiles, @"MSBuild", "14.0", "Bin", "MSBuild.exe");
+            string windir = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.Windows);
+            return Path.Combine(windir, @"Microsoft.NET", "Framework", "v4.0.30319", "MSBuild.exe");
         }
 
         internal static string ResolveVsTestPath()
