@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Configuration;
 using System.IO;
 using System.Linq;
 using SystemEnvironment = System.Environment;
@@ -23,60 +22,27 @@ namespace Kudu.Core.Infrastructure
 
         internal static string ResolveGitPath()
         {
-            string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);
-            string path = Path.Combine(programFiles, "Git", "bin", "git.exe");
-
-            if (!File.Exists(path))
-            {
-                throw new InvalidOperationException(Resources.Error_FailedToLocateGit);
-            }
-
-            return path;
+            string relativePath = Path.Combine("Git", "bin", "git.exe");
+            return ResolveRelativePathToProgramFiles(relativePath, relativePath, Resources.Error_FailedToLocateGit);
         }
 
         internal static string ResolveHgPath()
         {
-            string programFiles32 = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);
-            string path = Path.Combine(programFiles32, "Mercurial", "hg.exe");
-
-            if (!File.Exists(path))
-            {
-                string programFiles = SystemEnvironment.GetEnvironmentVariable(ProgramFiles64bitKey) ?? SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFiles);
-                path = Path.Combine(programFiles, "Mercurial", "hg.exe");
-
-                if (!File.Exists(path))
-                {
-                    throw new InvalidOperationException(Resources.Error_FailedToLocateHg);
-                }
-            }
-
-            return path;
+            string relativePath = Path.Combine("Mercurial", "hg.exe");
+            return ResolveRelativePathToProgramFiles(relativePath, relativePath, Resources.Error_FailedToLocateHg);
         }
 
         internal static string ResolveSSHPath()
         {
-            string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);
-            string path = Path.Combine(programFiles, "Git", "bin", "ssh.exe");
-
-            if (!File.Exists(path))
-            {
-                throw new InvalidOperationException(Resources.Error_FailedToLocateSsh);
-            }
-
-            return path;
+            string relativeX86Path = Path.Combine("Git", "bin", "ssh.exe");
+            string relativeX64Path = Path.Combine("Git", "usr", "bin", "ssh.exe");
+            return ResolveRelativePathToProgramFiles(relativeX86Path, relativeX64Path, Resources.Error_FailedToLocateSsh);
         }
 
         internal static string ResolveBashPath()
         {
-            string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);
-            string path = Path.Combine(programFiles, "Git", "bin", "bash.exe");
-
-            if (!File.Exists(path))
-            {
-                throw new InvalidOperationException(Resources.Error_FailedToLocateSsh);
-            }
-
-            return path;
+            string relativePath = Path.Combine("Git", "bin", "bash.exe");
+            return ResolveRelativePathToProgramFiles(relativePath, relativePath, Resources.Error_FailedToLocateBash);
         }
 
         internal static string ResolveNpmJsPath()
@@ -199,7 +165,7 @@ namespace Kudu.Core.Infrastructure
             {
                 paths.Add(npmPath);
             }
-            
+
             return paths;
         }
 
@@ -262,6 +228,24 @@ namespace Kudu.Core.Infrastructure
             return String.IsNullOrEmpty(toolPath)
                 ? String.Empty
                 : Path.Combine(toolPath, String.Format("{0}.cmd", toolName));
+        }
+
+        private static string ResolveRelativePathToProgramFiles(string relativeX86Path, string relativeX64Path, string errorMessge)
+        {
+            string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);
+            string path = Path.Combine(programFiles, relativeX86Path);
+            if (!File.Exists(path))
+            {
+                programFiles = SystemEnvironment.GetEnvironmentVariable(ProgramFiles64bitKey) ?? SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFiles);
+                path = Path.Combine(programFiles, relativeX64Path);
+            }
+
+            if (!File.Exists(path))
+            {
+                throw new InvalidOperationException(errorMessge);
+            }
+
+            return path;
         }
     }
 }

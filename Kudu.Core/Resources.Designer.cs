@@ -133,6 +133,15 @@ namespace Kudu.Core {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Unable to locate &apos;bash.exe&apos;. Make sure it is installed..
+        /// </summary>
+        internal static string Error_FailedToLocateBash {
+            get {
+                return ResourceManager.GetString("Error_FailedToLocateBash", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Unable to locate &apos;git.exe&apos;. Make sure it is installed..
         /// </summary>
         internal static string Error_FailedToLocateGit {
