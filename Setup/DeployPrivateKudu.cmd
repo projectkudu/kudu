@@ -5,6 +5,9 @@ set _SCRIPT=%~nx0
 set _KUDUZIP=%~dp0Kudu.zip
 set _SCMURI=%~1
 set _CURLEXE=%ProgramFiles(x86)%\git\bin\curl.exe
+if NOT EXIST "%_CURLEXE%" (
+  set _CURLEXE=%ProgramW6432%\git\mingw64\bin\curl.exe
+)
 
 REM first parameter is the deploy uri with embedded cred
 if "%_SCMURI%" equ "" (

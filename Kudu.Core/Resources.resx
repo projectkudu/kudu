@@ -219,4 +219,7 @@
   <data name="Warning_EnableAlwaysOn" xml:space="preserve">
     <value>'Always On' doesn't appear to be enabled for this Web App. To ensure your continuous job doesn't stop running when the SCM host is idle for too long, consider enabling 'Always On' in the configuration settings for your Web App. Note: 'Always On' is available only in Basic, Standard and Premium modes.</value>
   </data>
+  <data name="Error_FailedToLocateBash" xml:space="preserve">
+    <value>Unable to locate 'bash.exe'. Make sure it is installed.</value>
+  </data>
 </root>
