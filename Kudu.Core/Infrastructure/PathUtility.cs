@@ -34,9 +34,17 @@ namespace Kudu.Core.Infrastructure
 
         internal static string ResolveSSHPath()
         {
+            // version that before 2.5, ssh.exe has different path than in version 2.5
             string relativeX86Path = Path.Combine("Git", "bin", "ssh.exe");
-            string relativeX64Path = Path.Combine("Git", "usr", "bin", "ssh.exe");
-            return ResolveRelativePathToProgramFiles(relativeX86Path, relativeX64Path, Resources.Error_FailedToLocateSsh);
+            string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);
+            string path = Path.Combine(programFiles, relativeX86Path);
+            if (File.Exists(path))
+            {
+                return path;
+            }
+
+            string relativePath = Path.Combine("Git", "usr", "bin", "ssh.exe");
+            return ResolveRelativePathToProgramFiles(relativePath, relativePath, Resources.Error_FailedToLocateSsh);
         }
 
         internal static string ResolveBashPath()
