@@ -39,6 +39,10 @@ namespace Kudu.Core.Deployment.Generator
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.SelectPythonVersionCommandKey, SelectPythonVersionCommand, logger);
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.WebJobsDeployCommandKey, WebJobsDeployCommand, logger);
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.GoWebConfigTemplate, GoWebConfigTemplate, logger);
+            // this script takes in two param, target foler path and output file path
+            // what it does is, it assume immediate sub folder of targer folder are all name with version
+            // and this script is trying to get the folder name that with largest version name
+            UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.SelectLatestVersionCommandKey, SelectLatestVersionCommand, logger);
 
             bool isInPlace = false;
             string project = _deploymentSettings.GetValue(SettingsKeys.Project);
@@ -164,6 +168,14 @@ namespace Kudu.Core.Deployment.Generator
             get
             {
                 return Path.Combine(_environment.ScriptPath, "go.web.config.template");
+            }
+        }
+
+        private string SelectLatestVersionCommand
+        {
+            get
+            {
+                return Path.Combine(_environment.ScriptPath, "selectLatestVersion.ps1");
             }
         }
 
