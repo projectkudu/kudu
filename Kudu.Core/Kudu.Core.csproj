@@ -284,6 +284,9 @@
     <Compile Include="SourceControl\Hg\HgRepository.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Scripts\selectLatestVersion.ps1">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <Content Include="Scripts\select_python_version.py">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>

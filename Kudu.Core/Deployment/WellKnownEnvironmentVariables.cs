@@ -36,5 +36,6 @@
         public const string SiteBitness = "SITE_BITNESS";
 
         public const string GoWebConfigTemplate = "GO_WEB_CONFIG_TEMPLATE";
+        public const string SelectLatestVersionCommandKey = "SELECT_LATEST_VERSION_CMD";
     }
 }
