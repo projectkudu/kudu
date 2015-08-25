@@ -1,55 +1,57 @@
 ﻿{
-  "actor": {
-    "username": "shrimpy",
-    "display_name": "shrimpy",
-    "type": "user",
-    "links": {
-      "avatar": {
-        "href": "https://bitbucket.org/account/shrimpy/avatar/32/"
-      },
-      "html": {
-        "href": "https://bitbucket.org/shrimpy/"
-      },
-      "self": {
-        "href": "https://api.bitbucket.org/2.0/users/shrimpy"
-      }
+    "actor": {
+        "username": "shrimpy",
+        "display_name": "shrimpy",
+        "type": "user",
+        "links": {
+            "avatar": {
+                "href": "https://bitbucket.org/account/shrimpy/avatar/32/"
+            },
+            "html": {
+                "href": "https://bitbucket.org/shrimpy/"
+            },
+            "self": {
+                "href": "https://api.bitbucket.org/2.0/users/shrimpy"
+            }
+        },
+        "uuid": "{e55afd86-840f-4e1f-9993-f65847a7464f}"
     },
-    "uuid": "{e55afd86-840f-4e1f-9993-f65847a7464f}"
-  },
-  "repository": {
-    "uuid": "{c989e697-6961-4d14-ba0c-fb46dd9feff4}",
-    "owner": {
-      "username": "shrimpywu",
-      "display_name": "shrimpy wu",
-      "type": "user",
-      "links": {
-        "avatar": {
-          "href": "https://bitbucket.org/account/shrimpywu/avatar/32/"
+    "repository": {
+        "scm": "git",
+        "is_private":  false,
+        "uuid": "{c989e697-6961-4d14-ba0c-fb46dd9feff4}",
+        "owner": {
+            "username": "shrimpywu",
+            "display_name": "shrimpy wu",
+            "type": "user",
+            "links": {
+                "avatar": {
+                    "href": "https://bitbucket.org/account/shrimpywu/avatar/32/"
+                },
+                "html": {
+                    "href": "https://bitbucket.org/shrimpywu/"
+                },
+                "self": {
+                    "href": "https://api.bitbucket.org/2.0/users/shrimpywu"
+                }
+            },
+            "uuid": "{b5239cc6-2a9d-4122-8511-a132f68909b2}"
         },
-        "html": {
-          "href": "https://bitbucket.org/shrimpywu/"
-        },
-        "self": {
-          "href": "https://api.bitbucket.org/2.0/users/shrimpywu"
+        "full_name": "shrimpywu/hello",
+        "type": "repository",
+        "name": "Hello",
+        "links": {
+            "avatar": {
+                "href": "https://bitbucket.org/shrimpywu/hello/avatar/16/"
+            },
+            "html": {
+                "href": "https://bitbucket.org/shrimpywu/hello"
+            },
+            "self": {
+                "href": "https://api.bitbucket.org/2.0/repositories/shrimpywu/hello"
+            }
         }
-      },
-      "uuid": "{b5239cc6-2a9d-4122-8511-a132f68909b2}"
     },
-    "full_name": "shrimpywu/hello",
-    "type": "repository",
-    "name": "Hello",
-    "links": {
-      "avatar": {
-        "href": "https://bitbucket.org/shrimpywu/hello/avatar/16/"
-      },
-      "html": {
-        "href": "https://bitbucket.org/shrimpywu/hello"
-      },
-      "self": {
-        "href": "https://api.bitbucket.org/2.0/repositories/shrimpywu/hello"
-      }
-    }
-  },
   "push": {
     "changes": [
       {

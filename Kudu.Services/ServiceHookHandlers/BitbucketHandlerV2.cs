@@ -74,9 +74,10 @@ namespace Kudu.Services.ServiceHookHandlers
             }
 
             info.RepositoryUrl = payload.Value<JObject>("repository").Value<JObject>("links").Value<JObject>("html").Value<string>("href");
-            info.RepositoryType = RepositoryType.Git;   // TODO once bug is fixed https://bitbucket.org/site/master/issues/11665/missing-scm-and-is_private-info-from
+            bool isGitRepo = string.Equals("git", payload.Value<JObject>("repository").Value<string>("scm"), StringComparison.OrdinalIgnoreCase);
+            info.RepositoryType = isGitRepo ? RepositoryType.Git : RepositoryType.Mercurial;
 
-            bool isPrivate = false;     // TODO once bug is fixed https://bitbucket.org/site/master/issues/11665/missing-scm-and-is_private-info-from
+            bool isPrivate = bool.Parse(payload.Value<JObject>("repository").Value<string>("is_private"));
             // private repo, use SSH
             if (isPrivate)
             {
