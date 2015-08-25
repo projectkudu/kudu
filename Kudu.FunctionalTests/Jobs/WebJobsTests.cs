@@ -804,6 +804,24 @@ namespace WebJob
             });
         }
 
+        [Fact]
+        public void DnxWebJobDeploymentTest()
+        {
+            RunScenario("DnxWebJobDeploymentTest", appManager =>
+            {
+                using (var repo = Git.Clone("DnxWebJobTest"))
+                {
+                    appManager.GitDeploy(repo.PhysicalPath);
+                }
+                var result = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
+                var output = appManager.VfsManager.ReadAllText("Site/deployments/" + result[0].Id + "/log.log");
+
+                Assert.Equal(1, result.Count);
+                Assert.Equal(DeployStatus.Success, result[0].Status);
+                Assert.Contains("Generating deployment script for DNX Console Application", output);
+            });
+        }
+
         private static void RestartServiceSite(ApplicationManager appManager)
         {
             try

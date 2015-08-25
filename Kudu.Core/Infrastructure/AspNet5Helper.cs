@@ -38,13 +38,25 @@ namespace Kudu.Core.Infrastructure
             return aspNetSdk;
         }
 
-        public static bool TryAspNet5Project(string rootPath, out string projectJsonPath)
+        public static bool TryAspNet5WebProject(string rootPath, out string projectJsonPath)
         {
             projectJsonPath = null;
             var projectJsonFiles = Directory.GetFiles(rootPath, "project.json", SearchOption.AllDirectories);
             foreach (var filePath in projectJsonFiles.Where(IsWebApplicationProjectJsonFile))
             {
                 projectJsonPath = filePath;
+                return true;
+            }
+            return false;
+        }
+
+        public static bool TryAspNet5ConsoleAppProject(string rootPath, out string projectJsonPath)
+        {
+            projectJsonPath = null;
+            var projectJsonFile = Path.Combine(rootPath, "project.json");
+            if (FileSystemHelpers.FileExists(projectJsonFile))
+            {
+                projectJsonPath = projectJsonFile;
                 return true;
             }
             return false;

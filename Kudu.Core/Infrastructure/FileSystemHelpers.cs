@@ -321,6 +321,11 @@ namespace Kudu.Core.Infrastructure
             }
         }
 
+        public static string GetDirectoryName(string path)
+        {
+            return Instance.Path.GetDirectoryName(path);
+        }
+
         private static void DeleteDirectoryContentsSafe(DirectoryInfoBase directoryInfo, bool ignoreErrors)
         {
             try

@@ -12,12 +12,14 @@ namespace Kudu.Core.Deployment.Generator
     {
         private readonly string _projectPath;
         private readonly string _sourcePath;
+        private readonly bool _isConsoleApp;
 
-        public AspNet5Builder(IEnvironment environment, IDeploymentSettingsManager settings, IBuildPropertyProvider propertyProvider, string sourcePath, string projectPath)
+        public AspNet5Builder(IEnvironment environment, IDeploymentSettingsManager settings, IBuildPropertyProvider propertyProvider, string sourcePath, string projectPath, bool isConsoleApp)
             : base(environment, settings, propertyProvider, sourcePath)
         {
             _projectPath = projectPath;
             _sourcePath = sourcePath;
+            _isConsoleApp = isConsoleApp;
         }
 
         protected override string ScriptGeneratorCommandArguments
@@ -25,12 +27,19 @@ namespace Kudu.Core.Deployment.Generator
             get
             {
                 var commandArguments = new StringBuilder();
-                var aspNetSdk = AspNet5Helper.GetAspNet5Sdk(_sourcePath);
-                commandArguments.AppendFormat("--aspNet5 \"{0}\" --aspNet5Version \"{1}\" --aspNet5Runtime \"{2}\" --aspNet5Architecture \"{3}\"",
-                    _projectPath,
-                    aspNetSdk.Version,
-                    aspNetSdk.Runtime,
-                    aspNetSdk.Architecture);
+                if (_isConsoleApp)
+                {
+                    commandArguments.AppendFormat("--dnxConsoleApp \"{0}\"", FileSystemHelpers.GetDirectoryName(_projectPath));
+                }
+                else
+                {
+                    var aspNetSdk = AspNet5Helper.GetAspNet5Sdk(_sourcePath);
+                    commandArguments.AppendFormat("--aspNet5 \"{0}\" --aspNet5Version \"{1}\" --aspNet5Runtime \"{2}\" --aspNet5Architecture \"{3}\"",
+                        _projectPath,
+                        aspNetSdk.Version,
+                        aspNetSdk.Runtime,
+                        aspNetSdk.Architecture);
+                }
                 return commandArguments.ToString();
             }
         }

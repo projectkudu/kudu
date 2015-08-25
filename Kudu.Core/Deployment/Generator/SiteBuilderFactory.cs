@@ -124,7 +124,8 @@ namespace Kudu.Core.Deployment.Generator
                                       settings,
                                       _propertyProvider,
                                       repositoryRoot,
-                                      project.AbsolutePath);
+                                      project.AbsolutePath,
+                                      isConsoleApp: false);
             }
 
             return new WebSiteBuilder(_environment,
@@ -197,13 +198,24 @@ namespace Kudu.Core.Deployment.Generator
             
             // Check for ASP.NET 5 project without VS solution or project
             string projectJson;
-            if (AspNet5Helper.TryAspNet5Project(targetPath, out projectJson))
+            if (AspNet5Helper.TryAspNet5WebProject(targetPath, out projectJson))
             {
                 return new AspNet5Builder(_environment,
                                            perDeploymentSettings,
                                            _propertyProvider,
                                            repositoryRoot,
-                                           projectJson);
+                                           projectJson,
+                                           isConsoleApp: false);
+            }
+
+            if (AspNet5Helper.TryAspNet5ConsoleAppProject(targetPath, out projectJson))
+            {
+                return new AspNet5Builder(_environment,
+                                           perDeploymentSettings,
+                                           _propertyProvider,
+                                           repositoryRoot,
+                                           projectJson,
+                                           isConsoleApp: true);
             }
 
             if (tryWebSiteProject)
