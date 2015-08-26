@@ -73,9 +73,9 @@
                             var hash = md5.ComputeHash(System.Text.Encoding.UTF8.GetBytes(email.ToLowerInvariant().Trim()));
                             var imageUrl = String.Format("https://secure.gravatar.com/avatar/{0}.jpg?d=mm",
                                 BitConverter.ToString(hash).ToLowerInvariant().Replace("-", String.Empty));
-                            <ul class="nav navbar-nav navbar-right">
+                            <ul class="nav navbar-nav navbar-right" style="position: fixed; right: 65px;">
                                 <li class="dropdown">
-                                    <img src="@imageUrl" style="height: 50px; padding-top: 1px"/>
+                                    <img src="@imageUrl" style="height: 50px; padding-top: 1px" />
                                     <a href="#" data-toggle="dropdown" style="display: inline">@displayName</a>
                                     <ul class="dropdown-menu">
                                         <li><a href="/logout">Logout</a></li>
@@ -88,7 +88,7 @@
             </div>
         </div>
     </nav>
-    
+
     <!-- 403 error modal -->
     <div class="modal fade" id="403-error-modal" tabindex="-1" role="dialog" aria-labelledby="errorTitle" aria-hidden="true">
         <div class="modal-dialog">
