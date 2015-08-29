@@ -303,7 +303,7 @@ namespace Kudu.Core.Jobs
             }
         }
 
-        private int GetAvailableJobPort()
+        private static int GetAvailableJobPort()
         {
             var listener = new TcpListener(IPAddress.Loopback, 0);
             try
