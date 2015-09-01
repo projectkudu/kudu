@@ -354,10 +354,10 @@ var Process = (function () {
         }, false);
         $(profilingButton).css("width", "138px");
         if (Process.prototype.WebSiteSku === "Free" || Process.prototype.WebSiteSku === "Shared") {
-            $(profilingButton).attr("disabled", true);
-            $(profilingButton).addClass("ui-state-disabled");
+            $(profilingButton).css("opacity", "0.5");
+            $(profilingButton).off("click");
             $(profilingButton).attr("title", "Profiling is not supported for Free/Shared sites.");
-            $(profilingButton).tooltip();
+            $(profilingButton).tooltip().show();
         }
         tr.appendChild(Utilities.ToTd(profilingButton));
         return $(tr);
