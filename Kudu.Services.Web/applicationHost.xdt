@@ -10,4 +10,12 @@
       </site>
     </sites>
   </system.applicationHost>
+  <system.webServer>
+    <runtime xdt:Transform="InsertIfMissing">
+      <environmentVariables xdt:Transform="InsertIfMissing">
+        <!-- Force set this to make sure Kudu isn't taken down by a site App Setting that sets it to false -->
+        <add name="APPSETTING_webpages:Enabled" value="true" xdt:Locator="Match(name)" xdt:Transform="InsertIfMissing" />
+      </environmentVariables>
+    </runtime>
+  </system.webServer>
 </configuration>
