@@ -44,6 +44,7 @@ using Ninject.Activation;
 using Ninject.Web.Common;
 using Owin;
 using XmlSettings;
+using System.Configuration;
 
 [assembly: WebActivator.PreApplicationStartMethod(typeof(Kudu.Services.Web.App_Start.NinjectServices), "Start")]
 [assembly: WebActivator.ApplicationShutdownMethodAttribute(typeof(Kudu.Services.Web.App_Start.NinjectServices), "Stop")]
@@ -313,6 +314,10 @@ namespace Kudu.Services.Web.App_Start
             // Temporary fix for https://github.com/npm/npm/issues/5905
             EnsureNpmGlobalDirectory();
             EnsureUserProfileDirectory();
+
+            // Make sure webpages:Enabled is true. Even though we set it in web.config, it could be overwritten by
+            // an Azure AppSetting that's supposed to be for the site only but incidently affects Kudu as well.
+            ConfigurationManager.AppSettings["webpages:Enabled"] = "true";
 
             RegisterRoutes(kernel, RouteTable.Routes);
 
