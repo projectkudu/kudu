@@ -23,7 +23,7 @@ CALL dnu restore
 IF ERRORLEVEL 1 GOTO ERROR
 
 :: 5. Run the WebJob
-CALL dnx . run
+CALL dnx run
 IF ERRORLEVEL 1 GOTO ERROR
 
 GOTO END
