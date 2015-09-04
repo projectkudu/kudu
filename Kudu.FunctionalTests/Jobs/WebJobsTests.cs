@@ -815,10 +815,12 @@ namespace WebJob
                 }
                 var result = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
                 var output = appManager.VfsManager.ReadAllText("Site/deployments/" + result[0].Id + "/log.log");
+                var file = appManager.VfsManager.ReadAllText("Site/wwwroot/App_Data/jobs/continuous/deployedJob/Program.cs");
 
                 Assert.Equal(1, result.Count);
                 Assert.Equal(DeployStatus.Success, result[0].Status);
                 Assert.Contains("Generating deployment script for DNX Console Application", output);
+                Assert.Contains("namespace", file);
             });
         }
 
