@@ -217,8 +217,9 @@ namespace Kudu.TestHarness
             string repositoryPath = path ?? Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
             Directory.CreateDirectory(repositoryPath);
             var exe = new GitExecutable(repositoryPath, idleTimeout: TimeSpan.FromSeconds(3600));
-            exe.SetTraceLevel(2);
-            exe.SetHttpVerbose(true);
+            // reduce noises in log
+            //exe.SetTraceLevel(2);
+            //exe.SetHttpVerbose(true);
             exe.SetSSLNoVerify(true);
             GitExecute(exe, "clone \"{0}\" .", cloneUri);
             return repositoryPath;
@@ -265,8 +266,9 @@ namespace Kudu.TestHarness
 
             // Use a really long idle timeout, since it's mostly meaningful when running on server, not client
             var exe = new GitExecutable(repositoryPath, idleTimeout: TimeSpan.FromSeconds(3600));
-            exe.SetTraceLevel(2);
-            exe.SetHttpVerbose(true);
+            // reduce noises in log
+            //exe.SetTraceLevel(2);
+            //exe.SetHttpVerbose(true);
             exe.SetSSLNoVerify(true);
 
             if (environments != null)
