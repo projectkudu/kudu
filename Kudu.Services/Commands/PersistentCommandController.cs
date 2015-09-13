@@ -109,7 +109,7 @@ namespace Kudu.Services
             if (shell.Equals("powershell", StringComparison.OrdinalIgnoreCase))
             {
                 startInfo.FileName = System.Environment.ExpandEnvironmentVariables(@"%windir%\System32\WindowsPowerShell\v1.0\powershell.exe");
-                startInfo.Arguments = "-File -";
+                startInfo.Arguments = "-ExecutionPolicy RemoteSigned -File -";
             }
             else
             {
