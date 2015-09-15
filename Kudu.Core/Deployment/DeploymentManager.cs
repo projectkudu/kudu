@@ -823,7 +823,9 @@ namespace Kudu.Core.Deployment
         {
             string id = _status.ActiveDeploymentId;
 
-            if (String.IsNullOrEmpty(id))
+            // We've seen rare cases of corruption where the file is full of NUL characters.
+            // If we see the first char is 0, treat the file as corrupted and ignore it
+            if (String.IsNullOrEmpty(id) || id[0] == 0)
             {
                 return null;
             }
