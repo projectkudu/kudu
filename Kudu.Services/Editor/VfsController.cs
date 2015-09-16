@@ -90,6 +90,10 @@ namespace Kudu.Services.Editor
 
                 // Set etag for the file
                 successFileResponse.SetEntityTagHeader(currentEtag, lastModified);
+                // When in DebugConsole, convince browsers to download files
+                // rather than rendering inline
+                // See https://github.com/projectkudu/kudu/issues/1634
+                successFileResponse.Content.Headers.Add("Content-Disposition", "attachment");
                 return Task.FromResult(successFileResponse);
             }
             catch (InvalidByteRangeException invalidByteRangeException)

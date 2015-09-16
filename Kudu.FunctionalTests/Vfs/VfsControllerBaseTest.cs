@@ -107,7 +107,7 @@ namespace Kudu.FunctionalTests
             // Check create file results in 201 response with etag
             TestTracer.Trace("==== Check create file results in 201 response with etag");
             response = await HttpPutAsync(fileAddress, CreateUploadContent(_fileContent0));
-            await VerifyDeployment(deploymentFileAddress, HttpStatusCode.OK, _fileContent0);
+            await VerifyDeploymentAsync(deploymentFileAddress, HttpStatusCode.OK, _fileContent0);
             Assert.Equal(HttpStatusCode.Created, response.StatusCode);
             EntityTagHeaderValue originalEtag = response.Headers.ETag;
             Assert.NotNull(originalEtag);
@@ -261,7 +261,7 @@ namespace Kudu.FunctionalTests
                     update1.Content = CreateUploadContent(_fileContent1);
 
                     response = await HttpSendAsync(update1);
-                    await VerifyDeployment(deploymentFileAddress, HttpStatusCode.OK, _fileContent1);
+                    await VerifyDeploymentAsync(deploymentFileAddress, HttpStatusCode.OK, _fileContent1);
 
                     Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
                     Assert.NotNull(response.Headers.ETag);
@@ -279,7 +279,7 @@ namespace Kudu.FunctionalTests
                     update2.Content = CreateUploadContent(_fileContent2);
 
                     response = await HttpSendAsync(update2);
-                    await VerifyDeployment(deploymentFileAddress, HttpStatusCode.OK, _fileContent3);
+                    await VerifyDeploymentAsync(deploymentFileAddress, HttpStatusCode.OK, _fileContent3);
 
                     Assert.Equal(HttpStatusCode.OK, response.StatusCode);
                     Assert.NotNull(response.Headers.ETag);
@@ -298,7 +298,7 @@ namespace Kudu.FunctionalTests
                     update3.Content = CreateUploadContent(_fileContent3);
 
                     response = await HttpSendAsync(update3);
-                    await VerifyDeployment(deploymentFileAddress, HttpStatusCode.OK, _fileContent3);
+                    await VerifyDeploymentAsync(deploymentFileAddress, HttpStatusCode.OK, _fileContent3);
 
                     Assert.Equal(HttpStatusCode.OK, response.StatusCode);
                     Assert.NotNull(response.Headers.ETag);
@@ -317,7 +317,7 @@ namespace Kudu.FunctionalTests
                     update4.Content = CreateUploadContent(_fileContent4);
 
                     response = await HttpSendAsync(update4);
-                    await VerifyDeployment(deploymentFileAddress, HttpStatusCode.OK, _fileContent3);
+                    await VerifyDeploymentAsync(deploymentFileAddress, HttpStatusCode.OK, _fileContent3);
 
                     Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
                     Assert.Equal(_conflictMediaType, response.Content.Headers.ContentType);
@@ -336,7 +336,7 @@ namespace Kudu.FunctionalTests
                     update5.Content = CreateUploadContent(_fileContent1);
 
                     response = await HttpSendAsync(update5);
-                    await VerifyDeployment(deploymentFileAddress, HttpStatusCode.OK, _fileContent3);
+                    await VerifyDeploymentAsync(deploymentFileAddress, HttpStatusCode.OK, _fileContent3);
 
                     Assert.Equal(HttpStatusCode.PreconditionFailed, response.StatusCode);
                     Assert.Equal(updatedEtag, response.Headers.ETag);
@@ -352,7 +352,7 @@ namespace Kudu.FunctionalTests
                     update6.Content = CreateUploadContent(_fileContent1);
 
                     response = await HttpSendAsync(update6);
-                    await VerifyDeployment(deploymentFileAddress, HttpStatusCode.OK, _fileContent1);
+                    await VerifyDeploymentAsync(deploymentFileAddress, HttpStatusCode.OK, _fileContent1);
 
                     Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
                     Assert.NotNull(response.Headers.ETag);
@@ -390,7 +390,7 @@ namespace Kudu.FunctionalTests
                     request.Content = CreateUploadContent(_fileContent2);
 
                     response = await HttpSendAsync(request);
-                    await VerifyDeployment(deploymentFileAddress, HttpStatusCode.OK, _fileContent1);
+                    await VerifyDeploymentAsync(deploymentFileAddress, HttpStatusCode.OK, _fileContent1);
 
                     Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
                     Assert.NotNull(response.Headers.ETag);
@@ -407,7 +407,7 @@ namespace Kudu.FunctionalTests
                     request.Content = CreateUploadContent(_fileContent3);
 
                     response = await HttpSendAsync(request);
-                    await VerifyDeployment(deploymentFileAddress, HttpStatusCode.OK, _fileContent3);
+                    await VerifyDeploymentAsync(deploymentFileAddress, HttpStatusCode.OK, _fileContent3);
 
                     Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
                     Assert.NotNull(response.Headers.ETag);
@@ -430,7 +430,7 @@ namespace Kudu.FunctionalTests
                     update7.Content = CreateUploadContent(_fileContent2);
 
                     response = await HttpSendAsync(update7);
-                    await VerifyDeployment(customDeploymentFileAddress, HttpStatusCode.OK, _fileContent2);
+                    await VerifyDeploymentAsync(customDeploymentFileAddress, HttpStatusCode.OK, _fileContent2);
 
                     Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
                     Assert.NotNull(response.Headers.ETag);
@@ -451,7 +451,7 @@ namespace Kudu.FunctionalTests
                     deleteRequest.Headers.IfMatch.Add(new EntityTagHeaderValue("\"invalidetag\""));
 
                     response = await HttpSendAsync(deleteRequest);
-                    await VerifyDeployment(deploymentFileAddress, HttpStatusCode.OK, _fileContent2);
+                    await VerifyDeploymentAsync(deploymentFileAddress, HttpStatusCode.OK, _fileContent2);
 
                     Assert.Equal(HttpStatusCode.PreconditionFailed, response.StatusCode);
                     Assert.Equal(updatedEtag, response.Headers.ETag);
@@ -466,7 +466,7 @@ namespace Kudu.FunctionalTests
                     deleteRequest.Headers.IfMatch.Add(originalEtag);
 
                     response = await HttpSendAsync(deleteRequest);
-                    await VerifyDeployment(deploymentFileAddress, HttpStatusCode.OK, _fileContent2);
+                    await VerifyDeploymentAsync(deploymentFileAddress, HttpStatusCode.OK, _fileContent2);
 
                     Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
                 }
@@ -480,7 +480,7 @@ namespace Kudu.FunctionalTests
                     deleteRequest.Headers.IfMatch.Add(updatedEtag);
 
                     response = await HttpSendAsync(deleteRequest);
-                    await VerifyDeployment(deploymentFileAddress, HttpStatusCode.NotFound, null);
+                    await VerifyDeploymentAsync(deploymentFileAddress, HttpStatusCode.NotFound, null);
 
                     Assert.Equal(HttpStatusCode.OK, response.StatusCode);
                 }
@@ -494,7 +494,7 @@ namespace Kudu.FunctionalTests
                     deleteRequest.Headers.IfMatch.Add(updatedEtag);
 
                     response = await HttpSendAsync(deleteRequest);
-                    await VerifyDeployment(deploymentFileAddress, HttpStatusCode.NotFound, null);
+                    await VerifyDeploymentAsync(deploymentFileAddress, HttpStatusCode.NotFound, null);
 
                     Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
                 }
@@ -657,7 +657,7 @@ namespace Kudu.FunctionalTests
             }
         }
 
-        private async Task VerifyDeployment(string address, HttpStatusCode expectedStatus, byte[] expectedContent)
+        private async Task VerifyDeploymentAsync(string address, HttpStatusCode expectedStatus, byte[] expectedContent)
         {
             if (address != null)
             {
