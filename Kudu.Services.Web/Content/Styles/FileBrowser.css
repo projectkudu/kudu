@@ -197,3 +197,9 @@ div.editor {
 .statusbar-red {
     border-left-color: #f14000;
 }
+
+.statusbar-saved {
+    border-left-color: #00e166;
+    transition: border-left-color 0.35s ease;
+}
+
