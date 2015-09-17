@@ -337,7 +337,7 @@ namespace Kudu.Services.Infrastructure
                 }
                 else
                 {
-                    string reqUri = Request.RequestUri.AbsoluteUri;
+                    string reqUri = Request.RequestUri.AbsoluteUri.Split('?').First();
                     if (reqUri[reqUri.Length - 1] == UriSegmentSeparator)
                     {
                         result = Path.GetFullPath(result + Path.DirectorySeparatorChar);
@@ -349,7 +349,8 @@ namespace Kudu.Services.Infrastructure
 
         private IEnumerable<VfsStatEntry> GetDirectoryResponse(FileSystemInfoBase[] infos)
         {
-            string baseAddress = Request.RequestUri.AbsoluteUri;
+            string baseAddress = Request.RequestUri.AbsoluteUri.Split('?').First();
+            string query = Request.RequestUri.Query;
             foreach (FileSystemInfoBase fileSysInfo in infos)
             {
                 bool isDirectory = (fileSysInfo.Attributes & FileAttributes.Directory) != 0;
@@ -363,7 +364,7 @@ namespace Kudu.Services.Infrastructure
                     MTime = fileSysInfo.LastWriteTimeUtc,
                     Mime = mime,
                     Size = size,
-                    Href = (baseAddress + Uri.EscapeUriString(unescapedHref)).EscapeHashCharacter(),
+                    Href = (baseAddress + Uri.EscapeUriString(unescapedHref) + query).EscapeHashCharacter(),
                     Path = fileSysInfo.FullName
                 };
             }
@@ -372,7 +373,7 @@ namespace Kudu.Services.Infrastructure
             IHttpRouteData routeData = Request.GetRouteData();
             if (routeData != null && String.IsNullOrEmpty(routeData.Values["path"] as string))
             {
-                foreach (var entry in VfsSpecialFolders.GetEntries(baseAddress))
+                foreach (var entry in VfsSpecialFolders.GetEntries(baseAddress, query))
                 {
                     yield return entry;
                 }

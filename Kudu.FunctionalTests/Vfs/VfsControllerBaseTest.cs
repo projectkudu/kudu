@@ -68,12 +68,17 @@ namespace Kudu.FunctionalTests
             string dir = Guid.NewGuid().ToString("N");
             string dirAddress = BaseAddress + _segmentDelimiter + dir;
             string dirAddressWithTerminatingSlash = dirAddress + _segmentDelimiter;
-
+            
             // The %2520 is there to test that we can accept those characters. Here, %2520 is the URL encoded form,
             // and the actual file name has %20 (and not a space character!)
             string file = Guid.NewGuid().ToString("N") + "%2520" + ".txt";
             string fileAddress = dirAddressWithTerminatingSlash + file;
             string fileAddressWithTerminatingSlash = fileAddress + _segmentDelimiter;
+
+            string query = "?foo=bar";
+            string baseAddressWithQuery = BaseAddress + _segmentDelimiter + query;
+            string dirAddressWithQuery = dirAddressWithTerminatingSlash + query;
+            string fileAddressWithQuery = fileAddress + query;
 
             string deploymentFileAddress = null;
             string customDeploymentFileAddress = null;
@@ -117,6 +122,15 @@ namespace Kudu.FunctionalTests
             {
                 Assert.NotNull(lastModified);
             }
+
+            // Check query string
+            TestTracer.Trace("==== Check handle query string");
+            response = await HttpGetAsync(baseAddressWithQuery);
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            response = await HttpGetAsync(dirAddressWithQuery);
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            response = await HttpGetAsync(fileAddressWithQuery);
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
             // Check that we get a 200 (OK) on created file with the correct etag
             TestTracer.Trace("==== Check that we get a 200 (OK) on created file with the correct etag");
