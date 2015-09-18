@@ -1,4 +1,5 @@
 ﻿using Kudu.Core.Infrastructure;
+using Kudu.Core.SourceControl;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -6,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Xunit;
+using System.IO;
 
 namespace Kudu.Core.Test.Deployment
 {
@@ -21,8 +23,9 @@ namespace Kudu.Core.Test.Deployment
             };
             FileSystemHelpers.Instance = MockFileSystem.GetMockFileSystem(@"x:\repo\global.json", () => JsonConvert.SerializeObject(sdkObject));
             var arch = AspNet5Helper.GetDefaultAspNet5RuntimeArchitecture();
+            var mockFileFinder = new MockFileFinder();
             //Act
-            var sdk = AspNet5Helper.GetAspNet5Sdk(@"x:\repo");
+            var sdk = AspNet5Helper.GetAspNet5Sdk(@"x:\repo", mockFileFinder);
 
             //Assert
             Assert.NotNull(sdk);
@@ -47,8 +50,10 @@ namespace Kudu.Core.Test.Deployment
             };
             FileSystemHelpers.Instance = MockFileSystem.GetMockFileSystem(@"x:\repo\global.json", () => JsonConvert.SerializeObject(sdkObject));
             var arch = AspNet5Helper.GetDefaultAspNet5RuntimeArchitecture();
+            var mockFileFinder = new MockFileFinder();
+
             //Act
-            var sdk = AspNet5Helper.GetAspNet5Sdk(@"x:\repo");
+            var sdk = AspNet5Helper.GetAspNet5Sdk(@"x:\repo", mockFileFinder);
 
             //Assert
             Assert.NotNull(sdk);
@@ -57,5 +62,13 @@ namespace Kudu.Core.Test.Deployment
             Assert.Equal(sdkObject.sdk.architecture, sdk.Architecture);
         }
 
+    }
+
+    internal class MockFileFinder : IFileFinder
+    {
+        public IEnumerable<string> ListFiles(string path, SearchOption searchOption, params string[] lookupList)
+        {
+            return lookupList.Select(i => FileSystemHelpers.GetFiles(path, i, searchOption)).SelectMany(i => i);
+        }
     }
 }

@@ -5,18 +5,21 @@ using System.Text;
 using System.Threading.Tasks;
 using Kudu.Contracts.Settings;
 using Kudu.Core.Infrastructure;
+using Kudu.Core.SourceControl;
 
 namespace Kudu.Core.Deployment.Generator
 {
     class AspNet5Builder : GeneratorSiteBuilder
     {
+        private IFileFinder _fileFinder;
         private readonly string _projectPath;
         private readonly string _sourcePath;
         private readonly bool _isConsoleApp;
 
-        public AspNet5Builder(IEnvironment environment, IDeploymentSettingsManager settings, IBuildPropertyProvider propertyProvider, string sourcePath, string projectPath, bool isConsoleApp)
+        public AspNet5Builder(IEnvironment environment, IDeploymentSettingsManager settings, IBuildPropertyProvider propertyProvider, IFileFinder fileFinder, string sourcePath, string projectPath, bool isConsoleApp)
             : base(environment, settings, propertyProvider, sourcePath)
         {
+            _fileFinder = fileFinder;
             _projectPath = projectPath;
             _sourcePath = sourcePath;
             _isConsoleApp = isConsoleApp;
@@ -33,7 +36,7 @@ namespace Kudu.Core.Deployment.Generator
                 }
                 else
                 {
-                    var aspNetSdk = AspNet5Helper.GetAspNet5Sdk(_sourcePath);
+                    var aspNetSdk = AspNet5Helper.GetAspNet5Sdk(_sourcePath, _fileFinder);
                     commandArguments.AppendFormat("--aspNet5 \"{0}\" --aspNet5Version \"{1}\" --aspNet5Runtime \"{2}\" --aspNet5Architecture \"{3}\"",
                         _projectPath,
                         aspNetSdk.Version,

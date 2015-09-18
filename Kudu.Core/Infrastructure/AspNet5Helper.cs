@@ -3,11 +3,14 @@ using System.IO;
 using System.Linq;
 using Kudu.Core.Deployment;
 using Newtonsoft.Json.Linq;
+using Kudu.Core.SourceControl;
 
 namespace Kudu.Core.Infrastructure
 {
     internal static class AspNet5Helper
     {
+        public static readonly string[] GlobalJsonLookupList = new string[] { "*global.json" };
+
         public static bool IsWebApplicationProjectJsonFile(string projectJsonPath)
         {
             try
@@ -25,10 +28,10 @@ namespace Kudu.Core.Infrastructure
             }
         }
 
-        public static AspNet5Sdk GetAspNet5Sdk(string rootPath)
+        public static AspNet5Sdk GetAspNet5Sdk(string rootPath, IFileFinder fileFinder)
         {
             AspNet5Sdk aspNetSdk;
-            if (!TryGetAspNet5Sdk(rootPath, out aspNetSdk))
+            if (!TryGetAspNet5Sdk(rootPath, fileFinder, out aspNetSdk))
             {
                 aspNetSdk = new AspNet5Sdk
                 {
@@ -62,13 +65,15 @@ namespace Kudu.Core.Infrastructure
             return false;
         }
 
-        private static bool TryGetAspNet5Sdk(string rootPath, out AspNet5Sdk aspNetSdk)
+        private static bool TryGetAspNet5Sdk(string rootPath, IFileFinder fileFinder, out AspNet5Sdk aspNetSdk)
         {
             aspNetSdk = null;
-            var globalJson = Path.Combine(rootPath, "global.json");
-            if (FileSystemHelpers.FileExists(globalJson))
+            var globalJsonFiles = fileFinder.ListFiles(rootPath, SearchOption.AllDirectories, new[] { "*global.json" })
+                .Where(path => Path.GetFileName(path).Equals("global.json", StringComparison.OrdinalIgnoreCase))
+                .ToList();
+            if (globalJsonFiles.Count == 1 && FileSystemHelpers.FileExists(globalJsonFiles.First()))
             {
-                var parsedGlobalJson = JObject.Parse(FileSystemHelpers.ReadAllText(globalJson));
+                var parsedGlobalJson = JObject.Parse(FileSystemHelpers.ReadAllText(globalJsonFiles.First()));
                 if (parsedGlobalJson["sdk"] != null)
                 {
                     aspNetSdk = parsedGlobalJson["sdk"].ToObject<AspNet5Sdk>();
