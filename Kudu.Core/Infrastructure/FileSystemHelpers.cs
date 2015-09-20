@@ -130,6 +130,15 @@ namespace Kudu.Core.Infrastructure
             return Instance.File.GetLastWriteTimeUtc(path);
         }
 
+        // Get the latest LastWriteTime of all the files in a folder
+        public static DateTime GetFolderLatestWriteTimeUtc(string path)
+        {
+            DirectoryInfoBase jobBinariesDirectory = DirectoryInfoFromDirectoryName(path);
+            FileInfoBase[] files = jobBinariesDirectory.GetFiles("*.*", SearchOption.AllDirectories);
+
+            return files.Select(f => f.LastWriteTimeUtc).OrderByDescending(t => t).FirstOrDefault();
+        }
+
         public static void WriteAllBytes(string path, byte[] contents)
         {
             Instance.File.WriteAllBytes(path, contents);

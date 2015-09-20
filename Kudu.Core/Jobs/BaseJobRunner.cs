@@ -72,19 +72,6 @@ namespace Kudu.Core.Jobs
 
         protected JobSettings JobSettings { get; set; }
 
-        private static int CalculateHashForJob(string jobBinariesPath)
-        {
-            var updateDatesString = new StringBuilder();
-            DirectoryInfoBase jobBinariesDirectory = FileSystemHelpers.DirectoryInfoFromDirectoryName(jobBinariesPath);
-            FileInfoBase[] files = jobBinariesDirectory.GetFiles("*.*", SearchOption.AllDirectories);
-            foreach (FileInfoBase file in files)
-            {
-                updateDatesString.Append(file.LastWriteTimeUtc.Ticks);
-            }
-
-            return updateDatesString.ToString().GetHashCode();
-        }
-
         private void CacheJobBinaries(JobBase job, IJobLogger logger)
         {
             bool isInPlaceDefault = job.ScriptHost.GetType() == typeof(NodeScriptHost);
@@ -102,10 +89,14 @@ namespace Kudu.Core.Jobs
             {
                 try
                 {
-                    int currentHash = CalculateHashForJob(JobBinariesPath);
-                    int lastHash = CalculateHashForJob(WorkingDirectory);
+                    // If the newest file in the WebJobs folder is newer than the newest file in the cache,
+                    // treat the cache as invalid.
+                    // Note that we don't want to invalidate the cache if files are added in the cache. Also, we
+                    // update the .exe.config file, and we don't want that to invalidate the cache.
+                    DateTime lastWebJobsWriteTime = FileSystemHelpers.GetFolderLatestWriteTimeUtc(JobBinariesPath);
+                    DateTime lastWorkingDirectoryWriteTime = FileSystemHelpers.GetFolderLatestWriteTimeUtc(WorkingDirectory);
 
-                    if (lastHash == currentHash)
+                    if (lastWebJobsWriteTime <= lastWorkingDirectoryWriteTime)
                     {
                         return;
                     }
