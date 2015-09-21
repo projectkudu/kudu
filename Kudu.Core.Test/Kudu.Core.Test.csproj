@@ -98,6 +98,7 @@
     <Compile Include="Infrastructure\VsSolutionTest.cs" />
     <Compile Include="Infrastructure\XmlUtilityFacts.cs" />
     <Compile Include="DeploymentSettingsFacts.cs" />
+    <Compile Include="Jobs\BaseJobRunnerFacts.cs" />
     <Compile Include="Jobs\ContinuousJobRunnerFacts.cs" />
     <Compile Include="Jobs\ContinuousJobsManagerFacts.cs" />
     <Compile Include="Jobs\ScheduleFacts.cs">

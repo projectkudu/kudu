@@ -1,12 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.Configuration;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Abstractions;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Xml.Linq;
 using System.Xml.XPath;
@@ -28,6 +26,7 @@ namespace Kudu.Core.Jobs
         private string _shutdownNotificationFilePath;
         private string _workingDirectory;
         private string _inPlaceWorkingDirectory;
+        private Dictionary<string, FileInfoBase> _cachedSourceDirectoryFileMap;
 
         protected BaseJobRunner(string jobName, string jobsTypePath, IEnvironment environment,
             IDeploymentSettingsManager settings, ITraceFactory traceFactory, IAnalytics analytics)
@@ -72,17 +71,61 @@ namespace Kudu.Core.Jobs
 
         protected JobSettings JobSettings { get; set; }
 
-        private static int CalculateHashForJob(string jobBinariesPath)
+        internal static bool JobDirectoryHasChanged(
+            Dictionary<string, FileInfoBase> sourceDirectoryFileMap, 
+            Dictionary<string, FileInfoBase> workingDirectoryFileMap, 
+            Dictionary<string, FileInfoBase> cachedSourceDirectoryFileMap)
         {
-            var updateDatesString = new StringBuilder();
-            DirectoryInfoBase jobBinariesDirectory = FileSystemHelpers.DirectoryInfoFromDirectoryName(jobBinariesPath);
+            // enumerate all source directory files, and compare against the files
+            // in the working directory (i.e. the cached directory)
+            FileInfoBase foundEntry = null;
+            foreach (var entry in sourceDirectoryFileMap)
+            {  
+                if (workingDirectoryFileMap.TryGetValue(entry.Key, out foundEntry))
+                {
+                    if (entry.Value.LastWriteTimeUtc > foundEntry.LastWriteTimeUtc)
+                    {
+                        // source file has changed since we last cached it
+                        return true;
+                    }
+                }
+                else
+                {
+                    // a new file has been added that isn't in our cache directory
+                    return true;
+                }
+            }
+
+            // if we've previously run this check in the current process,
+            // look for any file deletions by ensuring all our previously
+            // cached entries are still present
+            if (cachedSourceDirectoryFileMap != null)
+            {
+                foreach (var entry in cachedSourceDirectoryFileMap)
+                {
+                    if (!sourceDirectoryFileMap.TryGetValue(entry.Key, out foundEntry))
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        internal static Dictionary<string, FileInfoBase> GetJobDirectoryFileMap(string sourceDirectory)
+        {
+            Dictionary<string, FileInfoBase> fileMap = new Dictionary<string, FileInfoBase>();
+
+            DirectoryInfoBase jobBinariesDirectory = FileSystemHelpers.DirectoryInfoFromDirectoryName(sourceDirectory);
             FileInfoBase[] files = jobBinariesDirectory.GetFiles("*.*", SearchOption.AllDirectories);
             foreach (FileInfoBase file in files)
             {
-                updateDatesString.Append(file.LastWriteTimeUtc.Ticks);
+                string key = file.FullName.Substring(sourceDirectory.Length + 1);
+                fileMap.Add(key, file);
             }
 
-            return updateDatesString.ToString().GetHashCode();
+            return fileMap;
         }
 
         private void CacheJobBinaries(JobBase job, IJobLogger logger)
@@ -98,22 +141,24 @@ namespace Kudu.Core.Jobs
 
             _inPlaceWorkingDirectory = null;
 
+            Dictionary<string, FileInfoBase> sourceDirectoryFileMap = null;
             if (WorkingDirectory != null)
             {
                 try
                 {
-                    int currentHash = CalculateHashForJob(JobBinariesPath);
-                    int lastHash = CalculateHashForJob(WorkingDirectory);
-
-                    if (lastHash == currentHash)
+                    sourceDirectoryFileMap = GetJobDirectoryFileMap(JobBinariesPath);
+                    var workingDirectoryFileMap = GetJobDirectoryFileMap(WorkingDirectory);
+                    if (!JobDirectoryHasChanged(sourceDirectoryFileMap, workingDirectoryFileMap, _cachedSourceDirectoryFileMap))
                     {
+                        // no changes detected, so skip the cache/copy step below
                         return;
                     }
                 }
                 catch (Exception ex)
                 {
-                    // Log error and ignore it as it's not critical to cache job binaries
-                    logger.LogWarning("Failed to calculate hash for WebJob, continue to copy WebJob binaries (this will not affect WebJob run)\n" + ex);
+                    // Log error and ignore it, since this diff optimization isn't critical.
+                    // We'll just do a full copy in this case.
+                    logger.LogWarning("Failed to diff WebJob directories for changes. Continuing to copy WebJob binaries (this will not affect the WebJob run)\n" + ex);
                     _analytics.UnexpectedException(ex);
                 }
             }
@@ -140,6 +185,10 @@ namespace Kudu.Core.Jobs
                     UpdateAppConfigs(tempJobInstancePath);
 
                     _workingDirectory = tempJobInstancePath;
+
+                    // cache the file map snapshot for next time (to aid in detecting
+                    // file deletions)
+                    _cachedSourceDirectoryFileMap = sourceDirectoryFileMap;
                 });
             }
             catch (Exception ex)
