@@ -29,6 +29,7 @@
       <HintPath>..\packages\Newtonsoft.Json.6.0.6\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
     <Reference Include="System.IO.Abstractions, Version=1.4.0.74, Culture=neutral, PublicKeyToken=d480b5b72fb413da, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -98,6 +99,7 @@
     <Compile Include="Infrastructure\VsSolutionTest.cs" />
     <Compile Include="Infrastructure\XmlUtilityFacts.cs" />
     <Compile Include="DeploymentSettingsFacts.cs" />
+    <Compile Include="Jobs\BaseJobRunnerFacts.cs" />
     <Compile Include="Jobs\ContinuousJobRunnerFacts.cs" />
     <Compile Include="Jobs\ContinuousJobsManagerFacts.cs" />
     <Compile Include="Jobs\ScheduleFacts.cs">

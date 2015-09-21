@@ -1,12 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.Configuration;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Abstractions;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Xml.Linq;
 using System.Xml.XPath;
@@ -28,6 +26,7 @@ namespace Kudu.Core.Jobs
         private string _shutdownNotificationFilePath;
         private string _workingDirectory;
         private string _inPlaceWorkingDirectory;
+        private Dictionary<string, FileInfoBase> _cachedSourceDirectoryFileMap;
 
         protected BaseJobRunner(string jobName, string jobsTypePath, IEnvironment environment,
             IDeploymentSettingsManager settings, ITraceFactory traceFactory, IAnalytics analytics)
@@ -72,17 +71,60 @@ namespace Kudu.Core.Jobs
 
         protected JobSettings JobSettings { get; set; }
 
-        private static int CalculateHashForJob(string jobBinariesPath)
+        internal static bool JobDirectoryHasChanged(
+            Dictionary<string, FileInfoBase> sourceDirectoryFileMap, 
+            Dictionary<string, FileInfoBase> workingDirectoryFileMap, 
+            Dictionary<string, FileInfoBase> cachedSourceDirectoryFileMap,
+            IJobLogger logger)
         {
-            var updateDatesString = new StringBuilder();
-            DirectoryInfoBase jobBinariesDirectory = FileSystemHelpers.DirectoryInfoFromDirectoryName(jobBinariesPath);
-            FileInfoBase[] files = jobBinariesDirectory.GetFiles("*.*", SearchOption.AllDirectories);
-            foreach (FileInfoBase file in files)
-            {
-                updateDatesString.Append(file.LastWriteTimeUtc.Ticks);
+            // enumerate all source directory files, and compare against the files
+            // in the working directory (i.e. the cached directory)
+            FileInfoBase foundEntry = null;
+            foreach (var entry in sourceDirectoryFileMap)
+            {  
+                if (workingDirectoryFileMap.TryGetValue(entry.Key, out foundEntry))
+                {
+                    if (entry.Value.LastWriteTimeUtc != foundEntry.LastWriteTimeUtc)
+                    {
+                        // source file has changed since we last cached it, or a source
+                        // file has been modified in the working directory.
+                        logger.LogInformation(string.Format("Job directory change detected: Job file '{0}' timestamp differs between source and working directories.", entry.Key));
+                        return true;
+                    }
+                }
+                else
+                {
+                    // A file exists in source that doesn't exist in our working
+                    // directory. This is either because a file was actually added
+                    // to source, or a file that previously existed in source has been
+                    // deleted from the working directory.
+                    logger.LogInformation(string.Format("Job directory change detected: Job file '{0}' exists in source directory but not in working directory.", entry.Key));
+                    return true;
+                }
             }
 
-            return updateDatesString.ToString().GetHashCode();
+            // if we've previously run this check in the current process,
+            // look for any file deletions by ensuring all our previously
+            // cached entries are still present
+            foreach (var entry in cachedSourceDirectoryFileMap)
+            {
+                if (!sourceDirectoryFileMap.TryGetValue(entry.Key, out foundEntry))
+                {
+                    logger.LogInformation(string.Format("Job directory change detected: Job file '{0}' has been deleted.", entry.Key));
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        internal static Dictionary<string, FileInfoBase> GetJobDirectoryFileMap(string sourceDirectory)
+        {
+            DirectoryInfoBase jobBinariesDirectory = FileSystemHelpers.DirectoryInfoFromDirectoryName(sourceDirectory);
+            FileInfoBase[] files = jobBinariesDirectory.GetFiles("*.*", SearchOption.AllDirectories);
+
+            int sourceDirectoryPathLength = sourceDirectory.Length + 1;
+            return files.ToDictionary(p => p.FullName.Substring(sourceDirectoryPathLength), q => q, StringComparer.InvariantCultureIgnoreCase);
         }
 
         private void CacheJobBinaries(JobBase job, IJobLogger logger)
@@ -92,28 +134,29 @@ namespace Kudu.Core.Jobs
             {
                 _inPlaceWorkingDirectory = JobBinariesPath;
                 SafeKillAllRunningJobInstances(logger);
-                UpdateAppConfigs(WorkingDirectory);
+                UpdateAppConfigs(WorkingDirectory, _analytics);
                 return;
             }
 
             _inPlaceWorkingDirectory = null;
 
+            Dictionary<string, FileInfoBase> sourceDirectoryFileMap = GetJobDirectoryFileMap(JobBinariesPath);
             if (WorkingDirectory != null)
             {
                 try
                 {
-                    int currentHash = CalculateHashForJob(JobBinariesPath);
-                    int lastHash = CalculateHashForJob(WorkingDirectory);
-
-                    if (lastHash == currentHash)
+                    var workingDirectoryFileMap = GetJobDirectoryFileMap(WorkingDirectory);
+                    if (!JobDirectoryHasChanged(sourceDirectoryFileMap, workingDirectoryFileMap, _cachedSourceDirectoryFileMap, logger))
                     {
+                        // no changes detected, so skip the cache/copy step below
                         return;
                     }
                 }
                 catch (Exception ex)
                 {
-                    // Log error and ignore it as it's not critical to cache job binaries
-                    logger.LogWarning("Failed to calculate hash for WebJob, continue to copy WebJob binaries (this will not affect WebJob run)\n" + ex);
+                    // Log error and ignore it, since this diff optimization isn't critical.
+                    // We'll just do a full copy in this case.
+                    logger.LogWarning("Failed to diff WebJob directories for changes. Continuing to copy WebJob binaries (this will not affect the WebJob run)\n" + ex);
                     _analytics.UnexpectedException(ex);
                 }
             }
@@ -137,9 +180,13 @@ namespace Kudu.Core.Jobs
                     var tempJobInstancePath = Path.Combine(JobTempPath, Path.GetRandomFileName());
 
                     FileSystemHelpers.CopyDirectoryRecursive(JobBinariesPath, tempJobInstancePath);
-                    UpdateAppConfigs(tempJobInstancePath);
+                    UpdateAppConfigs(tempJobInstancePath, _analytics);
 
                     _workingDirectory = tempJobInstancePath;
+
+                    // cache the file map snapshot for next time (to aid in detecting
+                    // file deletions)
+                    _cachedSourceDirectoryFileMap = sourceDirectoryFileMap;
                 });
             }
             catch (Exception ex)
@@ -310,25 +357,30 @@ namespace Kudu.Core.Jobs
             return Path.Combine(shutdownFilesDirectory, Path.GetRandomFileName());
         }
 
-        private void UpdateAppConfigs(string tempJobInstancePath)
+        internal static void UpdateAppConfigs(string tempJobInstancePath, IAnalytics analytics)
         {
             IEnumerable<string> configFilePaths = FileSystemHelpers.ListFiles(tempJobInstancePath, SearchOption.AllDirectories, AppConfigFilesLookupList);
 
             foreach (string configFilePath in configFilePaths)
             {
-                UpdateAppConfig(configFilePath);
-                UpdateAppConfigAddTraceListeners(configFilePath);
+                UpdateAppConfig(configFilePath, analytics);
+                UpdateAppConfigAddTraceListeners(configFilePath, analytics);
             }
         }
 
         /// <summary>
         /// Updates the app.config using XML directly for injecting trace providers.
         /// </summary>
-        private void UpdateAppConfigAddTraceListeners(string configFilePath)
+        internal static void UpdateAppConfigAddTraceListeners(string configFilePath, IAnalytics analytics)
         {
             try
             {
                 var xmlConfig = XDocument.Load(configFilePath);
+
+                // save the LastWriteTime before our modification, so we can restore
+                // it below
+                FileInfo fileInfo = new FileInfo(configFilePath);
+                DateTime lastWriteTime = fileInfo.LastWriteTimeUtc;
 
                 // Make sure the trace listeners section available otherwise create it
                 var configurationElement = GetOrCreateElement(xmlConfig, "configuration");
@@ -362,10 +414,14 @@ namespace Kudu.Core.Jobs
                 }
 
                 FileSystemHelpers.WriteAllText(configFilePath, xmlConfig.ToString());
+
+                // we need to restore the previous last update time so our file write
+                // doesn't cause the job directory to be considered dirty
+                fileInfo.LastWriteTimeUtc = lastWriteTime;
             }
             catch (Exception ex)
             {
-                _analytics.UnexpectedException(ex);
+                analytics.UnexpectedException(ex);
             }
         }
 
@@ -382,7 +438,7 @@ namespace Kudu.Core.Jobs
             return element;
         }
 
-        private void UpdateAppConfig(string configFilePath)
+        internal static void UpdateAppConfig(string configFilePath, IAnalytics analytics)
         {
             try
             {
@@ -398,6 +454,11 @@ namespace Kudu.Core.Jobs
                 {
                     return;
                 }
+
+                // save the LastWriteTime before our modification, so we can restore
+                // it below
+                FileInfo fileInfo = new FileInfo(configFilePath);
+                DateTime lastWriteTime = fileInfo.LastWriteTimeUtc;
 
                 Configuration config = ConfigurationManager.OpenExeConfiguration(exeFilePath);
 
@@ -428,10 +489,14 @@ namespace Kudu.Core.Jobs
                     // Write updated app.config
                     config.Save();
                 }
+
+                // we need to restore the previous last update time so our file write
+                // doesn't cause the job directory to be considered dirty
+                fileInfo.LastWriteTimeUtc = lastWriteTime;
             }
             catch (Exception ex)
             {
-                _analytics.UnexpectedException(ex);
+                analytics.UnexpectedException(ex);
             }
         }
 
