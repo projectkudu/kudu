@@ -17,7 +17,7 @@ namespace Kudu.Core.Test.Jobs
         }
 
         [Fact]
-        public void JobDirectoryHasChanged_NoChages_NoCachedEntries_ReturnsFalse()
+        public void JobDirectoryHasChanged_NoChanges_NoCachedEntries_ReturnsFalse()
         {
             CreateTestJobDirectories();
 

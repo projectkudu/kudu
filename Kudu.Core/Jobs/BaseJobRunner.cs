@@ -141,16 +141,16 @@ namespace Kudu.Core.Jobs
 
             _inPlaceWorkingDirectory = null;
 
-            Dictionary<string, FileInfoBase> sourceDirectoryFileMap = null;
+            Dictionary<string, FileInfoBase> sourceDirectoryFileMap = GetJobDirectoryFileMap(JobBinariesPath);
             if (WorkingDirectory != null)
             {
                 try
                 {
-                    sourceDirectoryFileMap = GetJobDirectoryFileMap(JobBinariesPath);
                     var workingDirectoryFileMap = GetJobDirectoryFileMap(WorkingDirectory);
                     if (!JobDirectoryHasChanged(sourceDirectoryFileMap, workingDirectoryFileMap, _cachedSourceDirectoryFileMap))
                     {
                         // no changes detected, so skip the cache/copy step below
+                        _cachedSourceDirectoryFileMap = sourceDirectoryFileMap;
                         return;
                     }
                 }
