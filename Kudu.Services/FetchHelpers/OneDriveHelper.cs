@@ -25,8 +25,11 @@ namespace Kudu.Services.FetchHelpers
         private const string MicrosoftAzure = "Microsoft Azure";
         private const string CursorKey = "onedrive_cursor";
         private const int DefaultBufferSize = 8192; // From http://msdn.microsoft.com/en-us/library/tyhc0kft.aspx
+        // From experiment, this concurrent seems to be best optimal in success rate and speed.
+        private const int MaxConcurrentRequests = 6;
         private const int MaxRetryCount = 3;
-        private const int MaxFilesPerSeconds = 5;
+        // if we exceed this failure (considered unrecoverable - token expired), we will bail out.
+        private const int MaxFailures = 10;
 
         private readonly ITracer _tracer;
         private readonly IDeploymentStatusManager _status;
@@ -60,7 +63,7 @@ namespace Kudu.Services.FetchHelpers
             ChangesResult changes = null;
             using (_tracer.Step("Getting delta changes with cursor: {0} ...", cursor))
             {
-                changes = await GetChanges(info.AccessToken, info.RepositoryUrl, cursor);
+                changes = await GetChanges(info.TargetChangeset.Id, info.AccessToken, info.RepositoryUrl, cursor);
             }
 
             if (changes == null || changes.Count == 0)
@@ -87,7 +90,7 @@ namespace Kudu.Services.FetchHelpers
                 //  if created dir first then create file. file creation will trigger folder timestamp change.
                 //  which will result in "/a/b" has timestamp from the monent of file creation instead of the timestamp value from server, where value supposed to be set by code specifically.
                 await ApplyChangesParallel(changes.DeletionChanges, info.AccessToken, maxParallelCount: 1);
-                await ApplyChangesParallel(changes.FileChanges, info.AccessToken, maxParallelCount: System.Environment.ProcessorCount);
+                await ApplyChangesParallel(changes.FileChanges, info.AccessToken, maxParallelCount: MaxConcurrentRequests);
                 // apply folder changes at last to maintain same timestamp as in OneDrive
                 await ApplyChangesParallel(changes.DirectoryChanges, info.AccessToken, maxParallelCount: 1);
 
@@ -198,12 +201,14 @@ namespace Kudu.Services.FetchHelpers
             }
         }
 
-        private async Task<ChangesResult> GetChanges(string accessToken, string requestUri, string cursor)
+        private async Task<ChangesResult> GetChanges(string changeset, string accessToken, string requestUri, string cursor)
         {
             string rootUri = GetOneDriveRootUri(requestUri);
             requestUri = string.Format(CultureInfo.InvariantCulture, "{0}/{1}", await GetItemUri(accessToken, requestUri, rootUri), "view.changes");
 
             ChangesResult result = new ChangesResult();
+            IDeploymentStatusFile statusFile = _status.Open(changeset);
+            var loop = 0;
             using (var client = CreateHttpClient(accessToken))
             {
                 var next = cursor;
@@ -218,9 +223,14 @@ namespace Kudu.Services.FetchHelpers
                         uri = string.Format(CultureInfo.InvariantCulture, "{0}?token={1}", requestUri, next);
                     }
 
-                    using (var response = await client.GetAsync(uri))
+                    ++loop;
+                    statusFile.UpdateProgress(string.Format(CultureInfo.CurrentCulture, "Getting delta changes batch #{0}", loop));
+                    using (_tracer.Step("Getting delta changes batch #{0}", loop))
                     {
-                        changes = await ProcessResponse<Dictionary<string, object>>("GetChanges", response);
+                        using (var response = await client.GetAsync(uri))
+                        {
+                            changes = await ProcessResponse<Dictionary<string, object>>("GetChanges", response);
+                        }
                     }
 
                     if (changes.ContainsKey("@changes.resync"))
@@ -231,6 +241,7 @@ namespace Kudu.Services.FetchHelpers
                         }
 
                         // resync
+                        loop = 0;
                         next = null;
                         changes["@changes.hasMoreChanges"] = true;
                         result = new ChangesResult();
@@ -320,9 +331,9 @@ namespace Kudu.Services.FetchHelpers
         {
             List<Task> tasks = new List<Task>();
             string wwwroot = _environment.WebRootPath;
+            bool failureExceed = false;
 
             using (var sem = new SemaphoreSlim(initialCount: maxParallelCount, maxCount: maxParallelCount))
-            using (var filesPerSecLimiter = new RateLimiter(MaxFilesPerSeconds, TimeSpan.FromSeconds(1)))
             {
                 foreach (OneDriveModel.OneDriveChange change in changes)
                 {
@@ -331,7 +342,11 @@ namespace Kudu.Services.FetchHelpers
                         try
                         {
                             await sem.WaitAsync();
-                            await filesPerSecLimiter.ThrottleAsync();
+                            if (failureExceed)
+                            {
+                                return;
+                            }
+
                             bool applied = await ProcessChangeWithRetry(change, accessToken, wwwroot);
                             if (applied)
                             {
@@ -339,7 +354,10 @@ namespace Kudu.Services.FetchHelpers
                             }
                             else
                             {
-                                Interlocked.Increment(ref _failedCount);
+                                if (Interlocked.Increment(ref _failedCount) > MaxFailures)
+                                {
+                                    failureExceed = true;
+                                }
                             }
                         }
                         finally
@@ -444,29 +462,40 @@ namespace Kudu.Services.FetchHelpers
                     string parentDir = Path.GetDirectoryName(fullPath);
                     FileSystemHelpers.EnsureDirectory(parentDir);
 
-                    if (FileSystemHelpers.FileExists(fullPath))
+                    var now = DateTime.UtcNow;
+                    var success = false;
+                    try
                     {
-                        TraceMessage("Updating file {0} ...", fullPath);
-                    }
-                    else
-                    {
-                        TraceMessage("Creating file {0} ...", fullPath);
-                    }
-
-                    using (var client = CreateHttpClient(accessToken))
-                    using (HttpResponseMessage response = await client.GetAsync(change.ContentUri))
-                    {
-                        var fileResponse = await ProcessResponse<Dictionary<string, object>>("HandlingUpdateOrCreate", response);
-                        string downloadUrl = (string)fileResponse["@content.downloadUrl"];
-
-                        using (HttpResponseMessage downloadResponse = await client.GetAsync(downloadUrl))
-                        using (Stream stream = await downloadResponse.EnsureSuccessStatusCode().Content.ReadAsStreamAsync())
+                        using (var client = CreateHttpClient(accessToken))
+                        using (HttpResponseMessage response = await client.GetAsync(change.ContentUri))
                         {
-                            await WriteToFile(stream, fullPath);
+                            var fileResponse = await ProcessResponse<Dictionary<string, object>>("HandlingUpdateOrCreate", response);
+                            string downloadUrl = (string)fileResponse["@content.downloadUrl"];
+
+                            using (HttpResponseMessage downloadResponse = await client.GetAsync(downloadUrl))
+                            using (Stream stream = await downloadResponse.EnsureSuccessStatusCode().Content.ReadAsStreamAsync())
+                            {
+                                await WriteToFile(stream, fullPath);
+                            }
+                        }
+
+                        FileSystemHelpers.SetLastWriteTimeUtc(fullPath, change.LastModifiedUtc);
+
+                        success = true;
+                    }
+                    finally
+                    {
+                        var elapse = (DateTime.UtcNow - now).TotalMilliseconds;
+                        var result = success ? "successful" : "failed";
+                        if (FileSystemHelpers.FileExists(fullPath))
+                        {
+                            TraceMessage("Update file {0} {1} ({2:0}ms)", fullPath, result, elapse);
+                        }
+                        else
+                        {
+                            TraceMessage("Create file {0} {1} ({2:0}ms)", fullPath, result, elapse);
                         }
                     }
-
-                    FileSystemHelpers.SetLastWriteTimeUtc(fullPath, change.LastModifiedUtc);
                 }
                 else
                 {

@@ -124,8 +124,8 @@ namespace Kudu.Services.Test.OneDriveDeployment
             mockTracer.Verify(t => t.Trace(@"Deleted directory D:\home\site\wwwroot\f-delete-dir", It.Is<IDictionary<string, string>>(d => d.Count == 0)));
 
             // file changes
-            mockTracer.Verify(t => t.Trace(@"Creating file D:\home\site\wwwroot\foo.txt ...", It.Is<IDictionary<string, string>>(d => d.Count == 0)));
-            mockTracer.Verify(t => t.Trace(@"Updating file D:\home\site\wwwroot\f22\bar.txt ...", It.Is<IDictionary<string, string>>(d => d.Count == 0)));
+            mockTracer.Verify(t => t.Trace(It.Is<string>(s => s.StartsWith(@"Create file D:\home\site\wwwroot\foo.txt successful ")), It.Is<IDictionary<string, string>>(d => d.Count == 0)));
+            mockTracer.Verify(t => t.Trace(It.Is<string>(s => s.StartsWith(@"Update file D:\home\site\wwwroot\f22\bar.txt successful ")), It.Is<IDictionary<string, string>>(d => d.Count == 0)));
 
             mockTracer.Verify(t => t.Trace(@"Deleted file D:\home\site\wwwroot\f-delete", It.Is<IDictionary<string, string>>(d => d.Count == 0)));
             mockTracer.Verify(t => t.Trace(@"Deleted directory D:\home\site\wwwroot\f-delete-dir", It.Is<IDictionary<string, string>>(d => d.Count == 0)));
