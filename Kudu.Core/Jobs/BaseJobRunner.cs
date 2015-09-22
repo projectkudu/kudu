@@ -106,15 +106,12 @@ namespace Kudu.Core.Jobs
             // if we've previously run this check in the current process,
             // look for any file deletions by ensuring all our previously
             // cached entries are still present
-            if (cachedSourceDirectoryFileMap != null)
+            foreach (var entry in cachedSourceDirectoryFileMap)
             {
-                foreach (var entry in cachedSourceDirectoryFileMap)
+                if (!sourceDirectoryFileMap.TryGetValue(entry.Key, out foundEntry))
                 {
-                    if (!sourceDirectoryFileMap.TryGetValue(entry.Key, out foundEntry))
-                    {
-                        logger.LogInformation(string.Format("Job directory change detected: Job file '{0}' has been deleted.", entry.Key));
-                        return true;
-                    }
+                    logger.LogInformation(string.Format("Job directory change detected: Job file '{0}' has been deleted.", entry.Key));
+                    return true;
                 }
             }
 

@@ -26,28 +26,14 @@ namespace Kudu.Core.Test.Jobs
         }
 
         [Fact]
-        public void JobDirectoryHasChanged_NoChanges_NoCachedEntries_ReturnsFalse()
-        {
-            CreateTestJobDirectories();
-
-            var sourceDirectoryFileMap = BaseJobRunner.GetJobDirectoryFileMap(_testJobSourceDir);
-            Assert.Equal(8, sourceDirectoryFileMap.Count);
-
-            var workingDirectoryFileMap = BaseJobRunner.GetJobDirectoryFileMap(_testJobWorkingDir);
-            Assert.Equal(8, workingDirectoryFileMap.Count);
-
-            Assert.False(BaseJobRunner.JobDirectoryHasChanged(sourceDirectoryFileMap, workingDirectoryFileMap, null, _mockLogger.Object));
-
-            _mockLogger.VerifyAll();
-        }
-
-        [Fact]
         public void JobDirectoryHasChanged_NoChanges_CachedEntries_ReturnsFalse()
         {
             CreateTestJobDirectories();
 
             var sourceDirectoryFileMap = BaseJobRunner.GetJobDirectoryFileMap(_testJobSourceDir);
+            Assert.Equal(8, sourceDirectoryFileMap.Count);
             var workingDirectoryFileMap = BaseJobRunner.GetJobDirectoryFileMap(_testJobWorkingDir);
+            Assert.Equal(8, workingDirectoryFileMap.Count);
             var cachedDirectoryFileMap = workingDirectoryFileMap;
 
             Assert.False(BaseJobRunner.JobDirectoryHasChanged(sourceDirectoryFileMap, workingDirectoryFileMap, cachedDirectoryFileMap, _mockLogger.Object));
@@ -190,8 +176,9 @@ namespace Kudu.Core.Test.Jobs
 
             var sourceDirectoryFileMap = BaseJobRunner.GetJobDirectoryFileMap(_testJobSourceDir);
             var workingDirectoryFileMap = BaseJobRunner.GetJobDirectoryFileMap(_testJobWorkingDir);
+            var cachedDirectoryFileMap = sourceDirectoryFileMap;
 
-            Assert.False(BaseJobRunner.JobDirectoryHasChanged(sourceDirectoryFileMap, workingDirectoryFileMap, null, _mockLogger.Object));
+            Assert.False(BaseJobRunner.JobDirectoryHasChanged(sourceDirectoryFileMap, workingDirectoryFileMap, cachedDirectoryFileMap, _mockLogger.Object));
 
             _mockLogger.VerifyAll();
         }
