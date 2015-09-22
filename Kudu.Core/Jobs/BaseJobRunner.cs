@@ -124,7 +124,7 @@ namespace Kudu.Core.Jobs
             FileInfoBase[] files = jobBinariesDirectory.GetFiles("*.*", SearchOption.AllDirectories);
 
             int sourceDirectoryPathLength = sourceDirectory.Length + 1;
-            return files.ToDictionary(p => p.FullName.Substring(sourceDirectoryPathLength), q => q, StringComparer.InvariantCultureIgnoreCase);
+            return files.ToDictionary(p => p.FullName.Substring(sourceDirectoryPathLength), q => q, StringComparer.OrdinalIgnoreCase);
         }
 
         private void CacheJobBinaries(JobBase job, IJobLogger logger)
