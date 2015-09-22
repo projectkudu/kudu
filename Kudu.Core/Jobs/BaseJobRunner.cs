@@ -83,15 +83,19 @@ namespace Kudu.Core.Jobs
             {  
                 if (workingDirectoryFileMap.TryGetValue(entry.Key, out foundEntry))
                 {
-                    if (entry.Value.LastWriteTimeUtc > foundEntry.LastWriteTimeUtc)
+                    if (entry.Value.LastWriteTimeUtc != foundEntry.LastWriteTimeUtc)
                     {
-                        // source file has changed since we last cached it
+                        // source file has changed since we last cached it, or a source
+                        // file has been modified in the working directory.
                         return true;
                     }
                 }
                 else
                 {
-                    // a new file has been added that isn't in our cache directory
+                    // A file exists in source that doesn't exist in our working
+                    // directory. This is either because a file was actually added
+                    // to source, or a file that previously existed in source has been
+                    // deleted from the working directory.
                     return true;
                 }
             }

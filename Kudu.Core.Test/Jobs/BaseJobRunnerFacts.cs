@@ -100,23 +100,45 @@ namespace Kudu.Core.Test.Jobs
         }
 
         [Fact]
-        public void JobDirectoryHasChanged_FileChangesInWorkingDir_ReturnsFalse()
+        public void JobDirectoryHasChanged_FileAddedInWorkingDir_ReturnsFalse()
         {
             CreateTestJobDirectories();
 
-            // add a file
             File.WriteAllText(Path.Combine(_testJobWorkingDir, "test4.txt"), "test");
+
             var sourceDirectoryFileMap = BaseJobRunner.GetJobDirectoryFileMap(_testJobSourceDir);
             var workingDirectoryFileMap = BaseJobRunner.GetJobDirectoryFileMap(_testJobWorkingDir);
             var cachedDirectoryFileMap = sourceDirectoryFileMap;
-            Assert.False(BaseJobRunner.JobDirectoryHasChanged(sourceDirectoryFileMap, workingDirectoryFileMap, cachedDirectoryFileMap));
 
-            // modify a file
-            File.WriteAllText(Path.Combine(_testJobWorkingDir, "test2.txt"), "test");
-            sourceDirectoryFileMap = BaseJobRunner.GetJobDirectoryFileMap(_testJobSourceDir);
-            workingDirectoryFileMap = BaseJobRunner.GetJobDirectoryFileMap(_testJobWorkingDir);
-            cachedDirectoryFileMap = sourceDirectoryFileMap;
             Assert.False(BaseJobRunner.JobDirectoryHasChanged(sourceDirectoryFileMap, workingDirectoryFileMap, cachedDirectoryFileMap));
+        }
+
+        [Fact]
+        public void JobDirectoryHasChanged_FileModifiedInWorkingDir_ReturnsTrue()
+        {
+            CreateTestJobDirectories();
+
+            File.WriteAllText(Path.Combine(_testJobWorkingDir, "test2.txt"), "test");
+
+            var sourceDirectoryFileMap = BaseJobRunner.GetJobDirectoryFileMap(_testJobSourceDir);
+            var workingDirectoryFileMap = BaseJobRunner.GetJobDirectoryFileMap(_testJobWorkingDir);
+            var cachedDirectoryFileMap = sourceDirectoryFileMap;
+
+            Assert.True(BaseJobRunner.JobDirectoryHasChanged(sourceDirectoryFileMap, workingDirectoryFileMap, cachedDirectoryFileMap));
+        }
+
+        [Fact]
+        public void JobDirectoryHasChanged_FileDeletedInWorkingDir_ReturnsTrue()
+        {
+            CreateTestJobDirectories();
+
+            File.Delete(Path.Combine(_testJobWorkingDir, "test2.txt"));
+
+            var sourceDirectoryFileMap = BaseJobRunner.GetJobDirectoryFileMap(_testJobSourceDir);
+            var workingDirectoryFileMap = BaseJobRunner.GetJobDirectoryFileMap(_testJobWorkingDir);
+            var cachedDirectoryFileMap = sourceDirectoryFileMap;
+
+            Assert.True(BaseJobRunner.JobDirectoryHasChanged(sourceDirectoryFileMap, workingDirectoryFileMap, cachedDirectoryFileMap));
         }
 
         private void CreateTestJobDirectories()
