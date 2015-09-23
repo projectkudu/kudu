@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading;
@@ -73,15 +74,16 @@ namespace Kudu.Services.FetchHelpers
                 return changeSet;
             }
 
-            _totals = changes.Count;
+            // for simplicity, use file changes as effective total
+            _totals = changes.FileChanges.Count > 0 ? changes.FileChanges.Count : changes.Count;
 
             string hoststarthtml = Path.Combine(_environment.WebRootPath, Constants.HostingStartHtml);
             FileSystemHelpers.DeleteFileSafe(hoststarthtml);
 
             using (new Timer(UpdateStatusFile, state: info.TargetChangeset.Id, dueTime: TimeSpan.FromSeconds(5), period: TimeSpan.FromSeconds(5)))
-            using (_tracer.Step("Applying {0} changes ...", changes.Count))
+            using (_tracer.Step("Applying {0} changes ...", _totals))
             {
-                LogMessage(Resources.OneDriveApplyingChanges, changes.Count);
+                LogMessage(Resources.OneDriveApplyingChanges, _totals);
 
                 // perform action seperately, so that can ensure timestamp on directory
                 // e.g two changes:
@@ -89,17 +91,17 @@ namespace Kudu.Services.FetchHelpers
                 //  (new) dir  /a/b
                 //  if created dir first then create file. file creation will trigger folder timestamp change.
                 //  which will result in "/a/b" has timestamp from the monent of file creation instead of the timestamp value from server, where value supposed to be set by code specifically.
-                await ApplyChangesParallel(changes.DeletionChanges, info.AccessToken, maxParallelCount: 1);
-                await ApplyChangesParallel(changes.FileChanges, info.AccessToken, maxParallelCount: MaxConcurrentRequests);
+                await ApplyChangesParallel(changes.DeletionChanges, info.AccessToken, maxParallelCount: 1, countSuccess: changes.FileChanges.Count == 0);
+                await ApplyChangesParallel(changes.FileChanges, info.AccessToken, maxParallelCount: MaxConcurrentRequests, countSuccess: true);
                 // apply folder changes at last to maintain same timestamp as in OneDrive
-                await ApplyChangesParallel(changes.DirectoryChanges, info.AccessToken, maxParallelCount: 1);
+                await ApplyChangesParallel(changes.DirectoryChanges, info.AccessToken, maxParallelCount: 1, countSuccess: changes.FileChanges.Count == 0);
 
                 _tracer.Trace("{0} succeeded, {1} failed", _successCount, _failedCount);
                 LogMessage(Resources.OneDriveApplyResult, _successCount, _failedCount);
 
                 string message = _failedCount > 0 ?
-                    string.Format(CultureInfo.CurrentCulture, Resources.OneDrive_SynchronizedWithFailure, _successCount, changes.Count, _failedCount) :
-                    string.Format(CultureInfo.CurrentCulture, Resources.OneDrive_Synchronized, changes.Count);
+                    string.Format(CultureInfo.CurrentCulture, Resources.OneDrive_SynchronizedWithFailure, _successCount, _totals, _failedCount) :
+                    string.Format(CultureInfo.CurrentCulture, Resources.OneDrive_Synchronized, _totals);
 
                 // Commit anyway even partial change
                 if (repository.Commit(message, info.AuthorName, info.AuthorEmail))
@@ -327,7 +329,7 @@ namespace Kudu.Services.FetchHelpers
             }
         }
 
-        private async Task ApplyChangesParallel(OneDriveModel.OneDriveChangeCollection changes, string accessToken, int maxParallelCount)
+        private async Task ApplyChangesParallel(OneDriveModel.OneDriveChangeCollection changes, string accessToken, int maxParallelCount, bool countSuccess)
         {
             List<Task> tasks = new List<Task>();
             string wwwroot = _environment.WebRootPath;
@@ -350,7 +352,10 @@ namespace Kudu.Services.FetchHelpers
                             bool applied = await ProcessChangeWithRetry(change, accessToken, wwwroot);
                             if (applied)
                             {
-                                Interlocked.Increment(ref _successCount);
+                                if (countSuccess)
+                                {
+                                    Interlocked.Increment(ref _successCount);
+                                }
                             }
                             else
                             {
@@ -506,7 +511,7 @@ namespace Kudu.Services.FetchHelpers
             {
                 if (FileSystemHelpers.DirectoryExists(fullPath))
                 {
-                    TraceMessage("Existed directory {0}, no action performed.", fullPath);
+                    TraceMessage("Directory {0} exists, no action performed.", fullPath);
                 }
                 else
                 {
