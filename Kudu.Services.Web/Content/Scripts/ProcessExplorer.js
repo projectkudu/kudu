@@ -981,6 +981,7 @@ window.onload = function () {
     $("#dialog-form").dialog({
         autoOpen: false,
         height: 300,
+        width: 800,
         buttons: {
             "Search": function () {
                 return searchForHandle();
