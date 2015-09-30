@@ -34,6 +34,7 @@
                     <i class="h4 glyphicon glyphicon-hdd" title="System Drive"></i>
                 </a>
                 <div class="spinner">
+                    <span data-bind="visible: koprocessing()" id="copy-percentage" title="percentage copy"></span>
                     <i data-bind="visible: koprocessing()" class="fa fa-spinner fa-spin" title="Please wait"></i>
                     <i data-bind="visible: errorText, attr: {title: errorText}" class="alert-warning glyphicon glyphicon-exclamation-sign" style="display: none"></i>
                 </div>

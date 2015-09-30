@@ -41,7 +41,64 @@ var statusbar = {
         }
 }
 
+var copyProgressObjects = {};
+var copyObjectsManager = {
+    init: function() {
+        copyProgressObjects = {};
+    },
+    addCopyStats: function (uri, loadedData, totalData
+   )  { 
+        if (copyProgressObjects[uri]) {
+            if (loadedData === totalData) { 
+                copyProgressObjects[uri].endDate = $.now();
+            }
+        } else {
+            copyProgressObjects[uri] = {};
+            copyProgressObjects[uri].startDate = $.now();
+            //this is used for when copying multiple files in the same time so that i may stii have a coherent percentage
+            copyProgressObjects[uri].transactionPackFinished = false; 
+        }
+
+        copyProgressObjects[uri].loadedData = loadedData;
+        copyProgressObjects[uri].totalData = totalData;
+    },
+    getCopyStats: function () {
+        return copyProgressObjects;
+    },
+    getCurrentPercentCompletion: function () {
+        var currentTransfered = 0;
+        var finalTransfered = 0;
+        var foundItem = false;
+
+        for (var key in copyProgressObjects) {
+            var co = copyProgressObjects[key];
+            if(co.transactionPackFinished === false) {
+                foundItem = true;
+                currentTransfered += co.loadedData;
+                finalTransfered += co.totalData;
+            }
+        }
+
+        var perc = 0;
+        if (foundItem) {
+            perc = parseInt((currentTransfered / finalTransfered) * 100);
+        } else { // to avoid 0/0
+            perc = 100;
+        }
+
+        if (perc === 100 && foundItem) { // if all transactions have finished & have some unmarked transaction pack, cancel it out
+            for (var key in copyProgressObjects) {
+                copyProgressObjects[key].transactionPackFinished = true;
+            }
+        }
+
+        return perc;
+    }
+}
+
 var statusbarObj = Object.create(statusbar);
+copyObjectsManager.init();
+
 
 $.connection.hub.url = appRoot + "api/filesystemhub";
 var fileSystemHub = $.connection.fileSystemHub;
@@ -62,6 +119,15 @@ $.connection.hub.start().done(function () {
                 url: item.href.replace(/#/g, encodeURIComponent("#")),
                 data: text,
                 method: "PUT",
+                xhr: function () {  // Custom XMLHttpRequest
+                    var myXhr = $.ajaxSettings.xhr();
+                    if (myXhr.upload) { // Check if upload property exists
+                        myXhr.upload.addEventListener('progress', function (e) {
+                            copyProgressHandlingFunction(e, item.href);
+                        }, false); // For handling the progress of the upload
+                    }
+                    return myXhr;
+                },
                 processData: false,
                 headers: {
                     "If-Match": "*"
@@ -229,8 +295,7 @@ $.connection.hub.start().done(function () {
                        editor.session.setScrollLeft(-1);
                    }).fail(showError);
             }
-            else
-            {
+            else {
                 Vfs.getContent(this)
                    .done(function (data) {
                        viewModel.editText(data);
@@ -384,6 +449,15 @@ $.connection.hub.start().done(function () {
         }
     };
 
+    //monitor file upload progress 
+    function copyProgressHandlingFunction(e,uniqueUrl) {
+        if (e.lengthComputable) {
+            copyObjectsManager.addCopyStats(uniqueUrl, e.loaded, e.total);
+            var perc = copyObjectsManager.getCurrentPercentCompletion();
+            $('#copy-percentage').text(perc + "%");
+        }
+    }
+
     function setupFileSystemWatcher() {
         updateFileSystemWatcher(null);
     }
@@ -476,12 +550,14 @@ $.connection.hub.start().done(function () {
 
             $(".show-on-hover").removeClass('upload-unzip-show');
             $(".show-on-hover").removeClass('upload-unzip-hover');
+            $("#copy-percentage").text("");
             var dir = viewModel.selected();
             viewModel.processing(true);
             _getInputFiles(evt).done(function (files) {
                 Vfs.addFiles(files).always(function () {
                     dir.fetchChildren( /* force */ true);
                     viewModel.processing(false);
+                    $("#copy-percentage").text("");
                 });
             });
         }).on("dragleave", function (e) {
