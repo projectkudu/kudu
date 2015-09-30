@@ -101,7 +101,7 @@ namespace Kudu.Core.Tracing
 
                 strb.Append(new String(' ', _infos.Count * 2));
                 strb.AppendFormat("<step title=\"{0}\" ", XmlUtility.EscapeXmlText(title));
-                strb.AppendFormat("date=\"{0}\" ", info.StartTime.ToString("yyy-MM-ddTHH:mm:ss.fff"));
+                strb.AppendFormat("date=\"{0}\" ", info.StartTime.ToString("yyyy-MM-ddTHH:mm:ss.fff"));
                 if (_infos.Count == 0)
                 {
                     strb.AppendFormat("instance=\"{0}\" ", InstanceIdUtility.GetShortInstanceId());
