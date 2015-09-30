@@ -41,7 +41,65 @@ var statusbar = {
         }
 }
 
+var copyProgressObjects = {};
+var copyObjectsManager = {
+    init: function() {
+        copyProgressObjects = {};
+    },
+    addCopyStats: function (uri, loadedData, totalData
+   )  { 
+        if (copyProgressObjects[uri]) {
+            if (loadedData === totalData) { 
+                copyProgressObjects[uri].endDate = $.now();
+            }
+        } else {
+            copyProgressObjects[uri] = {};
+            copyProgressObjects[uri].startDate = $.now();
+            //this is used for when copying multiple files in the same time so that i may stii have a coherent percentage
+            copyProgressObjects[uri].transactionPackFinished = false; 
+        }
+
+        copyProgressObjects[uri].loadedData = loadedData;
+        copyProgressObjects[uri].totalData = totalData;
+    },
+    getCopyStats: function () {
+        return copyProgressObjects;
+    },
+    getCurrentPercentCompletion: function () {
+        var currentTransfered = 0;
+        var finalTransfered = 0;
+        var foundItem = false;
+
+        for (var key in copyProgressObjects) {
+            var co = copyProgressObjects[key];
+            if(co.transactionPackFinished === false) {
+                foundItem = true;
+                currentTransfered += co.loadedData;
+                finalTransfered += co.totalData;
+            }
+        }
+
+        var perc = 0;
+        if (foundItem) {
+            perc = parseInt((currentTransfered / finalTransfered) * 100);
+        } else { // to avoid 0/0
+            perc = 100;
+        }
+
+        if (perc === 100 && foundItem) { // if all transactions have finished & have some unmarked transaction pack, cancel it out
+            for (var key in copyProgressObjects) {
+                copyProgressObjects[key].transactionPackFinished = true;
+            }
+        }
+
+        return perc;
+    }
+}
+
 var statusbarObj = Object.create(statusbar);
+var copyObjectsManagerObj = Object.create(copyObjectsManager);
+copyObjectsManagerObj.init();
+
 
 $.connection.hub.url = appRoot + "api/filesystemhub";
 var fileSystemHub = $.connection.fileSystemHub;
@@ -66,7 +124,7 @@ $.connection.hub.start().done(function () {
                     var myXhr = $.ajaxSettings.xhr();
                     if (myXhr.upload) { // Check if upload property exists
                         myXhr.upload.addEventListener('progress', function (e) {
-                            copyProgressHandlingFunction(e, item.href.replace(/#/g, encodeURIComponent("#")));
+                            copyProgressHandlingFunction(e, item.href);
                         }, false); // For handling the progress of the upload
                     }
                     return myXhr;
@@ -238,8 +296,7 @@ $.connection.hub.start().done(function () {
                        editor.session.setScrollLeft(-1);
                    }).fail(showError);
             }
-            else
-            {
+            else {
                 Vfs.getContent(this)
                    .done(function (data) {
                        viewModel.editText(data);
@@ -396,9 +453,10 @@ $.connection.hub.start().done(function () {
     //monitor file upload progress 
     function copyProgressHandlingFunction(e,uniqueUrl) {
         if (e.lengthComputable) {
-            var perc = parseInt((e.loaded / e.total) * 100);
+            copyObjectsManagerObj.addCopyStats(uniqueUrl, e.loaded, e.total);
+            var perc = copyObjectsManagerObj.getCurrentPercentCompletion();
             $('#copy-percentage').text(perc + "%");
-//            console.log('url: '+ uniqueUrl);
+
         }
     }
 
