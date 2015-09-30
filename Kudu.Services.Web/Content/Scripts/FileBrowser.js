@@ -62,6 +62,15 @@ $.connection.hub.start().done(function () {
                 url: item.href.replace(/#/g, encodeURIComponent("#")),
                 data: text,
                 method: "PUT",
+                xhr: function () {  // Custom XMLHttpRequest
+                    var myXhr = $.ajaxSettings.xhr();
+                    if (myXhr.upload) { // Check if upload property exists
+                        myXhr.upload.addEventListener('progress', function (e) {
+                            copyProgressHandlingFunction(e, item.href.replace(/#/g, encodeURIComponent("#")));
+                        }, false); // For handling the progress of the upload
+                    }
+                    return myXhr;
+                },
                 processData: false,
                 headers: {
                     "If-Match": "*"
@@ -384,6 +393,16 @@ $.connection.hub.start().done(function () {
         }
     };
 
+    //monitor file upload progress 
+    function copyProgressHandlingFunction(e,uniqueUrl) {
+        if (e.lengthComputable) {
+            var perc = parseInt((e.loaded / e.total) * 100);
+            $('#copy-percentage').text(perc + "%");
+//            console.log('url: '+ uniqueUrl);
+        }
+    }
+
+
     function setupFileSystemWatcher() {
         updateFileSystemWatcher(null);
     }
@@ -476,12 +495,14 @@ $.connection.hub.start().done(function () {
 
             $(".show-on-hover").removeClass('upload-unzip-show');
             $(".show-on-hover").removeClass('upload-unzip-hover');
+            $("#copy-percentage").text("");
             var dir = viewModel.selected();
             viewModel.processing(true);
             _getInputFiles(evt).done(function (files) {
                 Vfs.addFiles(files).always(function () {
                     dir.fetchChildren( /* force */ true);
                     viewModel.processing(false);
+                    $("#copy-percentage").text("");
                 });
             });
         }).on("dragleave", function (e) {
