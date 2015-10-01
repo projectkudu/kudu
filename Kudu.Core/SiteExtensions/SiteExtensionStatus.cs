@@ -124,8 +124,9 @@ namespace Kudu.Core.SiteExtensions
         }
 
         /// <summary>
-        /// <para>Loop thru all site extension settings files under 'siteExtensionStatusRoot', check if there is any successful installation</para>
-        /// <para>if not install to webroot, will trigger restart; if install to webroot and with applicationHost.xdt file, trigger restart.</para>
+        /// <para>Scan every site extensions, check if there is any successful installation</para>
+        /// <para>Looking for below cases:</para>
+        /// <para>if not install to webroot, trigger restart; if install to webroot and with applicationHost.xdt file, trigger restart.</para>
         /// </summary>
         /// <param name="siteExtensionStatusRoot">should be $ROOT\site\siteextensions</param>
         /// <param name="siteExtensionRoot">should be $ROOT\SiteExtensions</param>
@@ -136,19 +137,16 @@ namespace Kudu.Core.SiteExtensions
                 using (tracer.Step("Checking if there is any installation require site restart ..."))
                 {
                     string[] packageDirs = FileSystemHelpers.GetDirectories(siteExtensionStatusRoot);
+                    // folder name is the package id
                     foreach (var dir in packageDirs)
                     {
                         try
                         {
                             DirectoryInfo dirInfo = new DirectoryInfo(dir);
-                            string[] settingFile = FileSystemHelpers.GetFiles(dir, _statusSettingsFileName);
-                            foreach (var file in settingFile)
+                            var statusSettings = new SiteExtensionStatus(siteExtensionStatusRoot, dirInfo.Name, tracer);
+                            if (statusSettings.IsSiteExtensionRequireRestart(siteExtensionRoot))
                             {
-                                var statusSettings = new SiteExtensionStatus(siteExtensionStatusRoot, dirInfo.Name, tracer);
-                                if (statusSettings.IsSiteExtensionRequireRestart(siteExtensionRoot))
-                                {
-                                    return true;
-                                }
+                                return true;
                             }
                         }
                         catch (Exception ex)
