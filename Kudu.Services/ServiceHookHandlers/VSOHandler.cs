@@ -45,7 +45,7 @@ namespace Kudu.Services.ServiceHookHandlers
 
             // even it is empty password we need to explicitly say so (with colon).
             // without colon, LibGit2Sharp is not working
-            Uri remoteUrl = new Uri(_settings.GetValue("repoUrl"));
+            Uri remoteUrl = new Uri(_settings.GetValue("RepoUrl"));
             info.RepositoryUrl = string.Format(CultureInfo.InvariantCulture, "{0}://{1}:@{2}{3}",
                 remoteUrl.Scheme,
                 sessionToken.Value<string>("token"),

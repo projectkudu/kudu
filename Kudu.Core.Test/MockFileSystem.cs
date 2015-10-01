@@ -61,6 +61,9 @@ namespace Kudu.Core.Test
             dirBase.Setup(d => d.Exists(It.IsAny<string>()))
                    .Returns((string path) => path == Path.GetDirectoryName(file));
 
+            dirBase.Setup(d => d.GetFiles(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<SearchOption>()))
+                   .Returns((string path, string pattern, SearchOption searchOption) => new[] { file });
+
             dirInfoBase.SetupGet(d => d.Exists)
                        .Returns(true);
             dirInfoBase.SetupSet(d => d.Attributes = FileAttributes.Normal);

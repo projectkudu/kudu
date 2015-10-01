@@ -260,6 +260,11 @@ namespace Kudu.Core.Infrastructure
             return Instance.Directory.GetFiles(path, pattern);
         }
 
+        public static string[] GetFiles(string path, string pattern, SearchOption searchOption)
+        {
+            return Instance.Directory.GetFiles(path, pattern, searchOption);
+        }
+
         public static IEnumerable<string> ListFiles(string path, SearchOption searchOption, params string[] lookupList)
         {
             if (!Directory.Exists(path))

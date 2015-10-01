@@ -123,6 +123,7 @@ namespace Kudu.Core.Deployment.Generator
                 return new AspNet5Builder(_environment,
                                       settings,
                                       _propertyProvider,
+                                      fileFinder,
                                       repositoryRoot,
                                       project.AbsolutePath,
                                       isConsoleApp: false);
@@ -203,6 +204,7 @@ namespace Kudu.Core.Deployment.Generator
                 return new AspNet5Builder(_environment,
                                            perDeploymentSettings,
                                            _propertyProvider,
+                                           fileFinder,
                                            repositoryRoot,
                                            projectJson,
                                            isConsoleApp: false);
@@ -213,6 +215,7 @@ namespace Kudu.Core.Deployment.Generator
                 return new AspNet5Builder(_environment,
                                            perDeploymentSettings,
                                            _propertyProvider,
+                                           fileFinder,
                                            repositoryRoot,
                                            projectJson,
                                            isConsoleApp: true);
@@ -302,7 +305,9 @@ namespace Kudu.Core.Deployment.Generator
 
         private class CachedVsProjectsFileFinder : IFileFinder
         {
-            private static readonly string[] CachedExtensions = DeploymentHelper.ProjectFileLookup.Concat(VsHelper.SolutionsLookupList).ToArray();
+            // The way CachedVsProjectsFileFinder works is it looks up all the files in this CachedExtensions list the first time
+            // then it's the looked up list is filtered with the passed in lookupList to ListFiles()
+            private static readonly string[] CachedExtensions = DeploymentHelper.ProjectFileLookup.Concat(VsHelper.SolutionsLookupList).Concat(AspNet5Helper.GlobalJsonLookupList).ToArray();
 
             private const string NodeModulesDirectory = "\\node_modules\\";
 
