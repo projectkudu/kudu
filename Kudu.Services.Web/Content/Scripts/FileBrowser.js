@@ -97,8 +97,7 @@ var copyObjectsManager = {
 }
 
 var statusbarObj = Object.create(statusbar);
-var copyObjectsManagerObj = Object.create(copyObjectsManager);
-copyObjectsManagerObj.init();
+copyObjectsManager.init();
 
 
 $.connection.hub.url = appRoot + "api/filesystemhub";
@@ -453,13 +452,11 @@ $.connection.hub.start().done(function () {
     //monitor file upload progress 
     function copyProgressHandlingFunction(e,uniqueUrl) {
         if (e.lengthComputable) {
-            copyObjectsManagerObj.addCopyStats(uniqueUrl, e.loaded, e.total);
-            var perc = copyObjectsManagerObj.getCurrentPercentCompletion();
+            copyObjectsManager.addCopyStats(uniqueUrl, e.loaded, e.total);
+            var perc = copyObjectsManager.getCurrentPercentCompletion();
             $('#copy-percentage').text(perc + "%");
-
         }
     }
-
 
     function setupFileSystemWatcher() {
         updateFileSystemWatcher(null);
