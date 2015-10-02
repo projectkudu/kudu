@@ -35,5 +35,9 @@
         public const string SiteExtensionsFeedUrl = "SCM_SITEEXTENSIONS_FEED_URL";
         public const string DisableDeploymentOnPush = "SCM_DISABLE_DEPLOY_ON_PUSH";
         public const string TouchWebConfigAfterDeployment = "SCM_TOUCH_WEBCONFIG_AFTER_DEPLOYMENT";
+        public static string CustomLogStream(string streamKey)
+        {
+            return string.Concat("SCM_LOGSTREAM_", streamKey.ToUpperInvariant());
+        }
     }
 }
