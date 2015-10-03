@@ -42,12 +42,12 @@ var statusbar = {
 }
 
 var copyProgressObjects = {};
+
 var copyObjectsManager = {
     init: function() {
         copyProgressObjects = {};
     },
-    addCopyStats: function (uri, loadedData, totalData
-   )  { 
+    addCopyStats: function (uri, loadedData, totalData)  { 
         if (copyProgressObjects[uri]) {
             if (loadedData === totalData) { 
                 copyProgressObjects[uri].endDate = $.now();
@@ -56,7 +56,7 @@ var copyObjectsManager = {
             copyProgressObjects[uri] = {};
             copyProgressObjects[uri].startDate = $.now();
             //this is used for when copying multiple files in the same time so that i may stii have a coherent percentage
-            copyProgressObjects[uri].transactionPackFinished = false; 
+            copyProgressObjects[uri].transactionPackFinished = false;
         }
 
         copyProgressObjects[uri].loadedData = loadedData;
@@ -455,6 +455,24 @@ $.connection.hub.start().done(function () {
             copyObjectsManager.addCopyStats(uniqueUrl, e.loaded, e.total);
             var perc = copyObjectsManager.getCurrentPercentCompletion();
             $('#copy-percentage').text(perc + "%");
+
+            var modalHeaderText = '';
+            if (perc < 100) {
+                modalHeaderText = 'Transfered Files (<b>' + perc + '%</b>)';
+            } else {
+                modalHeaderText = 'Transfered Files (<b style =\' color:green\'>' + perc + '%</b>)';
+            }
+            
+            $('#files-transfered-modal .modal-header').html(modalHeaderText);
+
+            var copyObjs = copyObjectsManager.getCopyStats();
+            var modalBodyObj = $('#files-transfered-modal .modal-body');
+
+            var str = '';
+            for (var key in copyObjs) {
+                str += '<p>' + key + ' ' + copyObjs[key].loadedData + ' / ' + copyObjs[key].totalData + '</p><br/>';
+            }
+            modalBodyObj.html(str);
         }
     }
 

@@ -34,7 +34,9 @@
                     <i class="h4 glyphicon glyphicon-hdd" title="System Drive"></i>
                 </a>
                 <div class="spinner">
-                    <span data-bind="visible: koprocessing()" id="copy-percentage" title="percentage copy"></span>
+                    <button data-bind="visible: koprocessing()" onclick="$('#files-transfered-modal').modal()">
+                        <span id="copy-percentage" title="percentage copy"></span>
+                    </button>
                     <i data-bind="visible: koprocessing()" class="fa fa-spinner fa-spin" title="Please wait"></i>
                     <i data-bind="visible: errorText, attr: {title: errorText}" class="alert-warning glyphicon glyphicon-exclamation-sign" style="display: none"></i>
                 </div>
@@ -100,8 +102,27 @@
         </div>
         <a id="SwitchConsoleLink" href="javascript:SwitchConsole();" class="right">Use old console</a>
         <div id="KuduExecConsoleV2" class="left-aligned"></div>
+        <!-- tranfered files modal -->
+        <div class="modal fade" id="files-transfered-modal" tabindex="-1" role="dialog" aria-labelledby="errorTitle" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div  class="modal-header">
+                        Transfered files
+                     <!--   <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                        <h4 class="modal-title" id="errorTitle">Session expired</h4>
+                         -->
+                    </div>
+                    <div class="modal-body" style='overflow-y: scroll; height:400px;' >
+                       
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-    <div class="view edit-view" data-bind="visible: fileEdit()" style="display: none">
+    <div class="view edit-view" data-bind="visible: fileEdit() " style="display: none">
         <div class="form-group">
             <form role="form">
                 <p>
