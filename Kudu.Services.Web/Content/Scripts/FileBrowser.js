@@ -456,23 +456,25 @@ $.connection.hub.start().done(function () {
             var perc = copyObjectsManager.getCurrentPercentCompletion();
             $('#copy-percentage').text(perc + "%");
 
-            var modalHeaderText = '';
-            if (perc < 100) {
-                modalHeaderText = 'Transfered Files (<b>' + perc + '%</b>)';
-            } else {
-                modalHeaderText = 'Transfered Files (<b style =\' color:green\'>' + perc + '%</b>)';
-            }
-            
-            $('#files-transfered-modal .modal-header').html(modalHeaderText);
+            if ($('#files-transfered-modal').is(':visible')) { // update if modal visible
+                var modalHeaderText = '';
+                if (perc < 100) {
+                    modalHeaderText = 'Transfered Files (<b>' + perc + '%</b>)';
+                } else {
+                    modalHeaderText = 'Transfered Files (<b style =\' color:green\'>' + perc + '%</b>)';
+                }
 
-            var copyObjs = copyObjectsManager.getCopyStats();
-            var modalBodyObj = $('#files-transfered-modal .modal-body');
+                $('#files-transfered-modal .modal-header').html(modalHeaderText);
 
-            var str = '';
-            for (var key in copyObjs) {
-                str += '<p>' + key + ' ' + copyObjs[key].loadedData + ' / ' + copyObjs[key].totalData + '</p><br/>';
+                var copyObjs = copyObjectsManager.getCopyStats();
+                var modalBodyObj = $('#files-transfered-modal .modal-body');
+
+                var str = '';
+                for (var key in copyObjs) {
+                    str += '<p>' + key + ' ' + copyObjs[key].loadedData + ' / ' + copyObjs[key].totalData + '</p><br/>';
+                }
+                modalBodyObj.html(str);
             }
-            modalBodyObj.html(str);
         }
     }
 
