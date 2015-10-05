@@ -34,7 +34,7 @@
                     <i class="h4 glyphicon glyphicon-hdd" title="System Drive"></i>
                 </a>
                 <div class="spinner">
-                    <button data-bind="visible: koprocessing()" onclick="$('#files-transfered-modal').modal()">
+                    <button class="nomargin nopadding" style="display:none" data-bind="visible: isTransferInProgress(), click: showCopyProgressModal">
                         <span id="copy-percentage" title="percentage copy"></span>
                     </button>
                     <i data-bind="visible: koprocessing()" class="fa fa-spinner fa-spin" title="Please wait"></i>
@@ -106,16 +106,26 @@
         <div class="modal fade" id="files-transfered-modal" tabindex="-1" role="dialog" aria-labelledby="errorTitle" aria-hidden="true">
             <div class="modal-dialog">
                 <div class="modal-content">
-                    <div  class="modal-header">
-                        Transfered files
-                     <!--   <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-                        <h4 class="modal-title" id="errorTitle">Session expired</h4>
-                         -->
-                    </div>
-                    <div class="modal-body" style='overflow-y: scroll; height:400px;' >
+                    <div class="modal-header">
                        
+                       
+                        <!--   <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                           <h4 class="modal-title" id="errorTitle">Session expired</h4>
+                            -->
+                    </div>
+                    <div class="modal-body" data-bind="if: copyprogStats" style='overflow-y: scroll; height:400px;'>
+                   
+                        <ul data-bind="foreach: { data: copyprogStats, as: 'item' }">
+                            <li>
+                                <span data-bind="text: item.key"></span>
+                                <span data-bind="text: JSON.stringify(item.info)"></span>
+
+                            </li>
+                        </ul>
+
                     </div>
                     <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-bind="click: clearCopyProgressCache">Clear cache</button>
                         <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
                     </div>
                 </div>

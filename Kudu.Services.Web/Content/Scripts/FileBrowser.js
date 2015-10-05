@@ -49,8 +49,10 @@ var copyObjectsManager = {
     },
     addCopyStats: function (uri, loadedData, totalData)  { 
         if (copyProgressObjects[uri]) {
-            if (loadedData === totalData) { 
+            if (loadedData === totalData) {
                 copyProgressObjects[uri].endDate = $.now();
+            } else {
+                copyProgressObjects[uri].transactionPackFinished = false;
             }
         } else {
             copyProgressObjects[uri] = {};
@@ -61,6 +63,7 @@ var copyObjectsManager = {
 
         copyProgressObjects[uri].loadedData = loadedData;
         copyProgressObjects[uri].totalData = totalData;
+
     },
     getCopyStats: function () {
         return copyProgressObjects;
@@ -92,7 +95,18 @@ var copyObjectsManager = {
             }
         }
 
+        var b = true;
+
+        for (var key in copyProgressObjects) {
+            var co = copyProgressObjects[key];
+            if (co.transactionPackFinished === false) {
+                b = false;
+            }
+        }
         return perc;
+    },
+    clearData: function () {
+        copyProgressObjects = {};
     }
 }
 
@@ -115,15 +129,16 @@ $.connection.hub.start().done(function () {
         },
 
         setContent: function (item, text) {
+            var _url = item.href.replace(/#/g, encodeURIComponent("#"));
             return $.ajax({
-                url: item.href.replace(/#/g, encodeURIComponent("#")),
+                url: _url,
                 data: text,
                 method: "PUT",
                 xhr: function () {  // Custom XMLHttpRequest
                     var myXhr = $.ajaxSettings.xhr();
                     if (myXhr.upload) { // Check if upload property exists
                         myXhr.upload.addEventListener('progress', function (e) {
-                            copyProgressHandlingFunction(e, item.href);
+                            copyProgressHandlingFunction(e, _url);
                         }, false); // For handling the progress of the upload
                     }
                     return myXhr;
@@ -325,11 +340,13 @@ $.connection.hub.start().done(function () {
         workingDirChanging = false,
         viewModel = {
             root: root,
+            copyprogStats:ko.observableArray([]),
             specialDirs: ko.observableArray([]),
             selected: ko.observable(root),
             koprocessing: ko.observable(false),
             fileEdit: ko.observable(null),
             editText: ko.observable(""),
+            isTransferInProgress: ko.observable(false),
             cancelEdit: function () {
                 viewModel.fileEdit(null);
                 statusbarObj.reset();
@@ -339,6 +356,13 @@ $.connection.hub.start().done(function () {
                 if (item) {
                     item.selectNode();
                 }
+            },
+            showCopyProgressModal: function() {
+                $('#files-transfered-modal').modal();
+            },
+            clearCopyProgressCache: function() {
+                viewModel.copyprogStats([]);
+                copyObjectsManager.clearData();
             },
             errorText: ko.observable(),
             inprocessing: 0,
@@ -454,26 +478,48 @@ $.connection.hub.start().done(function () {
         if (e.lengthComputable) {
             copyObjectsManager.addCopyStats(uniqueUrl, e.loaded, e.total);
             var perc = copyObjectsManager.getCurrentPercentCompletion();
-            $('#copy-percentage').text(perc + "%");
+            var copyObjs = copyObjectsManager.getCopyStats();
+            var str = '';
 
+            $('#copy-percentage').text(perc + "%");
+        
+            if (perc == 100 || perc == 0) {
+             viewModel.isTransferInProgress(false);
+            } else {
+                viewModel.isTransferInProgress(true);
+            }
+   
             if ($('#files-transfered-modal').is(':visible')) { // update if modal visible
+
+                var array = [];
+                //var old_time = performance.now();
+
+                $.each(copyObjs, function (i, val) {
+                    array.push({ 'key': i, 'info': val });
+                });
+
+                viewModel.copyprogStats(array); // update view model
+
+                //var new_time = performance.now();
+                //var seconds_passed = new_time - old_time;
+                //console.log("TIME SPENT (ms): " + seconds_passed);
+
                 var modalHeaderText = '';
                 if (perc < 100) {
-                    modalHeaderText = 'Transfered Files (<b>' + perc + '%</b>)';
+                    modalHeaderText = 'Transfered Files (<b>' + perc + '%)</b>';
                 } else {
-                    modalHeaderText = 'Transfered Files (<b style =\' color:green\'>' + perc + '%</b>)';
+                    modalHeaderText = '<b style =\' color:green\'> Transfered Files (' + perc + '%)</b>';
                 }
 
                 $('#files-transfered-modal .modal-header').html(modalHeaderText);
 
-                var copyObjs = copyObjectsManager.getCopyStats();
-                var modalBodyObj = $('#files-transfered-modal .modal-body');
+                //return; //temp
+                //var modalbodyobj = $('#files-transfered-modal .modal-body');
 
-                var str = '';
-                for (var key in copyObjs) {
-                    str += '<p>' + key + ' ' + copyObjs[key].loadedData + ' / ' + copyObjs[key].totalData + '</p><br/>';
-                }
-                modalBodyObj.html(str);
+                //for (var key in copyobjs) {
+                //    str += '<p>' + key + ' ' + copyobjs[key].loadeddata + ' / ' + copyobjs[key].totaldata + '</p><br/>';
+                //}
+                //modalbodyobj.html(str);
             }
         }
     }
