@@ -18,18 +18,9 @@ namespace Kudu.TestHarness
         private const int MaxSiteNameIndex = 5;
         private static readonly string _sitePrefix = KuduUtils.SiteReusedForAllTests;
         private static readonly ConcurrentStack<int> _availableSiteIndex = new ConcurrentStack<int>(Enumerable.Range(1, MaxSiteNameIndex).Reverse());
+        private static readonly object _createSiteLock = new object();
 
         public static async Task<ApplicationManager> CreateApplicationAsync()
-        {
-            return await CreateApplicationInternal();
-        }
-
-        public static void ReportTestCompletion(ApplicationManager applicationManager, bool success)
-        {
-            _availableSiteIndex.Push(applicationManager.SitePoolIndex);
-        }
-
-        private static async Task<ApplicationManager> CreateApplicationInternal()
         {
             int siteIndex;
 
@@ -39,6 +30,26 @@ namespace Kudu.TestHarness
                 await Task.Delay(5000);
             }
 
+            try
+            {
+                // if succeed, caller will push back the index.
+                return await CreateApplicationInternal(siteIndex);
+            }
+            catch
+            {
+                _availableSiteIndex.Push(siteIndex);
+
+                throw;
+            }
+        }
+
+        public static void ReportTestCompletion(ApplicationManager applicationManager, bool success)
+        {
+            _availableSiteIndex.Push(applicationManager.SitePoolIndex);
+        }
+
+        private static async Task<ApplicationManager> CreateApplicationInternal(int siteIndex)
+        {
             string applicationName = _sitePrefix + siteIndex;
 
             string operationName = "SitePool.CreateApplicationInternal " + applicationName;
@@ -76,7 +87,10 @@ namespace Kudu.TestHarness
             else
             {
                 TestTracer.Trace("{0} Creating new site", operationName);
-                site = await siteManager.CreateSiteAsync(applicationName);
+                lock (_createSiteLock)
+                {
+                    site = siteManager.CreateSiteAsync(applicationName).Result;
+                }
 
                 TestTracer.Trace("{0} Created new site at {1}", operationName, site.SiteUrl);
                 return new ApplicationManager(siteManager, site, applicationName)
