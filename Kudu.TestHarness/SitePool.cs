@@ -1,9 +1,12 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Security.AccessControl;
 using System.Threading;
 using System.Threading.Tasks;
 using Kudu.SiteManagement;
@@ -53,8 +56,9 @@ namespace Kudu.TestHarness
             string applicationName = _sitePrefix + siteIndex;
 
             string operationName = "SitePool.CreateApplicationInternal " + applicationName;
-            
-            var siteManager = GetSiteManager(new KuduTestContext());
+
+            var context = new KuduTestContext();
+            var siteManager = GetSiteManager(context);
 
             Site site = siteManager.GetSite(applicationName);
             if (site != null)
@@ -89,6 +93,26 @@ namespace Kudu.TestHarness
                 TestTracer.Trace("{0} Creating new site", operationName);
                 lock (_createSiteLock)
                 {
+                    if (ConfigurationManager.AppSettings["UseNetworkServiceIdentity"] == "true")
+                    {
+                        var applicationsPath = context.Configuration.ApplicationsPath;
+                        if (!Directory.Exists(applicationsPath))
+                        {
+                            Directory.CreateDirectory(applicationsPath);
+
+                            var accessRule = new FileSystemAccessRule("NETWORK SERVICE",
+                                                 fileSystemRights: FileSystemRights.Write | FileSystemRights.ReadAndExecute | FileSystemRights.Read | FileSystemRights.ListDirectory,
+                                                 inheritanceFlags: InheritanceFlags.ContainerInherit | InheritanceFlags.ObjectInherit,
+                                                 propagationFlags: PropagationFlags.None,
+                                                 type: AccessControlType.Allow);
+
+                            var directoryInfo = new DirectoryInfo(applicationsPath);
+                            DirectorySecurity directorySecurity = directoryInfo.GetAccessControl();
+                            directorySecurity.AddAccessRule(accessRule);
+                            directoryInfo.SetAccessControl(directorySecurity);
+                        }
+                    }
+
                     site = siteManager.CreateSiteAsync(applicationName).Result;
                 }
 
