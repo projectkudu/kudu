@@ -101,7 +101,7 @@ namespace Kudu.TestHarness
                             Directory.CreateDirectory(applicationsPath);
 
                             var accessRule = new FileSystemAccessRule("NETWORK SERVICE",
-                                                 fileSystemRights: FileSystemRights.Write | FileSystemRights.ReadAndExecute | FileSystemRights.Read | FileSystemRights.ListDirectory,
+                                                 fileSystemRights: FileSystemRights.Modify | FileSystemRights.Write | FileSystemRights.ReadAndExecute | FileSystemRights.Read | FileSystemRights.ListDirectory,
                                                  inheritanceFlags: InheritanceFlags.ContainerInherit | InheritanceFlags.ObjectInherit,
                                                  propagationFlags: PropagationFlags.None,
                                                  type: AccessControlType.Allow);
