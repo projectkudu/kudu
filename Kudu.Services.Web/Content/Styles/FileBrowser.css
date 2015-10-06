@@ -190,8 +190,8 @@ div.editor {
     display: inline-block;
     white-space: nowrap;
     overflow: hidden;
-    /* text-overflow: ellipsis; */
-    max-width: 800px;
+    text-overflow: ellipsis;
+    max-width: 750px;
 }
 
 .statusbar-red {
