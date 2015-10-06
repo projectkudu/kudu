@@ -95,14 +95,6 @@ var copyObjectsManager = {
             }
         }
 
-        var b = true;
-
-        for (var key in copyProgressObjects) {
-            var co = copyProgressObjects[key];
-            if (co.transactionPackFinished === false) {
-                b = false;
-            }
-        }
         return perc;
     },
     clearData: function () {
@@ -340,7 +332,7 @@ $.connection.hub.start().done(function () {
         workingDirChanging = false,
         viewModel = {
             root: root,
-            copyprogStats:ko.observableArray([]),
+            copyProgStats:ko.observableArray([]),
             specialDirs: ko.observableArray([]),
             selected: ko.observable(root),
             koprocessing: ko.observable(false),
@@ -361,7 +353,7 @@ $.connection.hub.start().done(function () {
                 $('#files-transfered-modal').modal();
             },
             clearCopyProgressCache: function() {
-                viewModel.copyprogStats([]);
+                viewModel.copyProgStats([]);
                 copyObjectsManager.clearData();
             },
             errorText: ko.observable(),
@@ -498,7 +490,7 @@ $.connection.hub.start().done(function () {
                     array.push({ 'key': i, 'info': val });
                 });
 
-                viewModel.copyprogStats(array); // update view model
+                viewModel.copyProgStats(array); // update view model
 
                 //var new_time = performance.now();
                 //var seconds_passed = new_time - old_time;

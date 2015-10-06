@@ -113,9 +113,9 @@
                            <h4 class="modal-title" id="errorTitle">Session expired</h4>
                             -->
                     </div>
-                    <div class="modal-body" data-bind="if: copyprogStats" style='overflow-y: scroll; height:400px;'>
+                    <div class="modal-body" data-bind="if: copyProgStats" style='overflow-y: scroll; height:400px;'>
                    
-                        <ul data-bind="foreach: { data: copyprogStats, as: 'item' }">
+                        <ul data-bind="foreach: { data: copyProgStats, as: 'item' }">
                             <li>
                                 <span data-bind="text: item.key"></span>
                                 <span data-bind="text: JSON.stringify(item.info)"></span>
