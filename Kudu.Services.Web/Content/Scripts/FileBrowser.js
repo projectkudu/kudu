@@ -332,7 +332,7 @@ $.connection.hub.start().done(function () {
         workingDirChanging = false,
         viewModel = {
             root: root,
-            copyProgStats:ko.observableArray([]),
+            copyProgStats: ko.observable(),
             specialDirs: ko.observableArray([]),
             selected: ko.observable(root),
             koprocessing: ko.observable(false),
@@ -353,7 +353,7 @@ $.connection.hub.start().done(function () {
                 $('#files-transfered-modal').modal();
             },
             clearCopyProgressCache: function() {
-                viewModel.copyProgStats([]);
+                viewModel.copyProgStats("");
                 copyObjectsManager.clearData();
             },
             errorText: ko.observable(),
@@ -484,17 +484,19 @@ $.connection.hub.start().done(function () {
             if ($('#files-transfered-modal').is(':visible')) { // update if modal visible
 
                 var array = [];
-                //var old_time = performance.now();
+                var old_time = performance.now();
 
-                $.each(copyObjs, function (i, val) {
-                    array.push({ 'key': i, 'info': val });
-                });
+                viewModel.copyProgStats(copyObjs);
 
-                viewModel.copyProgStats(array); // update view model
+                //$.each(copyObjs, function (i, val) {
+                //    array.push({ 'key': i, 'info': val });
+                //});
 
-                //var new_time = performance.now();
-                //var seconds_passed = new_time - old_time;
-                //console.log("TIME SPENT (ms): " + seconds_passed);
+                //viewModel.copyProgStats(array); // update view model
+
+                var new_time = performance.now();
+                var seconds_passed = new_time - old_time;
+                console.log("TIME SPENT (ms): " + seconds_passed);
 
                 var modalHeaderText = '';
                 if (perc < 100) {

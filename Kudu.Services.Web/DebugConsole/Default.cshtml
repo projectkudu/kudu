@@ -114,15 +114,15 @@
                             -->
                     </div>
                     <div class="modal-body" data-bind="if: copyProgStats" style='overflow-y: scroll; height:400px;'>
-                   
-                        <ul data-bind="foreach: { data: copyProgStats, as: 'item' }">
-                            <li>
-                                <span data-bind="text: item.key"></span>
-                                <span data-bind="text: JSON.stringify(item.info)"></span>
+                        <div data-bind="foreach: { data: Object.keys(copyProgStats()), as: 'item' }">
+                            <ul>
+                                <li>
+                                    <span data-bind="text: item"></span>
+                                    <span data-bind="text: JSON.stringify($parent.copyProgStats()[item])"></span>
 
-                            </li>
-                        </ul>
-
+                                </li>
+                            </ul>
+                        </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-default" data-bind="click: clearCopyProgressCache">Clear cache</button>
