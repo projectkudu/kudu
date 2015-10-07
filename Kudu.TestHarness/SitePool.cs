@@ -13,14 +13,14 @@ using Kudu.SiteManagement;
 using Kudu.SiteManagement.Certificates;
 using Kudu.SiteManagement.Configuration;
 using Kudu.SiteManagement.Context;
+using Kudu.TestHarness.Xunit;
 
 namespace Kudu.TestHarness
 {
     public static class SitePool
     {
-        private const int MaxSiteNameIndex = 5;
         private static readonly string _sitePrefix = KuduUtils.SiteReusedForAllTests;
-        private static readonly ConcurrentStack<int> _availableSiteIndex = new ConcurrentStack<int>(Enumerable.Range(1, MaxSiteNameIndex).Reverse());
+        private static readonly ConcurrentStack<int> _availableSiteIndex = new ConcurrentStack<int>(Enumerable.Range(1, KuduXunitTestRunnerUtils.MaxParallelThreads).Reverse());
         private static readonly object _createSiteLock = new object();
 
         public static async Task<ApplicationManager> CreateApplicationAsync()

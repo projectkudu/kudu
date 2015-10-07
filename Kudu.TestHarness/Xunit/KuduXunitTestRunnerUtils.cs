@@ -12,28 +12,31 @@ namespace Kudu.TestHarness.Xunit
 {
     public static class KuduXunitTestRunnerUtils
     {
-        // we only limit to 4 tests concurrently each can block upto 4 threads
-        public const int MaxParallelThreads = 16;
+        public const int MaxParallelThreads = 4;
 
-        private static readonly SemaphoreSlim _semaphore = new SemaphoreSlim(initialCount: MaxParallelThreads / 4);
-
-        public static async Task<RunSummary> RunTestAsync(XunitTestRunner runner,
-                                                          IMessageBus messageBus,
-                                                          ExceptionAggregator aggregator,
-                                                          bool disableRetry)
+        public static Task<RunSummary> RunTestAsync(XunitTestRunner runner,
+                                                    IMessageBus messageBus,
+                                                    ExceptionAggregator aggregator,
+                                                    bool disableRetry)
         {
-            // defense in depth to avoid forever lock
-            bool acquired = await _semaphore.WaitAsync(TimeSpan.FromHours(2));
+            // fork non-SynchronizationContext thread
+            var result = Task.Factory.StartNew(
+                            () => RunTestAsyncCore(runner, messageBus, aggregator, disableRetry).Result,
+                            new CancellationToken(),
+                            TaskCreationOptions.None,
+                            TaskScheduler.Default).Result;
+            return Task.FromResult(result);
+        }
 
+        private static async Task<RunSummary> RunTestAsyncCore(XunitTestRunner runner,
+                                                               IMessageBus messageBus,
+                                                               ExceptionAggregator aggregator,
+                                                               bool disableRetry)
+        {
             try
             {
                 DelayedMessageBus delayedMessageBus = null;
                 RunSummary summary = null;
-
-                if (!acquired)
-                {
-                    throw new TimeoutException("Wait for thread to run the test timeout!");
-                }
 
                 // First run
                 if (!disableRetry)
@@ -74,11 +77,6 @@ namespace Kudu.TestHarness.Xunit
             }
             finally
             {
-                if (acquired)
-                {
-                    _semaphore.Release();
-                }
-
                 // set to original
                 runner.SetMessageBus(messageBus);
             }
