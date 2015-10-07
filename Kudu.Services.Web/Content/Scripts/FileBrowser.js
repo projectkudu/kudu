@@ -70,7 +70,6 @@ var copyObjectsManager = {
 
         this._copyProgressObjects[uri].loadedData = loadedData;
         this._copyProgressObjects[uri].totalData = totalData;
-
     },
     getCopyStats: function () {
         return this._copyProgressObjects;
@@ -108,6 +107,7 @@ var copyObjectsManager = {
         delete this._copyProgressObjects[index];
     },
     clearData: function () {
+        this._infoMessage = 'You have cleared the cache at ' + date.toLocaleString();
         this._copyProgressObjects = {};
     }
 }
@@ -363,8 +363,8 @@ $.connection.hub.start().done(function () {
                 $('#files-transfered-modal').modal();
             },
             clearCopyProgressCache: function() {
-                viewModel.copyProgStats("");
                 copyObjectsManager.clearData();
+                viewModel.copyProgStats("");
             },
             getCopyPercentage: function(item) {
                 return (item.loadedData * 100 / item.totalData).toFixed(1);
