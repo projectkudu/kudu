@@ -197,3 +197,9 @@ div.editor {
 .statusbar-red {
     border-left-color: #f14000;
 }
+
+
+.table-nonfluid {
+  table-layout: fixed;
+  word-wrap: break-word;
+}

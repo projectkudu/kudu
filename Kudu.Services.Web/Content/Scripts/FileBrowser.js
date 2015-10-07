@@ -53,17 +53,19 @@ var copyObjectsManager = {
     setInfoMessage: function(message) {
         this._infoMessage = message;
     },
-    addCopyStats: function (uri, loadedData, totalData)  { 
+    addCopyStats: function (uri, loadedData, totalData) {
+
+        uri = uri.substring(uri.indexOf('/vfs')+5, uri.length); // slice uri to be prettier
         if (this._copyProgressObjects[uri]) {
             if (loadedData === totalData) {
                 this._copyProgressObjects[uri].endDate = $.now();
             } else {
-                this._copyProgressObjects[uri].transactionPackFinished = false;
+                this._copyProgressObjects[uri].copyPackEnded = false;
             }
         } else {
             this._copyProgressObjects[uri] = {};
             this._copyProgressObjects[uri].startDate = $.now();
-            this._copyProgressObjects[uri].transactionPackFinished = false; //this is used for when copying multiple files in the same time so that i may stii have a coherent percentage
+            this._copyProgressObjects[uri].copyPackEnded = false; //this is used for when copying multiple files in the same time so that i may stii have a coherent percentage
         }
 
         this._copyProgressObjects[uri].loadedData = loadedData;
@@ -80,7 +82,7 @@ var copyObjectsManager = {
 
         for (var key in this._copyProgressObjects) {
             var co = this._copyProgressObjects[key];
-            if(co.transactionPackFinished === false) {
+            if(co.copyPackEnded === false) {
                 foundItem = true;
                 currentTransfered += co.loadedData;
                 finalTransfered += co.totalData;
@@ -96,7 +98,7 @@ var copyObjectsManager = {
 
         if (perc === 100 && foundItem) { // if all transactions have finished & have some unmarked transaction pack, cancel it out
             for (var key in this._copyProgressObjects) {
-                this._copyProgressObjects[key].transactionPackFinished = true;
+                this._copyProgressObjects[key].copyPackEnded = true;
             }
         }
 
