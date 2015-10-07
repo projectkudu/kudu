@@ -367,6 +367,9 @@ $.connection.hub.start().done(function () {
             getCopyPercentage: function(item) {
                 return (item.loadedData * 100 / item.totalData).toFixed(1);
             },
+            getCopyPercentageDisplay: function (item) {
+               return formatHandler.fileSize(item.loadedData, true) + " / " + formatHandler.fileSize(item.totalData, true);
+            },
             errorText: ko.observable(),
             inprocessing: 0,
             processing: function (value) {
