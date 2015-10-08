@@ -203,3 +203,11 @@ div.editor {
     transition: border-left-color 0.35s ease;
 }
 
+.table-nonfluid {
+  table-layout: fixed;
+  word-wrap: break-word;
+}
+
+.box-border{
+border:solid 2px grey;
+} 
