@@ -190,10 +190,16 @@ div.editor {
     display: inline-block;
     white-space: nowrap;
     overflow: hidden;
-    /* text-overflow: ellipsis; */
-    max-width: 800px;
+    text-overflow: ellipsis;
+    max-width: 750px;
 }
 
 .statusbar-red {
     border-left-color: #f14000;
 }
+
+.statusbar-saved {
+    border-left-color: #00e166;
+    transition: border-left-color 0.35s ease;
+}
+

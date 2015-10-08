@@ -105,10 +105,31 @@
         <div class="form-group">
             <form role="form">
                 <p>
-                    <button class="btn btn-primary btn-default" style="margin-right: 10px" data-bind="click: function () { return fileEdit().saveItem(); }">Save</button>
+                    <button class="btn btn-primary btn-default"
+                        style="margin-right: 10px" data-bind="click: function () { return fileEdit().saveItemAndClose(); }">Save</button>
                     <button class="btn" style="margin-right: 10px" data-bind="click: cancelEdit">Cancel</button>
                     <span id="statusbar" class="statusbar"></span>
+                    <span id="acehelp" class="btn btn-info right" onclick="showAceHelpModal();">Help</span>
                 </p>
+
+                <!-- Ace Help Modal -->
+                <div class="modal fade" id="ace-help-modal" tabindex="-1" role="dialog" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header" style="border: 0">
+                                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                                <h4 class="modal-title">Keyboard Shortcuts</h4>
+                            </div>
+                            <div class="modal-body">
+                                Loading...
+                            </div>
+                            <div class="modal-footer" style="border: 0">
+                                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Ace editor starts -->
                 <div id="editor" data-bind="ace: editText"></div>
                 <!-- Ace editor ends -->

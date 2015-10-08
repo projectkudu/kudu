@@ -864,7 +864,7 @@ project = myproject");
                     // Assert
                     Assert.Equal(1, results.Count);
                     Assert.Equal(DeployStatus.Failed, results[0].Status);
-                    KuduAssert.VerifyLogOutput(appManager, results[0].Id, "npm ERR! 404 Not Found");
+                    KuduAssert.VerifyLogOutput(appManager, results[0].Id, "npm ERR! code E404");
                 });
             }
         }

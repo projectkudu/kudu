@@ -1,35 +1,29 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Security.AccessControl;
 using System.Threading;
 using System.Threading.Tasks;
 using Kudu.SiteManagement;
 using Kudu.SiteManagement.Certificates;
 using Kudu.SiteManagement.Configuration;
 using Kudu.SiteManagement.Context;
+using Kudu.TestHarness.Xunit;
 
 namespace Kudu.TestHarness
 {
     public static class SitePool
     {
-        private const int MaxSiteNameIndex = 5;
         private static readonly string _sitePrefix = KuduUtils.SiteReusedForAllTests;
-        private static readonly ConcurrentStack<int> _availableSiteIndex = new ConcurrentStack<int>(Enumerable.Range(1, MaxSiteNameIndex).Reverse());
+        private static readonly ConcurrentStack<int> _availableSiteIndex = new ConcurrentStack<int>(Enumerable.Range(1, KuduXunitTestRunnerUtils.MaxParallelThreads).Reverse());
+        private static readonly object _createSiteLock = new object();
 
         public static async Task<ApplicationManager> CreateApplicationAsync()
-        {
-            return await CreateApplicationInternal();
-        }
-
-        public static void ReportTestCompletion(ApplicationManager applicationManager, bool success)
-        {
-            _availableSiteIndex.Push(applicationManager.SitePoolIndex);
-        }
-
-        private static async Task<ApplicationManager> CreateApplicationInternal()
         {
             int siteIndex;
 
@@ -39,11 +33,32 @@ namespace Kudu.TestHarness
                 await Task.Delay(5000);
             }
 
+            try
+            {
+                // if succeed, caller will push back the index.
+                return await CreateApplicationInternal(siteIndex);
+            }
+            catch
+            {
+                _availableSiteIndex.Push(siteIndex);
+
+                throw;
+            }
+        }
+
+        public static void ReportTestCompletion(ApplicationManager applicationManager, bool success)
+        {
+            _availableSiteIndex.Push(applicationManager.SitePoolIndex);
+        }
+
+        private static async Task<ApplicationManager> CreateApplicationInternal(int siteIndex)
+        {
             string applicationName = _sitePrefix + siteIndex;
 
             string operationName = "SitePool.CreateApplicationInternal " + applicationName;
-            
-            var siteManager = GetSiteManager(new KuduTestContext());
+
+            var context = new KuduTestContext();
+            var siteManager = GetSiteManager(context);
 
             Site site = siteManager.GetSite(applicationName);
             if (site != null)
@@ -76,7 +91,30 @@ namespace Kudu.TestHarness
             else
             {
                 TestTracer.Trace("{0} Creating new site", operationName);
-                site = await siteManager.CreateSiteAsync(applicationName);
+                lock (_createSiteLock)
+                {
+                    if (ConfigurationManager.AppSettings["UseNetworkServiceIdentity"] == "true")
+                    {
+                        var applicationsPath = context.Configuration.ApplicationsPath;
+                        if (!Directory.Exists(applicationsPath))
+                        {
+                            Directory.CreateDirectory(applicationsPath);
+
+                            var accessRule = new FileSystemAccessRule("NETWORK SERVICE",
+                                                 fileSystemRights: FileSystemRights.Modify | FileSystemRights.Write | FileSystemRights.ReadAndExecute | FileSystemRights.Read | FileSystemRights.ListDirectory,
+                                                 inheritanceFlags: InheritanceFlags.ContainerInherit | InheritanceFlags.ObjectInherit,
+                                                 propagationFlags: PropagationFlags.None,
+                                                 type: AccessControlType.Allow);
+
+                            var directoryInfo = new DirectoryInfo(applicationsPath);
+                            DirectorySecurity directorySecurity = directoryInfo.GetAccessControl();
+                            directorySecurity.AddAccessRule(accessRule);
+                            directoryInfo.SetAccessControl(directorySecurity);
+                        }
+                    }
+
+                    site = siteManager.CreateSiteAsync(applicationName).Result;
+                }
 
                 TestTracer.Trace("{0} Created new site at {1}", operationName, site.SiteUrl);
                 return new ApplicationManager(siteManager, site, applicationName)
