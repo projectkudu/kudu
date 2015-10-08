@@ -203,3 +203,7 @@ div.editor {
   table-layout: fixed;
   word-wrap: break-word;
 }
+
+.box-border{
+border:solid 2px grey;
+} 
