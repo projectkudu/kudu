@@ -360,9 +360,9 @@ namespace Kudu.Core.Infrastructure
             {
                 fileSystemInfo.Attributes = FileAttributes.Normal;
             }
-            catch
+            catch (Exception ex)
             {
-                if (!ignoreErrors) throw;
+                if (!ignoreErrors) throw new InvalidOperationException(String.Format("Set {0} attribute failed with {1}", fileSystemInfo.FullName, ex.Message), ex);
             }
 
             var directoryInfo = fileSystemInfo as DirectoryInfoBase;
@@ -372,18 +372,13 @@ namespace Kudu.Core.Infrastructure
                 DeleteDirectoryContentsSafe(directoryInfo, ignoreErrors);
             }
 
-            DoSafeAction(fileSystemInfo.Delete, ignoreErrors);
-        }
-
-        private static void DoSafeAction(Action action, bool ignoreErrors)
-        {
             try
             {
-                OperationManager.Attempt(action);
+                fileSystemInfo.Delete();
             }
-            catch
+            catch (Exception ex)
             {
-                if (!ignoreErrors) throw;
+                if (!ignoreErrors) throw new InvalidOperationException(String.Format("Delete {0} failed with {1}", fileSystemInfo.FullName, ex.Message), ex);
             }
         }
     }

@@ -6,8 +6,6 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Net.NetworkInformation;
-using System.Runtime.ConstrainedExecution;
-using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
 using Kudu.Client.Deployment;
@@ -345,6 +343,57 @@ namespace Kudu.SiteManagement
                 Debug.WriteLine(ex);
                 return false;
             }
+        }
+
+        public async Task StartAppPool(string applicationName)
+        {
+            using (ServerManager iis = GetServerManager())
+            {
+                string appPoolName = GetAppPool(applicationName);
+                var kuduAppPool = iis.ApplicationPools[appPoolName];
+
+                if (kuduAppPool.State != ObjectState.Started)
+                {
+                    kuduAppPool.Start();
+
+                    await WaitForState(kuduAppPool, ObjectState.Started);
+                }
+            }
+        }
+
+        public async Task StopAppPool(string applicationName)
+        {
+            using (ServerManager iis = GetServerManager())
+            {
+                string appPoolName = GetAppPool(applicationName);
+                var kuduAppPool = iis.ApplicationPools[appPoolName];
+
+                if (kuduAppPool.State != ObjectState.Stopped)
+                {
+                    kuduAppPool.Stop();
+
+                    await WaitForState(kuduAppPool, ObjectState.Stopped);
+                }
+            }
+        }
+
+        private static async Task WaitForState(ApplicationPool appPool, ObjectState expected)
+        {
+            ObjectState actual;
+            int loop = 30;
+            do
+            {
+                actual = appPool.State;
+                if (actual == expected)
+                {
+                    return;
+                }
+
+                await Task.Delay(2000);
+
+            } while (--loop >= 0);
+
+            throw new InvalidOperationException(String.Format("Timeout waiting for {0} state.  The current state is {1}!", expected, actual));
         }
 
         private static void MapServiceSitePath(ServerManager iis, string applicationName, string path, string siteRoot)
