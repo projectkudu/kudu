@@ -81,9 +81,24 @@ editor.on('change', function () {
         if (contentHasChanged) {
             return;
         }
+        $('#statusbar').removeClass('statusbar-saved');
         $('#statusbar').addClass('statusbar-red');
         // Let's be nice to jQuery and only .addClass() on first change
         contentHasChanged = true;
+    }
+});
+
+// Bind CTRL-S as Save without closing
+editor.commands.addCommand({
+    name: 'saveItem',
+    bindKey: {
+        win: 'Ctrl-S',
+        mac: 'Command-S',
+        sender: 'editor|cli'
+    },
+    // !!We probably don't need args!!
+    exec: function(env, args, request) {
+        viewModel.fileEdit().saveItem();
     }
 });
 

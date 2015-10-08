@@ -9,18 +9,21 @@ var statusbar = {
             catch(e) {
                 filename = 'Can not get filename. See console for details.';
                 if (typeof console == 'object') {
-                    console.log('Can not get filename: %s', e);
+                    console.error('Can not get filename: %s', e);
                 }
             }
             finally {
                 $('#statusbar').text(filename);
-                $('#statusbar').removeClass('statusbar-red');
             }
         },
     reset:
         function () {
             $('#statusbar').text('');
             $('#statusbar').removeClass('statusbar-red');
+            $('#statusbar').removeClass('statusbar-saved');
+            $('#statusbar').css('background', 'none');
+            // Clear editor window
+            editor.setValue('');
             // Flag from ace-init.js
             contentHasChanged = false;
             // Clear search box
@@ -29,16 +32,52 @@ var statusbar = {
                 editor.searchBox.hide();
             }
         },
-    SavingChanges:
+    savingChanges:
         function () {
             $('#statusbar').text('Saving changes...');
             $('#statusbar').prepend('<i class="glyphicon glyphicon-cloud-upload" style="margin-right: 6px"></i>');
-         },
-    FetchingChanges:
+        },
+    fetchingContents:
         function () {
-            $('#statusbar').text('Fetching changes...');
+            $('#statusbar').text('Fetching contents...');
             $('#statusbar').prepend('<i class="glyphicon glyphicon-cloud-download" style="margin-right: 6px"></i>');
+        },
+    acknowledgeSave:
+        function () {
+            this.errorState.remove();
+            $('#statusbar').addClass('statusbar-saved');
+            contentHasChanged = false;
+            this.showFilename();
+        },
+    errorState:
+        {
+            set: function () {
+                     // We could not save the file
+                     // Mild panic attack, turn statusbar red
+                     statusbar.showFilename();
+                     $('#statusbar').css('background', '#ffdddd');
+                 },
+            remove: function () {
+                        $('#statusbar').css('background', 'none');
+                        $('#statusbar').removeClass('statusbar-red');
+                 }
         }
+};
+
+function showAceHelpModal() {
+    $('#ace-help-modal').modal();
+    $('#ace-help-modal .modal-body').load('/DebugConsole/AceHelp.html',
+        function(response, status, xhr) {
+            if (status == 'error') {
+                $(this).html('<div class="alert alert-warning" role="alert">' +
+                             'Yikes! Can not load help page:<br>' +
+                             'Error Code ' + xhr.status + ' ' + xhr.statusText + '</div>');
+                if (typeof console == 'object') {
+                    console.error('Can not load help page: ' + 'xhr.status = ' +
+                                  xhr.status + ' ' + xhr.statusText);
+                }
+            }
+    });
 }
 
 
@@ -107,6 +146,7 @@ var copyObjectsManager = {
         delete this._copyProgressObjects[index];
     },
     clearData: function () {
+        var date = new Date();
         this._infoMessage = 'You have cleared the cache at ' + date.toLocaleString();
         this._copyProgressObjects = {};
     }
@@ -114,7 +154,6 @@ var copyObjectsManager = {
 
 var statusbarObj = Object.create(statusbar);
 copyObjectsManager.init();
-
 
 $.connection.hub.url = appRoot + "api/filesystemhub";
 var fileSystemHub = $.connection.fileSystemHub;
@@ -300,7 +339,7 @@ $.connection.hub.start().done(function () {
             var that = this;
             // Blank out the editor before fetching new content
             viewModel.editText(null);
-            statusbarObj.FetchingChanges();
+            statusbarObj.fetchingContents();
             viewModel.fileEdit(this);
             if(this.mime === "text/xml")
             {
@@ -325,14 +364,26 @@ $.connection.hub.start().done(function () {
 
         this.saveItem = function () {
             var text = viewModel.editText();
-            statusbarObj.SavingChanges();
+            statusbarObj.savingChanges();
+            Vfs.setContent(this, text)
+                .done(function () {
+                    statusbarObj.acknowledgeSave();
+                }).fail(function (error) {
+                    showErrorAsAlert(error);
+                    statusbarObj.errorState.set();
+                });
+        }
+
+        this.saveItemAndClose = function () {
+            var text = viewModel.editText();
+            statusbarObj.savingChanges();
             Vfs.setContent(this, text)
                 .done(function () {
                     viewModel.fileEdit(null);
                     statusbarObj.reset();
                 }).fail(function (error) {
-                    viewModel.fileEdit(null);
-                    showError(error);
+                    showErrorAsAlert(error);
+                    statusbar.errorState.set()
                 });
         }
     }
@@ -765,4 +816,11 @@ $.connection.hub.start().done(function () {
         viewModel.processing(false);
         viewModel.errorText(JSON.parse(error.responseText).Message);
     }
+
+    function showErrorAsAlert(error) {
+        viewModel.processing(false);
+        var msg = JSON.parse(error.responseText).Message;
+        alert(msg);
+    }
+
 });

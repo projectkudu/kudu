@@ -241,6 +241,7 @@
     <Content Include="DebugConsole\Default.cshtml">
       <SubType>Code</SubType>
     </Content>
+    <Content Include="DebugConsole\AceHelp.html" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="SiteExtensions\Default.cshtml" />
