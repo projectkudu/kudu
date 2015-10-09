@@ -94,7 +94,7 @@ var copyObjectsManager = {
     },
     addCopyStats: function (uri, loadedData, totalData) {
 
-        uri = uri.substring(uri.indexOf('/vfs')+5, uri.length); // slice uri to be prettier
+        uri = uri.substring(uri.indexOf('/vfs') + 5, uri.length); // slice uri to be prettier[ex: http://localhost:37911/api/vfs/ttesstt//Kudu.FunctionalTests/Vfs/VfsControllerTest.cs => ttesstt//Kudu.FunctionalTests/Vfs/VfsControllerTest.cs]
         if (this._copyProgressObjects[uri]) {
             if (loadedData === totalData) {
                 this._copyProgressObjects[uri].endDate = $.now();
@@ -104,7 +104,7 @@ var copyObjectsManager = {
         } else {
             this._copyProgressObjects[uri] = {};
             this._copyProgressObjects[uri].startDate = $.now();
-            this._copyProgressObjects[uri].copyPackEnded = false; //this is used for when copying multiple files in the same time so that i may stii have a coherent percentage
+            this._copyProgressObjects[uri].copyPackEnded = false; //this is used for when copying multiple files in the same time so that i may still have a coherent percentage
         }
 
         this._copyProgressObjects[uri].loadedData = loadedData;
@@ -206,7 +206,9 @@ $.connection.hub.start().done(function () {
             return whenArray(
                 $.map(files, function (item) {
                     var baseHref = unzip ? viewModel.selected().href.replace(/\/vfs\//, "/zip/") : viewModel.selected().href;
-                    return Vfs.setContent({ href: (baseHref + (unzip ? "" : item.name)) }, item.contents);
+                    var finalHref = (baseHref + (unzip ? "" : item.name));
+                    copyObjectsManager.addCopyStats(finalHref, 0, item.contents.size); //files copy progress data for monitory
+                    return Vfs.setContent({ href: finalHref }, item.contents);
                 })
             );
         },
@@ -549,7 +551,6 @@ $.connection.hub.start().done(function () {
 
             //handler for clearing out cache once it gets too large 
             var currentObjCount = Object.keys(copyObjs).length;
-           // console.log('CURRENT OBJ COUNT: %s', currentObjCount);
             if (currentObjCount > 2000) {
                 for (var i = 0; i < 1000; i++) { //delete oldest 1000 copy prog objects
                     copyObjectsManager.removeAtIndex(0);
@@ -559,9 +560,7 @@ $.connection.hub.start().done(function () {
             }
    
             if ($('#files-transfered-modal').is(':visible')) { // update if modal visible
-               // var old_time = performance.now();
                 viewModel.copyProgStats(copyObjs); // update viewmodel
-               // var new_time = performance.now(); var seconds_passed = new_time - old_time; console.log("TIME SPENT (ms): " + seconds_passed);
 
                 var modalHeaderText = '';
                 if (perc < 100) {
