@@ -18,6 +18,7 @@ namespace Kudu.Core.Jobs
     {
         private const string StatusFilesSearchPattern = ContinuousJobStatus.FileNamePrefix + "*";
         private const string Localhost = "127.0.0.1";
+        private const string HttpScheme = "http";
 
         private readonly Dictionary<string, ContinuousJobRunner> _continuousJobRunners = new Dictionary<string, ContinuousJobRunner>(StringComparer.OrdinalIgnoreCase);
 
@@ -74,9 +75,15 @@ namespace Kudu.Core.Jobs
 
         public static HttpRequestMessage GetForwardRequest(int port, string path, HttpRequestMessage original)
         {
-            var webJobBaseUri = new Uri(string.Concat("http://", Localhost, ":", port));
-            var fullUriPath = new Uri(webJobBaseUri, path);
-            var clone = new HttpRequestMessage(original.Method, fullUriPath);
+            var cloneUriBuilder = new UriBuilder(HttpScheme, Localhost, port)
+            {
+                Path = path,
+                // Uri has a ? leading the query string, while UriBuilder doesn't expect a leading ?
+                // If we don't trim it, we'll endup with ?? in the URL
+                Query = original.RequestUri.Query.Trim('?')
+            };
+
+            var clone = new HttpRequestMessage(original.Method, cloneUriBuilder.Uri);
 
             if (original.Method != HttpMethod.Get)
             {
