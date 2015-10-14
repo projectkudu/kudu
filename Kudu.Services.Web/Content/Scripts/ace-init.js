@@ -96,7 +96,6 @@ editor.commands.addCommand({
         mac: 'Command-S',
         sender: 'editor|cli'
     },
-    // !!We probably don't need args!!
     exec: function(env, args, request) {
         viewModel.fileEdit().saveItem();
     }
