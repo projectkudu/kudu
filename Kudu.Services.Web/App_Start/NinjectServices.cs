@@ -304,8 +304,7 @@ namespace Kudu.Services.Web.App_Start
             kernel.Bind<ISiteExtensionManager>().To<SiteExtensionManager>().InRequestScope();
 
             // Command executor
-            kernel.Bind<ICommandExecutor>().ToMethod(context => GetCommandExecutor(environment, context))
-                                           .InRequestScope();
+            kernel.Bind<ICommandExecutor>().To<CommandExecutor>().InRequestScope();
 
             MigrateSite(environment, noContextDeploymentsSettingsManager);
             RemoveOldTracePath(environment);
@@ -654,16 +653,6 @@ namespace Kudu.Services.Web.App_Start
             }
 
             return null;
-        }
-
-        private static ICommandExecutor GetCommandExecutor(IEnvironment environment, IContext context)
-        {
-            if (System.String.IsNullOrEmpty(environment.RepositoryPath))
-            {
-                throw new HttpResponseException(HttpStatusCode.NotFound);
-            }
-
-            return new CommandExecutor(environment.RootPath, environment, context.Kernel.Get<IDeploymentSettingsManager>(), TraceServices.CurrentRequestTracer);
         }
 
         private static string GetSettingsPath(IEnvironment environment)
