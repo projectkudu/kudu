@@ -107,7 +107,7 @@ var copyObjectsManager = {
             this._copyProgressObjects[uri].copyPackEnded = false; //this is used for when copying multiple files in the same time so that i may still have a coherent percentage
         }
 
-        if (totalData == 0) { // empty files appear to have size 0
+        if (totalData === 0) { // empty files appear to have size 0
             totalData = loadedData = 1;
         }
 
@@ -418,6 +418,7 @@ $.connection.hub.start().done(function () {
             },
             showCopyProgressModal: function() {
                 $('#files-transfered-modal').modal();
+                copyProgressHandlingFunction(null,null,true);
             },
             clearCopyProgressCache: function() {
                 copyObjectsManager.clearData();
@@ -544,29 +545,30 @@ $.connection.hub.start().done(function () {
     };
 
     //monitor file upload progress 
-    function copyProgressHandlingFunction(e,uniqueUrl) {
-        if (e.lengthComputable) {
+    function copyProgressHandlingFunction(e,uniqueUrl,forceUpdateModal) {
+        if (e && uniqueUrl && e.lengthComputable) {
             copyObjectsManager.addCopyStats(uniqueUrl, e.loaded, e.total); //add/update stats
-            var perc = copyObjectsManager.getCurrentPercentCompletion(); // perc-per-total transaction
-            var copyObjs = copyObjectsManager.getCopyStats();
+        }
+        var perc = copyObjectsManager.getCurrentPercentCompletion(); // perc-per-total transaction
+        var copyObjs = copyObjectsManager.getCopyStats();
 
-            $('#copy-percentage').text(perc + "%");
+        $('#copy-percentage').text(perc + "%");
         
-            if(perc != 100 && perc != 0)  {
-                viewModel.isTransferInProgress(true);
-            }
+        if(perc != 100 && perc != 0)  {
+            viewModel.isTransferInProgress(true);
+        }
 
-            //handler for clearing out cache once it gets too large 
-            var currentObjCount = Object.keys(copyObjs).length;
-            if (currentObjCount > 2000) {
-                for (var i = 0; i < 1000; i++) { //delete oldest 1000 copy prog objects
-                    copyObjectsManager.removeAtIndex(0);
-                }
-                var date = new Date();
-                copyObjectsManager.setInfoMessage('Cache was partialy auto-cleared at ' + date.toLocaleString() + ' for performance improvements');
+        //handler for clearing out cache once it gets too large 
+        var currentObjCount = Object.keys(copyObjs).length;
+        if (currentObjCount > 2000) {
+            for (var i = 0; i < 1000; i++) { //delete oldest 1000 copy prog objects
+                copyObjectsManager.removeAtIndex(0);
             }
-   
-            if ($('#files-transfered-modal').is(':visible')) { // update if modal visible
+            var date = new Date();
+            copyObjectsManager.setInfoMessage('Cache was partialy auto-cleared at ' + date.toLocaleString() + ' for performance improvements');
+        }
+
+        if ($('#files-transfered-modal').is(':visible') || forceUpdateModal) { // update if modal visible
                 viewModel.copyProgStats(copyObjs); // update viewmodel
 
                 var modalHeaderText = '';
@@ -578,7 +580,7 @@ $.connection.hub.start().done(function () {
                     modalHeaderText += ' ' +((_temp = copyObjectsManager.getInfoMessage()) ? _temp : "");
                 $('#files-transfered-modal .modal-header').html(modalHeaderText);
             }
-        }
+        
     }
 
     function setupFileSystemWatcher() {
