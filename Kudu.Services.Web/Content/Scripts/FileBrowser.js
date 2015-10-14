@@ -107,6 +107,10 @@ var copyObjectsManager = {
             this._copyProgressObjects[uri].copyPackEnded = false; //this is used for when copying multiple files in the same time so that i may still have a coherent percentage
         }
 
+        if (totalData == 0) { // empty files appear to have size 0
+            totalData = loadedData = 1;
+        }
+
         this._copyProgressObjects[uri].loadedData = loadedData;
         this._copyProgressObjects[uri].totalData = totalData;
     },
@@ -429,7 +433,12 @@ $.connection.hub.start().done(function () {
             inprocessing: 0,
             processing: function (value) {
                 value ? viewModel.inprocessing++ : viewModel.inprocessing--;
-                viewModel.inprocessing > 0 ? viewModel.koprocessing(true) : viewModel.koprocessing(false);
+                if (viewModel.inprocessing > 0) {
+                    viewModel.koprocessing(true);
+                } else {
+                    viewModel.koprocessing(false);
+                    viewModel.isTransferInProgress(false);
+                }
             }
         };
 
@@ -543,9 +552,7 @@ $.connection.hub.start().done(function () {
 
             $('#copy-percentage').text(perc + "%");
         
-            if (perc == 100 || perc == 0) {
-                viewModel.isTransferInProgress(false);
-            } else {
+            if(perc != 100 && perc != 0)  {
                 viewModel.isTransferInProgress(true);
             }
 
