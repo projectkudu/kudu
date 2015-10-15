@@ -136,10 +136,23 @@ namespace Kudu.Core.Infrastructure
         private static string ResolveNpmVersion(string nodeVersion)
         {
             string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);
+            string appSettingNpmVersion = SystemEnvironment.GetEnvironmentVariable("WEBSITE_NPM_DEFAULT_VERSION");
 
-            string npmTxtPath = Path.Combine(programFiles, "nodejs", nodeVersion, "npm.txt");
+            if (!string.IsNullOrEmpty(appSettingNpmVersion))
+            {
+                return appSettingNpmVersion;
+            }
+            else if (nodeVersion.Equals("4.1.2", StringComparison.OrdinalIgnoreCase))
+            {
+                // This case is only to work around node version 4.1.2 with npm 2.x failing to publish ASP.NET 5 apps due to long path issues.
+                return "3.3.6";
+            }
+            else
+            {
+                string npmTxtPath = Path.Combine(programFiles, "nodejs", nodeVersion, "npm.txt");
 
-            return FileSystemHelpers.FileExists(npmTxtPath) ? FileSystemHelpers.ReadAllTextFromFile(npmTxtPath).Trim() : DefaultNpmVersion;
+                return FileSystemHelpers.FileExists(npmTxtPath) ? FileSystemHelpers.ReadAllTextFromFile(npmTxtPath).Trim() : DefaultNpmVersion;
+            }
         }
 
         private static bool IsNodeVersionInstalled(string version)
