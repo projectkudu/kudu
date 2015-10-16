@@ -96,8 +96,8 @@ namespace Kudu.Services.Performance
             {
                 _operationLock.LockOperation(() =>
                 {
-                    var settings = new JsonSettings(Path.Combine(_environment.DiagnosticsPath, Constants.SettingsJsonFile));
-                    settings.SetValue(AzureDriveEnabledKey, true);
+                    var diagnostics = new DiagnosticsSettingsManager(Path.Combine(_environment.DiagnosticsPath, Constants.SettingsJsonFile), _tracer);
+                    diagnostics.UpdateSetting(AzureDriveEnabledKey, true);
                 }, TimeSpan.FromSeconds(30));
             }
 

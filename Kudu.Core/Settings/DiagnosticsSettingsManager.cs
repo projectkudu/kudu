@@ -31,6 +31,13 @@ namespace Kudu.Core.Settings
             return ReadSettings();
         }
 
+        public void UpdateSetting(string key, object value)
+        {
+            DiagnosticsSettings diagnosticsSettings = ReadSettings();
+            diagnosticsSettings.SetSetting(key, value);
+            SaveSettings(diagnosticsSettings);
+        }
+
         public void UpdateSettings(DiagnosticsSettings settings)
         {
             DiagnosticsSettings diagnosticsSettings = ReadSettings();
