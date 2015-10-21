@@ -607,7 +607,10 @@ namespace Kudu.Core.Deployment
                     {
                         await builder.Build(context);
 
-                        TryTouchWebConfig(context);
+                        if (_settings.TouchWebConfigAfterDeployment())
+                        {
+                            TryTouchWebConfig(context);
+                        }
 
                         // Run post deployment steps
                         FinishDeployment(id, deployStep);
