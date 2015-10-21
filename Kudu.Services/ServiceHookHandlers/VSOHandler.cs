@@ -1,9 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Globalization;
 using System.Web;
 using Kudu.Contracts.Settings;
-using Kudu.Contracts.Tracing;
 using Kudu.Core.Deployment;
 using Kudu.Core.SourceControl;
 using Newtonsoft.Json.Linq;
@@ -46,11 +44,19 @@ namespace Kudu.Services.ServiceHookHandlers
             // even it is empty password we need to explicitly say so (with colon).
             // without colon, LibGit2Sharp is not working
             Uri remoteUrl = new Uri(_settings.GetValue("RepoUrl"));
-            info.RepositoryUrl = string.Format(CultureInfo.InvariantCulture, "{0}://{1}:@{2}{3}",
-                remoteUrl.Scheme,
-                sessionToken.Value<string>("token"),
-                remoteUrl.Authority,
-                remoteUrl.PathAndQuery);
+            if (sessionToken == null)
+            {
+                // if there is no session token, fallback to use raw remoteUrl from setting.xml
+                info.RepositoryUrl = remoteUrl.AbsoluteUri;
+            }
+            else
+            {
+                info.RepositoryUrl = string.Format(CultureInfo.InvariantCulture, "{0}://{1}:@{2}{3}",
+                    remoteUrl.Scheme,
+                    sessionToken.Value<string>("token"),
+                    remoteUrl.Authority,
+                    remoteUrl.PathAndQuery);
+            }
 
             info.TargetChangeset = DeploymentManager.CreateTemporaryChangeSet(
                 authorName: info.Deployer,

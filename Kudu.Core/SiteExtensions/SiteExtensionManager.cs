@@ -72,22 +72,6 @@ namespace Kudu.Core.SiteExtensions
                 }
             },
             {
-                "kudu",
-                new SiteExtensionInfo
-                {
-                    Id = "Kudu",
-                    Title = "Site Admin Tools",
-                    Type = SiteExtensionInfo.SiteExtensionType.PreInstalledEnabled,
-                    Authors = new [] {"Project Kudu Team"},
-                    IconUrl = "https://www.siteextensions.net/Content/Images/kudu50x50.png",
-                    LicenseUrl = "https://github.com/projectkudu/kudu/blob/master/LICENSE.txt",
-                    ProjectUrl = "https://github.com/projectkudu/kudu",
-                    Description = "Site administration and management tools for your Azure Websites, including a terminal, process viewer and more!",
-                    // API will return a full url instead of this relative url.
-                    ExtensionUrl = "/"
-                }
-            },
-            {
                 "daas",
                 new SiteExtensionInfo
                 {
