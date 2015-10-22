@@ -32,7 +32,6 @@ namespace Kudu.FunctionalTests.SiteExtensions
         private static readonly Dictionary<string, string> _preInstalledExtensions = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
             {"Monaco", "Visual Studio Online"},
-            {"Kudu", "Kudu"},
             {"DaaS", "Site Diagnostics"}
         };
 
