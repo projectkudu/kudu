@@ -1,0 +1,29 @@
+﻿#generalModal {
+    background-color:#fff;
+    border-radius:15px;
+    color:#000;
+    display:none; 
+    padding:20px;
+    min-width:400px;
+    min-height: 180px;
+}
+    #generalModal .title {
+     vertical-align: text-top;
+     min-height: 10px;
+    }
+
+    #generalModal .content {
+     text-align: justify;
+    text-justify: inter-word;
+    margin:30px 10px 10px 10px;
+    min-height:30px;
+    }
+
+
+.b-close{
+    cursor:pointer;
+    position:absolute;
+    right:10px;
+    top:5px;
+}
+

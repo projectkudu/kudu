@@ -15,6 +15,7 @@
     <IISExpressAnonymousAuthentication />
     <IISExpressWindowsAuthentication />
     <IISExpressUseClassicPipelineMode />
+    <UseGlobalApplicationHostFile />
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Microsoft.AspNet.SignalR.Core, Version=2.1.1.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
@@ -149,6 +150,7 @@
     <Content Include="Content\Images\jquery-ui-theme\ui-icons_f6cf3b_256x240.png" />
     <Content Include="Content\Images\Kudu.svg" />
     <Content Include="Content\Images\Windows Azure Web Site.png" />
+    <Content Include="Content\Scripts\GeneralModal.js" />
     <Content Include="Content\Scripts\HelperScript.js" />
     <Content Include="Content\Scripts\jquery.contextMenu.js" />
     <Content Include="Content\Scripts\KuduExec.js" />
@@ -165,6 +167,7 @@
     <Content Include="Content\Styles\SiteExtensions.css" />
     <Content Include="Content\Scripts\jquery.signalR-2.1.1.min.js" />
     <Content Include="Content\Scripts\ace-init.js" />
+    <Content Include="Content\Styles\GeneralModal.css" />
     <Content Include="favicon.ico" />
     <Content Include="Web.config">
       <SubType>Designer</SubType>
