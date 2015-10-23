@@ -163,9 +163,8 @@ var Utilities = (function () {
                 var iframeDocument = iframe.contentDocument || iframe.contentWindow.document; // for both IE and other
                 var iFrameBody = iframeDocument.getElementsByTagName('body')[0];
                 if (iFrameBody.innerText && iFrameBody.innerText.length > 0) {
-                    generalModal.show("ALERT!", iFrameBody.innerText);
+                    showModal("ALERT!", iFrameBody.innerText);
                 }
-           //     alert(iFrameBody.innerText);
             }
         }
         iframe.src = url;
@@ -945,9 +944,32 @@ function startProfiling(e, processId) {
     });
 }
 
+function showModal(title, content) {
+
+    if (!$("#generalModal").hasClass('ui-dialog-content')) { //check if already init-ed
+        $("#generalModal").dialog({
+            autoOpen: false,
+            resizable: false,
+            draggable: false,
+            modal: true,
+            width:"500px",
+            create: function () {
+                $(".ui-dialog").find(".ui-dialog-titlebar").css({
+                    'background-image': 'none',
+                    'background-color': 'white',
+                    'border': 'none'
+                });
+            }
+        });
+    }
+    $('#generalModal').dialog('option', 'title', title);
+    $("#generalModal .content").text(content);
+    $("#generalModal").dialog("open");
+}
+
 function stopProfiling(e, processId) {
     var uri = window.location.protocol + "//" + window.location.host + "/api/processes/" + processId + "/profile/stop";
-    generalModal.show("Generating diagnostics...","The profiler is now generating your report. This could take a couple of minutes after which you will be prompted with a download.");
+    showModal("Generating diagnostics...", "The profiler is now generating your report. This could take a couple of minutes after which you will be prompted with a download.");
 
     Utilities.downloadURL(uri, true);
     e.target.textContent = "Start Profiling";

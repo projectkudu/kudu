@@ -2,6 +2,10 @@
     background-color: #ffff99;
 }
 
+#generalModal {
+    display:none; 
+}
+
 table th {
     background: white;
 }
