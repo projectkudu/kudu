@@ -31,9 +31,9 @@ namespace Kudu.Core.Test.Jobs
 
             var triggeredJobSchedulerLoggerMock = new Mock<TriggeredJobSchedulerLogger>(String.Empty, mockEnvironment.Object, null);
             var schedule = Schedule.BuildSchedule(cronExpression, triggeredJobSchedulerLoggerMock.Object);
-            schedule.SetDateTimeProvider(new TestDateTimeNowProvider(DateTime.Parse("00:00:00 1/1/2015", CultureInfo.CurrentCulture, DateTimeStyles.AssumeLocal)));
+            schedule.SetDateTimeProvider(new TestDateTimeNowProvider(DateTime.Parse("00:00:00 1/1/2015", CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal)));
 
-            DateTime lastSchedule = DateTime.Parse(lastScheduleStr, CultureInfo.CurrentCulture, DateTimeStyles.AssumeLocal);
+            DateTime lastSchedule = DateTime.Parse(lastScheduleStr, CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal);
             TimeSpan actualNextSchedule = schedule.GetNextInterval(lastSchedule, ignoreMissed);
 
             TimeSpan expectedNextInterval = TimeSpan.Parse(expectedNextIntervalStr);
