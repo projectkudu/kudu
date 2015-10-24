@@ -6,6 +6,10 @@
     display:none; 
 }
 
+    #generalModal .content {
+    word-wrap: break-word;
+    }
+
 table th {
     background: white;
 }

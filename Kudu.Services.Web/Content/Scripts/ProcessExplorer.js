@@ -162,8 +162,9 @@ var Utilities = (function () {
             if (showResponseMessage) {
                 var iframeDocument = iframe.contentDocument || iframe.contentWindow.document; // for both IE and other
                 var iFrameBody = iframeDocument.getElementsByTagName('body')[0];
-                if (iFrameBody.innerText && iFrameBody.innerText.length > 0) {
-                    showModal("ALERT!", iFrameBody.innerText);
+                var iframeText = $(iFrameBody).text();
+                if (iframeText && iframeText.length > 0) {
+                    showModal("ALERT!", iframeText);
                 }
             }
         }
