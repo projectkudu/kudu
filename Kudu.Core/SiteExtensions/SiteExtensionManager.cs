@@ -490,7 +490,7 @@ namespace Kudu.Core.SiteExtensions
             {
                 EnsureInstallationEnviroment(installationDirectory, tracer);
 
-                string packageLocalFilePath = GetNuGetPackageFile(package.Identity.Id, package.Identity.Version.ToString());
+                string packageLocalFilePath = GetNuGetPackageFile(package.Identity.Id, package.Identity.Version.ToNormalizedString());
                 bool packageExisted = FileSystemHelpers.DirectoryExists(installationDirectory);
                 SourceRepository remoteRepo = GetRemoteRepository(feedUrl);
 

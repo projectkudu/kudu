@@ -546,6 +546,34 @@ namespace Kudu.FunctionalTests.SiteExtensions
         }
 
         [Fact]
+        public async Task SiteExtensionNormalizedVersionTests()
+        {
+            const string appName = "SiteExtensionNormalizedVersionTests";
+            const string externalPackageId = "SimpleSite";
+            const string firstInstallVersion = "1.0";
+            const string firstInstallNormalizedVersion = "1.0.0";
+            const string latestListedNormalizedVersion = "2.0.0";
+            const string externalFeed = "https://www.myget.org/F/simplesvc/";
+
+            await ApplicationManager.RunAsync(appName, async appManager =>
+            {
+                var manager = appManager.SiteExtensionManager;
+                await CleanSiteExtensions(manager);
+
+                var response = await manager.InstallExtension(externalPackageId, version: firstInstallVersion, feedUrl: externalFeed);
+                var info = await response.Content.ReadAsAsync<SiteExtensionInfo>();
+                Assert.Equal(externalPackageId, info.Id);
+                Assert.NotEqual(firstInstallVersion, info.Version); // return value is normalized
+                Assert.Equal(firstInstallNormalizedVersion, info.Version);
+
+                // Update to latest version
+                response = await manager.InstallExtension(externalPackageId, feedUrl: externalFeed);
+                info = await response.Content.ReadAsAsync<SiteExtensionInfo>();
+                Assert.Equal(latestListedNormalizedVersion, info.Version);
+            });
+        }
+
+        [Fact]
         public async Task SiteExtensionInstallPackageToWebRootTests()
         {
             const string appName = "SiteExtensionInstallPackageToWebRootTests";
