@@ -79,7 +79,7 @@ namespace Kudu.FunctionalTests
                 File.WriteAllText(helloTextPath, "uncommitted changes");
 
                 // Act - 2
-                hgRepo.FetchWithoutConflict(remoteRepository, branchName: "test");
+                hgRepo.FetchWithoutConflict(remoteRepository, branchName: "branch with spaces");
 
                 // Assert - 2
                 Assert.Equal("This is a commit from test", File.ReadAllText(helloTextPath));
