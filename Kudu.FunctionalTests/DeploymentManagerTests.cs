@@ -1104,6 +1104,12 @@ namespace Kudu.FunctionalTests
             });
         }
 
+        readonly static string[] permissionDeniedExpectedMessage = new[]
+        {
+            "Permission denied [(]publickey[)]",
+            "make sure you have the correct access rights"
+        };
+
         private static IEnumerable<RepoInvalidInfo> GetRepoInvalidInfos()
         {
             yield return new RepoInvalidInfo("InvalidUrl", new [] {"Repository url 'InvalidUrl' is invalid."}, null);
@@ -1117,14 +1123,14 @@ namespace Kudu.FunctionalTests
             yield return new RepoInvalidInfo("http://abcdefghigkl.com/", new [] {"abort: error: getaddrinfo failed.*hg.exe pull"}, "hg");
             yield return new RepoInvalidInfo("https://abcdefghigkl.com/", new[] { "Could.*n.*t resolve host.*abcdefghigkl.com", "LibGit2SharpException: failed to send request: The server name or address could not be resolved", "LibGit2SharpException: Request failed with status code: 502"}, null);
             yield return new RepoInvalidInfo("https://abcdefghigkl.com/", new [] {"abort: error: getaddrinfo failed.*hg.exe pull"}, "hg");
-            yield return new RepoInvalidInfo("git@abcdefghigkl.com:Invalid/Invalid.git", new [] {"no address associated with name"}, null);
+            yield return new RepoInvalidInfo("git@abcdefghigkl.com:Invalid/Invalid.git", new [] { "no address associated with name", "Could not resolve hostname" }, null);
             yield return new RepoInvalidInfo("ssh://hg@abcdefghigkl.com/Invalid/Invalid.git", new [] {"abort: no suitable response from remote hg.*hg.exe pull"}, "hg");
-            yield return new RepoInvalidInfo("git@github.com:Invalid/Invalid.git", new [] {"Permission denied [(]publickey[)]"}, null);
-            yield return new RepoInvalidInfo("git@bitbucket.org:Invalid/Invalid.git", new [] {"Permission denied [(]publickey[)]"}, null);
-            yield return new RepoInvalidInfo("git@github.com:KuduApps/Invalid.git", new [] {"Permission denied [(]publickey[)]"}, null);
-            yield return new RepoInvalidInfo("git@bitbucket.org:kudutest/Invalid.git", new [] {"Permission denied [(]publickey[)]"}, null);
-            yield return new RepoInvalidInfo("git@github.com:KuduApps/HelloKudu.git", new [] {"Permission denied [(]publickey[)]"}, null);
-            yield return new RepoInvalidInfo("git@bitbucket.org:kudutest/jeanprivate.git", new [] {"Permission denied [(]publickey[)]"}, null);
+            yield return new RepoInvalidInfo("git@github.com:Invalid/Invalid.git", permissionDeniedExpectedMessage, null);
+            yield return new RepoInvalidInfo("git@bitbucket.org:Invalid/Invalid.git", permissionDeniedExpectedMessage, null);
+            yield return new RepoInvalidInfo("git@github.com:KuduApps/Invalid.git", permissionDeniedExpectedMessage, null);
+            yield return new RepoInvalidInfo("git@bitbucket.org:kudutest/Invalid.git", permissionDeniedExpectedMessage, null);
+            yield return new RepoInvalidInfo("git@github.com:KuduApps/HelloKudu.git", permissionDeniedExpectedMessage, null);
+            yield return new RepoInvalidInfo("git@bitbucket.org:kudutest/jeanprivate.git", permissionDeniedExpectedMessage, null);
             // due to unreliable error from github
             // yield return new RepoInvalidInfo("https://github.com/KuduApps/HelloKudu.git", "abort: HTTP Error 406: Not Acceptable.*hg.exe pull https://github.com/KuduApps/HelloKudu.git", "hg");
             yield return new RepoInvalidInfo("https://bitbucket.org/kudutest/hellomercurial/", new [] {"fatal:.*https://bitbucket.org/kudutest/hellomercurial.* not found", "\\[LibGit2SharpException: Request failed with status code: 404\\]"}, null);
