@@ -149,7 +149,7 @@ var Utilities = (function () {
         return options;
     };
 
-    Utilities.downloadURL = function (url) {
+    Utilities.downloadURL = function (url,showResponseMessage) {
         var hiddenIFrameID = "hiddenDownloader", iframe;
         iframe = document.getElementById(hiddenIFrameID);
         if (iframe === null) {
@@ -158,9 +158,18 @@ var Utilities = (function () {
             iframe.style.display = "none";
             document.body.appendChild(iframe);
         }
-        
+        iframe.onload = function (e) {
+            if (showResponseMessage) {
+                var iframeDocument = iframe.contentDocument || iframe.contentWindow.document; // for both IE and other
+                var iFrameBody = iframeDocument.getElementsByTagName('body')[0];
+                var iframeText = $(iFrameBody).text();
+                if (iframeText && iframeText.length > 0) {
+                    showModal("ALERT!", iframeText);
+                }
+            }
+        }
         iframe.src = url;
-    };
+   };
 
     Utilities.arrayToDivs = function (lines) {
         var htmls = [];
@@ -342,17 +351,22 @@ var Process = (function () {
         tr.appendChild(Utilities.ToTd(Utilities.commaSeparateNumber(this._json.working_set / 1024) + " KB"));
         tr.appendChild(Utilities.ToTd(Utilities.commaSeparateNumber(this._json.private_memory / 1024) + " KB"));
         tr.appendChild(Utilities.ToTd(Utilities.commaSeparateNumber(this._json.thread_count)));
-        tr.appendChild(Utilities.ToTd(Utilities.getButton("ui-button-info", this._json.id + "-properties", "Properties..", function (e) {
+        tr.appendChild(Utilities.ToTd(Utilities.getButton("btn btn-info", this._json.id + "-properties", "Properties..", function (e) {
             e.preventDefault();
             e.stopPropagation();
             _this.dialog().dialog("open");
             $("li").blur();
         }, false)));
         
-        var profilingButton = Utilities.getButton("ui-button-info", this._json.id + "-Profiling", this._json.is_profile_running ? "Stop Profiling" : "Start Profiling", function (e) {
+        var profilingButton = Utilities.getButton("btn btn-info", this._json.id + "-Profiling", this._json.is_profile_running ? "Stop Profiling" : "Start Profiling", function (e) {
             handleProfilingEvents(e, _this._json.id);
         }, false);
         $(profilingButton).css("width", "138px");
+
+        if (this._json.is_profile_running) { // highlight button if the profiler has started
+            $(profilingButton).addClass("btn-danger");
+        }
+
         if (Process.prototype.WebSiteSku === "Free" || Process.prototype.WebSiteSku === "Shared") {
             $(profilingButton).css("opacity", "0.5");
             $(profilingButton).off("click");
@@ -922,6 +936,7 @@ function startProfiling(e, processId) {
     request.done(function (resp) {
         e.target.title = "";
         e.target.textContent = "Stop Profiling";
+        $(e.currentTarget).addClass("btn-danger");  // highlight button if the profiler has started
     });
     request.fail(function (resp) {
         var obj = JSON.parse(resp.responseText);
@@ -930,12 +945,41 @@ function startProfiling(e, processId) {
     });
 }
 
+function showModal(title, content) {
+
+    if (!$("#generalModal").hasClass('ui-dialog-content')) { //check if already init-ed
+        $("#generalModal").dialog({
+            autoOpen: false,
+            resizable: false,
+            draggable: false,
+            modal: true,
+            width: "500px",
+            open: function () {
+                $(this).siblings(".ui-dialog-titlebar")
+                              .find("button").blur();
+            },
+            create: function () {
+                $(".ui-dialog").find(".ui-dialog-titlebar").css({
+                    'background-image': 'none',
+                    'background-color': 'white',
+                    'border': 'none'
+                });
+            }
+        });
+    }
+    $('#generalModal').dialog('option', 'title', title);
+    $("#generalModal .content").text(content);
+    $("#generalModal").dialog("open");
+}
+
 function stopProfiling(e, processId) {
     var uri = window.location.protocol + "//" + window.location.host + "/api/processes/" + processId + "/profile/stop";
-    Utilities.downloadURL(uri);
+    showModal("Generating diagnostics...", "The profiler is now generating your report. This could take a couple of minutes after which you will be prompted with a download.");
+
+    Utilities.downloadURL(uri, true);
     e.target.textContent = "Start Profiling";
-    // TODO: we need to find a better way to handle this.
     e.target.title = "It may take a few seconds for the download profile dialog to appear";
+    $(e.currentTarget).removeClass("btn-danger");  // remove highlight button if the profiler has stopped
 }
 
 window.onload = function () {
