@@ -953,7 +953,11 @@ function showModal(title, content) {
             resizable: false,
             draggable: false,
             modal: true,
-            width:"500px",
+            width: "500px",
+            open: function () {
+                $(this).siblings(".ui-dialog-titlebar")
+                              .find("button").blur();
+            },
             create: function () {
                 $(".ui-dialog").find(".ui-dialog-titlebar").css({
                     'background-image': 'none',
