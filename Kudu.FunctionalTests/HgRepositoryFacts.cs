@@ -83,7 +83,7 @@ namespace Kudu.FunctionalTests
 
                 // Assert - 2
                 Assert.Equal("This is a commit from test", File.ReadAllText(helloTextPath));
-                Assert.Equal("7648ca7e03987b5d4204fcb283c687dada051ce5", hgRepo.CurrentId);
+                Assert.Equal("693ae9285871f20f2b9c347727ca82b39c3fe5e8", hgRepo.CurrentId);
             }
         }
 
