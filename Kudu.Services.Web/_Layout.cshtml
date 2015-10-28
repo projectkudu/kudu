@@ -73,6 +73,11 @@
                             var hash = md5.ComputeHash(System.Text.Encoding.UTF8.GetBytes(email.ToLowerInvariant().Trim()));
                             var imageUrl = String.Format("https://secure.gravatar.com/avatar/{0}.jpg?d=mm",
                                 BitConverter.ToString(hash).ToLowerInvariant().Replace("-", String.Empty));
+
+                            if (displayName.StartsWith("xn--"))
+                            {
+                                displayName = new System.Globalization.IdnMapping().GetUnicode(displayName);
+                            }
                             <ul class="nav navbar-nav navbar-right" style="position: fixed; right: 65px;">
                                 <li class="dropdown">
                                     <img src="@imageUrl" style="height: 50px; padding-top: 1px" />
