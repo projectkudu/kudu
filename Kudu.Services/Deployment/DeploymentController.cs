@@ -25,6 +25,8 @@ namespace Kudu.Services.Deployment
 {
     public class DeploymentController : ApiController
     {
+        private readonly IEnvironment _environment;
+        private readonly IAnalytics _analytics;
         private readonly IDeploymentManager _deploymentManager;
         private readonly IDeploymentStatusManager _status;
         private readonly ITracer _tracer;
@@ -33,6 +35,8 @@ namespace Kudu.Services.Deployment
         private readonly IAutoSwapHandler _autoSwapHandler;
 
         public DeploymentController(ITracer tracer,
+                                    IEnvironment environment,
+                                    IAnalytics analytics,
                                     IDeploymentManager deploymentManager,
                                     IDeploymentStatusManager status,
                                     IOperationLock deploymentLock,
@@ -40,6 +44,8 @@ namespace Kudu.Services.Deployment
                                     IAutoSwapHandler autoSwapHandler)
         {
             _tracer = tracer;
+            _environment = environment;
+            _analytics = analytics;
             _deploymentManager = deploymentManager;
             _status = status;
             _deploymentLock = deploymentLock;
@@ -79,13 +85,14 @@ namespace Kudu.Services.Deployment
         /// </summary>
         /// <param name="id">id of the deployment to redeploy</param>
         [HttpPut]
-        public async Task Deploy(string id = null)
+        public async Task<HttpResponseMessage> Deploy(string id = null)
         {
             JObject result = GetJsonContent();
 
             // Just block here to read the json payload from the body
             using (_tracer.Step("DeploymentService.Deploy(id)"))
             {
+                HttpResponseMessage response = Request.CreateResponse(HttpStatusCode.OK);
                 await _deploymentLock.LockHttpOperationAsync(async () =>
                 {
                     try
@@ -93,6 +100,21 @@ namespace Kudu.Services.Deployment
                         if (_autoSwapHandler.IsAutoSwapOngoing())
                         {
                             throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.Conflict, Resources.Error_AutoSwapDeploymentOngoing));
+                        }
+
+                        DeployResult deployResult;
+                        if (TryParseDeployResult(id, result, out deployResult))
+                        {
+                            using (_tracer.Step("DeploymentService.Create(id)"))
+                            {
+                                CreateDeployment(deployResult, result.Value<string>("details"));
+
+                                deployResult.Url = Request.RequestUri;
+                                deployResult.LogUrl = UriHelper.MakeRelative(Request.RequestUri, "log");
+
+                                response = Request.CreateResponse(HttpStatusCode.OK, ArmUtils.AddEnvelopeOnArmRequest(deployResult, Request));
+                                return;
+                            }
                         }
 
                         bool clean = false;
@@ -134,7 +156,126 @@ namespace Kudu.Services.Deployment
                         throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.NotFound, ex));
                     }
                 });
+
+                return response;
             }
+        }
+
+        public void CreateDeployment(DeployResult deployResult, string details)
+        {
+            var id = deployResult.Id;
+            string path = Path.Combine(_environment.DeploymentsPath, id);
+            IDeploymentStatusFile statusFile = _status.Open(id);
+            if (statusFile != null)
+            {
+                throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.Conflict, String.Format("Deployment with id '{0}' exists", id)));
+            }
+
+            FileSystemHelpers.EnsureDirectory(path);
+            statusFile = _status.Create(id);
+            statusFile.Status = deployResult.Status;
+            statusFile.Message = deployResult.Message;
+            statusFile.Deployer = deployResult.Deployer;
+            statusFile.Author = deployResult.Author;
+            statusFile.AuthorEmail = deployResult.AuthorEmail;
+            statusFile.StartTime = deployResult.StartTime;
+            statusFile.EndTime = deployResult.EndTime;
+
+            // miscellaneous
+            statusFile.Complete = true;
+            statusFile.IsReadOnly = true;
+            statusFile.IsTemporary = false;
+            statusFile.ReceivedTime = deployResult.StartTime;
+            // keep it simple regardless of success or failure
+            statusFile.LastSuccessEndTime = deployResult.EndTime;
+            statusFile.Save();
+
+            if (deployResult.Current)
+            {
+                _status.ActiveDeploymentId = id;
+            }
+
+            var logger = new StructuredTextLogger(Path.Combine(path, DeploymentManager.TextLogFile), _analytics);
+            ILogger innerLogger;
+            if (deployResult.Status == DeployStatus.Success)
+            {
+                innerLogger = logger.Log("Deployment successful.");
+            }
+            else
+            {
+                innerLogger = logger.Log("Deployment failed.", LogEntryType.Error);
+            }
+
+            if (!String.IsNullOrEmpty(details))
+            {
+                innerLogger.Log(details);
+            }
+        }
+
+        public bool TryParseDeployResult(string id, JObject payload, out DeployResult deployResult)
+        {
+            deployResult = null;
+            if (String.IsNullOrEmpty(id) || payload == null)
+            {
+                return false;
+            }
+
+            var status = payload.Value<int?>("status");
+            if (status == null || (status.Value != 3 && status.Value != 4))
+            {
+                return false;
+            }
+
+            var message = payload.Value<string>("message");
+            if (String.IsNullOrEmpty(message))
+            {
+                return false;
+            }
+
+            var deployer = payload.Value<string>("deployer");
+            if (String.IsNullOrEmpty(deployer))
+            {
+                return false;
+            }
+
+            var author = payload.Value<string>("author");
+            if (String.IsNullOrEmpty(author))
+            {
+                return false;
+            }
+
+            deployResult = new DeployResult
+            {
+                Id = id,
+                Status = (DeployStatus)status.Value,
+                Message = message,
+                Deployer = deployer,
+                Author = author
+            };
+
+            // optionals
+            var now = DateTime.UtcNow;
+            deployResult.AuthorEmail = payload.Value<string>("author_email");
+            deployResult.StartTime = payload.Value<DateTime?>("start_time") ?? now;
+            deployResult.EndTime = payload.Value<DateTime?>("end_time") ?? now;
+            
+            // only success status can be active
+            var active = payload.Value<bool?>("active");
+            if (active == null)
+            {
+                deployResult.Current = deployResult.Status == DeployStatus.Success;
+            }
+            else
+            {
+                if (active.Value && deployResult.Status != DeployStatus.Success)
+                {
+                    throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.BadRequest, "Only successful status can be active!"));
+                }
+
+                deployResult.Current = active.Value;
+            }
+
+            return true;
         }
 
         /// <summary>
@@ -311,7 +452,13 @@ namespace Kudu.Services.Deployment
         {
             try
             {
-                return Request.Content.ReadAsAsync<JObject>().Result;
+                var payload = Request.Content.ReadAsAsync<JObject>().Result;
+                if (ArmUtils.IsArmRequest(Request))
+                {
+                    payload = payload.Value<JObject>("properties");
+                }
+
+                return payload;
             }
             catch
             {

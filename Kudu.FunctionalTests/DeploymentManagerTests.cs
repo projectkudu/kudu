@@ -65,7 +65,6 @@ namespace Kudu.FunctionalTests
         public async Task DeploymentApis()
         {
             // Arrange
-
             string appName = "DeploymentApis";
 
             using (var repo = Git.Clone("HelloWorld"))
@@ -171,6 +170,47 @@ namespace Kudu.FunctionalTests
 
                     // Make sure running this again doesn't throw an exception
                     await appManager.DeploymentManager.DeployAsync(null);
+
+                    // Create new deployment test
+                    var id = Guid.NewGuid().ToString();
+                    var payload = new JObject();
+                    var endtime = DateTime.UtcNow;
+                    payload["status"] = (int)DeployStatus.Success;
+                    payload["message"] = "this is commit message";
+                    payload["deployer"] = "kudu";
+                    payload["author"] = "tester";
+                    payload["end_time"] = endtime.ToString("o");
+                    payload["details"] = "http://kudu.com/deployments/details";
+
+                    // add new deployment
+                    result = await appManager.DeploymentManager.PutAsync(id, payload);
+                    Assert.Equal(id, result.Id);
+                    Assert.Equal(DeployStatus.Success, result.Status);
+                    Assert.Equal("this is commit message", result.Message);
+                    Assert.Equal("kudu", result.Deployer);
+                    Assert.Equal("tester", result.Author);
+                    Assert.Equal(endtime, result.EndTime);
+                    Assert.Equal(true, result.Current);
+
+                    // check result
+                    results = (await appManager.DeploymentManager.GetResultsAsync()).ToList();
+                    Assert.True(results.Any(r => r.Id == id));
+                    result = results[0];
+                    Assert.Equal(id, result.Id);
+                    Assert.Equal(DeployStatus.Success, result.Status);
+                    Assert.Equal("this is commit message", result.Message);
+                    Assert.Equal("kudu", result.Deployer);
+                    Assert.Equal("tester", result.Author);
+                    Assert.Equal(endtime, result.EndTime);
+                    Assert.Equal(true, result.Current);
+
+                    entries = (await appManager.DeploymentManager.GetLogEntriesAsync(result.Id)).ToList();
+                    Assert.Equal(1, entries.Count);
+                    Assert.Equal("Deployment successful.", entries[0].Message);
+
+                    entries = (await appManager.DeploymentManager.GetLogEntryDetailsAsync(result.Id, entries[0].Id)).ToList();
+                    Assert.Equal(1, entries.Count);
+                    Assert.Equal(payload["details"], entries[0].Message);
                 });
             }
         }

@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Kudu.Client.Infrastructure;
 using Kudu.Core.Deployment;
+using Newtonsoft.Json.Linq;
 
 namespace Kudu.Client.Deployment
 {
@@ -51,6 +51,15 @@ namespace Kudu.Client.Deployment
         public Task DeleteAsync(string id)
         {
             return Client.DeleteSafeAsync(BuildUrl(id));
+        }
+
+        public async Task<DeployResult> PutAsync(string id, JObject payload)
+        {
+            using (var response = await Client.PutAsJsonAsync(BuildUrl(id), payload))
+            {
+                response.EnsureSuccessful();
+                return await response.Content.ReadAsAsync<DeployResult>();
+            }
         }
 
         public Task<HttpResponseMessage> DeployAsync(string id)

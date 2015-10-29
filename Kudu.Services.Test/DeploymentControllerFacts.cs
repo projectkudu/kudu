@@ -14,6 +14,10 @@ using Kudu.Services.Deployment;
 using Moq;
 using Xunit;
 using System.Linq;
+using Kudu.Core;
+using Kudu.Core.Tracing;
+using System.Collections.Generic;
+using Newtonsoft.Json.Linq;
 
 namespace Kudu.Services.Test
 {
@@ -27,7 +31,7 @@ namespace Kudu.Services.Test
             repoFactory.Setup(r => r.GetRepository()).Returns((IRepository)null);
             var opLock = new Mock<IOperationLock>();
             opLock.Setup(f => f.Lock()).Returns(true);
-            var controller = new DeploymentController(Mock.Of<ITracer>(), Mock.Of<IDeploymentManager>(), Mock.Of<IDeploymentStatusManager>(),
+            var controller = new DeploymentController(Mock.Of<ITracer>(), Mock.Of<IEnvironment>(), Mock.Of<IAnalytics>(), Mock.Of<IDeploymentManager>(), Mock.Of<IDeploymentStatusManager>(),
                                                       opLock.Object, repoFactory.Object, Mock.Of<IAutoSwapHandler>());
             controller.Request = GetRequest();
 
@@ -50,7 +54,7 @@ namespace Kudu.Services.Test
             repoFactory.Setup(r => r.GetRepository()).Returns(repository.Object);
             var opLock = new Mock<IOperationLock>();
             opLock.Setup(f => f.Lock()).Returns(true);
-            var controller = new DeploymentController(Mock.Of<ITracer>(), Mock.Of<IDeploymentManager>(), Mock.Of<IDeploymentStatusManager>(),
+            var controller = new DeploymentController(Mock.Of<ITracer>(), Mock.Of<IEnvironment>(), Mock.Of<IAnalytics>(), Mock.Of<IDeploymentManager>(), Mock.Of<IDeploymentStatusManager>(),
                                                       opLock.Object, repoFactory.Object, Mock.Of<IAutoSwapHandler>());
             controller.Request = GetRequest();
 
@@ -70,7 +74,7 @@ namespace Kudu.Services.Test
             deploymentManager
                 .Setup(d => d.GetLogEntryDetails(It.IsAny<string>(), It.IsAny<string>()))
                 .Returns(Enumerable.Empty<LogEntry>());
-            var controller = new DeploymentController(Mock.Of<ITracer>(), deploymentManager.Object, Mock.Of<IDeploymentStatusManager>(),
+            var controller = new DeploymentController(Mock.Of<ITracer>(), Mock.Of<IEnvironment>(), Mock.Of<IAnalytics>(), deploymentManager.Object, Mock.Of<IDeploymentStatusManager>(),
                                                       Mock.Of<IOperationLock>(), Mock.Of<IRepositoryFactory>(), Mock.Of<IAutoSwapHandler>());
             controller.Request = GetRequest();
 
@@ -90,6 +94,75 @@ namespace Kudu.Services.Test
             request.Headers.Authorization = new AuthenticationHeaderValue("BASIC", authHeader);
 
             return request;
+        }
+
+        [Theory]
+        [MemberData("ParseDeployResultScenarios")]
+        public void TryParseDeployResultTests(string id, JObject payload, bool expected)
+        {
+            // Arrange
+            var controller = new DeploymentController(Mock.Of<ITracer>(), Mock.Of<IEnvironment>(), Mock.Of<IAnalytics>(), Mock.Of<IDeploymentManager>(), Mock.Of<IDeploymentStatusManager>(), Mock.Of<IOperationLock>(), Mock.Of<IRepositoryFactory>(), Mock.Of<IAutoSwapHandler>());
+
+            // Act
+            DeployResult result;
+            var actual = controller.TryParseDeployResult(id, payload, out result);
+
+            // Assert
+            Assert.Equal(expected, actual);
+            Assert.True(actual ? result != null : result == null);
+            if (result != null)
+            {
+                Assert.Equal(id, result.Id);
+                Assert.Equal((DeployStatus)payload.Value<int>("status"), result.Status);
+                Assert.Equal(payload.Value<string>("message"), result.Message);
+                Assert.Equal(payload.Value<string>("deployer"), result.Deployer);
+                Assert.Equal(payload.Value<string>("author"), result.Author);
+                Assert.Equal(payload.Value<string>("author_email"), result.AuthorEmail);
+                Assert.NotNull(result.StartTime);
+                Assert.NotNull(result.EndTime);
+
+                var startTime = payload.Value<DateTime?>("start_time");
+                if (startTime != null)
+                {
+                    Assert.Equal(startTime, result.StartTime);
+                }
+
+                var endTime = payload.Value<DateTime?>("end_time");
+                if (endTime != null)
+                {
+                    Assert.Equal(endTime, result.EndTime);
+                }
+
+                var active = payload.Value<bool?>("active");
+                if (active == null)
+                {
+                    Assert.Equal(result.Status == DeployStatus.Success, result.Current);
+                }
+                else
+                {
+                    Assert.Equal(active, result.Current);
+                }
+            }
+        }
+
+        public static IEnumerable<object[]> ParseDeployResultScenarios
+        {
+            get
+            {
+                yield return new object[] { null, null, false };
+                yield return new object[] { "deploy_id", null, false };
+                yield return new object[] { "deploy_id", new JObject(), false };
+                yield return new object[] { "deploy_id", JObject.Parse("{status:2,message:'msg',deployer:'kudu',author:'me'}"), false };
+                yield return new object[] { "deploy_id", JObject.Parse("{status:3,message:'',deployer:'kudu',author:'me'}"), false };
+                yield return new object[] { "deploy_id", JObject.Parse("{status:4,message:'msg',deployer:'',author:'me'}"), false };
+                yield return new object[] { "deploy_id", JObject.Parse("{status:3,message:'msg',deployer:'kudu',author:''}"), false };
+                yield return new object[] { "deploy_id", JObject.Parse("{status:4,message:'msg',deployer:'kudu',author:'me'}"), true };
+
+                var now = DateTime.UtcNow;
+                yield return new object[] { "deploy_id", JObject.Parse("{status:3,message:'msg',deployer:'kudu',author:'me',author_email:'me@foo.com',start_time:'" + now.ToString("o") + "',end_time:'" + now.AddSeconds(25).ToString("o") + "'}"), true };
+                yield return new object[] { "deploy_id", JObject.Parse("{status:4,message:'msg',deployer:'kudu',author:'me',author_email:'me@foo.com',start_time:'" + now.ToString("o") + "',end_time:'" + now.AddSeconds(25).ToString("o") + "'}"), true };
+                yield return new object[] { "deploy_id", JObject.Parse("{status:4,message:'msg',deployer:'kudu',author:'me',author_email:'me@foo.com',start_time:'" + now.ToString("o") + "',end_time:'" + now.AddSeconds(25).ToString("o") + "',active:false}"), true };
+            }
         }
     }
 }

@@ -34,7 +34,7 @@ namespace Kudu.Core.Deployment
         private readonly IWebHooksManager _hooksManager;
 
         private const string XmlLogFile = "log.xml";
-        private const string TextLogFile = "log.log";
+        public const string TextLogFile = "log.log";
         private const string TemporaryDeploymentIdPrefix = "temp-";
         public const int MaxSuccessDeploymentResults = 10;
 
