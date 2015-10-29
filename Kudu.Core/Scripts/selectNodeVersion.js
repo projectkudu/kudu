@@ -34,13 +34,26 @@ function resolveNpmPath(npmRootPath, npmVersion) {
 
 
 function getDefaultNpmVersion(nodeVersionPath) {
-    var npmLinkPath = path.resolve(nodeVersionPath, 'npm.txt');
-    // Determine if there's a link to npm at the node path
-    if (!existsSync(npmLinkPath)) {
-        return;
+    var appSettingNpmVersion = process.env.WEBSITE_NPM_DEFAULT_VERSION;
+
+    // extract the current node version from the path
+    var nodePathSplited = nodeVersionPath.split(path.sep).filter(function(e) { return e; });
+    var currentNodeVersion = nodePathSplited[nodePathSplited.length - 1];
+
+    if (appSettingNpmVersion) {
+        return appSettingNpmVersion;
+    } else if (currentNodeVersion === '4.1.2') {
+        // This is to preserve parity with kudu's behavior to fix issues with ASP.NET 5 use of npm
+        return '3.3.6';
+    } else {
+        var npmLinkPath = path.resolve(nodeVersionPath, 'npm.txt');
+        // Determine if there's a link to npm at the node path
+        if (!existsSync(npmLinkPath)) {
+            return null;
+        }
+        var npmVersion = fs.readFileSync(npmLinkPath, 'utf8').trim();
+        return npmVersion;
     }
-    var npmVersion = fs.readFileSync(npmLinkPath, 'utf8').trim();
-    return npmVersion;
 }
 
 function getNpmVersionFromJson(npmRootPath, json) {
