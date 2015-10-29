@@ -78,6 +78,9 @@ namespace Kudu.Core.Deployment.Generator
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.NuGetExeCommandKey, NuGetExeCommand, logger);
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.NpmJsPathKey, PathUtility.ResolveNpmJsPath(), logger);
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.DnvmPath, DnvmPath, logger);
+            UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.GypMsvsVersion, Constants.VCVersion, logger);
+            UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.VCTargetsPath, PathUtility.ResolveVCTargetsPath(), logger);
+            UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.VCInstallDir140, PathUtility.ResolveVCInstallDirPath(), logger);
 
             exe.SetHomePath(_environment);
 

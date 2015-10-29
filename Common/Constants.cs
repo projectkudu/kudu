@@ -87,5 +87,8 @@ namespace Kudu
 
         public const string FreeSKU = "Free";
         public const string BasicSKU = "Basic";
+
+        //Setting for VC++ for node builds
+        public const string VCVersion = "2015";
     }
 }

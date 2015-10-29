@@ -104,6 +104,20 @@ namespace Kudu.Core.Infrastructure
             return Path.Combine(appDataDirectory, "npm");
         }
 
+        internal static string ResolveVCTargetsPath()
+        {
+            string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);
+            //This path has to end with \ for the environment variable to work
+            return Path.Combine(programFiles, "MSBuild", "Microsoft.Cpp", "v4.0", @"V140\");
+        }
+
+        internal static string ResolveVCInstallDirPath()
+        {
+            string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);
+            //This path has to end with \ for the environment variable to work
+            return Path.Combine(programFiles, "Microsoft Visual Studio 14.0", @"VC\");
+        }
+
         private static string ResolveNodeVersion()
         {
             bool fromAppSetting;
