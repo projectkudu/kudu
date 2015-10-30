@@ -49,7 +49,7 @@ function getDefaultNpmVersion(nodeVersionPath) {
         var npmLinkPath = path.resolve(nodeVersionPath, 'npm.txt');
         // Determine if there's a link to npm at the node path
         if (!existsSync(npmLinkPath)) {
-            return;
+            return null;
         }
         var npmVersion = fs.readFileSync(npmLinkPath, 'utf8').trim();
         return npmVersion;
