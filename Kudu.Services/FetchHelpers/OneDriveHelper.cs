@@ -164,7 +164,7 @@ namespace Kudu.Services.FetchHelpers
             return client;
         }
 
-        private async Task<T> ProcessResponse<T>(string operation, HttpResponseMessage response)
+        private static async Task<T> ProcessResponse<T>(string operation, HttpResponseMessage response)
         {
             string content = response.Content != null ? await response.Content.ReadAsStringAsync() : null;
             if (response.IsSuccessStatusCode)

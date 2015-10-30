@@ -1035,7 +1035,7 @@ namespace Kudu.Core.SiteExtensions
             return container.GetExports<INuGetResourceProvider, INuGetResourceProviderMetadata>();
         }
 
-        private async Task<List<SiteExtensionInfo>> ConvertNuGetPackagesToSiteExtensionInfos(
+        private static async Task<List<SiteExtensionInfo>> ConvertNuGetPackagesToSiteExtensionInfos(
             IEnumerable<UIPackageMetadata> packages,
             Func<UIPackageMetadata, Task<SiteExtensionInfo>> convertor)
         {
