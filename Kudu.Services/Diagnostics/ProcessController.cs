@@ -19,6 +19,8 @@ using Kudu.Core.Tracing;
 using Kudu.Services.Arm;
 using Kudu.Services.Infrastructure;
 using System.Threading.Tasks;
+using Kudu.Core.Deployment.Generator;
+using Kudu.Core.Deployment;
 
 namespace Kudu.Services.Performance
 {
@@ -272,6 +274,48 @@ namespace Kudu.Services.Performance
                     return response;
                 }
             }
+        }
+
+        [HttpPost]
+        public async Task<HttpResponseMessage> TakeMemoryDumpOnCrash(int id)
+        {
+            using (_tracer.Step("ProcessController.TakeMemoryDumpOnTerminate"))
+            {
+                try
+                {
+                    var process = GetProcessById(id);
+                    var externalCommandFactory = new ExternalCommandFactory(_environment, _settings, _environment.RootPath);
+                    var exe = externalCommandFactory.BuildExternalCommandExecutable(_environment.CrashDumpsPath, _environment.WebRootPath, NullLogger.Instance);
+                    var outputStream = new MemoryStream();
+                    var errorStream = new MemoryStream();
+
+                    var runTask = Task.Run(() => exe.ExecuteAsync(_tracer, $"{ResolveProcDumpPath()} -accepteula -t {id}", outputStream, errorStream, idleManager: new IdleManager(TimeSpan.MaxValue, _tracer)));
+
+                    // procDump can fail to attach to a process if there is another instance of procDump (or any debugger) that's already attached to the same process
+                    await Task.Delay(TimeSpan.FromSeconds(1));
+                    if (runTask.IsCompleted)
+                    {
+                        var exitCode = await runTask;
+                        if (exitCode != 0)
+                        {
+                            return Request.CreateErrorResponse(HttpStatusCode.BadRequest, errorStream.AsString());
+                        }
+                    }
+
+                    return Request.CreateResponse(HttpStatusCode.Accepted);
+                }
+                catch(Exception ex)
+                {
+                    _tracer.TraceError(ex);
+                    return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, ex);
+                }
+            }
+        }
+
+        private static string ResolveProcDumpPath()
+        {
+            var systemDrive = Path.GetPathRoot(System.Environment.SystemDirectory);
+            return Path.Combine(systemDrive, "devtools", "sysinternals", "procdump.exe");
         }
 
         private static string GetResponseFileName(string prefix, string ext)

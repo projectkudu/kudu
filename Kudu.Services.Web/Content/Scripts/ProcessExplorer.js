@@ -503,6 +503,13 @@ var Process = (function () {
         });
     };
 
+    Process.prototype.enableCrashDump = function () {
+        return $.ajax({
+            url: appRoot + "api/processes/" + this._json.id + "/dump/oncrash",
+            type: "POST"
+        });
+    };
+
     Process.getIdFromHref = function (href) {
         return parseInt(href.substr(href.lastIndexOf("/") + 1));
     };
@@ -863,6 +870,14 @@ function overrideRightClickMenu() {
                     $("li")[0].click();
                     $("li").blur();
                     break;
+                case "crashdump":
+                    $("#proc-loading").show();
+                    process.enableCrashDump().done(function () {
+                        return processExplorerSetupAsync();
+                    }).fail(function () {
+                        return processExplorerSetupAsync();
+                    });
+                    break;
             }
         },
         items: {
@@ -874,6 +889,7 @@ function overrideRightClickMenu() {
                     "dump2": { name: "Full Dump" }
                 }
             },
+            "crashdump": { name: "Enable Crash Dump" },
             "sep1": "---------",
             "properties": { name: "Properties" }
         },

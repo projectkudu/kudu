@@ -457,6 +457,7 @@ namespace Kudu.Services.Web.App_Start
             routes.MapHttpProcessesRoute("one-process-thread", "/{processId}/threads/{threadId}", new { controller = "Process", action = "GetThread" }, new { verb = new HttpMethodConstraint("GET") });
             routes.MapHttpProcessesRoute("all-modules", "/{id}/modules", new { controller = "Process", action = "GetAllModules" }, new { verb = new HttpMethodConstraint("GET") });
             routes.MapHttpProcessesRoute("one-process-module", "/{id}/modules/{baseAddress}", new { controller = "Process", action = "GetModule" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpProcessesRoute("one-process-dump-on-crash", "/{id}/dump/oncrash", new { controller = "Process", action = "TakeMemoryDumpOnCrash" }, new { verb = new HttpMethodConstraint("POST") });
 
             // Runtime
             routes.MapHttpRouteDual("runtime", "diagnostics/runtime", new { controller = "Runtime", action = "GetRuntimeVersions" }, new { verb = new HttpMethodConstraint("GET") });
