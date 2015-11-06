@@ -120,6 +120,7 @@
     <Compile Include="PurgeDeploymentsTests.cs" />
     <Compile Include="RepositoryFactoryFacts.cs" />
     <Compile Include="Settings\DeploymentSettingsPrioritiesTests.cs" />
+    <Compile Include="Settings\DiagnosticsSettingsManagerTests.cs" />
     <Compile Include="Settings\SettingsProvidersTests.cs" />
     <Compile Include="SSHKeyManagerFacts.cs" />
     <Compile Include="StructuredTextDocumentFacts.cs" />

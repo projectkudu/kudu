@@ -74,6 +74,9 @@ namespace Kudu.Core.Settings
                 catch (Exception ex)
                 {
                     _tracer.TraceError(ex);
+
+                    // there must be corrupted value, delete file to reset everything to default
+                    FileSystemHelpers.DeleteFileSafe(_path);
                 }
             }
 
