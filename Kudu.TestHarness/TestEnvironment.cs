@@ -129,5 +129,11 @@ namespace Kudu.TestHarness
             get;
             set;
         }
+
+        public string CrashDumpsPath
+        {
+            get;
+            set;
+        }
     }
 }
