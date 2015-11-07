@@ -457,7 +457,13 @@ namespace Kudu.Services.Web.App_Start
             routes.MapHttpProcessesRoute("one-process-thread", "/{processId}/threads/{threadId}", new { controller = "Process", action = "GetThread" }, new { verb = new HttpMethodConstraint("GET") });
             routes.MapHttpProcessesRoute("all-modules", "/{id}/modules", new { controller = "Process", action = "GetAllModules" }, new { verb = new HttpMethodConstraint("GET") });
             routes.MapHttpProcessesRoute("one-process-module", "/{id}/modules/{baseAddress}", new { controller = "Process", action = "GetModule" }, new { verb = new HttpMethodConstraint("GET") });
-            routes.MapHttpProcessesRoute("one-process-dump-on-crash", "/{id}/dump/oncrash", new { controller = "Process", action = "TakeMemoryDumpOnCrash" }, new { verb = new HttpMethodConstraint("POST") });
+
+            // Crash dumps
+            routes.MapHttpProcessesRoute("take-crashdump", "/{id}/crashdump", new { controller = "Process", action = "TakeCrashDump" }, new { verb = new HttpMethodConstraint("POST") });
+            routes.MapHttpRoute("list-crashdumps", "api/crashdumps", new { controller = "CrashDump", action = "List" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpRoute("get-crashdump", "api/crashdumps/{name}", new { controller = "CrashDump", action = "Get" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpRoute("delete-crashdump", "api/crashdumps/{name}", new { controller = "CrashDump", action = "Delete" }, new { verb = new HttpMethodConstraint("DELETE") });
+            routes.MapHttpRoute("analyze-crashdump", "api/crashdumps/{name}/analyze", new { controller = "CrashDump", action = "Analyze" }, new { verb = new HttpMethodConstraint("POST") });
 
             // Runtime
             routes.MapHttpRouteDual("runtime", "diagnostics/runtime", new { controller = "Runtime", action = "GetRuntimeVersions" }, new { verb = new HttpMethodConstraint("GET") });

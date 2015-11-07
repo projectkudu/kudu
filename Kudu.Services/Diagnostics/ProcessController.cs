@@ -277,30 +277,19 @@ namespace Kudu.Services.Performance
         }
 
         [HttpPost]
-        public async Task<HttpResponseMessage> TakeMemoryDumpOnCrash(int id)
+        public HttpResponseMessage TakeCrashDump(int id, bool includeMemory = false)
         {
-            using (_tracer.Step("ProcessController.TakeMemoryDumpOnTerminate"))
+            using (_tracer.Step("ProcessController.TakeCrashDump"))
             {
                 try
                 {
                     var process = GetProcessById(id);
-                    var externalCommandFactory = new ExternalCommandFactory(_environment, _settings, _environment.RootPath);
-                    var exe = externalCommandFactory.BuildExternalCommandExecutable(_environment.CrashDumpsPath, _environment.WebRootPath, NullLogger.Instance);
+                    var exe = new Executable(ResolveProcDumpPath(), _environment.CrashDumpsPath, TimeSpan.MaxValue);
                     var outputStream = new MemoryStream();
                     var errorStream = new MemoryStream();
+                    var memoryFlag = includeMemory ? "-ma" : string.Empty;
 
-                    var runTask = Task.Run(() => exe.ExecuteAsync(_tracer, $"{ResolveProcDumpPath()} -accepteula -t {id}", outputStream, errorStream, idleManager: new IdleManager(TimeSpan.MaxValue, _tracer)));
-
-                    // procDump can fail to attach to a process if there is another instance of procDump (or any debugger) that's already attached to the same process
-                    await Task.Delay(TimeSpan.FromSeconds(1));
-                    if (runTask.IsCompleted)
-                    {
-                        var exitCode = await runTask;
-                        if (exitCode != 0)
-                        {
-                            return Request.CreateErrorResponse(HttpStatusCode.BadRequest, errorStream.AsString());
-                        }
-                    }
+                    Task.Run(() =>exe.ExecuteReturnExitCode(_tracer, s => _tracer.Trace(s), s => _tracer.TraceError(s), $"-accepteula -t {id} -e -g {memoryFlag}"));
 
                     return Request.CreateResponse(HttpStatusCode.Accepted);
                 }
