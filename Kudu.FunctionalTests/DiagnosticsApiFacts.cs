@@ -191,12 +191,13 @@ namespace Kudu.FunctionalTests
                 "\"AzureBlobEnabled\":false,\"AzureBlobTraceLevel\":\"Error\"}";
 
             const string settingsContentWithNumbers = "{AzureDriveEnabled: true,AzureDriveTraceLevel: \"4\"}";
-            const string expectedNumbersResponse =
+            const string settingsContentWithNulls = "{AzureDriveEnabled: null,AzureDriveTraceLevel: \"4\"}";
+
+            const string settingsContentWithString = "{AzureDriveEnabled: true,AzureDriveTraceLevel: \"Warning\"}";
+            const string expectedResponse =
                 "{\"AzureDriveEnabled\":true,\"AzureDriveTraceLevel\":\"Warning\"," +
                 "\"AzureTableEnabled\":false,\"AzureTableTraceLevel\":\"Error\"," +
                 "\"AzureBlobEnabled\":false,\"AzureBlobTraceLevel\":\"Error\"}";
-
-            const string settingsContentWithNulls = "{AzureDriveEnabled: null,AzureDriveTraceLevel: \"4\"}";
 
             const string repositoryName = "Mvc3Application";
             const string appName = "DiagnosticsSettingsExpectedValuesReturned";
@@ -212,15 +213,20 @@ namespace Kudu.FunctionalTests
                         string responseContent = DownloadDiagnosticsSettings(client);
                         Assert.Equal(expectedEmptyResponse, responseContent);
 
-                        // Expected string value for enums
+                        // Expecting value will be reset
                         appManager.VfsManager.WriteAllText("site/diagnostics/settings.json", settingsContentWithNumbers);
                         responseContent = DownloadDiagnosticsSettings(client);
-                        Assert.Equal(expectedNumbersResponse, responseContent);
+                        Assert.Equal(expectedEmptyResponse, responseContent);
 
                         // Invalid json we expect default values
                         appManager.VfsManager.WriteAllText("site/diagnostics/settings.json", settingsContentWithNulls);
                         responseContent = DownloadDiagnosticsSettings(client);
                         Assert.Equal(expectedEmptyResponse, responseContent);
+
+                        // Expecting AzureDriveEnabled to be true
+                        appManager.VfsManager.WriteAllText("site/diagnostics/settings.json", settingsContentWithString);
+                        responseContent = DownloadDiagnosticsSettings(client);
+                        Assert.Equal(expectedResponse, responseContent);
                     }
                 });
             }
