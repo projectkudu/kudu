@@ -73,7 +73,7 @@ namespace Kudu.Services.Diagnostics
                 using (MemoryStream outputStream = new MemoryStream(), errorStream = new MemoryStream())
                 {
                     // ExecuteAsync could deadlock if called from an ASP.NET thread
-                    var exitCode = await Task.Run(async () => await exe.ExecuteAsync(_tracer, $"-c \"!analyze -v;q\" -z \"{crashDump.FilePath}\"", outputStream, errorStream));
+                    var exitCode = await Task.Run(async () => await exe.ExecuteAsync(_tracer, $"-c \".symfix;.reload;.loadby sos clr;~*k;!analyze -v;q\" -z \"{crashDump.FilePath}\"", outputStream, errorStream));
                     if (exitCode == 0)
                     {
                         return Request.CreateResponse(HttpStatusCode.OK, new { output = outputStream.AsString() });
