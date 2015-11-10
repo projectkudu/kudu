@@ -23,6 +23,6 @@
         string DataPath { get; }                // e.g. /data
         string JobsDataPath { get; }            // e.g. /data/jobs
         string JobsBinariesPath { get; }        // e.g. /site/wwwroot/app_data/jobs
-        string CrashDumpsPath { get; }           // e.g /data/CrashDumps
+        string CrashDumpsPath { get; }          // e.g /data/dumps
     }
 }
