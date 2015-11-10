@@ -362,6 +362,7 @@ namespace Kudu.Services.Infrastructure
                 {
                     Name = fileSysInfo.Name,
                     MTime = fileSysInfo.LastWriteTimeUtc,
+                    CRTime = fileSysInfo.CreationTimeUtc,
                     Mime = mime,
                     Size = size,
                     Href = (baseAddress + Uri.EscapeUriString(unescapedHref) + query).EscapeHashCharacter(),
