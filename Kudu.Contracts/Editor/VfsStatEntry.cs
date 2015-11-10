@@ -18,6 +18,9 @@ namespace Kudu.Contracts.Editor
         [JsonProperty(PropertyName = "mtime")]
         public DateTimeOffset MTime { get; set; }
 
+        [JsonProperty(PropertyName = "crtime")]
+        public DateTimeOffset CRTime { get; set; }
+
         [JsonProperty(PropertyName = "mime")]
         public string Mime { get; set; }
 

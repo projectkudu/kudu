@@ -69,6 +69,7 @@ namespace Kudu.Services.Infrastructure
                 {
                     Name = SystemDriveFolder,
                     MTime = dir.LastWriteTimeUtc,
+                    CRTime = dir.CreationTimeUtc,
                     Mime = "inode/shortcut",
                     Href = baseAddress + Uri.EscapeUriString(SystemDriveFolder + VfsControllerBase.UriSegmentSeparator) + query,
                     Path = dir.FullName
@@ -82,6 +83,7 @@ namespace Kudu.Services.Infrastructure
                 {
                     Name = LocalSiteRootFolder,
                     MTime = dir.LastWriteTimeUtc,
+                    CRTime = dir.CreationTimeUtc,
                     Mime = "inode/shortcut",
                     Href = baseAddress + Uri.EscapeUriString(LocalSiteRootFolder + VfsControllerBase.UriSegmentSeparator) + query,
                     Path = dir.FullName
