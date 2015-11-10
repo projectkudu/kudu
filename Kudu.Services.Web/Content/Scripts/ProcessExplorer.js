@@ -505,7 +505,7 @@ var Process = (function () {
 
     Process.prototype.enableCrashDump = function () {
         return $.ajax({
-            url: appRoot + "api/processes/" + this._json.id + "/dump/oncrash",
+            url: appRoot + "api/processes/" + this._json.id + "/crashdump",
             type: "POST"
         });
     };

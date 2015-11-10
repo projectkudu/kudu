@@ -101,6 +101,7 @@
     <Compile Include="Commands\CommandsNativeMethods.cs" />
     <Compile Include="Commands\PersistentCommandController.cs" />
     <Compile Include="Deployment\DeploymentController.cs" />
+    <Compile Include="Diagnostics\CrashDumpController.cs" />
     <Compile Include="Diagnostics\LogStreamHandler.cs" />
     <Compile Include="Diagnostics\LogStreamManager.cs" />
     <Compile Include="Diagnostics\ProfileManager.cs" />

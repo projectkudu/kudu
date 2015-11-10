@@ -73,6 +73,7 @@
     <Compile Include="BitbucketDeployment\BitbucketHandlerFacts.cs" />
     <Compile Include="CodeBaseHqFacts.cs" />
     <Compile Include="CodePlexHandlerFacts.cs" />
+    <Compile Include="CrashDumpControllerFacts.cs" />
     <Compile Include="CustomGitRepositoryHandlerFacts.cs" />
     <Compile Include="DeploymentControllerFacts.cs" />
     <Compile Include="Diagnostics\ProcessControllerFacts.cs" />

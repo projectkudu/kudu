@@ -17,7 +17,7 @@ using System.Web.Http;
 
 namespace Kudu.Services.Diagnostics
 {
-    class CrashDumpController : ApiController
+    public class CrashDumpController : ApiController
     {
         private readonly ITracer _tracer;
         private readonly IEnvironment _environment;
@@ -39,7 +39,7 @@ namespace Kudu.Services.Diagnostics
             {
                 return FileSystemHelpers.GetFiles(_environment.CrashDumpsPath, "*.dmp")
                     .Select(FileSystemHelpers.FileInfoFromFileName)
-                    .Select(f => GetCrashDumpInfoFromFile(f, Request.RequestUri.GetLeftPart(UriPartial.Path).TrimEnd('/')));
+                    .Select(f => GetCrashDumpInfoFromFile(f, Request.RequestUri.GetLeftPart(UriPartial.Authority)));
             }
         }
 
@@ -70,33 +70,44 @@ namespace Kudu.Services.Diagnostics
             {
                 var crashDump = GetCrashDump(name);
                 var exe = new Executable(ResolveCdbPath(), _environment.RootPath, _settings.GetCommandIdleTimeout());
-                var outputStream = new MemoryStream();
-                var errorStream = new MemoryStream();
-                var exitCode = await exe.ExecuteAsync(_tracer, $"-c \"!analyze -v;q\" -z \"{crashDump.FilePath}\"", outputStream, errorStream);
-                var returnStatusCode = exitCode != 0 ? HttpStatusCode.InternalServerError : HttpStatusCode.OK;
-                return Request.CreateResponse(returnStatusCode, new { output = outputStream.AsString(), error = errorStream.AsString() });
+                using (MemoryStream outputStream = new MemoryStream(), errorStream = new MemoryStream())
+                {
+                    // ExecuteAsync could deadlock if called from an ASP.NET thread
+                    var exitCode = await Task.Run(async () => await exe.ExecuteAsync(_tracer, $"-c \"!analyze -v;q\" -z \"{crashDump.FilePath}\"", outputStream, errorStream));
+                    if (exitCode == 0)
+                    {
+                        return Request.CreateResponse(HttpStatusCode.OK, new { output = outputStream.AsString() });
+                    }
+                    else
+                    {
+                        return Request.CreateResponse(HttpStatusCode.InternalServerError, new { error = errorStream.AsString() });
+                    }
+                }
             }
         }
 
-        private CrashDumpInfo GetCrashDump(string name)
+        //public for unit tests
+        public CrashDumpInfo GetCrashDump(string name)
         {
-            var path = Path.Combine(_environment.CrashDumpsPath, name, ".dmp");
+            var path = Path.Combine(_environment.CrashDumpsPath, name);
             if (FileSystemHelpers.FileExists(path))
             {
                 var fileInfo = FileSystemHelpers.FileInfoFromFileName(path);
-                return GetCrashDumpInfoFromFile(fileInfo, Request.RequestUri.GetLeftPart(UriPartial.Path).TrimEnd('/'));
+                return GetCrashDumpInfoFromFile(fileInfo, Request.RequestUri.GetLeftPart(UriPartial.Authority));
             }
             throw new HttpResponseException(HttpStatusCode.NotFound);
         }
 
-        private static CrashDumpInfo GetCrashDumpInfoFromFile(FileInfoBase fileInfo, string href)
+        private static CrashDumpInfo GetCrashDumpInfoFromFile(FileInfoBase fileInfo, string baseUrl)
         {
+            baseUrl = baseUrl.TrimEnd('/');
             return new CrashDumpInfo
             {
                 Name = fileInfo.Name,
                 Timestamp = fileInfo.LastWriteTime,
-                Href = new Uri(href),
-                AnalyizeHref = new Uri($"{href}/{fileInfo.Name}"),
+                Href = new Uri($"{baseUrl}/api/crashdumps/{fileInfo.Name}"),
+                AnalyizeHref = new Uri($"{baseUrl}/api/crashdumps/{fileInfo.Name}/analyze"),
+                DownloadHref = new Uri($"{baseUrl}/api/vfs/data/{Constants.Dumps}/{fileInfo.Name}"),
                 FilePath = fileInfo.FullName
             };
         }

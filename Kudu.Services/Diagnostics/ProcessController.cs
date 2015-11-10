@@ -277,7 +277,7 @@ namespace Kudu.Services.Performance
         }
 
         [HttpPost]
-        public HttpResponseMessage TakeCrashDump(int id, bool includeMemory = false)
+        public HttpResponseMessage TakeCrashDump(int id, [FromUri] bool includeMemory = false)
         {
             using (_tracer.Step("ProcessController.TakeCrashDump"))
             {
@@ -285,15 +285,13 @@ namespace Kudu.Services.Performance
                 {
                     var process = GetProcessById(id);
                     var exe = new Executable(ResolveProcDumpPath(), _environment.CrashDumpsPath, TimeSpan.MaxValue);
-                    var outputStream = new MemoryStream();
-                    var errorStream = new MemoryStream();
                     var memoryFlag = includeMemory ? "-ma" : string.Empty;
 
-                    Task.Run(() =>exe.ExecuteReturnExitCode(_tracer, s => _tracer.Trace(s), s => _tracer.TraceError(s), $"-accepteula -t {id} -e -g {memoryFlag}"));
+                    Task.Run(() => exe.ExecuteReturnExitCode(_tracer, s => _tracer.Trace(s), s => _tracer.TraceError(s), $"-accepteula -t {process.Id} -e -g {memoryFlag}"));
 
                     return Request.CreateResponse(HttpStatusCode.Accepted);
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
                     _tracer.TraceError(ex);
                     return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, ex);

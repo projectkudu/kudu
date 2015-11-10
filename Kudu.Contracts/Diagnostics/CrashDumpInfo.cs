@@ -23,5 +23,8 @@ namespace Kudu.Contracts.Diagnostics
 
         [JsonProperty(PropertyName = "analyize_href", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public Uri AnalyizeHref { get; set; }
+
+        [JsonProperty(PropertyName = "download_href", DefaultValueHandling = DefaultValueHandling.Ignore)]
+        public Uri DownloadHref { get; set; }
     }
 }

@@ -72,7 +72,7 @@ namespace Kudu.Core
             _tracePath = Path.Combine(rootPath, Constants.TracePath);
             _analyticsPath = Path.Combine(tempPath ?? _logFilesPath, Constants.SiteExtensionLogsDirectory);
             _deploymentTracePath = Path.Combine(rootPath, Constants.DeploymentTracePath);
-            _crashDumpsPath = Path.Combine(_dataPath, Constants.CrashDumps);
+            _crashDumpsPath = Path.Combine(_dataPath, Constants.Dumps);
         }
 
         public Environment(
@@ -103,7 +103,7 @@ namespace Kudu.Core
             _dataPath = Path.Combine(rootPath, Constants.DataPath);
             _jobsDataPath = Path.Combine(_dataPath, Constants.JobsPath);
             _jobsBinariesPath = Path.Combine(_webRootPath, Constants.AppDataPath, Constants.JobsPath);
-            _crashDumpsPath = Path.Combine(_dataPath, Constants.CrashDumps);
+            _crashDumpsPath = Path.Combine(_dataPath, Constants.Dumps);
         }
 
         public string RepositoryPath
