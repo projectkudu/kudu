@@ -277,7 +277,7 @@ namespace Kudu.Services.Performance
         }
 
         [HttpPost]
-        public HttpResponseMessage TakeCrashDump(int id, [FromUri] bool includeMemory = false)
+        public HttpResponseMessage TakeCrashDump(int id, bool includeMemory = false)
         {
             using (_tracer.Step("ProcessController.TakeCrashDump"))
             {
