@@ -17,7 +17,7 @@
     </PropertyGroup>
     
     <PropertyGroup>
-        <MajorVersion>48</MajorVersion>
+        <MajorVersion>49</MajorVersion>
         <!-- Ensure that we come up with a new version every 65535 years -->
         <VersionStartYear>2012</VersionStartYear>
         
