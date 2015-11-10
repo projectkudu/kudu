@@ -872,9 +872,7 @@ function overrideRightClickMenu() {
                     break;
                 case "crashdump":
                     $("#proc-loading").show();
-                    process.enableCrashDump().done(function () {
-                        return processExplorerSetupAsync();
-                    }).fail(function () {
+                    process.enableCrashDump().always(function () {
                         return processExplorerSetupAsync();
                     });
                     break;
