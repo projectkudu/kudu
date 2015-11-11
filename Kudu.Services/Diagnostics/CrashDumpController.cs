@@ -106,7 +106,7 @@ namespace Kudu.Services.Diagnostics
                 Name = fileInfo.Name,
                 Timestamp = fileInfo.LastWriteTime,
                 Href = new Uri($"{baseUrl}/api/crashdumps/{fileInfo.Name}"),
-                AnalyizeHref = new Uri($"{baseUrl}/api/crashdumps/{fileInfo.Name}/analyze"),
+                AnalyzeHref = new Uri($"{baseUrl}/api/crashdumps/{fileInfo.Name}/analyze"),
                 DownloadHref = new Uri($"{baseUrl}/api/vfs/data/{Constants.Dumps}/{fileInfo.Name}"),
                 FilePath = fileInfo.FullName
             };

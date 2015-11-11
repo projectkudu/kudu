@@ -63,7 +63,7 @@ namespace Kudu.Services.Test
                 Assert.Equal(fullName, crashInfoDump.FilePath);
                 Assert.Equal(timestamp, crashInfoDump.Timestamp);
                 Assert.Equal($"{baseUrl}api/crashdumps/{name}", crashInfoDump.Href.ToString());
-                Assert.Equal($"{baseUrl}api/crashdumps/{name}/analyze", crashInfoDump.AnalyizeHref.ToString());
+                Assert.Equal($"{baseUrl}api/crashdumps/{name}/analyze", crashInfoDump.AnalyzeHref.ToString());
                 Assert.Equal($"{baseUrl}api/vfs/data/{Constants.Dumps}/{name}", crashInfoDump.DownloadHref.ToString());
             }
         }
