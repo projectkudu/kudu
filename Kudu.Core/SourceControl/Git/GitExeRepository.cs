@@ -367,19 +367,28 @@ echo $i > pushinfo
         {
             // Delete the lock file from the .git folder
             var lockFilesPath = Path.Combine(_gitExe.WorkingDirectory, ".git");
+            // Always clear lock file under ".git/refs/heads"
+            var branchLockFiles = Path.Combine(_gitExe.WorkingDirectory, ".git", "refs", "heads");
 
             if (!Directory.Exists(lockFilesPath))
             {
                 return;
             }
 
-            var lockFiles = Directory.EnumerateFiles(lockFilesPath, "*.lock", SearchOption.AllDirectories)
+            List<string> lockFiles = Directory.EnumerateFiles(lockFilesPath, "*.lock", SearchOption.AllDirectories)
                                      .Where(fullPath => _lockFileNames.Contains(Path.GetFileName(fullPath), StringComparer.OrdinalIgnoreCase))
                                      .ToList();
+
+            if (Directory.Exists(branchLockFiles))
+            {
+                // perform a seperated EnumerateFiles, otherwise will need to do extra string compare for every files udner .git folder and subfolder
+                lockFiles.AddRange(Directory.EnumerateFiles(branchLockFiles, "*.lock", SearchOption.TopDirectoryOnly));
+            }
+
             if (lockFiles.Count > 0)
             {
                 ITracer tracer = _tracerFactory.GetTracer();
-                tracer.TraceWarning("Deleting left over lock file");
+                tracer.TraceWarning("Deleting left over lock files: [{0}]", string.Join(",", lockFiles));
                 foreach (var file in lockFiles)
                 {
                     FileSystemHelpers.DeleteFileSafe(file);

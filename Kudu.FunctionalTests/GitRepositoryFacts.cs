@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Collections.Generic;
 using System.IO;
 using Kudu.Core.Infrastructure;
@@ -199,6 +200,8 @@ namespace Kudu.FunctionalTests
                 string fileToWrite = Path.Combine(testRepo.PhysicalPath, "some file.txt");
                 File.WriteAllText(Path.Combine(testRepo.PhysicalPath, ".git", "index.lock"), "");
                 File.WriteAllText(Path.Combine(testRepo.PhysicalPath, ".git", "HEAD.lock"), "");
+                File.WriteAllText(Path.Combine(testRepo.PhysicalPath, ".git", "refs", "heads", "master.lock"), "");
+                File.WriteAllText(Path.Combine(testRepo.PhysicalPath, ".git", "refs", "heads", "dev.lock"), "");
                 File.WriteAllText(fileToWrite, "Hello world");
                 var env = new TestEnvironment
                 {
@@ -214,6 +217,8 @@ namespace Kudu.FunctionalTests
                 // Act - 2
                 gitRepo.ClearLock();
                 Git.Add(testRepo.PhysicalPath, fileToWrite);
+
+                Assert.Equal(0, Directory.EnumerateFiles(Path.Combine(testRepo.PhysicalPath, ".git", "refs", "heads"), "*.lock", SearchOption.TopDirectoryOnly).Count());
             }
 
         }
