@@ -317,7 +317,7 @@ namespace Kudu.FunctionalTests.SiteExtensions
                 // Update should return right away, expecting code to look up from feed that store in local package
                 // since we had installed the latest package, there is nothing to update.
                 // We shouldn`t see any site operation header value
-                // And there is no polling, since it finsihed within 15 seconds
+                // And there is no polling, since it finished within 15 seconds
                 responseMessage = await manager.InstallExtension(testPackageId);
                 armResult = await responseMessage.Content.ReadAsAsync<ArmEntry<SiteExtensionInfo>>();
                 Assert.Equal(string.Empty, armResult.Location);   // test "x-ms-geo-location" header is empty, same value should be assign to "Location"

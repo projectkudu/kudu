@@ -105,7 +105,7 @@ namespace Kudu.Services.SiteExtensions
                         {
                             if (SiteExtensionInstallationLock.IsAnyPendingLock(_environment.SiteExtensionSettingsPath, tracer))
                             {
-                                using (tracer.Step("{0} finsihed installation. But there is other installation on-going, fake the status to be Created, so that we can restart once for all.", id))
+                                using (tracer.Step("{0} finished installation. But there is other installation on-going, fake the status to be Created, so that we can restart once for all.", id))
                                 {
                                     // if there is other pending installation, fake the status
                                     extension.ProvisioningState = Constants.SiteExtensionProvisioningStateCreated;
@@ -121,7 +121,7 @@ namespace Kudu.Services.SiteExtensions
                                 // clear operation, since opeation is done
                                 if (UpdateArmSettingsForSuccessInstallation())
                                 {
-                                    using (tracer.Step("{0} finsihed installation and batch update lock aquired. Will notify Antares GEO to restart website.", id))
+                                    using (tracer.Step("{0} finished installation and batch update lock aquired. Will notify Antares GEO to restart website.", id))
                                     {
                                         responseMessage = Request.CreateResponse(armSettings.Status, ArmUtils.AddEnvelopeOnArmRequest<SiteExtensionInfo>(extension, Request));
 
@@ -369,7 +369,7 @@ namespace Kudu.Services.SiteExtensions
         }
 
         /// <summary>
-        /// Log to MDS when installation/uninstallation finsihed
+        /// Log to MDS when installation/uninstallation finishes
         /// </summary>
         private void LogEndEvent(string id, TimeSpan duration, ITracer tracer, string defaultResult = null)
         {
@@ -407,7 +407,7 @@ namespace Kudu.Services.SiteExtensions
         private bool UpdateArmSettingsForSuccessInstallation()
         {
             var tracer = _traceFactory.GetTracer();
-            using (tracer.Step("Checking if there is any installation finsihed recently, if there is one, update its status."))
+            using (tracer.Step("Checking if there is any installation finished recently, if there is one, update its status."))
             {
                 var batchUpdateLock = SiteExtensionBatchUpdateStatusLock.CreateLock(_environment.SiteExtensionSettingsPath);
 

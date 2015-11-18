@@ -106,7 +106,7 @@ namespace Kudu.Core.SiteExtensions
                             // reset length of file stream
                             writeStream.SetLength(0);
 
-                            // let the thread go with itself, so that once file finsihed writing, doesn`t need to request thread context from main thread
+                            // let the thread go with itself, so that once file finishes writing, doesn't need to request thread context from main thread
                             await entry.OpenReader().CopyToAsync(writeStream).ConfigureAwait(false);
                         }
                     }
@@ -191,7 +191,7 @@ namespace Kudu.Core.SiteExtensions
                                 // reset length of file stream
                                 writeStream.SetLength(0);
 
-                                // let the thread go with itself, so that once file finsihed writing, doesn`t need to request thread context from main thread
+                                // let the thread go with itself, so that once file finishes writing, doesn't need to request thread context from main thread
                                 await entry.OpenReader().CopyToAsync(writeStream).ConfigureAwait(false);
                             }
                         }
