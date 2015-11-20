@@ -51,7 +51,7 @@ namespace Kudu
 
         public const string HostingStartHtml = "hostingstart.html";
 
-        public const string DnxDefaultVersion = "1.0.0-beta8";
+        public const string DnxDefaultVersion = "1.0.0-rc1-final";
         public const string DnxDefaultClr = "CLR";
 
         // These should match the ones that are set by Azure

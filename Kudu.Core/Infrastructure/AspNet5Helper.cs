@@ -13,19 +13,12 @@ namespace Kudu.Core.Infrastructure
 
         public static bool IsWebApplicationProjectJsonFile(string projectJsonPath)
         {
-            try
-            {
-                using (var reader = new StreamReader(projectJsonPath))
-                {
-                    var parsedProjectJson = JObject.Parse(reader.ReadToEnd());
-                    return parsedProjectJson["webroot"] != null;
-                }
-            }
-            catch
-            {
-                // Assume not an ASP.NET 5 project if can't parse project.json
-                return false;
-            }
+            var projectDirectory = Path.GetDirectoryName(projectJsonPath);
+            var hostingJson = Path.Combine(projectDirectory, "hosting.json");
+            var wwwrootDirectory = Path.Combine(projectDirectory, "wwwroot");
+
+            return FileSystemHelpers.FileExists(hostingJson) ||
+                FileSystemHelpers.DirectoryExists(wwwrootDirectory);
         }
 
         public static AspNet5Sdk GetAspNet5Sdk(string rootPath, IFileFinder fileFinder)
