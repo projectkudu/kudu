@@ -128,6 +128,7 @@
     <Compile Include="Commands\CommandExecutor.cs" />
     <Compile Include="Deployment\CascadeLogger.cs" />
     <Compile Include="Deployment\AutoSwapHandler.cs" />
+    <Compile Include="Deployment\BuildPropertyProvider.cs" />
     <Compile Include="Deployment\DeploymentStatusFileExtensions.cs" />
     <Compile Include="Deployment\DeploymentStatusManager.cs" />
     <Compile Include="Deployment\Generator\DotNetConsoleBuilder.cs" />

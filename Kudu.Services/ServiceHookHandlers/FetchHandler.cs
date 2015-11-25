@@ -11,6 +11,8 @@ using Kudu.Contracts.SourceControl;
 using Kudu.Contracts.Tracing;
 using Kudu.Core;
 using Kudu.Core.Deployment;
+using Kudu.Core.Deployment.Generator;
+using Kudu.Core.Hooks;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.SourceControl;
 using Kudu.Core.Tracing;
@@ -27,6 +29,7 @@ namespace Kudu.Services
         private readonly IDeploymentStatusManager _status;
         private readonly IEnumerable<IServiceHookHandler> _serviceHookHandlers;
         private readonly IOperationLock _deploymentLock;
+        private readonly IEnvironment _environment;
         private readonly ITracer _tracer;
         private readonly IRepositoryFactory _repositoryFactory;
         private readonly IAutoSwapHandler _autoSwapHandler;
@@ -44,6 +47,7 @@ namespace Kudu.Services
         {
             _tracer = tracer;
             _deploymentLock = deploymentLock;
+            _environment = environment;
             _deploymentManager = deploymentManager;
             _settings = settings;
             _status = status;
@@ -124,6 +128,21 @@ namespace Kudu.Services
                     return;
                 }
 
+                // for CI payload, we will return Accepted and do the task in the BG
+                // since autoSwap relies on the response header, deployment has to be synchronously.
+                bool isBackground = deployInfo.IsContinuous && !_autoSwapHandler.IsAutoSwapEnabled();
+                if (isBackground)
+                {
+                    using (_tracer.Step("Start deployment in the background"))
+                    {
+                        PerformBackgroundDeployment(deployInfo, _environment, _settings, _tracer.TraceLevel, context.Request.Url);
+                    }
+
+                    context.Response.StatusCode = (int)HttpStatusCode.Accepted;
+                    context.ApplicationInstance.CompleteRequest();
+                    return;
+                }
+
                 _tracer.Trace("Attempting to fetch target branch {0}", targetBranch);
                 bool acquired = await _deploymentLock.TryLockOperationAsync(async () =>
                 {
@@ -157,6 +176,7 @@ namespace Kudu.Services
                 }
             }
         }
+
 
         public async Task PerformDeployment(DeploymentInfo deploymentInfo)
         {
@@ -349,6 +369,66 @@ namespace Kudu.Services
             }
 
             return payload;
+        }
+
+        // key goal is to create background tracer that is independent of request.
+        public static void PerformBackgroundDeployment(DeploymentInfo deployInfo, IEnvironment environment, IDeploymentSettingsManager settings, TraceLevel traceLevel, Uri uri)
+        {
+            var tracer = traceLevel <= TraceLevel.Off ? NullTracer.Instance : new XmlTracer(environment.TracePath, traceLevel);
+            var traceFactory = new TracerFactory(() => tracer);
+
+            var backgroundTrace = tracer.Step(XmlTracer.BackgroundTrace, new Dictionary<string, string>
+            {
+                {"url", uri.AbsolutePath},
+                {"method", "POST"}
+            });
+
+            Task.Run(() =>
+            {
+                try
+                {
+                    // lock related
+                    string lockPath = Path.Combine(environment.SiteRootPath, Constants.LockPath);
+                    string deploymentLockPath = Path.Combine(lockPath, Constants.DeploymentLockFile);
+                    string statusLockPath = Path.Combine(lockPath, Constants.StatusLockFile);
+                    string hooksLockPath = Path.Combine(lockPath, Constants.HooksLockFile);
+                    var statusLock = new LockFile(statusLockPath, traceFactory);
+                    var hooksLock = new LockFile(hooksLockPath, traceFactory);
+                    var deploymentLock = new DeploymentLockFile(deploymentLockPath, traceFactory);
+
+                    var analytics = new Analytics(settings, new ServerConfiguration(), traceFactory);
+                    var deploymentStatusManager = new DeploymentStatusManager(environment, analytics, statusLock);
+                    var repositoryFactory = new RepositoryFactory(environment, settings, traceFactory);
+                    var siteBuilderFactory = new SiteBuilderFactory(new BuildPropertyProvider(), environment);
+                    var webHooksManager = new WebHooksManager(tracer, environment, hooksLock);
+                    var deploymentManager = new DeploymentManager(siteBuilderFactory, environment, traceFactory, analytics, settings, deploymentStatusManager, deploymentLock, NullLogger.Instance, webHooksManager);
+                    var fetchHandler = new FetchHandler(tracer, deploymentManager, settings, deploymentStatusManager, deploymentLock, environment, null, repositoryFactory, null);
+
+                    // Perform deployment
+                    var acquired = deploymentLock.TryLockOperation(() =>
+                    {
+                        fetchHandler.PerformDeployment(deployInfo).Wait();
+                    }, TimeSpan.Zero);
+
+                    if (!acquired)
+                    {
+                        using (tracer.Step("Update pending deployment marker file"))
+                        {
+                            // REVIEW: This makes the assumption that the repository url is the same.
+                            // If it isn't the result would be buggy either way.
+                            FileSystemHelpers.SetLastWriteTimeUtc(fetchHandler._markerFilePath, DateTime.UtcNow);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    tracer.TraceError(ex);
+                }
+                finally
+                {
+                    backgroundTrace.Dispose();
+                }
+            });
         }
     }
 }

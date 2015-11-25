@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
-using Kudu.Core.Deployment;
 
-namespace Kudu.Services
+namespace Kudu.Core.Deployment
 {
     public class BuildPropertyProvider : IBuildPropertyProvider
     {

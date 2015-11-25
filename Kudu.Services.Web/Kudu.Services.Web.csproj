@@ -193,9 +193,6 @@
     <Compile Include="App_Start\NinjectServices.cs" />
     <Compile Include="App_Start\PathResolver.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="..\Kudu.Console\Services\BuildPropertyProvider.cs">
-      <Link>Services\BuildPropertyProvider.cs</Link>
-    </Compile>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Kudu.Console\Kudu.Console.csproj">

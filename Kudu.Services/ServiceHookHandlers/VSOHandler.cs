@@ -38,12 +38,16 @@ namespace Kudu.Services.ServiceHookHandlers
         {
             var sessionToken = payload.Value<JObject>("sessionToken");
 
-            var info = new GitDeploymentInfo { RepositoryType = RepositoryType.Git };
-            info.Deployer = GetDeployer();
+            var info = new GitDeploymentInfo
+            {
+                RepositoryType = RepositoryType.Git,
+                Deployer = GetDeployer(),
+                IsContinuous = true
+            };
 
             // even it is empty password we need to explicitly say so (with colon).
             // without colon, LibGit2Sharp is not working
-            Uri remoteUrl = new Uri(_settings.GetValue("RepoUrl"));
+            Uri remoteUrl = GetRemoteUrl(payload);
             if (sessionToken == null)
             {
                 // if there is no session token, fallback to use raw remoteUrl from setting.xml
@@ -70,6 +74,19 @@ namespace Kudu.Services.ServiceHookHandlers
         protected virtual string GetDeployer()
         {
             return "VSO";
+        }
+
+        private Uri GetRemoteUrl(JObject payload)
+        {
+            var remoteUrl = _settings.GetValue("RepoUrl");
+            if (String.IsNullOrEmpty(remoteUrl))
+            {
+                var resource = payload.Value<JObject>("resource");
+                var repository = resource.Value<JObject>("repository");
+                remoteUrl = repository.Value<string>("remoteUrl");
+            }
+
+            return new Uri(remoteUrl);
         }
     }
 }

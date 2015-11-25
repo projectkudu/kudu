@@ -421,7 +421,7 @@ namespace Kudu.FunctionalTests
                 {
                     client.DefaultRequestHeaders.Add("X-Github-Event", "push");
                     return client.PostAsync("deploy?scmType=GitHub", new FormUrlEncodedContent(post));
-                });
+                }, isContinuous: true);
 
                 var results = (await appManager.DeploymentManager.GetResultsAsync()).ToList();
 
@@ -455,7 +455,7 @@ namespace Kudu.FunctionalTests
                 {
                     client.DefaultRequestHeaders.Add("User-Agent", "Bitbucket.org");
                     return client.PostAsync("deploy?scmType=BitbucketGit", new FormUrlEncodedContent(post));
-                });
+                }, isContinuous: true);
 
                 var resultsTask = appManager.DeploymentManager.GetResultsAsync();
                 var verifyUrl = KuduAssert.VerifyUrlAsync(appManager.SiteUrl, "Welcome to ASP.NET!");
@@ -481,17 +481,18 @@ namespace Kudu.FunctionalTests
 
             await ApplicationManager.RunAsync(appName, async appManager =>
             {
-                var client = CreateClient(appManager);
-
                 await appManager.SettingsManager.SetValue("branch", "default");
 
-                client.DefaultRequestHeaders.Add("User-Agent", "Bitbucket.org");
                 var post = new Dictionary<string, string>
                 {
                     { "payload", bitbucketPayload }
                 };
 
-                (await client.PostAsync("deploy?scmType=BitbucketHg", new FormUrlEncodedContent(post))).EnsureSuccessful();
+                await DeployPayloadHelperAsync(appManager, client =>
+                {
+                    client.DefaultRequestHeaders.Add("User-Agent", "Bitbucket.org");
+                    return client.PostAsync("deploy?scmType=BitbucketHg", new FormUrlEncodedContent(post));
+                }, isContinuous: true);
 
                 var results = (await appManager.DeploymentManager.GetResultsAsync()).ToList();
                 Assert.Equal(1, results.Count);
@@ -519,16 +520,19 @@ namespace Kudu.FunctionalTests
                     // Run SSH tests only if the key is present
                     return;
                 }
-                var client = CreateClient(appManager);
+
                 await appManager.SettingsManager.SetValue("branch", "Test-Branch");
 
-                client.DefaultRequestHeaders.Add("User-Agent", "Bitbucket.org");
                 var post = new Dictionary<string, string>
                 {
                     { "payload", bitbucketPayload }
                 };
 
-                (await client.PostAsync("deploy?scmType=BitbucketHg", new FormUrlEncodedContent(post))).EnsureSuccessful();
+                await DeployPayloadHelperAsync(appManager, client =>
+                {
+                    client.DefaultRequestHeaders.Add("User-Agent", "Bitbucket.org");
+                    return client.PostAsync("deploy?scmType=BitbucketHg", new FormUrlEncodedContent(post));
+                }, isContinuous: true);
 
                 var results = (await appManager.DeploymentManager.GetResultsAsync()).ToList();
                 Assert.Equal(1, results.Count);
@@ -551,7 +555,7 @@ namespace Kudu.FunctionalTests
 
             await ApplicationManager.RunAsync(appName, async appManager =>
             {
-                await DeployPayloadHelperAsync(appManager, client => client.PostAsync("deploy", new StringContent(payload)));
+                await DeployPayloadHelperAsync(appManager, client => client.PostAsync("deploy", new StringContent(payload)), isContinuous: true);
 
                 var results = (await appManager.DeploymentManager.GetResultsAsync()).ToList();
                 Assert.Equal(1, results.Count);
@@ -582,7 +586,7 @@ namespace Kudu.FunctionalTests
                 {
                     client.DefaultRequestHeaders.Add("User-Agent", "Codebasehq.com");
                     return client.PostAsync("deploy", new FormUrlEncodedContent(post));
-                });
+                }, isContinuous: true);
 
                 var results = (await appManager.DeploymentManager.GetResultsAsync()).ToList();
                 Assert.Equal(1, results.Count);
@@ -604,8 +608,6 @@ namespace Kudu.FunctionalTests
 
             await ApplicationManager.RunAsync(appName, async appManager =>
             {
-                var client = CreateClient(appManager);
-
                 // since we're pulling against bitbucket we need to simulate a self-hosted setup of kiln
                 await appManager.SettingsManager.SetValue("kiln.domain", "bitbucket\\.org");
                 await appManager.SettingsManager.SetValue("branch", "default");
@@ -615,7 +617,10 @@ namespace Kudu.FunctionalTests
                     { "payload", kilnPayload }
                 };
 
-                (await client.PostAsync("deploy", new FormUrlEncodedContent(post))).EnsureSuccessful();
+                await DeployPayloadHelperAsync(appManager, client =>
+                {
+                    return client.PostAsync("deploy", new FormUrlEncodedContent(post));
+                }, isContinuous: true);
 
                 var results = (await appManager.DeploymentManager.GetResultsAsync()).ToList();
 
@@ -623,6 +628,32 @@ namespace Kudu.FunctionalTests
                 Assert.Equal(DeployStatus.Success, results[0].Status);
                 Assert.Equal("Kiln", results[0].Deployer);
                 KuduAssert.VerifyUrl(appManager.SiteUrl + "Hello.txt", "Hello mercurial");
+            });
+        }
+    }
+
+    [KuduXunitTestClass]
+    public class PullApiTestVsoFormatTests : DeploymentManagerTests
+    {
+        [Fact]
+        public async Task PullApiTestVsoFormat()
+        {
+            string payload = @"{ ""publisherId"": ""tfs"", ""resource"": { ""repository"": { ""remoteUrl"": ""https://github.com/KuduApps/HelloKudu"" } } }";
+            string appName = "PullApiTestVsoFormat";
+
+            await ApplicationManager.RunAsync(appName, async appManager =>
+            {
+                await DeployPayloadHelperAsync(appManager, client =>
+                {
+                    return client.PostAsync("deploy?scmType=Vso", new StringContent(payload));
+                }, isContinuous: true);
+
+                var results = (await appManager.DeploymentManager.GetResultsAsync()).ToList();
+
+                Assert.Equal(1, results.Count);
+                Assert.Equal(DeployStatus.Success, results[0].Status);
+                Assert.Equal("VSO", results[0].Deployer);
+                KuduAssert.VerifyUrl(appManager.SiteUrl, "Hello Kudu");
             });
         }
     }
@@ -643,7 +674,7 @@ namespace Kudu.FunctionalTests
                     { "payload", payload }
                 };
 
-                await DeployPayloadHelperAsync(appManager, client => client.PostAsync("deploy", new FormUrlEncodedContent(post)));
+                await DeployPayloadHelperAsync(appManager, client => client.PostAsync("deploy", new FormUrlEncodedContent(post)), isContinuous: true);
 
                 var results = (await appManager.DeploymentManager.GetResultsAsync()).ToList();
                 Assert.Equal(1, results.Count);
@@ -678,7 +709,7 @@ namespace Kudu.FunctionalTests
                     { "payload", payload }
                 };
 
-                await DeployPayloadHelperAsync(appManager, client => client.PostAsync("deploy", new FormUrlEncodedContent(post)));
+                await DeployPayloadHelperAsync(appManager, client => client.PostAsync("deploy", new FormUrlEncodedContent(post)), isContinuous: true);
 
                 var results = (await appManager.DeploymentManager.GetResultsAsync()).ToList();
                 Assert.Equal(1, results.Count);
@@ -707,7 +738,7 @@ namespace Kudu.FunctionalTests
                     { "payload", payload }
                 };
 
-                await DeployPayloadHelperAsync(appManager, client => client.PostAsync("deploy", new FormUrlEncodedContent(post)));
+                await DeployPayloadHelperAsync(appManager, client => client.PostAsync("deploy", new FormUrlEncodedContent(post)), isContinuous: true);
 
                 var results = (await appManager.DeploymentManager.GetResultsAsync()).ToList();
                 Assert.Equal(1, results.Count);
@@ -913,7 +944,7 @@ namespace Kudu.FunctionalTests
             {
                 var exception = await Assert.ThrowsAsync<HttpUnsuccessfulRequestException>(async () =>
                 {
-                    await PostPayloadHelperAsync(appManager, client => client.PostAsJsonAsync("deploy", payload));
+                    await DeployPayloadHelperAsync(appManager, client => client.PostAsJsonAsync("deploy", payload));
                 });
 
                 KuduAssert.ContainsAny(new[] { "unable to create file symfony", "The data area passed to a system call is too small" }, exception.Message);
@@ -1135,7 +1166,7 @@ namespace Kudu.FunctionalTests
                     // Test
                     var exception = await Assert.ThrowsAsync<HttpUnsuccessfulRequestException>(async () =>
                     {
-                        await PostPayloadHelperAsync(appManager, client => client.PostAsJsonAsync("deploy", info.Payload));
+                        await DeployPayloadHelperAsync(appManager, client => client.PostAsJsonAsync("deploy", info.Payload));
                     });
 
                     // Assert
@@ -1259,23 +1290,54 @@ namespace Kudu.FunctionalTests
             Assert.False(String.IsNullOrEmpty(deploymentId));
         }
 
-        internal static async Task DeployPayloadHelperAsync(ApplicationManager appManager, Func<HttpClient, Task<HttpResponseMessage>> func)
-        {
-            (await PostPayloadHelperAsync(appManager, func)).EnsureSuccessful().Dispose();
-        }
-
-        internal static async Task<HttpResponseMessage> PostPayloadHelperAsync(ApplicationManager appManager, Func<HttpClient, Task<HttpResponseMessage>> func)
+        internal static async Task DeployPayloadHelperAsync(ApplicationManager appManager, Func<HttpClient, Task<HttpResponseMessage>> func, bool isContinuous = false)
         {
             using (HttpClient client = CreateClient(appManager))
             {
-                HttpResponseMessage response = await func(client);
-
-                if (response.StatusCode == HttpStatusCode.InternalServerError)
+                DeployResult previous = null;
+                if (isContinuous)
                 {
-                    response.EnsureSuccessful();
+                    previous = (await appManager.DeploymentManager.GetResultsAsync()).FirstOrDefault();
                 }
 
-                return response;
+                using (HttpResponseMessage response = await func(client))
+                {
+                    response.EnsureSuccessful();
+
+                    if (isContinuous)
+                    {
+                        Assert.Equal(HttpStatusCode.Accepted, response.StatusCode);
+
+                        // Poll till deployment finished
+                        bool completed = false;
+                        for (int i = 0; i < 60 && !completed; ++i)
+                        {
+                            await Task.Delay(1000);
+
+                            var current = (await appManager.DeploymentManager.GetResultsAsync()).FirstOrDefault();
+
+                            // no new deployment
+                            if (current == null)
+                            {
+                                continue;
+                            }
+
+                            // same as previous deployment
+                            if (previous != null && previous.Id == current.Id)
+                            {
+                                continue;
+                            }
+
+                            completed = current.Status == DeployStatus.Success || current.Status == DeployStatus.Failed;
+                        }
+
+                        Assert.True(completed, "the deployment is not completed within a given time!");
+                    }
+                    else
+                    {
+                        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+                    }
+                }
             }
         }
 

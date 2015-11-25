@@ -267,8 +267,7 @@ namespace Kudu.Services.Web.App_Start
 
             kernel.Bind<IRepositoryFactory>().ToMethod(context => _deploymentLock.RepositoryFactory = new RepositoryFactory(context.Kernel.Get<IEnvironment>(),
                                                                                                                             context.Kernel.Get<IDeploymentSettingsManager>(),
-                                                                                                                            context.Kernel.Get<ITraceFactory>(),
-                                                                                                                            context.Kernel.Get<HttpContextBase>()))
+                                                                                                                            context.Kernel.Get<ITraceFactory>()))
                                              .InRequestScope();
 
             kernel.Bind<IApplicationLogsReader>().To<ApplicationLogsReader>()

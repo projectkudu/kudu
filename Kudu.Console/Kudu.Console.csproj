@@ -51,7 +51,6 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <Compile Include="Services\BuildPropertyProvider.cs" />
     <Compile Include="Services\ConsoleLogger.cs" />
   </ItemGroup>
   <ItemGroup>

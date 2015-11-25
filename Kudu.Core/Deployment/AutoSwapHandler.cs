@@ -95,7 +95,7 @@ namespace Kudu.Core.Deployment
             tracer.Trace("Requesting auto swap to slot name - '{0}', operation id - '{1}', deployment id - '{2}'".FormatInvariant(_autoSwapSlotName, operationId, deploymentId));
         }
 
-        private bool IsAutoSwapEnabled()
+        public bool IsAutoSwapEnabled()
         {
             return !String.IsNullOrEmpty(_autoSwapSlotName);
         }

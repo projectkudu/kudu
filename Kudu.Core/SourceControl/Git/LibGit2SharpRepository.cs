@@ -218,24 +218,31 @@ echo $i > pushinfo
                     // Configure the remote
                     var remote = repo.Network.Remotes.Add(_remoteAlias, remoteUrl, refSpec);
 
-                    // This will only retrieve the "master"
-                    repo.Network.Fetch(remote);
-
-                    // Optionally set up the branch tracking configuration
-                    var trackedBranch = repo.Branches[trackedBranchName];
-                    if (trackedBranch == null)
+                    using (tracer.Step("LibGit2SharpRepository Fetch"))
                     {
-                        throw new BranchNotFoundException(branchName, null);
+                        // This will only retrieve the "master"
+                        repo.Network.Fetch(remote);
                     }
-                    var branch = repo.Branches[branchName] ?? repo.CreateBranch(branchName, trackedBranch.Tip);
-                    repo.Branches.Update(branch,
-                        b => b.TrackedBranch = trackedBranch.CanonicalName);
 
-                    //Update the raw ref to point the head of branchName to the latest fetched branch
-                    UpdateRawRef(string.Format("refs/heads/{0}", branchName), trackedBranchName);
+                    using (tracer.Step("LibGit2SharpRepository Update"))
+                    {
+                        // Optionally set up the branch tracking configuration
+                        var trackedBranch = repo.Branches[trackedBranchName];
+                        if (trackedBranch == null)
+                        {
+                            throw new BranchNotFoundException(branchName, null);
+                        }
 
-                    // Now checkout out our branch, which points to the right place
-                    Update(branchName);
+                        var branch = repo.Branches[branchName] ?? repo.CreateBranch(branchName, trackedBranch.Tip);
+                        repo.Branches.Update(branch,
+                            b => b.TrackedBranch = trackedBranch.CanonicalName);
+
+                        // Update the raw ref to point the head of branchName to the latest fetched branch
+                        UpdateRawRef(string.Format("refs/heads/{0}", branchName), trackedBranchName);
+
+                        // Now checkout out our branch, which points to the right place
+                        Update(branchName);
+                    }
                 }
             }
             catch (LibGit2SharpException exception)

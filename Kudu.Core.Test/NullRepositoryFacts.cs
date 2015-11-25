@@ -34,10 +34,9 @@ namespace Kudu.Core.Test
             var settings = MockSettings();
             var environment = MockEnviroment(@"x:\site", settings.Object);
             var traceFactory = MockTraceFactory();
-            var httpContext = MockHttpContext();
 
             // test
-            var repository = new NullRepository(environment.Object, traceFactory.Object, httpContext.Object);
+            var repository = new NullRepository(environment.Object, traceFactory.Object);
 
             // Assert
             Assert.Equal(RepositoryType.None, repository.RepositoryType);

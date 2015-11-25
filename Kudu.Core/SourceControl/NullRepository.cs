@@ -15,24 +15,23 @@ namespace Kudu.Core.SourceControl
     /// </summary>
     public class NullRepository : IRepository
     {
+        // for null repo, good enough for last known changeset
+        private static ChangeSet _latestChangeSet;
+
         private readonly IEnvironment _environment;
         private readonly ITraceFactory _traceFactory;
-        private readonly HttpContextBase _httpContext;
-        private readonly string _changeSetKey;
 
-        public NullRepository(IEnvironment environment, ITraceFactory traceFactory, HttpContextBase httpContext)
+        public NullRepository(IEnvironment environment, ITraceFactory traceFactory)
         {
             _environment = environment;
             _traceFactory = traceFactory;
-            _httpContext = httpContext;
-            _changeSetKey = Path.Combine(_environment.RepositoryPath, "changeset");
         }
 
         public string CurrentId
         {
             get
             {
-                var changeSet = (ChangeSet)_httpContext.Items[_changeSetKey];
+                var changeSet = _latestChangeSet;
                 return changeSet == null ? null : changeSet.Id;
             }
         }
@@ -59,7 +58,7 @@ namespace Kudu.Core.SourceControl
 
         public ChangeSet GetChangeSet(string id)
         {
-            var changeSet = (ChangeSet)_httpContext.Items[_changeSetKey];
+            var changeSet = _latestChangeSet;
             if (changeSet != null)
             {
                 if (id == changeSet.Id || id == "master" || id == "HEAD")
@@ -90,8 +89,8 @@ namespace Kudu.Core.SourceControl
                 // Does not support rollback
                 changeSet.IsReadOnly = true;
 
-                // The lifetime is per request
-                _httpContext.Items[_changeSetKey] = changeSet;
+                // Only maintain latest changeSet
+                _latestChangeSet = changeSet;
 
                 tracer.Trace("Commit id: " + changeSet.Id, new Dictionary<string, string>
                 {
@@ -126,7 +125,7 @@ namespace Kudu.Core.SourceControl
 
         public void Clean()
         {
-            _httpContext.Items.Remove(_changeSetKey);
+            _latestChangeSet = null;
         }
 
         public void UpdateSubmodules()

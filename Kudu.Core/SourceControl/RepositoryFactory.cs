@@ -18,14 +18,12 @@ namespace Kudu.Core.SourceControl
         private readonly IEnvironment _environment;
         private readonly ITraceFactory _traceFactory;
         private readonly IDeploymentSettingsManager _settings;
-        private readonly HttpContextBase _httpContext;
 
-        public RepositoryFactory(IEnvironment environment, IDeploymentSettingsManager settings, ITraceFactory traceFactory, HttpContextBase httpContext)
+        public RepositoryFactory(IEnvironment environment, IDeploymentSettingsManager settings, ITraceFactory traceFactory)
         {
             _environment = environment;
             _settings = settings;
             _traceFactory = traceFactory;
-            _httpContext = httpContext;
         }
 
         /// <summary>
@@ -77,7 +75,7 @@ namespace Kudu.Core.SourceControl
             IRepository repository;
             if (repositoryType == RepositoryType.None)
             {
-                repository = new NullRepository(_environment, _traceFactory, _httpContext);
+                repository = new NullRepository(_environment, _traceFactory);
             }
             else if (repositoryType == RepositoryType.Mercurial)
             {
@@ -102,7 +100,7 @@ namespace Kudu.Core.SourceControl
             if (IsNullRepository)
             {
                 tracer.Trace("Assuming none repository at {0}", _environment.RepositoryPath);
-                return new NullRepository(_environment, _traceFactory, _httpContext);
+                return new NullRepository(_environment, _traceFactory);
             }
             else if (IsGitRepository)
             {
