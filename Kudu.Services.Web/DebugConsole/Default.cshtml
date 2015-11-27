@@ -37,7 +37,7 @@
                     <button class="btn btn-info box-border" style="display:none" data-bind="visible: isTransferInProgress(), click: showCopyProgressModal">
                         <span id="copy-percentage" title="percentage copy"></span>
                     </button>
-                    <i data-bind="visible: koprocessing()" class="fa fa-spinner fa-spin" title="Please wait"></i>
+                    <i data-bind="visible: koprocessing()" class="old-school-spinner" title="Please wait"></i>
                     <i data-bind="visible: errorText, attr: {title: errorText}" class="alert-warning glyphicon glyphicon-exclamation-sign" style="display: none"></i>
                 </div>
             </div>
@@ -184,3 +184,28 @@
 <script src="~/content/scripts/jquery-console/jquery.console.js"></script>
 <script src="~/content/scripts/ace-init.js"></script>
 <script src="~/content/scripts/HelperScript.js"></script>
+
+<script>
+// Old school ASCII spinner
+var i = 0;
+var frames = ['-', '\\', '|', '/'];
+var spinbox = $('div.spinner > .old-school-spinner');
+var timeout = 300;
+
+function spinner() {
+    var i = 0;
+    frames.forEach(function(frame) {
+        setTimeout(function() {
+            spinbox.text(frame);
+        }, timeout * i);
+        i++;
+    });
+
+    setTimeout(function() {
+        spinner();
+    }, timeout * (frames.length));
+}
+
+spinner();
+
+</script>
