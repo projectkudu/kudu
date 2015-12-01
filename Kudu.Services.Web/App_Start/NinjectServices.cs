@@ -317,6 +317,13 @@ namespace Kudu.Services.Web.App_Start
             // an Azure AppSetting that's supposed to be for the site only but incidently affects Kudu as well.
             ConfigurationManager.AppSettings["webpages:Enabled"] = "true";
 
+            // Kudu does not rely owin:appStartup.  This is to avoid Azure AppSetting if set.
+            if (ConfigurationManager.AppSettings["owin:appStartup"] != null)
+            {
+                // Set the appSetting to null since we cannot use AppSettings.Remove(key) (ReadOnly exception!)
+                ConfigurationManager.AppSettings["owin:appStartup"] = null;
+            }
+
             RegisterRoutes(kernel, RouteTable.Routes);
 
             // Register the default hubs route: ~/signalr
