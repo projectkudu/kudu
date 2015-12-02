@@ -145,7 +145,7 @@ var copyObjectsManager = {
         }
 
         return perc;
-    }, 
+    },
     removeAtIndex: function(index) {
         delete this._copyProgressObjects[index];
     },
@@ -156,7 +156,6 @@ var copyObjectsManager = {
     }
 }
 
-var statusbarObj = Object.create(statusbar);
 copyObjectsManager.init();
 
 $.connection.hub.url = appRoot + "api/filesystemhub";
@@ -344,15 +343,15 @@ $.connection.hub.start().done(function () {
         this.editItem = function () {
             var that = this;
             // Blank out the editor before fetching new content
-            viewModel.editText(null);
-            statusbarObj.fetchingContents();
+            viewModel.editText('');
+            statusbar.fetchingContents();
             viewModel.fileEdit(this);
             if(this.mime === "text/xml")
             {
                 Vfs.getContent(this)
                    .done(function (data) {
                        viewModel.editText(vkbeautify.xml(data));
-                       statusbarObj.showFilename();
+                       statusbar.showFilename();
                        // Editor h-scroll workaround
                        editor.session.setScrollLeft(-1);
                    }).fail(showError);
@@ -361,7 +360,7 @@ $.connection.hub.start().done(function () {
                 Vfs.getContent(this)
                    .done(function (data) {
                        viewModel.editText(data);
-                       statusbarObj.showFilename();
+                       statusbar.showFilename();
                        // Editor h-scroll workaround
                        editor.session.setScrollLeft(-1);
                    }).fail(showError);
@@ -370,23 +369,23 @@ $.connection.hub.start().done(function () {
 
         this.saveItem = function () {
             var text = viewModel.editText();
-            statusbarObj.savingChanges();
+            statusbar.savingChanges();
             Vfs.setContent(this, text)
                 .done(function () {
-                    statusbarObj.acknowledgeSave();
+                    statusbar.acknowledgeSave();
                 }).fail(function (error) {
                     showErrorAsAlert(error);
-                    statusbarObj.errorState.set();
+                    statusbar.errorState.set();
                 });
         }
 
         this.saveItemAndClose = function () {
             var text = viewModel.editText();
-            statusbarObj.savingChanges();
+            statusbar.savingChanges();
             Vfs.setContent(this, text)
                 .done(function () {
                     viewModel.fileEdit(null);
-                    statusbarObj.reset();
+                    statusbar.reset();
                 }).fail(function (error) {
                     showErrorAsAlert(error);
                     statusbar.errorState.set()
@@ -408,7 +407,7 @@ $.connection.hub.start().done(function () {
             isTransferInProgress: ko.observable(false),
             cancelEdit: function () {
                 viewModel.fileEdit(null);
-                statusbarObj.reset();
+                statusbar.reset();
             },
             selectSpecialDir: function (name) {
                 var item = viewModel.specialDirsIndex()[name];
