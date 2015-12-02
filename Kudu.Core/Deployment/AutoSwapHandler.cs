@@ -14,16 +14,14 @@ namespace Kudu.Core.Deployment
     {
         public const string AutoSwapLockFile = "autoswap.lock";
 
-        private readonly IDeploymentManager _deploymentManager;
         private readonly IDeploymentStatusManager _deploymentStatusManager;
         private readonly ITraceFactory _traceFactory;
         private readonly string _autoSwapSlotName;
         private readonly string _autoSwapLockFilePath;
         private string _initialActiveDeplymentId;
 
-        public AutoSwapHandler(IDeploymentManager deploymentManager, IDeploymentStatusManager deploymentStatusManager, IEnvironment environment, IDeploymentSettingsManager settings, ITraceFactory traceFactory)
+        public AutoSwapHandler(IDeploymentStatusManager deploymentStatusManager, IEnvironment environment, IDeploymentSettingsManager settings, ITraceFactory traceFactory)
         {
-            _deploymentManager = deploymentManager;
             _deploymentStatusManager = deploymentStatusManager;
             _traceFactory = traceFactory;
             _autoSwapSlotName = settings.GetValue("WEBSITE_SWAP_SLOTNAME");
@@ -51,26 +49,19 @@ namespace Kudu.Core.Deployment
             return isAutoSwapOngoing;
         }
 
-        public void HandleAutoSwap(bool verifyActiveDeploymentIdChanged)
+        public void HandleAutoSwap()
         {
+            var tracer = _traceFactory.GetTracer();
             if (!IsAutoSwapEnabled())
             {
                 return;
             }
 
-            var tracer = _traceFactory.GetTracer();
-
+            // active deployment is always a success deployment
             string currentActiveDeploymentId = _deploymentStatusManager.ActiveDeploymentId;
-            if (verifyActiveDeploymentIdChanged && currentActiveDeploymentId == _initialActiveDeplymentId)
+            if (currentActiveDeploymentId == _initialActiveDeplymentId)
             {
-                tracer.Trace("Deployment haven't changed, no need for auto swap", currentActiveDeploymentId);
-                return;
-            }
-
-            DeployResult latestDeploymentResult = _deploymentManager.GetResult(currentActiveDeploymentId);
-            if (latestDeploymentResult.Status != DeployStatus.Success)
-            {
-                tracer.Trace("Auto swap is not requested as the deployment did not succeed", latestDeploymentResult.Id, latestDeploymentResult.Status);
+                tracer.Trace("Deployment haven't changed, no need for auto swap: {0}", currentActiveDeploymentId);
                 return;
             }
 
@@ -84,7 +75,7 @@ namespace Kudu.Core.Deployment
             }
 
             string operationId = "AUTOSWAP" + Guid.NewGuid();
-            string deploymentId = latestDeploymentResult.Id;
+            string deploymentId = currentActiveDeploymentId;
 
             HttpResponse response = HttpContext.Current.Response;
 

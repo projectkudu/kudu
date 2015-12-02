@@ -149,7 +149,7 @@ namespace Kudu.Services.Deployment
 
                         await _deploymentManager.DeployAsync(repository, changeSet, username, clean, needFileUpdate);
 
-                        _autoSwapHandler.HandleAutoSwap(verifyActiveDeploymentIdChanged: false);
+                        _autoSwapHandler.HandleAutoSwap();
                     }
                     catch (FileNotFoundException ex)
                     {

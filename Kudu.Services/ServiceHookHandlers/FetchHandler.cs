@@ -156,7 +156,7 @@ namespace Kudu.Services
 
                     await PerformDeployment(deployInfo);
 
-                    _autoSwapHandler.HandleAutoSwap(verifyActiveDeploymentIdChanged: false);
+                    _autoSwapHandler.HandleAutoSwap();
                 }, TimeSpan.Zero);
 
                 if (!acquired)

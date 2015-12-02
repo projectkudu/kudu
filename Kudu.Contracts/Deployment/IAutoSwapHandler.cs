@@ -6,6 +6,6 @@ namespace Kudu.Core.Deployment
 
         bool IsAutoSwapOngoing();
 
-        void HandleAutoSwap(bool verifyActiveDeploymentIdChanged);
+        void HandleAutoSwap();
     }
 }
