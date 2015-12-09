@@ -1016,20 +1016,12 @@ namespace Kudu.FunctionalTests
                     client.DefaultRequestHeaders.Add("X-Github-Event", "push");
                     var response = await client.PostAsync("deploy?scmType=GitHub", new FormUrlEncodedContent(post));
                     Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+
+                    TestTracer.Trace("Second deployment failed, no swap happen");
+                    IEnumerable<string> values;
+                    response.Headers.TryGetValues("X-MS-SWAP-OPERATIONID", out values);
+                    Assert.Null(values);
                 }
-
-                appManager.VfsManager.Delete("site/locks/autoswap.lock");
-
-                TestTracer.Trace("After deleting the lock file the deployment should happen but since nothing changed auto swap will not happen");
-                await DeployPayloadHelperAsync(appManager, async client =>
-                {
-                    client.DefaultRequestHeaders.Add("X-Github-Event", "push");
-                    var response = await client.PostAsync("deploy?scmType=GitHub", new FormUrlEncodedContent(post));
-
-                    AssertAutoSwapResponse(response, "someslot");
-
-                    return response;
-                });
             });
         }
     }
@@ -1057,13 +1049,15 @@ namespace Kudu.FunctionalTests
                     repo.WriteFile("HelloWorld.txt", "This is a test");
                     Git.Commit(repo.PhysicalPath, "Another commit");
 
+                    string secondCommitId = Git.Id(repo.PhysicalPath);
+
                     appManager.GitDeploy(repo.PhysicalPath);
                     results = await appManager.DeploymentManager.GetResultsAsync();
                     Assert.True(results.All(r => r.Status == DeployStatus.Success));
 
                     await appManager.SettingsManager.SetValue("WEBSITE_SWAP_SLOTNAME", "someotherslot");
 
-                    // Redeploy first deployment
+                    // ReDeploy first deployment
                     TestTracer.Trace("Deploy should auto swap");
                     var response = await appManager.DeploymentManager.DeployAsync(firstCommitId);
                     AssertAutoSwapResponse(response, "someotherslot");
@@ -1072,11 +1066,16 @@ namespace Kudu.FunctionalTests
                     response = await appManager.DeploymentManager.DeployWithoutEnsureSuccessfulAsync(firstCommitId);
                     Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
 
+                    TestTracer.Trace("Second deployment failed, no swap happen");
+                    IEnumerable<string> values;
+                    response.Headers.TryGetValues("X-MS-SWAP-OPERATIONID", out values);
+                    Assert.Null(values);
+
                     TestTracer.Trace("Delete auto swap lock file");
                     appManager.VfsManager.Delete("site/locks/autoswap.lock");
-
-                    TestTracer.Trace("Deployment should auto swap");
-                    response = await appManager.DeploymentManager.DeployAsync(firstCommitId);
+                    
+                    TestTracer.Trace("Deploy should auto swap");
+                    response = await appManager.DeploymentManager.DeployAsync(secondCommitId);
                     AssertAutoSwapResponse(response, "someotherslot");
                 });
             }
