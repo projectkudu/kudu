@@ -15,10 +15,8 @@ using Kudu.Core.Infrastructure;
 using Kudu.Core.Settings;
 using Kudu.Core.Tracing;
 using Kudu.Services.Infrastructure;
-
-using Environment = System.Environment;
 using System.Diagnostics.CodeAnalysis;
-using System.Security.Policy;
+using Environment = System.Environment;
 
 namespace Kudu.Services.Performance
 {
@@ -298,8 +296,10 @@ namespace Kudu.Services.Performance
                 return Path.Combine(_logPath, routePath);
             }
 
-            // in case a custom log file path exist
-            string path = _settings.GetValue(SettingsKeys.CustomLogStream(firstPath));
+            // Given that SCM_LOGSTREAM_MYLOG is used in "appsettings"
+            // And the value for the key supplies a relative path like "site\wwwroot\app_data\logs\"
+            // Then return the custom log path: env root path + custom log path => D:\home + site\wwwroot\app_data\logs\
+            string path = _settings.GetValue(_settings.GetCustomLogStreamPath(firstPath));
             if (!string.IsNullOrEmpty(path))
             {
                 var customLogPath = Path.Combine(_environment.RootPath, path.TrimStart('\\'));
