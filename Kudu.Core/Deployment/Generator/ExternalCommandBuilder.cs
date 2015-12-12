@@ -61,6 +61,7 @@ namespace Kudu.Core.Deployment.Generator
 
             // Set Commit ID in the environment
             exe.EnvironmentVariables[WellKnownEnvironmentVariables.CommitId] = context.CommitId;
+            exe.EnvironmentVariables[WellKnownEnvironmentVariables.CommitMessage] = context.Message;
 
             // Populate the environment with the build properties
             foreach (var property in PropertyProvider.GetProperties())

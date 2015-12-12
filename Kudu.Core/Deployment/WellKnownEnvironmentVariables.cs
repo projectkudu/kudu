@@ -32,6 +32,7 @@
         public const string WebJobsPort = "WEBJOBS_PORT";
 
         public const string CommitId = "SCM_COMMIT_ID";
+        public const string CommitMessage = "SCM_COMMIT_MESSAGE";
         public const string DnvmPath = "SCM_DNVM_PS_PATH";
 
         public const string SiteBitness = "SITE_BITNESS";

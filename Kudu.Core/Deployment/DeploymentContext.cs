@@ -44,5 +44,9 @@ namespace Kudu.Core.Deployment
         /// </summary>
         public string CommitId { get; set; }
 
+        /// <summary>
+        // Commit message of the repository to be deployed.
+        /// </summary>
+        public string Message { get; set; }
     }
 }

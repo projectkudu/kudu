@@ -224,7 +224,7 @@ namespace Kudu.Core.Deployment
                     innerLogger = null;
 
                     // Perform the build deployment of this changeset
-                    await Build(id, tracer, deployStep, repository, deploymentAnalytics);
+                    await Build(changeSet, tracer, deployStep, repository, deploymentAnalytics);
                 }
                 catch (Exception ex)
                 {
@@ -511,16 +511,17 @@ namespace Kudu.Core.Deployment
         /// <summary>
         /// Builds and deploys a particular changeset. Puts all build artifacts in a deployments/{id}
         /// </summary>
-        private async Task Build(string id, ITracer tracer, IDisposable deployStep, IFileFinder fileFinder, DeploymentAnalytics deploymentAnalytics)
+        private async Task Build(ChangeSet changeSet, ITracer tracer, IDisposable deployStep, IFileFinder fileFinder, DeploymentAnalytics deploymentAnalytics)
         {
-            if (String.IsNullOrEmpty(id))
+            if (changeSet == null || String.IsNullOrEmpty(changeSet.Id))
             {
-                throw new ArgumentException("The id parameter is null or empty", "id");
+                throw new ArgumentException("The changeSet.Id parameter is null or empty", "changeSet.Id");
             }
 
             ILogger logger = null;
             IDeploymentStatusFile currentStatus = null;
             string buildTempPath = null;
+            string id = changeSet.Id;
 
             try
             {
@@ -583,7 +584,8 @@ namespace Kudu.Core.Deployment
                     GlobalLogger = _globalLogger,
                     OutputPath = GetOutputPath(_environment, perDeploymentSettings),
                     BuildTempPath = buildTempPath,
-                    CommitId = id
+                    CommitId = id,
+                    Message = changeSet.Message
                 };
 
                 if (context.PreviousManifestFilePath == null)
