@@ -750,9 +750,10 @@ $.connection.hub.start().done(function () {
 
     function _getInputFiles(evt) {
         var dt = evt.originalEvent.dataTransfer,
-            items = evt.originalEvent.dataTransfer.items;
+            items = evt.originalEvent.dataTransfer.items,
+            isSupportedGetAsEntry = typeof DataTransferItem !== "undefined" && !!(DataTransferItem.prototype.webkitGetAsEntry || DataTransferItem.prototype.getAsEntry);
 
-        if (items && items.length) {
+        if (items && items.length && isSupportedGetAsEntry) {
             return whenArray($.map(items, function (item) {
                 if (item.kind === 'file') {
                     var entry = (item.webkitGetAsEntry || item.getAsEntry).apply(item);
