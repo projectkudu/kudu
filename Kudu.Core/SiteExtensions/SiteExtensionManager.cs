@@ -348,6 +348,13 @@ namespace Kudu.Core.SiteExtensions
                         UIPackageMetadata localPackage = null;
                         UIPackageMetadata repoPackage = null;
 
+                        if (this.IsInstalledToWebRoot(id))
+                        {
+                            // override WebRoot type from setting
+                            // WebRoot is a special type that install package to wwwroot, when perform update we need to update new content to wwwroot even if type is not specified
+                            type = SiteExtensionInfo.SiteExtensionType.WebRoot;
+                        }
+
                         if (string.IsNullOrWhiteSpace(version))
                         {
                             using (tracer.Step("Version is null, search latest package by id: {0}, will not search for unlisted package.", id))

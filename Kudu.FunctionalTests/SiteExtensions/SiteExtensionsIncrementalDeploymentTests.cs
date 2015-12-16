@@ -48,7 +48,57 @@ namespace Kudu.FunctionalTests.SiteExtensions
                 responseMessage = await client.GetAsync(appManager.SiteUrl + "new.txt");
                 Assert.Equal(HttpStatusCode.NotFound, responseMessage.StatusCode);
 
+                TestTracer.Trace("Perform update with id '{0}', version '{1}' to WebRoot", packageId, packageLatestVersion);
                 responseMessage = await manager.InstallExtension(packageId, packageLatestVersion, externalFeed, SiteExtensionInfo.SiteExtensionType.WebRoot);
+                Assert.Equal(HttpStatusCode.OK, responseMessage.StatusCode);
+                responseMessage = await client.GetAsync(appManager.SiteUrl + "default.aspx");
+                responseContent = await responseMessage.Content.ReadAsStringAsync();
+                Assert.True(responseContent.Contains("<h1>World's most amazing file counter v2!</h1>"),
+                    string.Format(CultureInfo.InvariantCulture, "Not contain expected content. Actual: {0}", responseContent));
+
+                responseMessage = await client.GetAsync(appManager.SiteUrl + "new.txt");
+                responseContent = await responseMessage.Content.ReadAsStringAsync();
+                Assert.Equal("new", responseContent);
+
+                responseMessage = await client.GetAsync(appManager.SiteUrl + "delete.txt");
+                Assert.Equal(HttpStatusCode.NotFound, responseMessage.StatusCode);
+            });
+        }
+
+        [Fact]
+        public async Task CanInstallAndUpdateWithoutType()
+        {
+            const string appName = "IncrementalDeploymentTests";
+            const string packageId = "IncrementalDeployment";
+            const string packageOldVersion = "1.0.0";
+            const string packageLatestVersion = "2.0.0";
+            const string externalFeed = "https://www.myget.org/F/simplesvc/";
+
+            await ApplicationManager.RunAsync(appName, async appManager =>
+            {
+                var manager = appManager.SiteExtensionManager;
+                await SiteExtensionApiFacts.CleanSiteExtensions(manager);
+
+                TestTracer.Trace("Perform InstallExtension with id '{0}', version '{1}' from '{2}' to WebRoot", packageId, packageOldVersion, externalFeed);
+                HttpResponseMessage responseMessage = await manager.InstallExtension(packageId, packageOldVersion, externalFeed, SiteExtensionInfo.SiteExtensionType.WebRoot);
+                Assert.Equal(HttpStatusCode.OK, responseMessage.StatusCode);
+
+                HttpClient client = new HttpClient();
+                TestTracer.Trace("Package is installed to wwwroot, perform get to verify content.");
+                responseMessage = await client.GetAsync(appManager.SiteUrl + "default.aspx");
+                string responseContent = await responseMessage.Content.ReadAsStringAsync();
+                Assert.True(responseContent.Contains("<h1>World's most amazing file counter</h1>"),
+                    string.Format(CultureInfo.InvariantCulture, "Not contain expected content. Actual: {0}", responseContent));
+
+                responseMessage = await client.GetAsync(appManager.SiteUrl + "delete.txt");
+                responseContent = await responseMessage.Content.ReadAsStringAsync();
+                Assert.Equal("delete", responseContent);
+
+                responseMessage = await client.GetAsync(appManager.SiteUrl + "new.txt");
+                Assert.Equal(HttpStatusCode.NotFound, responseMessage.StatusCode);
+
+                TestTracer.Trace("Perform update with id '{0}', version '{1}' to WebRoot without specifiy type", packageId, packageLatestVersion);
+                responseMessage = await manager.InstallExtension(packageId, packageLatestVersion, externalFeed);
                 Assert.Equal(HttpStatusCode.OK, responseMessage.StatusCode);
                 responseMessage = await client.GetAsync(appManager.SiteUrl + "default.aspx");
                 responseContent = await responseMessage.Content.ReadAsStringAsync();
