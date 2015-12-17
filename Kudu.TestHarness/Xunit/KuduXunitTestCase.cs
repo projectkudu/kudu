@@ -21,13 +21,6 @@ namespace Kudu.TestHarness.Xunit
                                  IAttributeInfo testAttribute)
             : base(diagnosticMessageSink, testMethodDisplay, testMethod, testMethodArguments)
         {
-            DisableRetry = testAttribute == null ? true : testAttribute.GetNamedArgument<bool>("DisableRetry");
-        }
-
-        public bool DisableRetry
-        {
-            get;
-            set;
         }
 
         public override Task<RunSummary> RunAsync(IMessageSink diagnosticMessageSink,
@@ -37,20 +30,6 @@ namespace Kudu.TestHarness.Xunit
                                                  CancellationTokenSource cancellationTokenSource)
         {
             return new KuduXunitTestCaseRunner(this, DisplayName, SkipReason, constructorArguments, TestMethodArguments, messageBus, aggregator, cancellationTokenSource).RunAsync();
-        }
-
-        public override void Serialize(IXunitSerializationInfo data)
-        {
-            base.Serialize(data);
-
-            data.AddValue("DisableRetry", DisableRetry);
-        }
-
-        public override void Deserialize(IXunitSerializationInfo data)
-        {
-            base.Deserialize(data);
-
-            DisableRetry = data.GetValue<bool>("DisableRetry");
         }
     }
 }

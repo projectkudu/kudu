@@ -16,12 +16,11 @@ namespace Kudu.TestHarness.Xunit
 
         public static Task<RunSummary> RunTestAsync(XunitTestRunner runner,
                                                     IMessageBus messageBus,
-                                                    ExceptionAggregator aggregator,
-                                                    bool disableRetry)
+                                                    ExceptionAggregator aggregator)
         {
             // fork non-SynchronizationContext thread
             var result = Task.Factory.StartNew(
-                            () => RunTestAsyncCore(runner, messageBus, aggregator, disableRetry).Result,
+                            () => RunTestAsyncCore(runner, messageBus, aggregator).Result,
                             new CancellationToken(),
                             TaskCreationOptions.None,
                             TaskScheduler.Default).Result;
@@ -30,8 +29,7 @@ namespace Kudu.TestHarness.Xunit
 
         private static async Task<RunSummary> RunTestAsyncCore(XunitTestRunner runner,
                                                                IMessageBus messageBus,
-                                                               ExceptionAggregator aggregator,
-                                                               bool disableRetry)
+                                                               ExceptionAggregator aggregator)
         {
             try
             {
@@ -39,7 +37,7 @@ namespace Kudu.TestHarness.Xunit
                 RunSummary summary = null;
 
                 // First run
-                if (!disableRetry)
+                if (!KuduUtils.DisableRetry)
                 {
                     // This is really the only tricky bit: we need to capture and delay messages (since those will
                     // contain run status) until we know we've decided to accept the final result;

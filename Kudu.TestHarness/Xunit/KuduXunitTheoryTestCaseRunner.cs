@@ -47,13 +47,7 @@ namespace Kudu.TestHarness.Xunit
 
         private async Task<RunSummary> RunTestAsync(XunitTestRunner runner)
         {
-            var disableRetry = ((KuduXunitTheoryTestCase)TestCase).DisableRetry;
-            if (!disableRetry)
-            {
-                var value = ConfigurationManager.AppSettings["DisableRetry"];
-                disableRetry = string.IsNullOrEmpty(value) || bool.Parse(value);
-            }
-            return await KuduXunitTestRunnerUtils.RunTestAsync(runner, MessageBus, Aggregator, disableRetry);
+            return await KuduXunitTestRunnerUtils.RunTestAsync(runner, MessageBus, Aggregator);
         }
     }
 }

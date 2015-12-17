@@ -80,6 +80,14 @@ namespace Kudu.TestHarness
             }
         }
 
+        public static bool DisableRetry
+        {
+            get
+            {
+                return GetBooleanTestSetting("DisableRetry");
+            }
+        }
+
         public static bool GetBooleanTestSetting(string settingName)
         {
             bool retValue;
