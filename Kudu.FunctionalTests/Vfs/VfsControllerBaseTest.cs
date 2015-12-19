@@ -7,6 +7,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Reflection;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Kudu.Client.Editor;
 using Kudu.Client.Infrastructure;
@@ -28,7 +29,7 @@ namespace Kudu.FunctionalTests
 
         private static readonly ContentRangeHeaderValue _fileContentRange = new ContentRangeHeaderValue(_fileContent0.Length);
 
-        private static readonly string _conflict = "<<<<<<< HEAD\r\nAAAA\r\nbbb\r\nCCCCC\r\n=======\r\nCCCCC\r\nbbb\r\nAAAAA\r\n>>>>>>>";
+        private static readonly string _conflict = "^<<<<<<< .*\r\nAAAA\r\nbbb\r\nCCCCC\r\n=======\r\nCCCCC\r\nbbb\r\nAAAAA\r\n>>>>>>>";
 
         private static readonly MediaTypeHeaderValue _fileMediaType = MediaTypeHeaderValue.Parse("text/plain");
         private static readonly MediaTypeHeaderValue _dirMediaType = MediaTypeHeaderValue.Parse("application/json; charset=utf-8");
@@ -337,7 +338,7 @@ namespace Kudu.FunctionalTests
                     Assert.Equal(_conflictMediaType, response.Content.Headers.ContentType);
                     Assert.Null(response.Headers.ETag);
                     string content = await response.Content.ReadAsStringAsync();
-                    Assert.True(content.StartsWith(_conflict));
+                    Assert.True(Regex.IsMatch(content, _conflict));
                 }
 
                 // Update file with fifth edit based on invalid etag
