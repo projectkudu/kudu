@@ -1328,12 +1328,16 @@ namespace Kudu.FunctionalTests
                         Assert.Equal(HttpStatusCode.Accepted, response.StatusCode);
 
                         var location = response.Headers.Location;
-                        Assert.NotNull(location);
 
                         // Poll till deployment finished
                         bool completed = false;
                         for (int i = 0; i < 60 && !completed; ++i)
                         {
+                            if (location == null)
+                            {
+                                location = new Uri(new Uri(appManager.ServiceUrl), "api/deployments/latest");
+                            }
+
                             await Task.Delay(1000);
 
                             using (var pending = await client.GetAsync(location))
