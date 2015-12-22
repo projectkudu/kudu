@@ -778,6 +778,32 @@ namespace Kudu.FunctionalTests
     }
 
     [KuduXunitTestClass]
+    public class PullApiTestSimpleFormatWithAsyncTests : DeploymentManagerTests
+    {
+        [Fact]
+        public async Task PullApiTestSimpleFormatWithAsync()
+        {
+            var payload = new JObject();
+            payload["url"] = "https://github.com/KuduApps/HelloKudu";
+            payload["format"] = "basic";
+            string appName = "HelloKudu";
+
+            await ApplicationManager.RunAsync(appName, async appManager =>
+            {
+                // Fetch master branch from first repo
+                await DeployPayloadHelperAsync(appManager, client => client.PostAsJsonAsync("deploy?isAsync=true", payload), isContinuous: true);
+
+                var results = (await appManager.DeploymentManager.GetResultsAsync()).ToList();
+                Assert.Equal(1, results.Count);
+                Assert.Equal(DeployStatus.Success, results[0].Status);
+                Assert.Equal("GitHub", results[0].Deployer);
+
+                KuduAssert.VerifyUrl(appManager.SiteUrl, "<h1>Hello Kudu</h1>");
+            });
+        }
+    }
+
+    [KuduXunitTestClass]
     public class PullApiTestSimpleFormatMultiBranchWithUpdatesTests : DeploymentManagerTests
     {
         [Fact]
@@ -1293,12 +1319,6 @@ namespace Kudu.FunctionalTests
         {
             using (HttpClient client = CreateClient(appManager))
             {
-                DeployResult previous = null;
-                if (isContinuous)
-                {
-                    previous = (await appManager.DeploymentManager.GetResultsAsync()).FirstOrDefault();
-                }
-
                 using (HttpResponseMessage response = await func(client))
                 {
                     response.EnsureSuccessful();
@@ -1307,27 +1327,30 @@ namespace Kudu.FunctionalTests
                     {
                         Assert.Equal(HttpStatusCode.Accepted, response.StatusCode);
 
+                        var location = response.Headers.Location;
+                        Assert.NotNull(location);
+
                         // Poll till deployment finished
                         bool completed = false;
                         for (int i = 0; i < 60 && !completed; ++i)
                         {
                             await Task.Delay(1000);
 
-                            var current = (await appManager.DeploymentManager.GetResultsAsync()).FirstOrDefault();
-
-                            // no new deployment
-                            if (current == null)
+                            using (var pending = await client.GetAsync(location))
                             {
-                                continue;
-                            }
+                                pending.EnsureSuccessful();
 
-                            // same as previous deployment
-                            if (previous != null && previous.Id == current.Id)
-                            {
-                                continue;
-                            }
+                                if (pending.StatusCode == HttpStatusCode.OK)
+                                {
+                                    completed = true;
+                                    break;
+                                }
 
-                            completed = current.Status == DeployStatus.Success || current.Status == DeployStatus.Failed;
+                                Assert.Equal(HttpStatusCode.Accepted, pending.StatusCode);
+
+                                location = pending.Headers.Location;
+                                Assert.NotNull(location);
+                            }
                         }
 
                         Assert.True(completed, "the deployment is not completed within a given time!");

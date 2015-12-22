@@ -375,6 +375,13 @@ namespace Kudu.Services.Deployment
         {
             using (_tracer.Step("DeploymentService.GetResult"))
             {
+                if (IsLatestPendingDeployment(ref id))
+                {
+                    var response = Request.CreateResponse(HttpStatusCode.Accepted);
+                    response.Headers.Location = Request.RequestUri;
+                    return response;
+                }
+
                 DeployResult result = _deploymentManager.GetResult(id);
 
                 if (result == null)
@@ -390,6 +397,37 @@ namespace Kudu.Services.Deployment
 
                 return Request.CreateResponse(HttpStatusCode.OK, ArmUtils.AddEnvelopeOnArmRequest(result, Request));
             }
+        }
+
+        private bool IsLatestPendingDeployment(ref string id)
+        {
+            if (String.Equals(Constants.LatestDeployment, id))
+            {
+                using (_tracer.Step("DeploymentService.GetLatestDeployment"))
+                {
+                    var results = _deploymentManager.GetResults();
+                    var pending = results.Where(r => r.Status != DeployStatus.Success && r.Status != DeployStatus.Failed).FirstOrDefault();
+                    if (pending != null)
+                    {
+                        _tracer.Trace("Deployment {0} is {1}", pending.Id, pending.Status);
+                        return true;
+                    }
+
+                    var latest = results.Where(r => r.EndTime != null).OrderBy(r => r.EndTime.Value).LastOrDefault();
+                    if (latest != null)
+                    {
+                        _tracer.Trace("Deployment {0} is {1} at {2}", latest.Id, latest.Status, latest.EndTime.Value.ToString("o"));
+
+                        id = latest.Id;
+                    }
+                    else
+                    {
+                        _tracer.Trace("Could not find latest deployment!");
+                    }
+                }
+            }
+
+            return false;
         }
 
         /// <summary>

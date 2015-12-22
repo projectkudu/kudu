@@ -58,6 +58,8 @@ namespace Kudu
         public const string X64Bit = "AMD64";
         public const string X86Bit = "x86";
 
+        public const string LatestDeployment = "latest";
+
         private static readonly TimeSpan _maxAllowedExectionTime = TimeSpan.FromMinutes(30);
 
         public static TimeSpan MaxAllowedExecutionTime

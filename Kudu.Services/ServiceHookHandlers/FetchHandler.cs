@@ -129,15 +129,38 @@ namespace Kudu.Services
                 }
 
                 // for CI payload, we will return Accepted and do the task in the BG
+                // if isAsync is defined, we will return Accepted and do the task in the BG
                 // since autoSwap relies on the response header, deployment has to be synchronously.
-                bool isBackground = deployInfo.IsContinuous && !_autoSwapHandler.IsAutoSwapEnabled();
+                bool isAsync = String.Equals(context.Request.QueryString["isAsync"], "true", StringComparison.OrdinalIgnoreCase);
+                bool isBackground = (isAsync || deployInfo.IsContinuous) && !_autoSwapHandler.IsAutoSwapEnabled();
                 if (isBackground)
                 {
                     using (_tracer.Step("Start deployment in the background"))
                     {
-                        PerformBackgroundDeployment(deployInfo, _environment, _settings, _tracer.TraceLevel, context.Request.Url);
+                        ChangeSet tempChangeSet = null;
+                        IDisposable tempDeployment = null;
+                        if (isAsync)
+                        {
+                            // create temporary deployment before the actual deployment item started
+                            // this allows portal ui to readily display on-going deployment (not having to wait for fetch to complete).
+                            // in addition, it captures any failure that may occur before the actual deployment item started
+                            tempDeployment = _deploymentManager.CreateTemporaryDeployment(
+                                                            Resources.ReceivingChanges,
+                                                            out tempChangeSet,
+                                                            deployInfo.TargetChangeset,
+                                                            deployInfo.Deployer);
+                        }
+
+                        PerformBackgroundDeployment(deployInfo, _environment, _settings, _tracer.TraceLevel, context.Request.Url, tempDeployment, tempChangeSet);
                     }
 
+                    // to avoid regression, only set location header if isAsync
+                    if (isAsync)
+                    {
+                        // latest deployment keyword reserved to poll till deployment done
+                        context.Response.Headers["Location"] = new Uri(context.Request.Url,
+                            String.Format("/api/deployments/{0}?deployer={1}&time={2}", Constants.LatestDeployment, deployInfo.Deployer, DateTime.UtcNow.ToString("yyy-MM-dd_HH-mm-ssZ"))).ToString();
+                    }
                     context.Response.StatusCode = (int)HttpStatusCode.Accepted;
                     context.ApplicationInstance.CompleteRequest();
                     return;
@@ -178,7 +201,7 @@ namespace Kudu.Services
         }
 
 
-        public async Task PerformDeployment(DeploymentInfo deploymentInfo)
+        public async Task PerformDeployment(DeploymentInfo deploymentInfo, IDisposable tempDeployment = null, ChangeSet tempChangeSet = null)
         {
             DateTime currentMarkerFileUTC;
             DateTime nextMarkerFileUTC = FileSystemHelpers.GetLastWriteTimeUtc(_markerFilePath);
@@ -195,8 +218,7 @@ namespace Kudu.Services
                     // create temporary deployment before the actual deployment item started
                     // this allows portal ui to readily display on-going deployment (not having to wait for fetch to complete).
                     // in addition, it captures any failure that may occur before the actual deployment item started
-                    ChangeSet tempChangeSet;
-                    IDisposable tempDeployment = _deploymentManager.CreateTemporaryDeployment(
+                    tempDeployment = tempDeployment ?? _deploymentManager.CreateTemporaryDeployment(
                                                     Resources.ReceivingChanges,
                                                     out tempChangeSet,
                                                     deploymentInfo.TargetChangeset,
@@ -372,7 +394,7 @@ namespace Kudu.Services
         }
 
         // key goal is to create background tracer that is independent of request.
-        public static void PerformBackgroundDeployment(DeploymentInfo deployInfo, IEnvironment environment, IDeploymentSettingsManager settings, TraceLevel traceLevel, Uri uri)
+        public static void PerformBackgroundDeployment(DeploymentInfo deployInfo, IEnvironment environment, IDeploymentSettingsManager settings, TraceLevel traceLevel, Uri uri, IDisposable tempDeployment, ChangeSet tempChangeSet)
         {
             var tracer = traceLevel <= TraceLevel.Off ? NullTracer.Instance : new XmlTracer(environment.TracePath, traceLevel);
             var traceFactory = new TracerFactory(() => tracer);
@@ -407,11 +429,16 @@ namespace Kudu.Services
                     // Perform deployment
                     var acquired = deploymentLock.TryLockOperation(() =>
                     {
-                        fetchHandler.PerformDeployment(deployInfo).Wait();
+                        fetchHandler.PerformDeployment(deployInfo, tempDeployment, tempChangeSet).Wait();
                     }, TimeSpan.Zero);
 
                     if (!acquired)
                     {
+                        if (tempDeployment != null)
+                        {
+                            tempDeployment.Dispose();
+                        }
+
                         using (tracer.Step("Update pending deployment marker file"))
                         {
                             // REVIEW: This makes the assumption that the repository url is the same.
