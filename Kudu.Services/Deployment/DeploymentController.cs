@@ -375,9 +375,10 @@ namespace Kudu.Services.Deployment
         {
             using (_tracer.Step("DeploymentService.GetResult"))
             {
-                if (IsLatestPendingDeployment(ref id))
+                DeployResult pending;
+                if (IsLatestPendingDeployment(ref id, out pending))
                 {
-                    var response = Request.CreateResponse(HttpStatusCode.Accepted);
+                    var response = Request.CreateResponse(HttpStatusCode.Accepted, ArmUtils.AddEnvelopeOnArmRequest(pending, Request));
                     response.Headers.Location = Request.RequestUri;
                     return response;
                 }
@@ -399,14 +400,14 @@ namespace Kudu.Services.Deployment
             }
         }
 
-        private bool IsLatestPendingDeployment(ref string id)
+        private bool IsLatestPendingDeployment(ref string id, out DeployResult pending)
         {
             if (String.Equals(Constants.LatestDeployment, id))
             {
                 using (_tracer.Step("DeploymentService.GetLatestDeployment"))
                 {
                     var results = _deploymentManager.GetResults();
-                    var pending = results.Where(r => r.Status != DeployStatus.Success && r.Status != DeployStatus.Failed).FirstOrDefault();
+                    pending = results.Where(r => r.Status != DeployStatus.Success && r.Status != DeployStatus.Failed).FirstOrDefault();
                     if (pending != null)
                     {
                         _tracer.Trace("Deployment {0} is {1}", pending.Id, pending.Status);
@@ -427,6 +428,7 @@ namespace Kudu.Services.Deployment
                 }
             }
 
+            pending = null;
             return false;
         }
 
