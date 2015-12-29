@@ -10,7 +10,6 @@ namespace Kudu.Core.Deployment.Generator
     public class ExternalCommandFactory
     {
         public const string KuduSyncCommand = "kudusync";
-        public const string PostDeploymentActionsCommand = "postdeployment";
 
         internal const string StarterScriptName = "starter.cmd";
 
@@ -33,8 +32,6 @@ namespace Kudu.Core.Deployment.Generator
             var exe = BuildCommandExecutable(StarterScriptPath, workingDirectory, _deploymentSettings.GetCommandIdleTimeout(), logger);
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.SourcePath, sourcePath, logger);
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.TargetPath, targetPath, logger);
-            UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.PostDeploymentActionsCommandKey, PostDeploymentActionsCommand, logger);
-            UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.PostDeploymentActionsDirectoryKey, PostDeploymentActionsDir, logger);
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.SelectNodeVersionCommandKey, SelectNodeVersionCommand, logger);
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.SelectPythonVersionCommandKey, SelectPythonVersionCommand, logger);
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.WebJobsDeployCommandKey, WebJobsDeployCommand, logger);
@@ -119,16 +116,7 @@ namespace Kudu.Core.Deployment.Generator
                 return Path.Combine(_environment.ScriptPath, "nuget.exe");
             }
         }
-
-        private string PostDeploymentActionsDir
-        {
-            get
-            {
-                var defaultPath = Path.Combine(_environment.DeploymentToolsPath, "PostDeploymentActions");
-                return _deploymentSettings.GetPostDeploymentActionsDir(defaultPath);
-            }
-        }
-
+        
         private string SelectNodeVersionCommand
         {
             get

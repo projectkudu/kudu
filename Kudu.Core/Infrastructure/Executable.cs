@@ -236,7 +236,7 @@ namespace Kudu.Core.Infrastructure
 
             if (exitCode != 0)
             {
-                throw new CommandLineException(Path, cmdArguments, !String.IsNullOrEmpty(error) ? error : output)
+                throw new CommandLineException(Path, cmdArguments, error)
                 {
                     ExitCode = exitCode,
                     Output = output,

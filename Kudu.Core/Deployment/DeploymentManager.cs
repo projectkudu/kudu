@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
+using Kudu.Core.Deployment.Generator;
 using Kudu.Core.Hooks;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Settings;
@@ -608,6 +609,7 @@ namespace Kudu.Core.Deployment
                     try
                     {
                         await builder.Build(context);
+                        builder.PostBuild(context);
 
                         if (_settings.TouchWebConfigAfterDeployment())
                         {
