@@ -161,10 +161,6 @@ footer {
     width: 100%;
 }
 
-textarea {
-    min-height: 800px;
-}
-
 .disabled {
     color: gray;
 }
