@@ -34,6 +34,18 @@ div.spinner {
     top: 20px;
 }
 
+.paKman {
+    height: 30px;
+    margin-top: -4px;
+}
+
+.box-border {
+    padding: 0px 14px;
+    height: 28px;
+    border: solid 1px grey;
+    margin-top: -4px;
+}
+
 #fileList {
     height: 35%;
 }
@@ -203,7 +215,3 @@ div.editor {
   table-layout: fixed;
   word-wrap: break-word;
 }
-
-.box-border{
-border:solid 2px grey;
-} 

@@ -149,6 +149,7 @@
     <Content Include="Content\Images\jquery-ui-theme\ui-icons_f6cf3b_256x240.png" />
     <Content Include="Content\Images\Kudu.svg" />
     <Content Include="Content\Images\Windows Azure Web Site.png" />
+    <Content Include="Content\Images\paKman.gif" />
     <Content Include="Content\Scripts\HelperScript.js" />
     <Content Include="Content\Scripts\jquery.contextMenu.js" />
     <Content Include="Content\Scripts\KuduExec.js" />

@@ -34,10 +34,10 @@
                     <i class="h4 glyphicon glyphicon-hdd" title="System Drive"></i>
                 </a>
                 <div class="spinner">
-                    <button class="btn btn-info box-border" style="display:none" data-bind="visible: isTransferInProgress(), click: showCopyProgressModal">
+                    <button class="btn btn-info box-border" style="display: none" data-bind="visible: isTransferInProgress(), click: showCopyProgressModal">
                         <span id="copy-percentage" title="percentage copy"></span>
                     </button>
-                    <i data-bind="visible: koprocessing()" class="fa fa-spinner fa-spin" title="Please wait"></i>
+                    <img data-bind="visible: koprocessing()" class="paKman" src="/Content/Images/paKman.gif" title="Please wait" />
                     <i data-bind="visible: errorText, attr: {title: errorText}" class="alert-warning glyphicon glyphicon-exclamation-sign" style="display: none"></i>
                 </div>
             </div>
@@ -132,7 +132,7 @@
                        </table>
                     </div>
                     <div class="modal-footer" style="border: 0">
-                        <button type="button" class="btn btn-default" data-bind="click: clearCopyProgressCache">Clear cache</button>
+                        <button type="button" class="btn btn-default" data-bind="click: clearCopyProgressCache">Clear</button>
                         <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
                     </div>
                 </div>
