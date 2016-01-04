@@ -179,7 +179,10 @@ namespace Kudu.Services.Jobs
             try
             {
                 _triggeredJobsManager.InvokeTriggeredJob(jobName, arguments, "External - " + Request.Headers.UserAgent);
-                return Request.CreateResponse(HttpStatusCode.Accepted);
+
+                // Return a 200 in the ARM case, otherwise a 202 can cause it to poll on /run, which we don't support
+                // For non-ARM, stay with the 202 to reduce potential impact of change
+                return Request.CreateResponse(ArmUtils.IsArmRequest(Request) ? HttpStatusCode.OK : HttpStatusCode.Accepted);
             }
             catch (JobNotFoundException)
             {
