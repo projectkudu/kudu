@@ -30,6 +30,23 @@ namespace Kudu.Services.Test.Jobs
         }
 
         [Fact]
+        public void InvokeARMTriggeredJob_ShouldReturn200()
+        {
+            var controller = new JobsController(
+                Mock.Of<ITriggeredJobsManager>(),
+                Mock.Of<IContinuousJobsManager>(),
+                Mock.Of<ITracer>());
+
+            controller.Request = new HttpRequestMessage();
+
+            // Add header to simulate ARM request
+            controller.Request.Headers.Add(Arm.ArmUtils.GeoLocationHeaderKey, "East US");
+
+            HttpResponseMessage resMsg = controller.InvokeTriggeredJob("foo");
+            Assert.Equal(HttpStatusCode.OK, resMsg.StatusCode);
+        }
+
+        [Fact]
         public void InvokeTriggeredJob_ReadOnlyFileSystem_ShouldReturn503()
         {
             var triggeredJobsManagerMock = new Mock<ITriggeredJobsManager>();
