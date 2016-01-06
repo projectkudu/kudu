@@ -125,11 +125,11 @@ namespace Kudu.Core.Deployment.Generator
 
             const string extensionEnvVarSuffix = "_EXTENSION_VERSION";
 
-            // "/site/deployments/tools/PostDeploymentActions" (can override with %POST_DEPLOYMENT_ACTIONS_DIR%)
+            // "/site/deployments/tools/PostDeploymentActions" (can override with %SCM_POST_DEPLOYMENT_ACTIONS_PATH"%)
             var defaultPath = Path.Combine(Environment.DeploymentToolsPath, PostDeploymentActions);
-            if (!string.IsNullOrEmpty(System.Environment.GetEnvironmentVariable(WellKnownEnvironmentVariables.PostDeploymentActionsDirectoryKey)))
+            if (!string.IsNullOrEmpty(System.Environment.GetEnvironmentVariable(SettingsKeys.PostDeploymentActionsDirectory)))
             {
-                defaultPath = System.Environment.GetEnvironmentVariable(WellKnownEnvironmentVariables.PostDeploymentActionsDirectoryKey);
+                defaultPath = System.Environment.GetEnvironmentVariable(SettingsKeys.PostDeploymentActionsDirectory);
             }
 
             if (FileSystemHelpers.DirectoryExists(defaultPath))

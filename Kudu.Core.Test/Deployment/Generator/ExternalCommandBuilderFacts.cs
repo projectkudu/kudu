@@ -67,9 +67,9 @@ namespace Kudu.Core.Test.Deployment.Generator
             directoryMock.Setup(d => d.GetFiles(CustomDeploymentActionDir, "*"))
                          .Returns(CustomActionScripts.Union(new string[] { Path.Combine(CustomDeploymentActionDir, "Foo.txt") }).ToArray());
 
-            TestTracer.Trace("Override POST_DEPLOYMENT_ACTIONS_DIR to a custom location");
-            var originalVal = System.Environment.GetEnvironmentVariable("POST_DEPLOYMENT_ACTIONS_DIR");
-            System.Environment.SetEnvironmentVariable("POST_DEPLOYMENT_ACTIONS_DIR", CustomDeploymentActionDir, EnvironmentVariableTarget.Process);
+            TestTracer.Trace("Override SCM_POST_DEPLOYMENT_ACTIONS_PATH to a custom location");
+            var originalVal = System.Environment.GetEnvironmentVariable("SCM_POST_DEPLOYMENT_ACTIONS_PATH");
+            System.Environment.SetEnvironmentVariable("SCM_POST_DEPLOYMENT_ACTIONS_PATH", CustomDeploymentActionDir, EnvironmentVariableTarget.Process);
 
             try
             {
@@ -91,8 +91,7 @@ namespace Kudu.Core.Test.Deployment.Generator
             }
             finally
             {
-
-                System.Environment.SetEnvironmentVariable("POST_DEPLOYMENT_ACTIONS_DIR", originalVal, EnvironmentVariableTarget.Process);
+                System.Environment.SetEnvironmentVariable("SCM_POST_DEPLOYMENT_ACTIONS_PATH", originalVal, EnvironmentVariableTarget.Process);
             }
         }
 
