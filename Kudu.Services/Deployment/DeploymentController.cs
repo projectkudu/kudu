@@ -25,6 +25,8 @@ namespace Kudu.Services.Deployment
 {
     public class DeploymentController : ApiController
     {
+        private static DeploymentsCacheItem _cachedDeployments = DeploymentsCacheItem.None;
+
         private readonly IEnvironment _environment;
         private readonly IAnalytics _analytics;
         private readonly IDeploymentManager _deploymentManager;
@@ -286,7 +288,14 @@ namespace Kudu.Services.Deployment
         public HttpResponseMessage GetDeployResults()
         {
             HttpResponseMessage response;
-            EntityTagHeaderValue currentEtag = GetCurrentEtag(Request);
+            EntityTagHeaderValue currentEtag = null;
+            DeploymentsCacheItem cachedDeployments = _cachedDeployments;
+
+            using (_tracer.Step("DeploymentService.GetCurrentEtag"))
+            {
+                currentEtag = GetCurrentEtag(Request);
+                _tracer.Trace("Current Etag: {0}, Cached Etag: {1}", currentEtag, cachedDeployments.Etag);
+            }
 
             if (EtagEquals(Request, currentEtag))
             {
@@ -296,8 +305,18 @@ namespace Kudu.Services.Deployment
             {
                 using (_tracer.Step("DeploymentService.GetDeployResults"))
                 {
-                    IEnumerable<DeployResult> results = GetResults(Request).ToList();
-                    response = Request.CreateResponse(HttpStatusCode.OK, ArmUtils.AddEnvelopeOnArmRequest(results, Request));
+                    if (!currentEtag.Equals(cachedDeployments.Etag))
+                    {
+                        cachedDeployments = new DeploymentsCacheItem
+                        {
+                            Results = GetResults(Request).ToList(),
+                            Etag = currentEtag
+                        };
+
+                        _cachedDeployments = cachedDeployments;
+                    }
+
+                    response = Request.CreateResponse(HttpStatusCode.OK, ArmUtils.AddEnvelopeOnArmRequest(cachedDeployments.Results, Request));
                 }
             }
 
@@ -507,6 +526,15 @@ namespace Kudu.Services.Deployment
                 // to return null.
                 return null;
             }
+        }
+
+        class DeploymentsCacheItem
+        {
+            public readonly static DeploymentsCacheItem None = new DeploymentsCacheItem();
+
+            public List<DeployResult> Results { get; set; }
+
+            public EntityTagHeaderValue Etag { get; set; }
         }
     }
 }
