@@ -163,7 +163,7 @@ var nodeStartFilePath = (function createIisNodeWebConfigIfNeeded() {
                 console.error('Invalid start-up command "' + startupCommand + '" in package.json. Please use the format "node <script relative path>".');
             }
         }
-        
+
         if (!nodeStartFilePath) {
             console.log('Looking for app.js/server.js under site root.');
             nodeStartFilePath = getNodeDefaultStartFile(repo);
@@ -252,10 +252,15 @@ try {
             shouldUpdateIisNodeYml = true;
         }
     }
-    
+
     var nodeVersionPath = path.resolve(nodejsDir, nodeVersion),
-        nodeExePath = path.resolve(nodeVersionPath, 'node.exe'),
-        npmPath = resolveNpmPath(npmRootPath, npmVersion || getDefaultNpmVersion(nodeVersionPath));
+        nodeExePath = path.resolve(nodeVersionPath, 'node.exe'),        
+        npmPath;
+
+    npmVersion = npmVersion || getDefaultNpmVersion(nodeVersionPath);
+    npmPath = resolveNpmPath(npmRootPath, npmVersion)
+
+    console.log("Selected npm version " + npmVersion);
 
     // Save the node version in a temporary path for kudu service usage
     if (existsSync(nodeExePath) && existsSync(npmPath)) {
