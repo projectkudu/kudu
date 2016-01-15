@@ -310,7 +310,7 @@
     <value>No changes found.</value>
   </data>
   <data name="Vso_Synchronizing" xml:space="preserve">
-    <value>Synchronizing changes from VSO ...</value>
+    <value>Synchronizing changes from VSTS ...</value>
   </data>
   <data name="Error_LogDetailsNotFound" xml:space="preserve">
     <value>LogId '{0}' was not found in Deployment '{1}'.</value>

@@ -646,7 +646,7 @@ namespace Kudu.Services {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Synchronizing changes from VSO ....
+        ///   Looks up a localized string similar to Synchronizing changes from VSTS ....
         /// </summary>
         internal static string Vso_Synchronizing {
             get {

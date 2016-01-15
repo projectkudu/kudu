@@ -29,8 +29,8 @@ namespace Kudu.Services.Test
             Assert.Equal(DeployAction.ProcessDeployment, result);
             Assert.NotNull(deploymentInfo);
             Assert.Null(deploymentInfo.CommitId);
-            Assert.Equal("VSO", deploymentInfo.TargetChangeset.AuthorName);
-            Assert.Equal("VSO", deploymentInfo.TargetChangeset.AuthorEmail);
+            Assert.Equal("VSTS", deploymentInfo.TargetChangeset.AuthorName);
+            Assert.Equal("VSTS", deploymentInfo.TargetChangeset.AuthorEmail);
             Assert.Equal(Resources.Vso_Synchronizing, deploymentInfo.TargetChangeset.Message);
 
             var repositoryUri = new Uri(deploymentInfo.RepositoryUrl);

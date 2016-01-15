@@ -73,7 +73,7 @@ namespace Kudu.Services.ServiceHookHandlers
 
         protected virtual string GetDeployer()
         {
-            return "VSO";
+            return "VSTS";
         }
 
         private Uri GetRemoteUrl(JObject payload)

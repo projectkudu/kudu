@@ -652,7 +652,7 @@ namespace Kudu.FunctionalTests
 
                 Assert.Equal(1, results.Count);
                 Assert.Equal(DeployStatus.Success, results[0].Status);
-                Assert.Equal("VSO", results[0].Deployer);
+                Assert.Equal("VSTS", results[0].Deployer);
                 KuduAssert.VerifyUrl(appManager.SiteUrl, "Hello Kudu");
             });
         }
