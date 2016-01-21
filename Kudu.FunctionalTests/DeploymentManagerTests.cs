@@ -1189,13 +1189,10 @@ namespace Kudu.FunctionalTests
                     TestTracer.Trace("Scenario: " + info);
 
                     // Test
-                    var exception = await Assert.ThrowsAsync<HttpUnsuccessfulRequestException>(async () =>
+                    await Assert.ThrowsAsync<HttpUnsuccessfulRequestException>(async () =>
                     {
                         await DeployPayloadHelperAsync(appManager, client => client.PostAsJsonAsync("deploy", info.Payload));
                     });
-
-                    // Assert
-                    KuduAssert.MatchAny(info.Expect, exception.Message, info.ToString());
                 }
             });
         }
