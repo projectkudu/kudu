@@ -25,6 +25,7 @@ namespace Kudu.Core
         private readonly string _dataPath;
         private readonly string _jobsDataPath;
         private readonly string _jobsBinariesPath;
+        private readonly string _crashDumpsPath;
 
         // This ctor is used only in unit tests
         public Environment(
@@ -71,6 +72,7 @@ namespace Kudu.Core
             _tracePath = Path.Combine(rootPath, Constants.TracePath);
             _analyticsPath = Path.Combine(tempPath ?? _logFilesPath, Constants.SiteExtensionLogsDirectory);
             _deploymentTracePath = Path.Combine(rootPath, Constants.DeploymentTracePath);
+            _crashDumpsPath = Path.Combine(_dataPath, Constants.Dumps);
         }
 
         public Environment(
@@ -101,6 +103,7 @@ namespace Kudu.Core
             _dataPath = Path.Combine(rootPath, Constants.DataPath);
             _jobsDataPath = Path.Combine(_dataPath, Constants.JobsPath);
             _jobsBinariesPath = Path.Combine(_webRootPath, Constants.AppDataPath, Constants.JobsPath);
+            _crashDumpsPath = Path.Combine(_dataPath, Constants.Dumps);
         }
 
         public string RepositoryPath
@@ -269,6 +272,14 @@ namespace Kudu.Core
         public static bool IsAzureEnvironment()
         {
             return !String.IsNullOrEmpty(System.Environment.GetEnvironmentVariable("WEBSITE_INSTANCE_ID"));
+        }
+
+        public string CrashDumpsPath
+        {
+            get
+            {
+                return FileSystemHelpers.EnsureDirectory(_crashDumpsPath);
+            }
         }
     }
 }

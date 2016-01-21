@@ -92,5 +92,7 @@ namespace Kudu
 
         //Setting for VC++ for node builds
         public const string VCVersion = "2015";
+
+        public const string Dumps = "dumps";
     }
 }

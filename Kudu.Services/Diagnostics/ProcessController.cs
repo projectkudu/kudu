@@ -19,6 +19,8 @@ using Kudu.Core.Tracing;
 using Kudu.Services.Arm;
 using Kudu.Services.Infrastructure;
 using System.Threading.Tasks;
+using Kudu.Core.Deployment.Generator;
+using Kudu.Core.Deployment;
 
 namespace Kudu.Services.Performance
 {
@@ -272,6 +274,35 @@ namespace Kudu.Services.Performance
                     return response;
                 }
             }
+        }
+
+        [HttpPost]
+        public HttpResponseMessage TakeCrashDump(int id, bool includeMemory = false)
+        {
+            using (_tracer.Step("ProcessController.TakeCrashDump"))
+            {
+                try
+                {
+                    var process = GetProcessById(id);
+                    var exe = new Executable(ResolveProcDumpPath(), _environment.CrashDumpsPath, TimeSpan.MaxValue);
+                    var memoryFlag = includeMemory ? "-ma" : string.Empty;
+
+                    Task.Run(() => exe.ExecuteReturnExitCode(_tracer, s => _tracer.Trace(s), s => _tracer.TraceError(s), $"-accepteula -t {process.Id} -e -g {memoryFlag}"));
+
+                    return Request.CreateResponse(HttpStatusCode.Accepted);
+                }
+                catch (Exception ex)
+                {
+                    _tracer.TraceError(ex);
+                    return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, ex);
+                }
+            }
+        }
+
+        private static string ResolveProcDumpPath()
+        {
+            var systemDrive = Path.GetPathRoot(System.Environment.SystemDirectory);
+            return Path.Combine(systemDrive, "devtools", "sysinternals", "procdump.exe");
         }
 
         private static string GetResponseFileName(string prefix, string ext)

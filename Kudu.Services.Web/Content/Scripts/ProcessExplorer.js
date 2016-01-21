@@ -503,6 +503,13 @@ var Process = (function () {
         });
     };
 
+    Process.prototype.enableCrashDump = function (includeMemory) {
+        return $.ajax({
+            url: appRoot + "api/processes/" + this._json.id + "/crashdump?includeMemory=" + includeMemory,
+            type: "POST"
+        });
+    };
+
     Process.getIdFromHref = function (href) {
         return parseInt(href.substr(href.lastIndexOf("/") + 1));
     };
@@ -863,6 +870,13 @@ function overrideRightClickMenu() {
                     $("li")[0].click();
                     $("li").blur();
                     break;
+                case "crashdump1":
+                case "crashdump2":
+                    $("#proc-loading").show();
+                    process.enableCrashDump(key === "crashdump2").always(function () {
+                        return processExplorerSetupAsync();
+                    });
+                    break;
             }
         },
         items: {
@@ -872,6 +886,13 @@ function overrideRightClickMenu() {
                 "items": {
                     "dump1": { name: "Mini Dump" },
                     "dump2": { name: "Full Dump" }
+                }
+            },
+            "crashdump": {
+                name: "Enable Crash Dump",
+                "items": {
+                    "crashdump1": { name: "Mini Dump" },
+                    "crashdump2": { name: "Full Dump" }
                 }
             },
             "sep1": "---------",

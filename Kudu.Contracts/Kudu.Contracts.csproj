@@ -111,6 +111,7 @@
     <Compile Include="Deployment\LogEntry.cs" />
     <Compile Include="Deployment\LogEntryType.cs" />
     <Compile Include="Diagnostics\ApplicationLogEntry.cs" />
+    <Compile Include="Diagnostics\CrashDumpInfo.cs" />
     <Compile Include="Diagnostics\ProcessInfo.cs" />
     <Compile Include="Diagnostics\ProcessModuleInfo.cs" />
     <Compile Include="Diagnostics\ProcessThreadInfo.cs" />
