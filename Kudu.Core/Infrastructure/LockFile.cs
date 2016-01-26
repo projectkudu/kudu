@@ -15,6 +15,8 @@ namespace Kudu.Core.Infrastructure
     [SuppressMessage("Microsoft.Design", "CA1001:TypesThatOwnDisposableFieldsShouldBeDisposable", Justification = "Because of a bug in Ninject we can't make this disposable as it would otherwise get disposed on every request.")]
     public class LockFile : IOperationLock
     {
+        private const string NotEnoughSpaceText = "There is not enough space on the disk.";
+        
         private readonly string _path;
         private readonly ITraceFactory _traceFactory;
 
@@ -88,14 +90,13 @@ namespace Kudu.Core.Infrastructure
                     //      There is one drawback, previously for write action, even acquire lock will fail with UnauthorizedAccessException,
                     //      there will be retry within given timeout. so if exception is temporary, previous`s implementation will still go thru.
                     //      While right now will end up failure. But it is a extreem edge case, should be ok to ignore.
-                    try
-                    {
-                        return !FileSystemHelpers.IsFileSystemReadOnly();
-                    }
-                    catch
-                    {
-                        return true;
-                    }
+                    return !FileSystemHelpers.IsFileSystemReadOnly();
+                }
+                catch (IOException ex)
+                {
+                    // if not enough disk space, no one has the lock.
+                    // let the operation thru and fail where it would try to get the file
+                    return !ex.Message.Contains(NotEnoughSpaceText);
                 }
                 catch (Exception ex)
                 {
@@ -137,30 +138,27 @@ namespace Kudu.Core.Infrastructure
                 //      There is one drawback, previously for write action, even acquire lock will fail with UnauthorizedAccessException,
                 //      there will be retry within given timeout. so if exception is temporary, previous`s implementation will still go thru.
                 //      While right now will end up failure. But it is a extreem edge case, should be ok to ignore.
-                try
-                {
-                    return FileSystemHelpers.IsFileSystemReadOnly();
-                }
-                catch
-                {
-                    if (lockStream != null)
-                    {
-                        lockStream.Close();
-                    }
-                    return false;
-                }
+                return FileSystemHelpers.IsFileSystemReadOnly();
+            }
+            catch (IOException ex)
+            {
+                // if not enough disk space, no one has the lock.
+                // let the operation thru and fail where it would try to get the file
+                return ex.Message.Contains(NotEnoughSpaceText);
             }
             catch (Exception ex)
             {
                 TraceIfUnknown(ex);
-
+            }
+            finally
+            {
                 if (lockStream != null)
                 {
                     lockStream.Close();
                 }
-
-                return false;
             }
+
+            return false;
         }
 
         protected virtual void OnLockAcquired()

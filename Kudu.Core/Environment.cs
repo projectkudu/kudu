@@ -1,5 +1,9 @@
 ﻿using System;
+using System.ComponentModel;
+using System.Globalization;
 using System.IO;
+using System.Runtime.InteropServices;
+using System.Security;
 using Kudu.Core.Infrastructure;
 
 namespace Kudu.Core
@@ -269,6 +273,41 @@ namespace Kudu.Core
         public static bool IsAzureEnvironment()
         {
             return !String.IsNullOrEmpty(System.Environment.GetEnvironmentVariable("WEBSITE_INSTANCE_ID"));
+        }
+
+        public static string GetFreeSpaceHtml(string path)
+        {
+            try
+            {
+                ulong freeBytes;
+                ulong totalBytes;
+                GetDiskFreeSpace(path, out freeBytes, out totalBytes);
+
+                var usage = Math.Round(((totalBytes - freeBytes) * 100.0) / totalBytes);
+                var color = usage > 97 ? "red" : (usage > 90 ? "orange" : "green");
+                return String.Format(CultureInfo.InvariantCulture, "<span style='color:{0}'>{1:#,##0} MB total; {2:#,##0} MB free</span>", color, totalBytes / (1024 * 1024), freeBytes / (1024 * 1024));
+            }
+            catch (Exception ex)
+            {
+                return ex.ToString();
+            }
+        }
+
+        static void GetDiskFreeSpace(string path, out ulong freeBytes, out ulong totalBytes)
+        {
+            ulong diskFreeBytes;
+            if (!EnvironmentNativeMethods.GetDiskFreeSpaceEx(path, out freeBytes, out totalBytes, out diskFreeBytes))
+            {
+                throw new Win32Exception();
+            }
+        }
+
+        [SuppressUnmanagedCodeSecurity]
+        static class EnvironmentNativeMethods
+        {
+            [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+            [return: MarshalAs(UnmanagedType.Bool)]
+            public static extern bool GetDiskFreeSpaceEx(string path, out ulong freeBytes, out ulong totalBytes, out ulong diskFreeBytes);
         }
     }
 }

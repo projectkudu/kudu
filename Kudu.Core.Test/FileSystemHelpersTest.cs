@@ -3,6 +3,7 @@ using Moq;
 using System;
 using System.IO.Abstractions;
 using Xunit;
+using Kudu.TestHarness;
 
 namespace Kudu.Core.Test
 {
@@ -72,30 +73,33 @@ namespace Kudu.Core.Test
         [Fact]
         public void IsFileSystemReadOnlyBasicTest()
         {
-            // With Default TmpFolder value should always return false
-            FileSystemHelpers.TmpFolder = @"%WEBROOT_PATH%\data\Temp";
+            // In non-azure env, read-only is false
             Assert.Equal(false, FileSystemHelpers.IsFileSystemReadOnly());
 
-            // able to create and delete folder, should return false
-            var fileSystem = new Mock<IFileSystem>();
-            var dirBase = new Mock<DirectoryBase>();
-            var dirInfoBase = new Mock<DirectoryInfoBase>();
-            var dirInfoFactory = new Mock<IDirectoryInfoFactory>();
+            // mock Azure Env
+            using (KuduUtils.MockAzureEnvironment())
+            {
+                // able to create and delete folder, should return false
+                var fileSystem = new Mock<IFileSystem>();
+                var dirBase = new Mock<DirectoryBase>();
+                var dirInfoBase = new Mock<DirectoryInfoBase>();
+                var dirInfoFactory = new Mock<IDirectoryInfoFactory>();
 
-            fileSystem.Setup(f => f.Directory).Returns(dirBase.Object);
-            fileSystem.Setup(f => f.DirectoryInfo).Returns(dirInfoFactory.Object);
+                fileSystem.Setup(f => f.Directory).Returns(dirBase.Object);
+                fileSystem.Setup(f => f.DirectoryInfo).Returns(dirInfoFactory.Object);
 
-            dirBase.Setup(d => d.CreateDirectory(It.IsAny<string>())).Returns(dirInfoBase.Object);
-            dirInfoFactory.Setup(d => d.FromDirectoryName(It.IsAny<string>())).Returns(dirInfoBase.Object);
+                dirBase.Setup(d => d.CreateDirectory(It.IsAny<string>())).Returns(dirInfoBase.Object);
+                dirInfoFactory.Setup(d => d.FromDirectoryName(It.IsAny<string>())).Returns(dirInfoBase.Object);
 
-            FileSystemHelpers.Instance = fileSystem.Object;
-            FileSystemHelpers.TmpFolder = @"D:\";   // value doesn`t really matter, just need to have something other than default value
+                FileSystemHelpers.Instance = fileSystem.Object;
+                FileSystemHelpers.TmpFolder = @"D:\";   // value doesn`t really matter, just need to have something other than default value
 
-            Assert.Equal(false, FileSystemHelpers.IsFileSystemReadOnly());
+                Assert.Equal(false, FileSystemHelpers.IsFileSystemReadOnly());
 
-            // Read-Only should return true
-            dirBase.Setup(d => d.CreateDirectory(It.IsAny<string>())).Throws<UnauthorizedAccessException>();
-            Assert.Equal(true, FileSystemHelpers.IsFileSystemReadOnly());
+                // Read-Only should return true
+                dirBase.Setup(d => d.CreateDirectory(It.IsAny<string>())).Throws<UnauthorizedAccessException>();
+                Assert.Equal(true, FileSystemHelpers.IsFileSystemReadOnly());
+            }
         }
     }
 }

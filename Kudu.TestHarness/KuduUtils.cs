@@ -5,6 +5,7 @@ using System.Net;
 using System.Net.Http;
 using System.Xml.Linq;
 using Kudu.Client.Infrastructure;
+using Kudu.Core.Infrastructure;
 
 namespace Kudu.TestHarness
 {
@@ -112,6 +113,12 @@ namespace Kudu.TestHarness
             {
                 return ConfigurationManager.AppSettings[settingName];
             }
+        }
+
+        public static IDisposable MockAzureEnvironment()
+        {
+            Environment.SetEnvironmentVariable("WEBSITE_INSTANCE_ID", "1234");
+            return new DisposableAction(() => Environment.SetEnvironmentVariable("WEBSITE_INSTANCE_ID", null));
         }
     }
 }

@@ -9,6 +9,7 @@ using System.IO.Abstractions;
 using System.Net;
 using System.Net.Http;
 using Xunit;
+using Kudu.TestHarness;
 
 namespace Kudu.Services.Test.Jobs
 {
@@ -66,12 +67,14 @@ namespace Kudu.Services.Test.Jobs
             fileSystem.Setup(f => f.Directory).Returns(dirBase.Object);
             dirBase.Setup(d => d.CreateDirectory(It.IsAny<string>())).Throws<UnauthorizedAccessException>();
             FileSystemHelpers.Instance = fileSystem.Object;
-            FileSystemHelpers.TmpFolder = @"D:\";   // value doesn`t really matter, just need to have something other than default value
 
             controller.Request = new HttpRequestMessage();
 
-            HttpResponseMessage resMsg = controller.InvokeTriggeredJob("foo");
-            Assert.Equal(HttpStatusCode.ServiceUnavailable, resMsg.StatusCode);
+            using (KuduUtils.MockAzureEnvironment())
+            {
+                HttpResponseMessage resMsg = controller.InvokeTriggeredJob("foo");
+                Assert.Equal(HttpStatusCode.ServiceUnavailable, resMsg.StatusCode);
+            }
         }
     }
 }

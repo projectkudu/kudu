@@ -307,9 +307,9 @@ namespace Kudu.Core.Infrastructure
 
         public static bool IsFileSystemReadOnly()
         {
-            if (TmpFolder.StartsWith("%WEBROOT_PATH%", StringComparison.OrdinalIgnoreCase))
+            if (!Environment.IsAzureEnvironment())
             {
-                // not able to check, return false since by default we are expecting none readonly file system
+                // if not azure, it should be writable
                 return false;
             }
 
