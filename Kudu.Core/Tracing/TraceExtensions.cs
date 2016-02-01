@@ -25,6 +25,7 @@ namespace Kudu.Core.Tracing
             "DISGUISED-HOST",
             "X-Original-URL",
             "X-Forwarded-For",
+            Constants.X_MS_SITE_RESTRICTED_JWT,
             "X-ARR-SSL"
         },
         StringComparer.OrdinalIgnoreCase);

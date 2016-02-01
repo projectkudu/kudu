@@ -23,7 +23,7 @@ namespace Kudu.Services.Web.Tracing
 
         // (/|$) means either "/" or end-of-line
         // {0,2} means repeat pattern 0 to 2 times
-        private static Regex[] _rbacWhiteListPaths = new[] 
+        private static Regex[] _rbacWhiteListPaths = new[]
         {
             new Regex(@"^/api/siteextensions(/|$)", RegexOptions.IgnoreCase),
             new Regex(@"^/api/deployments((/|$)([^/]*|$)){0,2}(/|$)$", RegexOptions.IgnoreCase),
@@ -65,6 +65,8 @@ namespace Kudu.Services.Web.Tracing
                 httpContext.Response.StatusCode = (int)HttpStatusCode.Forbidden;
                 httpContext.Response.End();
             }
+
+            TryConvertSpecialHeadersToEnvironmentVariable(httpRequest);
 
             // HACK: If it's a Razor extension, add a dummy extension to prevent WebPages for blocking it,
             // as we need to serve those files via /vfs
@@ -239,6 +241,17 @@ namespace Kudu.Services.Web.Tracing
                 System.Threading.Thread.CurrentThread.ManagedThreadId));
 
             return attribs;
+        }
+
+        private static void TryConvertSpecialHeadersToEnvironmentVariable(HttpRequestWrapper request)
+        {
+            string siteRestrictedJwt = request.Headers.Get(Constants.X_MS_SITE_RESTRICTED_JWT);
+            if (!string.IsNullOrWhiteSpace(siteRestrictedJwt))
+            {
+                System.Environment.SetEnvironmentVariable(Constants.X_MS_SITE_RESTRICTED_JWT, siteRestrictedJwt);
+            }
+
+            System.Environment.SetEnvironmentVariable(Constants.HTTP_HOST, request.Url.Host);
         }
 
         public void Dispose()

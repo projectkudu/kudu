@@ -92,5 +92,8 @@ namespace Kudu
 
         //Setting for VC++ for node builds
         public const string VCVersion = "2015";
+
+        public const string X_MS_SITE_RESTRICTED_JWT = "X-MS-SITE-RESTRICTED-JWT";
+        public const string HTTP_HOST = "HTTP_HOST";
     }
 }
