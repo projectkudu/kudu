@@ -22,9 +22,9 @@
 
 using System;
 using System.Net;
+using System.Threading.Tasks;
 using System.Web;
 using Kudu.Contracts.Infrastructure;
-using Kudu.Contracts.Settings;
 using Kudu.Contracts.SourceControl;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Deployment;
@@ -94,10 +94,6 @@ namespace Kudu.Services.GitServer
                     {
                         GitServer.Receive(context.Request.GetInputStream(), context.Response.OutputStream);
                     }
-
-                    // TODO: Currently we do not support auto-swap for git push due to an issue where we already sent the headers at the
-                    // beginning of the deployment and cannot flag at this point to make the auto swap (by sending the proper headers).
-                    //_autoSwapHandler.HandleAutoSwap(verifyActiveDeploymentIdChanged: true);
                 }, TimeSpan.Zero);
 
                 if (!acquired)

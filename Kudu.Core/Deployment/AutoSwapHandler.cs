@@ -1,10 +1,11 @@
 ﻿using System;
-using System.Configuration;
 using System.IO;
 using System.IO.Abstractions;
-using System.Linq;
+using System.Net.Http;
+using System.Threading.Tasks;
 using System.Web;
 using Kudu.Contracts.Settings;
+using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Tracing;
 
@@ -18,7 +19,6 @@ namespace Kudu.Core.Deployment
         private readonly ITraceFactory _traceFactory;
         private readonly string _autoSwapSlotName;
         private readonly string _autoSwapLockFilePath;
-        private string _initialActiveDeplymentId;
 
         public AutoSwapHandler(IDeploymentStatusManager deploymentStatusManager, IEnvironment environment, IDeploymentSettingsManager settings, ITraceFactory traceFactory)
         {
@@ -35,8 +35,6 @@ namespace Kudu.Core.Deployment
                 return false;
             }
 
-            _initialActiveDeplymentId = _deploymentStatusManager.ActiveDeploymentId;
-
             FileInfoBase autoSwapLockFile = FileSystemHelpers.FileInfoFromFileName(_autoSwapLockFilePath);
 
             // Auto swap is ongoing if the auto swap lock file exists and is written to less than 2 minutes ago
@@ -49,19 +47,28 @@ namespace Kudu.Core.Deployment
             return isAutoSwapOngoing;
         }
 
-        public void HandleAutoSwap()
+        public async Task HandleAutoSwap(string currentDeploymetId, DeploymentContext context)
         {
-            var tracer = _traceFactory.GetTracer();
+            ITracer tracer = context.Tracer;
             if (!IsAutoSwapEnabled())
             {
+
+                tracer.Trace("AutoSwap is not enabled");
+                return;
+            }
+
+            string jwtToken = System.Environment.GetEnvironmentVariable(Constants.SiteRestrictedJWT);
+            if (string.IsNullOrWhiteSpace(jwtToken))
+            {
+                tracer.Trace("Jwt token is null");
                 return;
             }
 
             // active deployment is always a success deployment
-            string currentActiveDeploymentId = _deploymentStatusManager.ActiveDeploymentId;
-            if (currentActiveDeploymentId == _initialActiveDeplymentId)
+            string lastDeploymentId = _deploymentStatusManager.ActiveDeploymentId;
+            if (string.Equals(currentDeploymetId, lastDeploymentId, StringComparison.OrdinalIgnoreCase))
             {
-                tracer.Trace("Deployment haven't changed, no need for auto swap: {0}", currentActiveDeploymentId);
+                tracer.Trace("Deployment haven't changed, no need for auto swap: {0}", lastDeploymentId);
                 return;
             }
 
@@ -75,15 +82,14 @@ namespace Kudu.Core.Deployment
             }
 
             string operationId = "AUTOSWAP" + Guid.NewGuid();
-            string deploymentId = currentActiveDeploymentId;
 
-            HttpResponse response = HttpContext.Current.Response;
+            var queryStrings = HttpUtility.ParseQueryString(string.Empty);
+            queryStrings["slot"] = _autoSwapSlotName;
+            queryStrings["operationId"] = operationId;
 
-            response.Headers.Add("X-MS-SWAP-OPERATIONID", operationId);
-            response.Headers.Add("X-MS-SWAP-SLOTNAME", _autoSwapSlotName);
-            response.Headers.Add("X-MS-SWAP-DEPLOYMENTID", deploymentId);
-
-            tracer.Trace("Requesting auto swap to slot name - '{0}', operation id - '{1}', deployment id - '{2}'".FormatInvariant(_autoSwapSlotName, operationId, deploymentId));
+            var client = new OperationClient(context.Tracer);
+            await client.PostAsync<string>("/operations/autoswap?" + queryStrings.ToString());
+            context.Logger.Log("Requesting auto swap to slot - '{0}' operation id - '{1}' deployment id - '{2}'".FormatInvariant(_autoSwapSlotName, operationId, currentDeploymetId));
         }
 
         public bool IsAutoSwapEnabled()

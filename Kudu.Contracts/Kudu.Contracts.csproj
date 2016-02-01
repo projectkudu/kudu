@@ -102,7 +102,6 @@
     <Compile Include="Deployment\DeploymentFailedException.cs" />
     <Compile Include="Deployment\DeployResult.cs" />
     <Compile Include="Deployment\DeployStatus.cs" />
-    <Compile Include="Deployment\IAutoSwapHandler.cs" />
     <Compile Include="Deployment\IDeploymentEnvironment.cs" />
     <Compile Include="Deployment\IDeploymentManager.cs" />
     <Compile Include="Deployment\IDeploymentManagerFactory.cs" />

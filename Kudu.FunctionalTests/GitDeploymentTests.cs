@@ -204,41 +204,6 @@ namespace Kudu.FunctionalTests
     }
 
     [KuduXunitTestClass]
-    public class HelloKuduAutoSwapSecondPushShouldFailTests : GitDeploymentTests
-    {
-        [Fact]
-        public async Task PushHelloKuduAutoSwapSecondPushShouldFail()
-        {
-            const string randomTestName = "PushHelloKuduAutoSwapSecondPushShouldFail";
-            await ApplicationManager.RunAsync(randomTestName, async appManager =>
-            {
-                await appManager.SettingsManager.SetValue("WEBSITE_SWAP_SLOTNAME", "someslot");
-
-                // Act
-                using (TestRepository testRepository = Git.Clone("HelloKudu"))
-                {
-                    appManager.GitDeploy(testRepository.PhysicalPath);
-                    var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
-
-                    // Assert
-                    Assert.Equal(1, results.Count);
-                    Assert.Equal(DeployStatus.Success, results[0].Status);
-
-                    testRepository.WriteFile("somefile.txt", String.Empty);
-                    Git.Commit(testRepository.PhysicalPath, "some commit");
-
-                    // TODO: Add this assert when auto swap is enabled for git push
-                    // var ex = Assert.Throws<CommandLineException>(() => appManager.GitDeploy(testRepository.PhysicalPath, retries: 1));
-                    // Assert.Contains("HTTP code = 409", ex.Error);
-
-                    // Currently this succeeds as auto swap will not occur on git push
-                    appManager.GitDeploy(testRepository.PhysicalPath);
-                }
-            });
-        }
-    }
-
-    [KuduXunitTestClass]
     public class HelloKuduWithCorruptedGitTestsTests : GitDeploymentTests
     {
         [Fact]

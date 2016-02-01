@@ -33,6 +33,7 @@ namespace Kudu.Core.Deployment
         private readonly IDeploymentSettingsManager _settings;
         private readonly IDeploymentStatusManager _status;
         private readonly IWebHooksManager _hooksManager;
+        private readonly IAutoSwapHandler _autoSwapHandler;
 
         private const string XmlLogFile = "log.xml";
         public const string TextLogFile = "log.log";
@@ -47,7 +48,8 @@ namespace Kudu.Core.Deployment
                                  IDeploymentStatusManager status,
                                  IOperationLock deploymentLock,
                                  ILogger globalLogger,
-                                 IWebHooksManager hooksManager)
+                                 IWebHooksManager hooksManager,
+                                 IAutoSwapHandler autoSwapHandler)
         {
             _builderFactory = builderFactory;
             _environment = environment;
@@ -58,6 +60,7 @@ namespace Kudu.Core.Deployment
             _settings = settings;
             _status = status;
             _hooksManager = hooksManager;
+            _autoSwapHandler = autoSwapHandler;
         }
 
         private bool IsDeploying
@@ -610,13 +613,13 @@ namespace Kudu.Core.Deployment
                     {
                         await builder.Build(context);
                         builder.PostBuild(context);
+                        await _autoSwapHandler.HandleAutoSwap(id, context);
 
                         if (_settings.TouchWebConfigAfterDeployment())
                         {
                             TryTouchWebConfig(context);
                         }
 
-                        // Run post deployment steps
                         FinishDeployment(id, deployStep);
 
                         deploymentAnalytics.Result = DeployStatus.Success.ToString();

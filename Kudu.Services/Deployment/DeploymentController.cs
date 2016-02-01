@@ -150,8 +150,6 @@ namespace Kudu.Services.Deployment
                         }
 
                         await _deploymentManager.DeployAsync(repository, changeSet, username, clean, needFileUpdate);
-
-                        _autoSwapHandler.HandleAutoSwap();
                     }
                     catch (FileNotFoundException ex)
                     {
@@ -260,7 +258,7 @@ namespace Kudu.Services.Deployment
             deployResult.AuthorEmail = payload.Value<string>("author_email");
             deployResult.StartTime = payload.Value<DateTime?>("start_time") ?? now;
             deployResult.EndTime = payload.Value<DateTime?>("end_time") ?? now;
-            
+
             // only success status can be active
             var active = payload.Value<bool?>("active");
             if (active == null)

@@ -132,7 +132,7 @@ namespace Kudu.Services
                 // if isAsync is defined, we will return Accepted and do the task in the BG
                 // since autoSwap relies on the response header, deployment has to be synchronously.
                 bool isAsync = String.Equals(context.Request.QueryString["isAsync"], "true", StringComparison.OrdinalIgnoreCase);
-                bool isBackground = (isAsync || deployInfo.IsContinuous) && !_autoSwapHandler.IsAutoSwapEnabled();
+                bool isBackground = isAsync || deployInfo.IsContinuous;
                 if (isBackground)
                 {
                     using (_tracer.Step("Start deployment in the background"))
@@ -151,7 +151,7 @@ namespace Kudu.Services
                                                             deployInfo.Deployer);
                         }
 
-                        PerformBackgroundDeployment(deployInfo, _environment, _settings, _tracer.TraceLevel, context.Request.Url, tempDeployment, tempChangeSet);
+                        PerformBackgroundDeployment(deployInfo, _environment, _settings, _tracer.TraceLevel, context.Request.Url, tempDeployment, _autoSwapHandler, tempChangeSet);
                     }
 
                     // to avoid regression, only set location header if isAsync
@@ -178,8 +178,6 @@ namespace Kudu.Services
                     }
 
                     await PerformDeployment(deployInfo);
-
-                    _autoSwapHandler.HandleAutoSwap();
                 }, TimeSpan.Zero);
 
                 if (!acquired)
@@ -394,7 +392,7 @@ namespace Kudu.Services
         }
 
         // key goal is to create background tracer that is independent of request.
-        public static void PerformBackgroundDeployment(DeploymentInfo deployInfo, IEnvironment environment, IDeploymentSettingsManager settings, TraceLevel traceLevel, Uri uri, IDisposable tempDeployment, ChangeSet tempChangeSet)
+        public static void PerformBackgroundDeployment(DeploymentInfo deployInfo, IEnvironment environment, IDeploymentSettingsManager settings, TraceLevel traceLevel, Uri uri, IDisposable tempDeployment, IAutoSwapHandler autoSwapHandler, ChangeSet tempChangeSet)
         {
             var tracer = traceLevel <= TraceLevel.Off ? NullTracer.Instance : new XmlTracer(environment.TracePath, traceLevel);
             var traceFactory = new TracerFactory(() => tracer);
@@ -423,7 +421,7 @@ namespace Kudu.Services
                     var repositoryFactory = new RepositoryFactory(environment, settings, traceFactory);
                     var siteBuilderFactory = new SiteBuilderFactory(new BuildPropertyProvider(), environment);
                     var webHooksManager = new WebHooksManager(tracer, environment, hooksLock);
-                    var deploymentManager = new DeploymentManager(siteBuilderFactory, environment, traceFactory, analytics, settings, deploymentStatusManager, deploymentLock, NullLogger.Instance, webHooksManager);
+                    var deploymentManager = new DeploymentManager(siteBuilderFactory, environment, traceFactory, analytics, settings, deploymentStatusManager, deploymentLock, NullLogger.Instance, webHooksManager, autoSwapHandler);
                     var fetchHandler = new FetchHandler(tracer, deploymentManager, settings, deploymentStatusManager, deploymentLock, environment, null, repositoryFactory, null);
 
                     // Perform deployment

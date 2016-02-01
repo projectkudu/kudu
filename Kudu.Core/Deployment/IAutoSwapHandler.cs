@@ -1,3 +1,5 @@
+using System.Threading.Tasks;
+
 namespace Kudu.Core.Deployment
 {
     public interface IAutoSwapHandler
@@ -6,6 +8,6 @@ namespace Kudu.Core.Deployment
 
         bool IsAutoSwapOngoing();
 
-        void HandleAutoSwap();
+        Task HandleAutoSwap(string currChangeSetId, DeploymentContext context);
     }
 }

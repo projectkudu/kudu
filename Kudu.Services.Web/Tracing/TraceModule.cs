@@ -245,15 +245,15 @@ namespace Kudu.Services.Web.Tracing
 
         private static void TryConvertSpecialHeadersToEnvironmentVariable(HttpRequestWrapper request)
         {
-            string siteRestrictedJwt = request.Headers.Get(Constants.X_MS_SITE_RESTRICTED_JWT);
+            string siteRestrictedJwt = request.Headers.Get(Constants.SiteRestrictedJWT);
             if (!string.IsNullOrWhiteSpace(siteRestrictedJwt))
             {
-                System.Environment.SetEnvironmentVariable(Constants.X_MS_SITE_RESTRICTED_JWT, siteRestrictedJwt);
+                System.Environment.SetEnvironmentVariable(Constants.SiteRestrictedJWT, siteRestrictedJwt);
             }
 
             try
             {
-                System.Environment.SetEnvironmentVariable(Constants.HTTP_HOST, request.Url.Host);
+                System.Environment.SetEnvironmentVariable(Constants.HttpHost, request.Url.Host);
             }
             catch
             {

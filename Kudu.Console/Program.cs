@@ -99,16 +99,19 @@ namespace Kudu.Console
             IAnalytics analytics = new Analytics(settingsManager, serverConfiguration, traceFactory);
 
             IWebHooksManager hooksManager = new WebHooksManager(tracer, env, hooksLock);
+            IDeploymentStatusManager deploymentStatusManager = new DeploymentStatusManager(env, analytics, statusLock);
+            IAutoSwapHandler autoSwapHander = new AutoSwapHandler(deploymentStatusManager, env, settingsManager, traceFactory);
             var logger = new ConsoleLogger();
             IDeploymentManager deploymentManager = new DeploymentManager(builderFactory,
                                                           env,
                                                           traceFactory,
                                                           analytics,
                                                           settingsManager,
-                                                          new DeploymentStatusManager(env, analytics, statusLock),
+                                                          deploymentStatusManager,
                                                           deploymentLock,
                                                           GetLogger(env, level, logger),
-                                                          hooksManager);
+                                                          hooksManager,
+                                                          autoSwapHander);
 
             var step = tracer.Step(XmlTracer.ExecutingExternalProcessTrace, new Dictionary<string, string>
             {

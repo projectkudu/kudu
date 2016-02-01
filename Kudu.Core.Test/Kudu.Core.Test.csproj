@@ -80,9 +80,13 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\Kudu.Services.Test\TestMessageHandler.cs">
+      <Link>TestMessageHandler.cs</Link>
+    </Compile>
     <Compile Include="AsyncStreamWriterFacts.cs" />
     <Compile Include="AuthUtilityFacts.cs" />
     <Compile Include="AsyncLockFileTests.cs" />
+    <Compile Include="AutoSwapHandlerFacts.cs" />
     <Compile Include="DebugConsoleFacts.cs" />
     <Compile Include="Deployment\AspNet5HelperFacts.cs" />
     <Compile Include="Deployment\Generator\ExternalCommandBuilderFacts.cs" />

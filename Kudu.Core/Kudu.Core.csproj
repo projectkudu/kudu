@@ -144,6 +144,7 @@
     <Compile Include="Deployment\Generator\PythonSiteEnabler.cs" />
     <Compile Include="Deployment\Generator\PythonSiteBuilder.cs" />
     <Compile Include="Deployment\Generator\AspNet5Builder.cs" />
+    <Compile Include="Deployment\IAutoSwapHandler.cs" />
     <Compile Include="Deployment\ProgressLogger.cs" />
     <Compile Include="Deployment\Generator\BasicBuilder.cs" />
     <Compile Include="Deployment\Generator\BaseBasicBuilder.cs" />

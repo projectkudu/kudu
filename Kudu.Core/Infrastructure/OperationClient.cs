@@ -13,6 +13,9 @@ namespace Kudu.Core.Infrastructure
 {
     public class OperationClient
     {
+        // For testing purpose
+        public static HttpMessageHandler ClientHandler { get; set; }
+
         private static Lazy<ProductInfoHeaderValue> _userAgent = new Lazy<ProductInfoHeaderValue>(() =>
         {
             var assembly = Assembly.GetExecutingAssembly();
@@ -29,21 +32,21 @@ namespace Kudu.Core.Infrastructure
 
         public async Task<HttpResponseMessage> PostAsync<T>(string path, T content = default(T))
         {
-            var jwt = System.Environment.GetEnvironmentVariable(Constants.X_MS_SITE_RESTRICTED_JWT);
+            var jwt = System.Environment.GetEnvironmentVariable(Constants.SiteRestrictedJWT);
             if (String.IsNullOrEmpty(jwt))
             {
-                throw new InvalidOperationException(String.Format("Missing {0} header!", Constants.X_MS_SITE_RESTRICTED_JWT));
+                throw new InvalidOperationException(String.Format("Missing {0} header!", Constants.SiteRestrictedJWT));
             }
 
-            var host = System.Environment.GetEnvironmentVariable(Constants.HTTP_HOST);
+            var host = System.Environment.GetEnvironmentVariable(Constants.HttpHost);
             if (String.IsNullOrEmpty(jwt))
             {
                 throw new InvalidOperationException("Missing HTTP_HOST env!");
             }
-           
+
             using (_tracer.Step("POST " + path))
             {
-                using (var client = new HttpClient())
+                using (var client = ClientHandler != null ? new HttpClient(ClientHandler) : new HttpClient())
                 {
                     client.BaseAddress = new Uri("https://" + host);
                     client.DefaultRequestHeaders.UserAgent.Add(_userAgent.Value);

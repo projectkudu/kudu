@@ -33,7 +33,7 @@ namespace Kudu.Core.Functions
                     return; 
                 }
 
-                var jwt = System.Environment.GetEnvironmentVariable(Constants.X_MS_SITE_RESTRICTED_JWT);
+                var jwt = System.Environment.GetEnvironmentVariable(Constants.SiteRestrictedJWT);
                 if (String.IsNullOrEmpty(jwt))
                 {
                     // If there is no token, do nothing. This can happen on non-dynamic stamps
