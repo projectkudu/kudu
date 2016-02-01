@@ -45,6 +45,7 @@ using Ninject.Web.Common;
 using Owin;
 using XmlSettings;
 using System.Configuration;
+using Kudu.Core.Functions;
 
 [assembly: WebActivator.PreApplicationStartMethod(typeof(Kudu.Services.Web.App_Start.NinjectServices), "Start")]
 [assembly: WebActivator.ApplicationShutdownMethodAttribute(typeof(Kudu.Services.Web.App_Start.NinjectServices), "Stop")]
@@ -302,6 +303,9 @@ namespace Kudu.Services.Web.App_Start
             // SiteExtensions
             kernel.Bind<ISiteExtensionManager>().To<SiteExtensionManager>().InRequestScope();
 
+            // Functions
+            kernel.Bind<IFunctionManager>().To<FunctionManager>().InRequestScope();
+
             // Command executor
             kernel.Bind<ICommandExecutor>().To<CommandExecutor>().InRequestScope();
 
@@ -505,6 +509,9 @@ namespace Kudu.Services.Web.App_Start
             routes.MapHttpRoute("api-get-local-extension", "api/siteextensions/{id}", new { controller = "SiteExtension", action = "GetLocalExtension" }, new { verb = new HttpMethodConstraint("GET") });
             routes.MapHttpRoute("api-uninstall-extension", "api/siteextensions/{id}", new { controller = "SiteExtension", action = "UninstallExtension" }, new { verb = new HttpMethodConstraint("DELETE") });
             routes.MapHttpRoute("api-install-update-extension", "api/siteextensions/{id}", new { controller = "SiteExtension", action = "InstallExtension" }, new { verb = new HttpMethodConstraint("PUT") });
+
+            // Functions
+            routes.MapHttpRouteDual("api-sync-functions", "functions/synctriggers", new { controller = "Function", action = "SyncTriggers" }, new { verb = new HttpMethodConstraint("POST") });
 
             // catch all unregistered url to properly handle not found
             // this is to work arounf the issue in TraceModule where we see double OnBeginRequest call

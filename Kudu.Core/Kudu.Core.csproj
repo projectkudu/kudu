@@ -110,6 +110,9 @@
     <Reference Include="System.Net.Http.Primitives">
       <HintPath>..\packages\Microsoft.Net.Http.2.2.29\lib\net45\System.Net.Http.Primitives.dll</HintPath>
     </Reference>
+    <Reference Include="System.Net.Http.Formatting, Version=5.2.2.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.AspNet.WebApi.Client.5.2.2\lib\net45\System.Net.Http.Formatting.dll</HintPath>
+    </Reference>
     <Reference Include="System.Net.Http.WebRequest" />
     <Reference Include="System.Web.Http" />
     <Reference Include="System.Xml.Linq" />
@@ -151,6 +154,7 @@
     <Compile Include="Deployment\StructuredTextDocument.cs" />
     <Compile Include="Deployment\StructuredTextDocumentEntry.cs" />
     <Compile Include="Deployment\StructuredTextLogger.cs" />
+    <Compile Include="Functions\FunctionManager.cs" />
     <Compile Include="Hooks\WebHooksManager.cs" />
     <Compile Include="Infrastructure\AspNet5Helper.cs" />
     <Compile Include="Infrastructure\InstanceIdUtility.cs" />
@@ -227,6 +231,7 @@
     <Compile Include="Infrastructure\LockFile.cs" />
     <Compile Include="Infrastructure\DeploymentLockFile.cs" />
     <Compile Include="Infrastructure\OperationManager.cs" />
+    <Compile Include="Infrastructure\OperationClient.cs" />
     <Compile Include="Infrastructure\VsHelper.cs" />
     <Compile Include="Infrastructure\XmlUtility.cs" />
     <Compile Include="Settings\EnvironmentSettingsProvider.cs" />

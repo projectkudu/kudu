@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using Kudu.Contracts.Infrastructure;
+using Newtonsoft.Json;
 
 namespace Kudu.Services.Arm
 {
@@ -103,6 +105,41 @@ namespace Kudu.Services.Arm
             }
 
             return armEntry;
+        }
+
+        public static HttpResponseMessage CreateErrorResponse(HttpRequestMessage request, HttpStatusCode statusCode, Exception exception)
+        {
+            if (IsArmRequest(request))
+            {
+                return request.CreateResponse(statusCode, new ArmErrorInfo(statusCode, exception));
+            }
+
+            return request.CreateErrorResponse(statusCode, exception);
+        }
+
+        // this error will be deserialized conforming with ARM spec
+        public class ArmErrorInfo
+        {
+            public ArmErrorInfo(HttpStatusCode code, Exception exception)
+            {
+                Error = new ArmErrorDetails
+                {
+                    Code = code.ToString(),
+                    Message = exception.ToString()
+                };
+            }
+
+            [JsonProperty(PropertyName = "error")]
+            public ArmErrorDetails Error { get; private set; }
+
+            public class ArmErrorDetails
+            {
+                [JsonProperty(PropertyName = "code")]
+                public string Code { get; set; }
+
+                [JsonProperty(PropertyName = "message")]
+                public string Message { get; set; }
+            }
         }
     }
 }
