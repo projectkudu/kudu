@@ -17,6 +17,7 @@ namespace Kudu.Core.Jobs
     public class TriggeredJobsManager : JobsManagerBase<TriggeredJob>, ITriggeredJobsManager
     {
         private const int DefaultTriggeredJobStoppingWaitTimeInSeconds = 30;
+        internal static IEnumerable<TriggeredJob> TriggeredJobCache = null;
 
         private readonly ConcurrentDictionary<string, TriggeredJobRunner> _triggeredJobRunners =
             new ConcurrentDictionary<string, TriggeredJobRunner>(StringComparer.OrdinalIgnoreCase);
@@ -31,7 +32,13 @@ namespace Kudu.Core.Jobs
 
         public override IEnumerable<TriggeredJob> ListJobs()
         {
-            return ListJobsInternal();
+            var cache = TriggeredJobCache;
+            if (cache == null)
+            {
+                cache = ListJobsInternal();
+                TriggeredJobCache = cache;
+            }
+            return cache;
         }
 
         public override TriggeredJob GetJob(string jobName)
