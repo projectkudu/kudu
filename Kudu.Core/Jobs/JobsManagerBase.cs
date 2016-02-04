@@ -44,7 +44,7 @@ namespace Kudu.Core.Jobs
         }
     }
 
-    public abstract class JobsManagerBase<TJob> : JobsManagerBase, IJobsManager<TJob>, IRegisteredObject where TJob : JobBase, new()
+    public abstract class JobsManagerBase<TJob> : JobsManagerBase, IJobsManager<TJob>, IDisposable, IRegisteredObject where TJob : JobBase, new()
     {
         private const string DefaultScriptFileName = "run";
 
@@ -64,6 +64,12 @@ namespace Kudu.Core.Jobs
 
         protected IAnalytics Analytics { get; private set; }
 
+        protected JobsFileWatcher JobsFileWatcher { get; set; }
+
+        internal static IEnumerable<TJob> JobListCache = null;
+
+        private List<Action<string>> FileWatcherExtraEventHandlers;
+
         protected JobsManagerBase(ITraceFactory traceFactory, IEnvironment environment, IDeploymentSettingsManager settings, IAnalytics analytics, string jobsTypePath)
         {
             TraceFactory = traceFactory;
@@ -77,9 +83,49 @@ namespace Kudu.Core.Jobs
             JobsDataPath = Path.Combine(Environment.JobsDataPath, jobsTypePath);
 
             HostingEnvironment.RegisterObject(this);
+            JobsFileWatcher = new JobsFileWatcher(JobsBinariesPath, OnJobChanged, JobSettings.JobSettingsFileName, ListJobNames, TraceFactory, Analytics);
         }
 
-        public abstract IEnumerable<TJob> ListJobs();
+        /// <summary>
+        /// Process job file changed and invoke any extra file watcher event handlers
+        /// </summary>
+        private void OnJobChanged(string jobName)
+        {
+            JobListCache = null;
+            if (FileWatcherExtraEventHandlers != null)
+            {
+                foreach (Action<string> action in FileWatcherExtraEventHandlers)
+                {
+                    action.Invoke(jobName);
+                }
+            }
+        }
+
+        public void RegisterExtraEventHandlerForFileChange(Action<string> action)
+        {
+            if (FileWatcherExtraEventHandlers == null)
+            {
+                FileWatcherExtraEventHandlers = new List<Action<string>>();
+            }
+            FileWatcherExtraEventHandlers.Add(action);
+        }
+
+        public IEnumerable<TJob> ListJobs()
+        {
+            var cache = JobListCache;
+            if (cache == null)
+            {
+                cache = ListJobsInternal();
+                JobListCache = cache;
+            }
+            return cache;
+        }
+
+        public virtual IEnumerable<string> ListJobNames()
+        {
+            IEnumerable<TJob> jobs = ListJobs();
+            return jobs.Select(job => job.Name);
+        }
 
         public abstract TJob GetJob(string jobName);
 
@@ -515,6 +561,30 @@ namespace Kudu.Core.Jobs
             }
 
             return null;
+        }
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+        protected virtual void Dispose(bool disposing)
+        {
+            // HACK: Next if statement should be removed once ninject wlll not dispose this class
+            // Since ninject automatically calls dispose we currently disable it
+            if (disposing)
+            {
+                return;
+            }
+            // End of code to be removed
+
+            if (disposing)
+            {
+                if (JobsFileWatcher != null)
+                {
+                    JobsFileWatcher.Dispose();
+                    JobsFileWatcher = null;
+                }
+            }
         }
     }
 }
