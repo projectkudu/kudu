@@ -19,6 +19,7 @@ namespace Kudu.Core.Jobs
         private const string StatusFilesSearchPattern = ContinuousJobStatus.FileNamePrefix + "*";
         private const string Localhost = "127.0.0.1";
         private const string HttpScheme = "http";
+        internal static IEnumerable<ContinuousJob> ContinuousJobCache = null;
 
         private readonly Dictionary<string, ContinuousJobRunner> _continuousJobRunners = new Dictionary<string, ContinuousJobRunner>(StringComparer.OrdinalIgnoreCase);
 
