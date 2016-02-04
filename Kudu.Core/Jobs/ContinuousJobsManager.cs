@@ -19,7 +19,6 @@ namespace Kudu.Core.Jobs
         private const string StatusFilesSearchPattern = ContinuousJobStatus.FileNamePrefix + "*";
         private const string Localhost = "127.0.0.1";
         private const string HttpScheme = "http";
-        internal static IEnumerable<ContinuousJob> ContinuousJobCache = null;
 
         private readonly Dictionary<string, ContinuousJobRunner> _continuousJobRunners = new Dictionary<string, ContinuousJobRunner>(StringComparer.OrdinalIgnoreCase);
 
@@ -29,17 +28,6 @@ namespace Kudu.Core.Jobs
             : base(traceFactory, environment, settings, analytics, Constants.ContinuousPath)
         {
             _jobsFileWatcher = new JobsFileWatcher(JobsBinariesPath, OnJobChanged, null, ListJobNames, traceFactory, analytics);
-        }
-
-        public override IEnumerable<ContinuousJob> ListJobs()
-        {
-            var cache = ContinuousJobCache;
-            if (cache == null)
-            {
-                cache = ListJobsInternal();
-                ContinuousJobCache = cache;
-            }
-            return cache;
         }
 
         public override ContinuousJob GetJob(string jobName)
@@ -223,7 +211,7 @@ namespace Kudu.Core.Jobs
             {
                 RefreshJob(continuousJob, logRefresh: !_jobsFileWatcher.FirstTimeMakingChanges);
             }
-            ContinuousJobCache = null;
+            JobListCache = null;
         }
 
         private void RefreshJob(ContinuousJob continuousJob, bool logRefresh)

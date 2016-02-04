@@ -96,7 +96,7 @@ namespace Kudu.Core.Jobs
             }
 
             // invalidate the jobs list cache
-            TriggeredJobsManager.TriggeredJobCache = null;
+            TriggeredJobsManager.JobListCache = null;
         }
 
         private void OnSchedule(TriggeredJobSchedule triggeredJobSchedule)

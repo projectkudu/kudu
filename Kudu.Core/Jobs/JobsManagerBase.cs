@@ -64,6 +64,8 @@ namespace Kudu.Core.Jobs
 
         protected IAnalytics Analytics { get; private set; }
 
+        internal static IEnumerable<TJob> JobListCache = null;
+
         protected JobsManagerBase(ITraceFactory traceFactory, IEnvironment environment, IDeploymentSettingsManager settings, IAnalytics analytics, string jobsTypePath)
         {
             TraceFactory = traceFactory;
@@ -79,7 +81,16 @@ namespace Kudu.Core.Jobs
             HostingEnvironment.RegisterObject(this);
         }
 
-        public abstract IEnumerable<TJob> ListJobs();
+        public IEnumerable<TJob> ListJobs()
+        {
+            var cache = JobListCache;
+            if (cache == null)
+            {
+                cache = ListJobsInternal();
+                JobListCache = cache;
+            }
+            return cache;
+        }
 
         public abstract TJob GetJob(string jobName);
 
