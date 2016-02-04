@@ -14,7 +14,7 @@ using Kudu.Contracts.Tracing;
 
 namespace Kudu.Core.Jobs
 {
-    public class ContinuousJobsManager : JobsManagerBase<ContinuousJob>, IContinuousJobsManager, IDisposable
+    public class ContinuousJobsManager : JobsManagerBase<ContinuousJob>, IContinuousJobsManager
     {
         private const string StatusFilesSearchPattern = ContinuousJobStatus.FileNamePrefix + "*";
         private const string Localhost = "127.0.0.1";
@@ -23,12 +23,10 @@ namespace Kudu.Core.Jobs
 
         private readonly Dictionary<string, ContinuousJobRunner> _continuousJobRunners = new Dictionary<string, ContinuousJobRunner>(StringComparer.OrdinalIgnoreCase);
 
-        private JobsFileWatcher _jobsFileWatcher;
-
         public ContinuousJobsManager(ITraceFactory traceFactory, IEnvironment environment, IDeploymentSettingsManager settings, IAnalytics analytics)
             : base(traceFactory, environment, settings, analytics, Constants.ContinuousPath)
         {
-            _jobsFileWatcher = new JobsFileWatcher(JobsBinariesPath, OnJobChanged, null, ListJobNames, traceFactory, analytics);
+            RegisterExtraEventHandlerForFileChange(OnJobChanged);
         }
 
         public override ContinuousJob GetJob(string jobName)
@@ -110,7 +108,7 @@ namespace Kudu.Core.Jobs
 
         protected override void OnShutdown()
         {
-            _jobsFileWatcher.Stop();
+            JobsFileWatcher.Stop();
 
             foreach (ContinuousJobRunner continuousJobRunner in _continuousJobRunners.Values)
             {
@@ -210,9 +208,8 @@ namespace Kudu.Core.Jobs
             }
             else
             {
-                RefreshJob(continuousJob, logRefresh: !_jobsFileWatcher.FirstTimeMakingChanges);
+                RefreshJob(continuousJob, logRefresh: !JobsFileWatcher.FirstTimeMakingChanges);
             }
-            JobListCache = null;
         }
 
         private void RefreshJob(ContinuousJob continuousJob, bool logRefresh)
@@ -242,36 +239,10 @@ namespace Kudu.Core.Jobs
             _continuousJobRunners.Remove(updatedJobName);
         }
 
-        private IEnumerable<string> ListJobNames()
+        public override IEnumerable<string> ListJobNames()
         {
             IEnumerable<ContinuousJob> continuousJobs = ListJobs();
             return _continuousJobRunners.Keys.Union(continuousJobs.Select(j => j.Name));
-        }
-
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            // HACK: Next if statement should be removed once ninject wlll not dispose this class
-            // Since ninject automatically calls dispose we currently disable it
-            if (disposing)
-            {
-                return;
-            }
-            // End of code to be removed
-
-            if (disposing)
-            {
-                if (_jobsFileWatcher != null)
-                {
-                    _jobsFileWatcher.Dispose();
-                    _jobsFileWatcher = null;
-                }
-            }
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 
 namespace Kudu.Contracts.Jobs
@@ -24,5 +25,9 @@ namespace Kudu.Contracts.Jobs
         void SyncExternalJobs(string sourcePath, string sourceName);
 
         void CleanupExternalJobs(string sourceName);
+
+        IEnumerable<string> ListJobNames();
+
+        void RegisterExtraEventHandlerForFileChange(Action<string> action);
     }
 }
