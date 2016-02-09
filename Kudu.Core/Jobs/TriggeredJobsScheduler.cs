@@ -56,17 +56,7 @@ namespace Kudu.Core.Jobs
                 {
                     var logger = new TriggeredJobSchedulerLogger(triggeredJob.Name, _environment, _traceFactory);
 
-                    Schedule schedule = null;
-                    // before init schedule, check site SKU if site is allowed to have scheduled WebJob
-                    if (string.Equals(_settings.GetWebSiteSku(), Constants.BasicSKU, StringComparison.OrdinalIgnoreCase))
-                    {
-                        logger.LogInformation(string.Format(CultureInfo.InvariantCulture, "'{0}' tier website doesn`t support scheduled WebJob.", Constants.BasicSKU));
-                    }
-                    else
-                    {
-                        schedule = Schedule.BuildSchedule(cronExpression, logger);
-                    }
-
+                    Schedule schedule = Schedule.BuildSchedule(cronExpression, logger);
                     if (schedule != null)
                     {
                         if (triggeredJobSchedule == null)
