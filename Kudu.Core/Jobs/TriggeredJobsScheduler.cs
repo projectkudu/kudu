@@ -17,18 +17,16 @@ namespace Kudu.Core.Jobs
         private readonly ITriggeredJobsManager _triggeredJobsManager;
         private readonly ITraceFactory _traceFactory;
         private readonly IEnvironment _environment;
-        private readonly IDeploymentSettingsManager _settings;
 
         private readonly Dictionary<string, TriggeredJobSchedule> _triggeredJobsSchedules = new Dictionary<string, TriggeredJobSchedule>(StringComparer.OrdinalIgnoreCase);
 
         private JobsFileWatcher _jobsFileWatcher;
 
-        public TriggeredJobsScheduler(ITriggeredJobsManager triggeredJobsManager, ITraceFactory traceFactory, IAnalytics analytics, IEnvironment environment, IDeploymentSettingsManager settings)
+        public TriggeredJobsScheduler(ITriggeredJobsManager triggeredJobsManager, ITraceFactory traceFactory, IAnalytics analytics, IEnvironment environment)
         {
             _triggeredJobsManager = triggeredJobsManager;
             _traceFactory = traceFactory;
             _environment = environment;
-            _settings = settings;
 
             _jobsFileWatcher = new JobsFileWatcher(triggeredJobsManager.JobsBinariesPath, OnJobChanged, JobSettings.JobSettingsFileName, ListJobNames, traceFactory, analytics);
         }
