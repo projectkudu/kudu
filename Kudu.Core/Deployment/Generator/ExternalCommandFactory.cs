@@ -105,6 +105,9 @@ namespace Kudu.Core.Deployment.Generator
                 PathUtility.ResolveGulpPath()
             }.Where(p => !String.IsNullOrEmpty(p)).Select(Path.GetDirectoryName));
 
+            // Add /site/deployments/tools to the path to allow users to drop tools in there
+            toolsPaths.Add(_environment.DeploymentToolsPath);
+
             exe.PrependToPath(toolsPaths);
             return exe;
         }
