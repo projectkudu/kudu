@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
+using System.Web.Hosting;
 using Kudu.Contracts.Jobs;
 using Kudu.Contracts.Settings;
 using Kudu.Core.Infrastructure;
@@ -139,9 +140,15 @@ namespace Kudu.Core.Jobs
 
         private void OnError(object sender, ErrorEventArgs e)
         {
-            Exception ex = e.GetException();
-            _traceFactory.GetTracer().TraceError(ex.ToString());
-            ResetWatcher();
+            // Error event is raised when the directory being watched gets deleted
+            // in cases when a parent to that directory is deleted, this handler should 
+            // finish quickly so the deletion does not fail.
+            HostingEnvironment.QueueBackgroundWorkItem(cancellationToken =>
+            {
+                Exception ex = e.GetException();
+                _traceFactory.GetTracer().TraceError(ex.ToString());
+                ResetWatcher();
+            });
         }
 
         private void ResetWatcher()
