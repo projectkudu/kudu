@@ -16,7 +16,7 @@ namespace Kudu.Core.SourceControl.Git
     /// </summary>
     public class GitExeRepository : IGitRepository
     {
-        private const string RemoteAlias = "external";
+        internal const string RemoteAlias = "origin";
 
         // From CIT experience, this is most common flakiness issue with github.com
         private static readonly string[] RetriableFetchFailures =
@@ -124,8 +124,12 @@ namespace Kudu.Core.SourceControl.Git
                 Execute(tracer, "config core.preloadindex true");
 
                 Execute(tracer, @"config user.name ""{0}""", _settings.GetGitUsername());
-
                 Execute(tracer, @"config user.email ""{0}""", _settings.GetGitEmail());
+
+                // This is needed to make lfs work
+                Execute(tracer, @"config filter.lfs.clean ""git-lfs clean %f""");
+                Execute(tracer, @"config filter.lfs.smudge ""git-lfs smudge %f""");
+                Execute(tracer, @"config filter.lfs.required true");
 
                 using (tracer.Step("Configure git server"))
                 {
@@ -264,46 +268,40 @@ echo $i > pushinfo
         public void FetchWithoutConflict(string remote, string branchName)
         {
             ITracer tracer = _tracerFactory.GetTracer();
+
+            TryUpdateRemote(remote, RemoteAlias, branchName, tracer);
+
+            string fetchCommand = @"fetch {0} --progress";
+            if (this.IsEmpty() && _settings.AllowShallowClones())
+            {
+                // If it's the initial fetch and the setting allows it, we do a shallow fetch so that we omit all the history, keeping
+                // our repo small. In subsequent fetches, we can't use the --depth flag as that would further
+                // trim the repo, preventing us from redeploying old deployments
+                fetchCommand += " --depth 1";
+            }
+
             try
             {
-                TryUpdateRemote(remote, RemoteAlias, branchName, tracer);
-
-                string fetchCommand = @"fetch {0} --progress";
-                if (this.IsEmpty() && _settings.AllowShallowClones())
-                {
-                    // If it's the initial fetch and the setting allows it, we do a shallow fetch so that we omit all the history, keeping
-                    // our repo small. In subsequent fetches, we can't use the --depth flag as that would further
-                    // trim the repo, preventing us from redeploying old deployments
-                    fetchCommand += " --depth 1";
-                }
-
-                try
-                {
-                    ExecuteGenericGitCommandWithRetryAndCatchingWellKnownGitErrors(() => Execute(tracer, fetchCommand, RemoteAlias));
-                }
-                catch (CommandLineException exception)
-                {
-                    // Check if the fetch failed because the remote repository hasn't been set up as yet.
-                    string branchNotFoundMessage = "fatal: Couldn't find remote ref";
-                    string exceptionMessage = exception.Message ?? String.Empty;
-                    if (exceptionMessage.StartsWith(branchNotFoundMessage, StringComparison.OrdinalIgnoreCase))
-                    {
-                        throw new BranchNotFoundException(branchName, exception);
-                    }
-                    throw;
-                }
-
-                // Set our branch to point to the remote branch we just fetched. This is a trivial branch pointer
-                // operation that doesn't touch any working files
-                Execute(tracer, @"update-ref refs/heads/{1} {0}/{1}", RemoteAlias, branchName);
-
-                // Now checkout out our branch, which points to the right place
-                Update(branchName);
+                ExecuteGenericGitCommandWithRetryAndCatchingWellKnownGitErrors(() => Execute(tracer, fetchCommand, RemoteAlias));
             }
-            finally
+            catch (CommandLineException exception)
             {
-                TryDeleteRemote(RemoteAlias, tracer);
+                // Check if the fetch failed because the remote repository hasn't been set up as yet.
+                string branchNotFoundMessage = "fatal: Couldn't find remote ref";
+                string exceptionMessage = exception.Message ?? String.Empty;
+                if (exceptionMessage.StartsWith(branchNotFoundMessage, StringComparison.OrdinalIgnoreCase))
+                {
+                    throw new BranchNotFoundException(branchName, exception);
+                }
+                throw;
             }
+
+            // Set our branch to point to the remote branch we just fetched. This is a trivial branch pointer
+            // operation that doesn't touch any working files
+            Execute(tracer, @"update-ref refs/heads/{1} {0}/{1}", RemoteAlias, branchName);
+
+            // Now checkout out our branch, which points to the right place
+            Update(branchName);
         }
 
         public void Update(string id)
