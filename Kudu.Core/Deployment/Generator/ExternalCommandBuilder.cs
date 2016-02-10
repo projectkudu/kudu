@@ -106,6 +106,8 @@ namespace Kudu.Core.Deployment.Generator
             {
                 context.Tracer.TraceError(ex);
 
+                customLogger.Log(ex);
+
                 // HACK: Log an empty error to the global logger (post receive hook console output).
                 // The reason we don't log the real exception is because the 'live output' running
                 // msbuild has already been captured.
