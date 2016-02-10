@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
+using System.Web.Hosting;
 using Kudu.Contracts.Jobs;
 using Kudu.Contracts.Settings;
 using Kudu.Core.Infrastructure;
@@ -139,9 +140,12 @@ namespace Kudu.Core.Jobs
 
         private void OnError(object sender, ErrorEventArgs e)
         {
-            Exception ex = e.GetException();
-            _traceFactory.GetTracer().TraceError(ex.ToString());
-            ResetWatcher();
+            HostingEnvironment.QueueBackgroundWorkItem(cancellationToken =>
+            {
+                Exception ex = e.GetException();
+                _traceFactory.GetTracer().TraceError(ex.ToString());
+                ResetWatcher();
+            });
         }
 
         private void ResetWatcher()
