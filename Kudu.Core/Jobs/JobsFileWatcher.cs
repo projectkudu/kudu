@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using Kudu.Contracts.Jobs;
 using Kudu.Contracts.Settings;
 using Kudu.Core.Infrastructure;
@@ -139,9 +140,13 @@ namespace Kudu.Core.Jobs
 
         private void OnError(object sender, ErrorEventArgs e)
         {
-            Exception ex = e.GetException();
-            _traceFactory.GetTracer().TraceError(ex.ToString());
-            ResetWatcher();
+            Task t = new Task(() =>
+            {
+                Exception ex = e.GetException();
+                _traceFactory.GetTracer().TraceError(ex.ToString());
+                ResetWatcher();
+            });
+            t.Start();
         }
 
         private void ResetWatcher()
