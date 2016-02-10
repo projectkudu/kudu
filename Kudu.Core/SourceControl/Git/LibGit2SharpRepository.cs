@@ -15,7 +15,7 @@ namespace Kudu.Core.SourceControl.Git
 {
     public class LibGit2SharpRepository : IGitRepository
     {
-        private const string _remoteAlias = "external";
+        private const string _remoteAlias = GitExeRepository.RemoteAlias;
         private readonly ITraceFactory _tracerFactory;
         private readonly IDeploymentSettingsManager _settings;
         private readonly GitExeRepository _legacyGitExeRepository;
@@ -65,8 +65,12 @@ namespace Kudu.Core.SourceControl.Git
                     repo.Config.Set("core.preloadindex", true);
 
                     repo.Config.Set("user.name", _settings.GetGitUsername());
-
                     repo.Config.Set("user.email", _settings.GetGitEmail());
+
+                    // This is needed to make lfs work
+                    repo.Config.Set("filter.lfs.clean", "git-lfs clean %f");
+                    repo.Config.Set("filter.lfs.smudge", "git-lfs smudge %f");
+                    repo.Config.Set("filter.lfs.required", true);
 
                     using (tracer.Step("Configure git server"))
                     {
@@ -215,6 +219,9 @@ echo $i > pushinfo
                     var trackedBranchName = string.Format("{0}/{1}", _remoteAlias, branchName);
                     var refSpec = string.Format("+refs/heads/{0}:refs/remotes/{1}", branchName, trackedBranchName);
 
+                    // Remove it if it already exists (does not throw if it doesn't)
+                    repo.Network.Remotes.Remove(_remoteAlias);
+
                     // Configure the remote
                     var remote = repo.Network.Remotes.Add(_remoteAlias, remoteUrl, refSpec);
 
@@ -259,13 +266,6 @@ echo $i > pushinfo
                 else
                 {
                     throw;
-                }
-            }
-            finally
-            {
-                using (var repo = new LibGit2Sharp.Repository(RepositoryPath))
-                {
-                    repo.Network.Remotes.Remove(_remoteAlias);
                 }
             }
         }
