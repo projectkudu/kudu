@@ -132,11 +132,7 @@ namespace Kudu.Core.Infrastructure
             }
             catch (CommandLineException exception)
             {
-                // in case of failure without stderr, we log error explicitly
-                if (String.IsNullOrEmpty(exception.Error))
-                {
-                    logger.Log(exception);
-                }
+                logger.Log(exception);
 
                 throw;
             }
