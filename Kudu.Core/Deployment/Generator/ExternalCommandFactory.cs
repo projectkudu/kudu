@@ -85,30 +85,6 @@ namespace Kudu.Core.Deployment.Generator
             string path = System.Environment.GetEnvironmentVariable("PATH");
             exe.EnvironmentVariables["PATH"] = path;
 
-            // Add the msbuild path and git path to the %PATH% so more tools are available
-            var toolsPaths = new List<string> {
-                _environment.ScriptPath,
-                Path.GetDirectoryName(PathUtility.ResolveMSBuildPath()),
-                Path.GetDirectoryName(PathUtility.ResolveGitPath()),
-                Path.GetDirectoryName(PathUtility.ResolveVsTestPath()),
-                Path.GetDirectoryName(PathUtility.ResolveSQLCmdPath()),
-                Path.GetDirectoryName(PathUtility.ResolveFSharpCPath())
-            };
-
-            toolsPaths.AddRange(PathUtility.ResolveNodeNpmPaths());
-            toolsPaths.Add(PathUtility.ResolveNpmGlobalPrefix());
-
-            toolsPaths.AddRange(new[]
-            {
-                PathUtility.ResolveBowerPath(),
-                PathUtility.ResolveGruntPath(),
-                PathUtility.ResolveGulpPath()
-            }.Where(p => !String.IsNullOrEmpty(p)).Select(Path.GetDirectoryName));
-
-            // Add /site/deployments/tools to the path to allow users to drop tools in there
-            toolsPaths.Add(_environment.DeploymentToolsPath);
-
-            exe.PrependToPath(toolsPaths);
             return exe;
         }
 

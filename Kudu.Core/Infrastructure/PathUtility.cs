@@ -6,7 +6,7 @@ using SystemEnvironment = System.Environment;
 
 namespace Kudu.Core.Infrastructure
 {
-    internal static class PathUtility
+    public static class PathUtility
     {
         private const string ProgramFiles64bitKey = "ProgramW6432";
 
@@ -19,6 +19,35 @@ namespace Kudu.Core.Infrastructure
         /// Maps to the version of NPM that shipped with the DefaultNodeVersion
         /// </summary>
         private const string DefaultNpmVersion = "1.4.9";
+
+        // Return a list of folders that need to be on the %PATH%
+        public static List<string> GetPathFolders(IEnvironment environment)
+        {
+            // Add the msbuild path and git path to the %PATH% so more tools are available
+            var toolsPaths = new List<string> {
+                environment.ScriptPath,
+                Path.GetDirectoryName(ResolveMSBuildPath()),
+                Path.GetDirectoryName(ResolveGitPath()),
+                Path.GetDirectoryName(ResolveVsTestPath()),
+                Path.GetDirectoryName(ResolveSQLCmdPath()),
+                Path.GetDirectoryName(ResolveFSharpCPath())
+            };
+
+            toolsPaths.AddRange(ResolveNodeNpmPaths());
+            toolsPaths.Add(ResolveNpmGlobalPrefix());
+
+            toolsPaths.AddRange(new[]
+            {
+                ResolveBowerPath(),
+                ResolveGruntPath(),
+                ResolveGulpPath()
+            }.Where(p => !String.IsNullOrEmpty(p)).Select(Path.GetDirectoryName));
+
+            // Add /site/deployments/tools to the path to allow users to drop tools in there
+            toolsPaths.Add(environment.DeploymentToolsPath);
+
+            return toolsPaths;
+        }
 
         internal static string ResolveGitPath()
         {

@@ -46,6 +46,7 @@ using Owin;
 using XmlSettings;
 using System.Configuration;
 using Kudu.Core.Functions;
+using System.Text;
 
 [assembly: WebActivator.PreApplicationStartMethod(typeof(Kudu.Services.Web.App_Start.NinjectServices), "Start")]
 [assembly: WebActivator.ApplicationShutdownMethodAttribute(typeof(Kudu.Services.Web.App_Start.NinjectServices), "Stop")]
@@ -126,6 +127,9 @@ namespace Kudu.Services.Web.App_Start
             EnsureSiteBitnessEnvironmentVariable();
 
             IEnvironment environment = GetEnvironment();
+
+            // Add various folders that never change to the process path. All child processes will inherit
+            PrependFoldersToPath(environment);
 
             // Per request environment
             kernel.Bind<IEnvironment>().ToMethod(context => GetEnvironment(context.Kernel.Get<IDeploymentSettingsManager>()))
@@ -681,6 +685,22 @@ namespace Kudu.Services.Web.App_Start
             {
                 path = Path.GetFullPath(path);
                 System.Environment.SetEnvironmentVariable("HOME", path);
+            }
+        }
+
+        private static void PrependFoldersToPath(IEnvironment environment)
+        {
+            List<string> folders = PathUtility.GetPathFolders(environment);
+
+            string path = System.Environment.GetEnvironmentVariable("PATH");
+            string additionalPaths = String.Join(";", folders);
+
+            // Make sure we haven't already added them. This can happen if the Kudu appdomain restart (since it's still same process)
+            if (!path.Contains(additionalPaths))
+            {
+                path = additionalPaths + ";" + path;
+
+                System.Environment.SetEnvironmentVariable("PATH", path);
             }
         }
 
