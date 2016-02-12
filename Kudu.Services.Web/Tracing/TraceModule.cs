@@ -251,7 +251,15 @@ namespace Kudu.Services.Web.Tracing
                 System.Environment.SetEnvironmentVariable(Constants.X_MS_SITE_RESTRICTED_JWT, siteRestrictedJwt);
             }
 
-            System.Environment.SetEnvironmentVariable(Constants.HTTP_HOST, request.Url.Host);
+            try
+            {
+                System.Environment.SetEnvironmentVariable(Constants.HTTP_HOST, request.Url.Host);
+            }
+            catch
+            {
+                // this is temporary hack for host name invalid due to ~ (http://~1hostname/)
+                // we don't know how to repro it yet.
+            }
         }
 
         public void Dispose()
