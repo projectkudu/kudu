@@ -65,7 +65,7 @@ namespace Kudu.Core.Jobs
         protected IAnalytics Analytics { get; private set; }
 
         protected JobsFileWatcher JobsWatcher { get; set; }
-        protected IEnumerable<TJob> JobListCache { get; set; } = null;
+        protected IEnumerable<TJob> JobListCache { get; set; }
 
         List<Action<string>> FileWatcherExtraEventHandlers;
 
