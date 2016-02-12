@@ -4,10 +4,20 @@ setlocal
 set _SCRIPT=%~nx0
 set _KUDUZIP=%~dp0Kudu.zip
 set _SCMURI=%~1
-set _CURLEXE=%ProgramFiles(x86)%\git\bin\curl.exe
-if NOT EXIST "%_CURLEXE%" (
-  set _CURLEXE=%ProgramW6432%\git\mingw64\bin\curl.exe
+set _CURLEXE="%ProgramFiles(x86)%\git\bin\curl.exe"
+
+if NOT EXIST %_CURLEXE% (
+  REM must put quote to not inteprete ( and )
+  set _CURLEXE="%ProgramFiles(x86)%\git\mingw32\bin\curl.exe"
 )
+
+if NOT EXIST %_CURLEXE% (
+  REM must put quote to not inteprete ( and )
+  set _CURLEXE="%ProgramW6432%\git\mingw64\bin\curl.exe"
+)
+
+REM Trim quote
+set _CURLEXE=%_CURLEXE:"=%
 
 REM first parameter is the deploy uri with embedded cred
 if "%_SCMURI%" equ "" (
