@@ -1,9 +1,11 @@
 using System;
 using System.Diagnostics;
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Reflection;
 using System.Threading.Tasks;
+using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Tracing;
 
@@ -46,6 +48,14 @@ namespace Kudu.Core.Infrastructure
                     response.EnsureSuccessStatusCode();
                     return response;
                 }
+            }
+        }
+
+        public static void SkipSslValidation()
+        {
+            if (System.Environment.GetEnvironmentVariable(SettingsKeys.SkipSslValidation) == "1")
+            {
+                ServicePointManager.ServerCertificateValidationCallback = delegate { return true; };
             }
         }
     }
