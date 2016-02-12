@@ -29,11 +29,6 @@ namespace Kudu.Core.Jobs
             _hooksManager = hooksManager;
         }
 
-        public override IEnumerable<TriggeredJob> ListJobs()
-        {
-            return ListJobsInternal();
-        }
-
         public override TriggeredJob GetJob(string jobName)
         {
             return GetJobInternal(jobName);

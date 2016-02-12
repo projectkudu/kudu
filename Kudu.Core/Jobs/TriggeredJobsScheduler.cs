@@ -12,7 +12,7 @@ namespace Kudu.Core.Jobs
     /// <summary>
     /// Responsible for scheduling the invocation of triggered jobs with the schedule setting on them
     /// </summary>
-    public class TriggeredJobsScheduler : IDisposable
+    public class TriggeredJobsScheduler
     {
         private readonly ITriggeredJobsManager _triggeredJobsManager;
         private readonly ITraceFactory _traceFactory;
@@ -20,21 +20,13 @@ namespace Kudu.Core.Jobs
 
         private readonly Dictionary<string, TriggeredJobSchedule> _triggeredJobsSchedules = new Dictionary<string, TriggeredJobSchedule>(StringComparer.OrdinalIgnoreCase);
 
-        private JobsFileWatcher _jobsFileWatcher;
-
-        public TriggeredJobsScheduler(ITriggeredJobsManager triggeredJobsManager, ITraceFactory traceFactory, IAnalytics analytics, IEnvironment environment)
+        public TriggeredJobsScheduler(ITriggeredJobsManager triggeredJobsManager, ITraceFactory traceFactory, IEnvironment environment)
         {
             _triggeredJobsManager = triggeredJobsManager;
             _traceFactory = traceFactory;
             _environment = environment;
 
-            _jobsFileWatcher = new JobsFileWatcher(triggeredJobsManager.JobsBinariesPath, OnJobChanged, JobSettings.JobSettingsFileName, ListJobNames, traceFactory, analytics);
-        }
-
-        private IEnumerable<string> ListJobNames()
-        {
-            IEnumerable<TriggeredJob> triggeredJobs = _triggeredJobsManager.ListJobs();
-            return triggeredJobs.Select(triggeredJob => triggeredJob.Name);
+            _triggeredJobsManager.RegisterExtraEventHandlerForFileChange(OnJobChanged);
         }
 
         /// <summary>
@@ -125,32 +117,6 @@ namespace Kudu.Core.Jobs
             }
 
             triggeredJobSchedule.Reschedule(DateTime.Now);
-        }
-
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            // HACK: Next if statement should be removed once ninject wlll not dispose this class
-            // Since ninject automatically calls dispose we currently disable it
-            if (disposing)
-            {
-                return;
-            }
-            // End of code to be removed
-
-            if (disposing)
-            {
-                if (_jobsFileWatcher != null)
-                {
-                    _jobsFileWatcher.Dispose();
-                    _jobsFileWatcher = null;
-                }
-            }
         }
     }
 }

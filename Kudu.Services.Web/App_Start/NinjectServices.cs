@@ -253,7 +253,6 @@ namespace Kudu.Services.Web.App_Start
             TriggeredJobsScheduler triggeredJobsScheduler = new TriggeredJobsScheduler(
                 triggeredJobsManager,
                 noContextTraceFactory,
-                kernel.Get<IAnalytics>(),
                 environment);
 
             kernel.Bind<TriggeredJobsScheduler>().ToConstant(triggeredJobsScheduler)
