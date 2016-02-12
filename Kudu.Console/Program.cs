@@ -53,6 +53,9 @@ namespace Kudu.Console
 
             System.Environment.SetEnvironmentVariable("GIT_DIR", null, System.EnvironmentVariableTarget.Process);
 
+            // Skip SSL Certificate Validate
+            OperationClient.SkipSslValidationIfNeeded();
+
             string appRoot = args[0];
             string wapTargets = args[1];
             string deployer = args.Length == 2 ? null : args[2];

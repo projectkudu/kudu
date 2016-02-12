@@ -320,6 +320,9 @@ namespace Kudu.Services.Web.App_Start
             EnsureNpmGlobalDirectory();
             EnsureUserProfileDirectory();
 
+            // Skip SSL Certificate Validate
+            OperationClient.SkipSslValidationIfNeeded();
+
             // Make sure webpages:Enabled is true. Even though we set it in web.config, it could be overwritten by
             // an Azure AppSetting that's supposed to be for the site only but incidently affects Kudu as well.
             ConfigurationManager.AppSettings["webpages:Enabled"] = "true";
