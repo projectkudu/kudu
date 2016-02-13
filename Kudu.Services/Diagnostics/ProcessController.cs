@@ -468,7 +468,15 @@ namespace Kudu.Services.Performance
         {
             try
             {
-                return id <= 0 ? Process.GetCurrentProcess() : Process.GetProcessById(id);
+                switch (id)
+                {
+                    case 0:
+                        return Process.GetCurrentProcess();
+                    case -1:
+                        return Process.GetProcessesByName("w3wp").FirstOrDefault(s => s.Id != Process.GetCurrentProcess().Id) ?? Process.GetCurrentProcess();
+                    default:
+                        return Process.GetProcessById(id);
+                }
             }
             catch (ArgumentException ex)
             {

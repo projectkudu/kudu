@@ -1,4 +1,5 @@
-﻿using Kudu.Core;
+﻿using System;
+using Kudu.Core;
 
 namespace Kudu.TestHarness
 {
@@ -125,6 +126,18 @@ namespace Kudu.TestHarness
         }
 
         public string SiteExtensionSettingsPath
+        {
+            get;
+            set;
+        }
+
+        public string AppBaseUrlPrefix
+        {
+            get;
+            set;
+        }
+
+        public string FunctionsPath
         {
             get;
             set;

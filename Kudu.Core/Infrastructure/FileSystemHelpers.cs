@@ -4,6 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.IO.Abstractions;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace Kudu.Core.Infrastructure
 {
@@ -116,6 +117,18 @@ namespace Kudu.Core.Infrastructure
             }
         }
 
+        /// <summary>
+        /// Async version of ReadAllTestFromFile,
+        /// </summary>
+        public static async Task<string> ReadAllTextFromFileAsync(string path)
+        {
+            using (var fileStream = OpenFile(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))
+            using (var streamReader = new StreamReader(fileStream))
+            {
+                return await streamReader.ReadToEndAsync();
+            }
+        }
+
         public static Stream OpenWrite(string path)
         {
             return Instance.File.OpenWrite(path);
@@ -146,6 +159,19 @@ namespace Kudu.Core.Infrastructure
                 var streamWriter = new StreamWriter(fileStream);
                 streamWriter.Write(content);
                 streamWriter.Flush();
+            }
+        }
+
+        /// <summary>
+        /// Async version of WriteAllTextToFile,
+        /// </summary>
+        public static async Task WriteAllTextToFileAsync(string path, string content)
+        {
+            using (var fileStream = OpenFile(path, FileMode.Create, FileAccess.Write, FileShare.ReadWrite | FileShare.Delete))
+            using (var streamWriter = new StreamWriter(fileStream))
+            {
+                await streamWriter.WriteAsync(content);
+                await streamWriter.FlushAsync();
             }
         }
 

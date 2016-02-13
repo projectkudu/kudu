@@ -23,5 +23,7 @@
         string DataPath { get; }                // e.g. /data
         string JobsDataPath { get; }            // e.g. /data/jobs
         string JobsBinariesPath { get; }        // e.g. /site/wwwroot/app_data/jobs
+        string FunctionsPath { get; }           // e.g. /site/wwwroot
+        string AppBaseUrlPrefix { get; }        // e.g. siteName.azurewebsites.net
     }
 }

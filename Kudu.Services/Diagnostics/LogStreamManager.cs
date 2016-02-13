@@ -555,7 +555,9 @@ namespace Kudu.Services.Performance
 
                 _context.Response.Buffer = false;
                 _context.Response.BufferOutput = false;
-                _context.Response.ContentType = "text/plain";
+                _context.Response.ContentType = _context.Request.Headers["FunctionsPortal"] != null
+                    ? "custom-functions/stream"
+                    : "text/plain";
                 _context.Response.StatusCode = 200;
             }
 
