@@ -116,7 +116,9 @@ namespace Kudu.Core.Jobs
             if (cache == null)
             {
                 cache = ListJobsInternal();
-                JobListCache = cache;
+
+                // Disable WebJobs caching as it breaks several tests. Re-enable after issue is figured out.
+                //JobListCache = cache;
             }
             return cache;
         }
