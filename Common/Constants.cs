@@ -95,5 +95,11 @@ namespace Kudu
 
         public const string X_MS_SITE_RESTRICTED_JWT = "X-MS-SITE-RESTRICTED-JWT";
         public const string HTTP_HOST = "HTTP_HOST";
+
+        public const string Functions = "functions";
+        public const string FunctionsConfigFile = "function.json";
+        public const string FunctionsHostConfigFile = "host.json";
+        public const string Secrets = "secrets";
+        public const string SampleData = "sampledata";
     }
 }

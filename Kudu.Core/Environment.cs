@@ -5,6 +5,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Security;
 using Kudu.Core.Infrastructure;
+using System.Web;
 
 namespace Kudu.Core
 {
@@ -268,6 +269,22 @@ namespace Kudu.Core
         public string SiteExtensionSettingsPath
         {
             get { return _siteExtensionSettingsPath; }
+        }
+
+        public string FunctionsPath
+        {
+            get
+            {
+                return this.WebRootPath;
+            }
+        }
+
+        public string AppBaseUrlPrefix
+        {
+            get
+            {
+                return HttpContext.Current?.Request?.Url?.GetLeftPart(UriPartial.Authority);
+            }
         }
 
         public static bool IsAzureEnvironment()
