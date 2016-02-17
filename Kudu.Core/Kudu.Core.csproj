@@ -9,7 +9,7 @@
     <RootNamespace>Kudu.Core</RootNamespace>
     <AssemblyName>Kudu.Core</AssemblyName>
     <NuGetPackageImportStamp>2da09ae7</NuGetPackageImportStamp>
-    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <TargetFrameworkProfile />
   </PropertyGroup>
   <ItemGroup>
