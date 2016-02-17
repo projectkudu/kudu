@@ -35,7 +35,17 @@ namespace Kudu.Core.Infrastructure
         public async Task<HttpResponseMessage> PostAsync<T>(string path, T content = default(T))
         {
             var jwt = System.Environment.GetEnvironmentVariable(Constants.X_MS_SITE_RESTRICTED_JWT);
+            if (String.IsNullOrEmpty(jwt))
+            {
+                throw new InvalidOperationException(String.Format("Missing {0} header!", Constants.X_MS_SITE_RESTRICTED_JWT));
+            }
+
             var host = System.Environment.GetEnvironmentVariable(Constants.HTTP_HOST);
+            if (String.IsNullOrEmpty(jwt))
+            {
+                throw new InvalidOperationException("Missing HTTP_HOST env!");
+            }
+           
             using (_tracer.Step("POST " + path))
             {
                 using (var client = new HttpClient())
