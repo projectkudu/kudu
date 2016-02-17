@@ -61,6 +61,14 @@ namespace Kudu.Core.Functions
                 try
                 {
                     var json = JObject.Parse(FileSystemHelpers.ReadAllText(functionJson));
+
+                    JToken disabled;
+                    if (json.TryGetValue("disabled", out disabled) && (bool)disabled)
+                    {
+                        tracer.Trace(String.Format("{0} is disabled", functionJson));
+                        continue;
+                    }
+
                     var binding = json.Value<JObject>("bindings");
                     foreach (JObject input in binding.Value<JArray>("input"))
                     {
