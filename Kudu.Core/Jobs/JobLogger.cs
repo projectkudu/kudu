@@ -68,6 +68,20 @@ namespace Kudu.Core.Jobs
         public void ReportStatus<TJobStatus>(TJobStatus status) where TJobStatus : class, IJobStatus
         {
             ReportStatus(status, logStatus: true);
+            if (status.GetType() == typeof(ContinuousJobStatus))
+            {
+                lock (ContinuousJobsManager.jobsListCacheLockObj)
+                {
+                    ContinuousJobsManager.JobListCache = null;
+                }
+            }
+            else if (status.GetType() == typeof(TriggeredJobStatus))
+            {
+                lock (TriggeredJobsManager.jobsListCacheLockObj)
+                {
+                    TriggeredJobsManager.JobListCache = null;
+                }
+            }
         }
 
         protected virtual void ReportStatus<TJobStatus>(TJobStatus status, bool logStatus) where TJobStatus : class, IJobStatus

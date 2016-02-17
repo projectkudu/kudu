@@ -7,6 +7,7 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using Kudu.Client;
 using Kudu.Client.SiteExtensions;
+using Kudu.Contracts.Jobs;
 using Kudu.Contracts.SiteExtensions;
 using Kudu.Core.Infrastructure;
 using Kudu.FunctionalTests.Infrastructure;
@@ -247,20 +248,27 @@ namespace Kudu.FunctionalTests.SiteExtensions
                     Assert.Equal("PendingRestart", continuousJobs[0].Status);
                 }, 100, 500);
 
-                var triggeredJobs = (await appManager.JobsManager.ListTriggeredJobsAsync()).ToArray();
-                Assert.Equal(2, triggeredJobs.Length);
-                Assert.Equal("filecounterwithwebjobs(tjoba)", triggeredJobs[0].Name);
-                Assert.Equal("filecounterwithwebjobs(tjobb)", triggeredJobs[1].Name);
+                TriggeredJob[] triggeredJobs;
+                await OperationManager.AttemptAsync(async () =>
+                {
+                    triggeredJobs = (await appManager.JobsManager.ListTriggeredJobsAsync()).ToArray();
+                    Assert.Equal(2, triggeredJobs.Length);
+                    Assert.Equal("filecounterwithwebjobs(tjoba)", triggeredJobs[0].Name);
+                    Assert.Equal("filecounterwithwebjobs(tjobb)", triggeredJobs[1].Name);
+                }, 100, 500);
 
                 TestTracer.Trace("Uninstall site extension with jobs");
                 await manager.UninstallExtension("filecounterwithwebjobs");
 
                 TestTracer.Trace("Verify jobs removed");
-                var continuousJobs2 = (await appManager.JobsManager.ListContinuousJobsAsync()).ToArray();
-                Assert.Equal(0, continuousJobs2.Length);
+                await OperationManager.AttemptAsync(async () =>
+                {
+                    var continuousJobs2 = (await appManager.JobsManager.ListContinuousJobsAsync()).ToArray();
+                    Assert.Equal(0, continuousJobs2.Length);
 
-                triggeredJobs = (await appManager.JobsManager.ListTriggeredJobsAsync()).ToArray();
-                Assert.Equal(0, triggeredJobs.Length);
+                    triggeredJobs = (await appManager.JobsManager.ListTriggeredJobsAsync()).ToArray();
+                    Assert.Equal(0, triggeredJobs.Length);
+                }, 100, 500);
             });
         }
 

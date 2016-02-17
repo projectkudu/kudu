@@ -52,6 +52,8 @@ namespace Kudu.Core.Jobs
 
         private string _lastKnownAppBaseUrlPrefix;
 
+        internal static object jobsListCacheLockObj = new object();
+
         protected IEnvironment Environment { get; private set; }
 
         protected IDeploymentSettingsManager Settings { get; private set; }
@@ -65,7 +67,7 @@ namespace Kudu.Core.Jobs
         protected IAnalytics Analytics { get; private set; }
 
         protected JobsFileWatcher JobsWatcher { get; set; }
-        protected IEnumerable<TJob> JobListCache { get; set; }
+        internal static IEnumerable<TJob> JobListCache { get; set; }
 
         List<Action<string>> FileWatcherExtraEventHandlers;
 
@@ -84,9 +86,9 @@ namespace Kudu.Core.Jobs
             HostingEnvironment.RegisterObject(this);
         }
 
-        protected virtual IEnumerable<string> ListJobNames()
+        protected virtual IEnumerable<string> ListJobNames(bool forceRefreshCache)
         {
-            return ListJobs().Select(triggeredJob => triggeredJob.Name);
+            return ListJobs(forceRefreshCache).Select(job => job.Name);
         }
 
         public void RegisterExtraEventHandlerForFileChange(Action<string> action)
@@ -100,7 +102,10 @@ namespace Kudu.Core.Jobs
 
         private void OnJobChanged(string jobName)
         {
-            JobListCache = null;
+            lock (jobsListCacheLockObj)
+            {
+                JobListCache = null;
+            }
             if (FileWatcherExtraEventHandlers != null)
             {
                 foreach (Action<string> action in FileWatcherExtraEventHandlers)
@@ -108,17 +113,20 @@ namespace Kudu.Core.Jobs
                     action.Invoke(jobName);
                 }
             }
+
         }
 
-        public IEnumerable<TJob> ListJobs()
+        public IEnumerable<TJob> ListJobs(bool forceRefreshCache)
         {
-            var cache = JobListCache;
-            if (cache == null)
+            IEnumerable<TJob> cache;
+            lock (jobsListCacheLockObj)
             {
-                cache = ListJobsInternal();
-
-                // Disable WebJobs caching as it breaks several tests. Re-enable after issue is figured out.
-                //JobListCache = cache;
+                cache = JobListCache;
+                if (cache == null || forceRefreshCache)
+                {
+                    cache = ListJobsInternal();
+                    JobListCache = cache;
+                }
             }
             return cache;
         }
@@ -196,7 +204,7 @@ namespace Kudu.Core.Jobs
 
         public void CleanupDeletedJobs()
         {
-            IEnumerable<TJob> jobs = ListJobs();
+            IEnumerable<TJob> jobs = ListJobs(true);
             IEnumerable<string> jobNames = jobs.Select(j => j.Name);
             DirectoryInfoBase jobsDataDirectory = FileSystemHelpers.DirectoryInfoFromDirectoryName(JobsDataPath);
             if (jobsDataDirectory.Exists)
