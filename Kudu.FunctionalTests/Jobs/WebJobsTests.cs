@@ -615,11 +615,18 @@ namespace Kudu.FunctionalTests.Jobs
                 jobSettings["one"] = 1;
                 appManager.JobsManager.SetTriggeredJobSettingsAsync("job1", jobSettings).Wait();
 
-                var triggeredJobs = appManager.JobsManager.ListTriggeredJobsAsync().Result;
-                var continuousJobs = appManager.JobsManager.ListContinuousJobsAsync().Result;
+                WaitUntilAssertVerified(
+                   "get jobs count",
+                   TimeSpan.FromSeconds(60),
+                   () =>
+                   {
+                       var triggeredJobs = appManager.JobsManager.ListTriggeredJobsAsync().Result;
+                       var continuousJobs = appManager.JobsManager.ListContinuousJobsAsync().Result;
 
-                Assert.Equal(2, triggeredJobs.Count());
-                Assert.Equal(2, continuousJobs.Count());
+                       Assert.Equal(2, triggeredJobs.Count());
+                       Assert.Equal(2, continuousJobs.Count());
+                   }
+                   );
 
                 VerifyTriggeredJobTriggers(appManager, "job1", 1, "Success", "echo ");
 
@@ -627,12 +634,18 @@ namespace Kudu.FunctionalTests.Jobs
                 appManager.JobsManager.DeleteTriggeredJobAsync("job2").Wait();
                 appManager.JobsManager.DeleteContinuousJobAsync("job1").Wait();
                 appManager.JobsManager.DeleteContinuousJobAsync("job2").Wait();
+                WaitUntilAssertVerified(
+                  "get jobs count",
+                  TimeSpan.FromSeconds(60),
+                  () =>
+                  {
+                      var triggeredJobs = appManager.JobsManager.ListTriggeredJobsAsync().Result;
+                      var continuousJobs = appManager.JobsManager.ListContinuousJobsAsync().Result;
 
-                triggeredJobs = appManager.JobsManager.ListTriggeredJobsAsync().Result;
-                continuousJobs = appManager.JobsManager.ListContinuousJobsAsync().Result;
-
-                Assert.Equal(0, triggeredJobs.Count());
-                Assert.Equal(0, continuousJobs.Count());
+                      Assert.Equal(0, triggeredJobs.Count());
+                      Assert.Equal(0, continuousJobs.Count());
+                  }
+                  );
             });
         }
 

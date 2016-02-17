@@ -240,6 +240,10 @@ namespace Kudu.Core.Jobs
             JobSettings jobSettings = triggeredJob.Settings;
 
             triggeredJobRunner.StartJobRun(triggeredJob, jobSettings, trigger, ReportTriggeredJobFinished);
+            lock (jobsListCacheLockObj)
+            {
+                JobListCache = null;
+            }
         }
 
         private async void ReportTriggeredJobFinished(string jobName, string jobRunId)

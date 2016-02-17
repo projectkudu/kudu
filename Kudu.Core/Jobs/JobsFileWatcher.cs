@@ -34,13 +34,13 @@ namespace Kudu.Core.Jobs
         private readonly string _watchedDirectoryPath;
         private readonly Action<string> _onJobChanged;
         private readonly string _filter;
-        private readonly Func<IEnumerable<string>> _listJobNames;
+        private readonly Func<bool, IEnumerable<string>> _listJobNames;
 
         public JobsFileWatcher(
             string watchedDirectoryPath,
             Action<string> onJobChanged,
             string filter,
-            Func<IEnumerable<string>> listJobNames,
+            Func<bool, IEnumerable<string>> listJobNames,
             ITraceFactory traceFactory,
             IAnalytics analytics)
         {
@@ -122,7 +122,7 @@ namespace Kudu.Core.Jobs
                     _fileSystemWatcher.EnableRaisingEvents = true;
 
                     // Refresh all jobs
-                    IEnumerable<string> jobNames = _listJobNames();
+                    IEnumerable<string> jobNames = _listJobNames(true);
                     foreach (string jobName in jobNames)
                     {
                         MarkJobUpdated(jobName);

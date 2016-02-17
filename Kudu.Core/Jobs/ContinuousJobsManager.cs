@@ -238,9 +238,9 @@ namespace Kudu.Core.Jobs
             _continuousJobRunners.Remove(updatedJobName);
         }
 
-        protected override IEnumerable<string> ListJobNames()
+        protected override IEnumerable<string> ListJobNames(bool forceRefreshCache)
         {
-            IEnumerable<ContinuousJob> continuousJobs = ListJobs();
+            IEnumerable<ContinuousJob> continuousJobs = ListJobs(forceRefreshCache);
             return _continuousJobRunners.Keys.Union(continuousJobs.Select(j => j.Name));
         }
     }

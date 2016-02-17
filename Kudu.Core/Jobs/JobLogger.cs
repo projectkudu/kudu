@@ -80,6 +80,23 @@ namespace Kudu.Core.Jobs
                 {
                     LogInformation("Status changed to " + status.Status);
                 }
+
+                // joblistcache has info about job status, so when changing the status
+                // the cache should be invalidated.
+                if (status.GetType() == typeof(ContinuousJobStatus))
+                {
+                    lock (ContinuousJobsManager.jobsListCacheLockObj)
+                    {
+                        ContinuousJobsManager.JobListCache = null;
+                    }
+                }
+                else if (status.GetType() == typeof(TriggeredJobStatus))
+                {
+                    lock (TriggeredJobsManager.jobsListCacheLockObj)
+                    {
+                        TriggeredJobsManager.JobListCache = null;
+                    }
+                }
             }
             catch (Exception ex)
             {

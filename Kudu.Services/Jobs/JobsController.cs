@@ -35,8 +35,8 @@ namespace Kudu.Services.Jobs
         [HttpGet]
         public HttpResponseMessage ListAllJobs()
         {
-            IEnumerable<ContinuousJob> continuousJobs = _continuousJobsManager.ListJobs();
-            IEnumerable<TriggeredJob> triggeredJobs = _triggeredJobsManager.ListJobs();
+            IEnumerable<ContinuousJob> continuousJobs = _continuousJobsManager.ListJobs(forceRefreshCache: false);
+            IEnumerable<TriggeredJob> triggeredJobs = _triggeredJobsManager.ListJobs(forceRefreshCache: false);
 
             var allJobs = triggeredJobs.OfType<JobBase>().Union(continuousJobs);
 
@@ -46,7 +46,7 @@ namespace Kudu.Services.Jobs
         [HttpGet]
         public HttpResponseMessage ListContinuousJobs()
         {
-            IEnumerable<ContinuousJob> continuousJobs = _continuousJobsManager.ListJobs();
+            IEnumerable<ContinuousJob> continuousJobs = _continuousJobsManager.ListJobs(forceRefreshCache: false);
 
             return ListJobsResponseBasedOnETag(continuousJobs);
         }
@@ -106,7 +106,7 @@ namespace Kudu.Services.Jobs
         [HttpGet]
         public HttpResponseMessage ListTriggeredJobs()
         {
-            IEnumerable<TriggeredJob> triggeredJobs = _triggeredJobsManager.ListJobs();
+            IEnumerable<TriggeredJob> triggeredJobs = _triggeredJobsManager.ListJobs(forceRefreshCache: false);
 
             return ListJobsResponseBasedOnETag(triggeredJobs);
         }
@@ -114,7 +114,7 @@ namespace Kudu.Services.Jobs
         [HttpGet]
         public HttpResponseMessage ListTriggeredJobsInSwaggerFormat()
         {
-            IEnumerable<TriggeredJob> triggeredJobs = _triggeredJobsManager.ListJobs();
+            IEnumerable<TriggeredJob> triggeredJobs = _triggeredJobsManager.ListJobs(forceRefreshCache: false);
 
             SwaggerApiDef responseSwagger = new SwaggerApiDef(triggeredJobs);
             return Request.CreateResponse(responseSwagger);
