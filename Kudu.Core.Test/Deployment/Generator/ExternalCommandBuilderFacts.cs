@@ -26,7 +26,10 @@ namespace Kudu.Core.Test.Deployment.Generator
             };
 
             var enviromentMock = new Mock<IEnvironment>();
+            enviromentMock.Setup(e => e.RootPath).Returns(@"e:\");
             enviromentMock.Setup(e => e.DeploymentToolsPath).Returns(DeploymentToolsPath);
+
+            var deploymentSettingsMock = new Mock<IDeploymentSettingsManager>();
 
             var directoryMock = new Mock<DirectoryBase>();
             directoryMock.Setup(d => d.Exists(Path.Combine(DeploymentToolsPath, "PostDeploymentActions"))).Returns(true);
@@ -41,7 +44,7 @@ namespace Kudu.Core.Test.Deployment.Generator
 
             var builder = new CustomBuilder(
                 enviromentMock.Object,
-                Mock.Of<IDeploymentSettingsManager>(),
+                deploymentSettingsMock.Object,
                 Mock.Of<IBuildPropertyProvider>(),
                 string.Empty,
                 string.Empty);
@@ -68,31 +71,25 @@ namespace Kudu.Core.Test.Deployment.Generator
                          .Returns(CustomActionScripts.Union(new string[] { Path.Combine(CustomDeploymentActionDir, "Foo.txt") }).ToArray());
 
             TestTracer.Trace("Override SCM_POST_DEPLOYMENT_ACTIONS_PATH to a custom location");
-            var originalVal = System.Environment.GetEnvironmentVariable("SCM_POST_DEPLOYMENT_ACTIONS_PATH");
-            System.Environment.SetEnvironmentVariable("SCM_POST_DEPLOYMENT_ACTIONS_PATH", CustomDeploymentActionDir, EnvironmentVariableTarget.Process);
+            deploymentSettingsMock.Setup(d => 
+                d.GetValue(It.Is<string>(key => "SCM_POST_DEPLOYMENT_ACTIONS_PATH".Equals(key)), It.IsAny<bool>()))
+            .Returns(CustomDeploymentActionDir);
 
-            try
-            {
-                TestTracer.Trace("Should return action script from custom folder");
-                actionScripts = builder.GetPostBuildActionScripts();
-                Assert.NotEmpty(actionScripts);
-                Assert.Equal(DefaultActionScripts.Count(), actionScripts.Count);
-                Assert.NotEqual(DefaultActionScripts[0], actionScripts[0]);
-                Assert.NotEqual(DefaultActionScripts[1], actionScripts[1]);
-                Assert.NotEqual(DefaultActionScripts[2], actionScripts[2]);
+            TestTracer.Trace("Should return action script from custom folder");
+            actionScripts = builder.GetPostBuildActionScripts();
+            Assert.NotEmpty(actionScripts);
+            Assert.Equal(DefaultActionScripts.Count(), actionScripts.Count);
+            Assert.NotEqual(DefaultActionScripts[0], actionScripts[0]);
+            Assert.NotEqual(DefaultActionScripts[1], actionScripts[1]);
+            Assert.NotEqual(DefaultActionScripts[2], actionScripts[2]);
 
-                Assert.Equal(CustomActionScripts.Count(), actionScripts.Count);
-                Assert.NotEqual(CustomActionScripts[0], actionScripts[0]);
-                Array.Sort(CustomActionScripts);
+            Assert.Equal(CustomActionScripts.Count(), actionScripts.Count);
+            Assert.NotEqual(CustomActionScripts[0], actionScripts[0]);
+            Array.Sort(CustomActionScripts);
 
-                Assert.Equal(CustomActionScripts[0], actionScripts[0]);
-                Assert.Equal(CustomActionScripts[1], actionScripts[1]);
-                Assert.Equal(CustomActionScripts[2], actionScripts[2]);
-            }
-            finally
-            {
-                System.Environment.SetEnvironmentVariable("SCM_POST_DEPLOYMENT_ACTIONS_PATH", originalVal, EnvironmentVariableTarget.Process);
-            }
+            Assert.Equal(CustomActionScripts[0], actionScripts[0]);
+            Assert.Equal(CustomActionScripts[1], actionScripts[1]);
+            Assert.Equal(CustomActionScripts[2], actionScripts[2]);
         }
 
         [Fact]
@@ -106,8 +103,9 @@ namespace Kudu.Core.Test.Deployment.Generator
             };
 
             var enviromentMock = new Mock<IEnvironment>();
+            enviromentMock.Setup(e => e.RootPath).Returns(@"e:\");
             enviromentMock.Setup(e => e.DeploymentToolsPath).Returns(DeploymentToolsPath);
-
+            
             var directoryMock = new Mock<DirectoryBase>();
             directoryMock.Setup(d => d.Exists(Path.Combine(DeploymentToolsPath, "PostDeploymentActions"))).Returns(true);
             directoryMock.Setup(d => d.GetFiles(

@@ -57,7 +57,6 @@ namespace Kudu.Core.Deployment.Generator
         public void PostBuild(DeploymentContext context)
         {
             context.Logger.Log("Running post deployment command(s)...");
-
             foreach (var file in GetPostBuildActionScripts())
             {
                 var fi = new FileInfo(file);
@@ -126,15 +125,12 @@ namespace Kudu.Core.Deployment.Generator
             const string extensionEnvVarSuffix = "_EXTENSION_VERSION";
 
             // "/site/deployments/tools/PostDeploymentActions" (can override with %SCM_POST_DEPLOYMENT_ACTIONS_PATH"%)
-            var defaultPath = Path.Combine(Environment.DeploymentToolsPath, PostDeploymentActions);
-            if (!string.IsNullOrEmpty(System.Environment.GetEnvironmentVariable(SettingsKeys.PostDeploymentActionsDirectory)))
-            {
-                defaultPath = System.Environment.GetEnvironmentVariable(SettingsKeys.PostDeploymentActionsDirectory);
-            }
+            var customPostDeploymentPath = DeploymentSettings.GetValue(SettingsKeys.PostDeploymentActionsDirectory);
+            var postDeploymentPath = string.IsNullOrEmpty(customPostDeploymentPath) ? Path.Combine(Environment.DeploymentToolsPath, PostDeploymentActions) : Path.Combine(Environment.RootPath, customPostDeploymentPath);
 
-            if (FileSystemHelpers.DirectoryExists(defaultPath))
+            if (FileSystemHelpers.DirectoryExists(postDeploymentPath))
             {
-                scriptFolders.Add(defaultPath);
+                scriptFolders.Add(postDeploymentPath);
             }
 
             // D:\Program Files (x86)\SiteExtensions
