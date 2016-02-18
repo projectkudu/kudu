@@ -96,6 +96,11 @@ namespace Kudu.Core.Jobs
             ReportStatus(triggeredJobStatus);
         }
 
+        protected override void ClearJobsListCache()
+        {
+            TriggeredJobsManager.ClearJobListCache();
+        }
+
         public string Id
         {
             get

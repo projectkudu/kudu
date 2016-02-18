@@ -58,6 +58,11 @@ namespace Kudu.Core.Jobs
             base.ReportStatus(status, logStatus);
         }
 
+        protected override void ClearJobsListCache()
+        {
+            ContinuousJobsManager.ClearJobListCache();
+        }
+
         internal static string GetStatusFileName()
         {
             return ContinuousJobStatus.FileNamePrefix + InstanceIdUtility.GetShortInstanceId();

@@ -102,10 +102,7 @@ namespace Kudu.Core.Jobs
 
         private void OnJobChanged(string jobName)
         {
-            lock (jobsListCacheLockObj)
-            {
-                JobListCache = null;
-            }
+            ClearJobListCache();
             if (FileWatcherExtraEventHandlers != null)
             {
                 foreach (Action<string> action in FileWatcherExtraEventHandlers)
@@ -118,19 +115,23 @@ namespace Kudu.Core.Jobs
 
         public IEnumerable<TJob> ListJobs(bool forceRefreshCache)
         {
-            IEnumerable<TJob> cache;
             lock (jobsListCacheLockObj)
             {
-                cache = JobListCache;
-                if (cache == null || forceRefreshCache)
+                if (JobListCache == null || forceRefreshCache)
                 {
-                    cache = ListJobsInternal();
-                    JobListCache = cache;
+                    JobListCache = ListJobsInternal();
                 }
             }
-            return cache;
+            return JobListCache;
         }
 
+        internal static void ClearJobListCache()
+        {
+            lock (jobsListCacheLockObj)
+            {
+                JobListCache = null;
+            }
+        }
         public abstract TJob GetJob(string jobName);
 
         public TJob CreateOrReplaceJobFromZipStream(Stream zipStream, string jobName)

@@ -25,5 +25,10 @@ namespace Kudu.Core.Jobs
         protected override void OnRolledLogFile()
         {
         }
+
+        protected override void ClearJobsListCache()
+        {
+            TriggeredJobsManager.ClearJobListCache();
+        }
     }
 }
