@@ -185,9 +185,12 @@ namespace Kudu.Core.Functions
         {
             return new[]
             {
-                new FunctionTemplate { Id = "HttpTrigger", Language = "JavaScript", Trigger = "Http" },
-                new FunctionTemplate { Id = "HttpTrigger-Batch", Language = "Batch", Trigger = "Http" },
+                new FunctionTemplate { Id = "BlobTrigger-CSharp", Language = "C#", Trigger = "Blob" },
                 new FunctionTemplate { Id = "BlobTrigger", Language = "JavaScript", Trigger = "Blob" },
+                new FunctionTemplate { Id = "HttpTrigger-Batch", Language = "Batch", Trigger = "Http" },
+                new FunctionTemplate { Id = "HttpTrigger-CSharp", Language = "C#", Trigger = "Http" },
+                new FunctionTemplate { Id = "HttpTrigger", Language = "JavaScript", Trigger = "Http" },
+                new FunctionTemplate { Id = "ManualTrigger", Language = "JavaScript", Trigger = "Manual" },
                 new FunctionTemplate { Id = "QueueTrigger-Bash", Language = "Bash", Trigger = "Queue" },
                 new FunctionTemplate { Id = "QueueTrigger-Batch", Language = "Batch", Trigger = "Queue" },
                 new FunctionTemplate { Id = "QueueTrigger-FSharp", Language = "F#", Trigger = "Queue" },
@@ -198,6 +201,7 @@ namespace Kudu.Core.Functions
                 new FunctionTemplate { Id = "ResizeImage", Language = "exe", Trigger = "Queue" },
                 new FunctionTemplate { Id = "ServiceBusQueueTrigger", Language = "JavaScript", Trigger = "ServiceBus" },
                 new FunctionTemplate { Id = "TimerTrigger", Language = "JavaScript", Trigger = "Timer" },
+                new FunctionTemplate { Id = "TimerTrigger-CSharp", Language = "C#", Trigger = "Timer" },
                 new FunctionTemplate { Id = "WebHook-Generic", Language = "JavaScript", Trigger = "WebHook-Generic" },
                 new FunctionTemplate { Id = "WebHook-GitHub", Language = "JavaScript", Trigger = "WebHook-GitHub" }
             };
@@ -294,7 +298,7 @@ namespace Kudu.Core.Functions
         {
             using (var client = GetHttpClient())
             {
-                var response = await client.GetAsync("https://api.github.com/repos/Azure/azure-webjobs-sdk-script/contents/sample?ref=0fc45ab7b5168588fe40955c12033a2d0ae3c8e0");
+                var response = await client.GetAsync("https://api.github.com/repos/fabiocav/azure-webjobs-sdk-script/contents/sample?ref=3b5a5bcefc57f432a67ce1c30386ce7620cca1ef");
                 response.EnsureSuccessStatusCode();
                 var content = await response.Content.ReadAsAsync<IEnumerable<GitHubContent>>();
                 return content.Where(s => s.type.Equals("dir", StringComparison.OrdinalIgnoreCase));
