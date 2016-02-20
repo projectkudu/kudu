@@ -122,12 +122,22 @@ namespace Kudu.Core.Functions
             }
             else
             {
-                // Create or update function
-                if (!FileSystemHelpers.DirectoryExists(functionDir))
+                // Make sure the function folder exists
+                FileSystemHelpers.EnsureDirectory(functionDir);
+
+                // If files are included, write them out
+                if (functionEnvelope?.Files != null)
                 {
-                    // create a new function
-                    FileSystemHelpers.EnsureDirectory(functionDir);
+                    // Delete all existing files in the directory. This will also delete current function.json, but it gets recreated below
+                    FileSystemHelpers.DeleteDirectoryContentsSafe(functionDir);
+
+                    foreach (var fileEntry in functionEnvelope?.Files)
+                    {
+                        await FileSystemHelpers.WriteAllTextToFileAsync(Path.Combine(functionDir, fileEntry.Key), fileEntry.Value);
+                    }
                 }
+
+                // Create the function.json
                 await FileSystemHelpers.WriteAllTextToFileAsync(Path.Combine(functionDir, Constants.FunctionsConfigFile), JsonConvert.SerializeObject(functionEnvelope?.Config ?? new JObject()));
             }
             return await GetFunctionConfig(name);

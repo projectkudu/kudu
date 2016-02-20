@@ -2,6 +2,7 @@
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Collections.Generic;
 
 namespace Kudu.Contracts.Jobs
 {
@@ -33,5 +34,8 @@ namespace Kudu.Contracts.Jobs
 
         [JsonProperty(PropertyName = "config")]
         public JObject Config { get; set; }
+
+        [JsonProperty(PropertyName = "files")]
+        public IDictionary<string, string> Files { get; set; }
     }
 }

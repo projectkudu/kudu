@@ -26,15 +26,27 @@ namespace Kudu.Services.Functions
         }
 
         [HttpPut]
-        public async Task<HttpResponseMessage> CreateOrUpdate(string name)
+        public Task<HttpResponseMessage> CreateOrUpdate(string name)
+        {
+            return CreateOrUpdateHelper(name, Request.Content.ReadAsAsync<FunctionEnvelope>());
+        }
+
+        [HttpPut]
+        public Task<HttpResponseMessage> CreateOrUpdateArm(string name, ArmEntry<FunctionEnvelope> armFunctionEnvelope)
+        {
+            return CreateOrUpdateHelper(name, Task.FromResult(armFunctionEnvelope.Properties));
+        }
+
+        private async Task<HttpResponseMessage> CreateOrUpdateHelper(string name, Task<FunctionEnvelope> functionEnvelopeBuilder)
         {
             var tracer = _traceFactory.GetTracer();
             using (tracer.Step($"FunctionsController.CreateOrUpdate({name})"))
             {
                 try
                 {
-                    var functionEnvelope = await Request.Content.ReadAsAsync<FunctionEnvelope>();
-                    return Request.CreateResponse(HttpStatusCode.Created, await _manager.CreateOrUpdate(name, functionEnvelope));
+                    var functionEnvelope = await functionEnvelopeBuilder;
+                    functionEnvelope = await _manager.CreateOrUpdate(name, functionEnvelope);
+                    return Request.CreateResponse(HttpStatusCode.Created, ArmUtils.AddEnvelopeOnArmRequest(functionEnvelope, Request));
                 }
                 catch (FileNotFoundException ex)
                 {
@@ -55,7 +67,7 @@ namespace Kudu.Services.Functions
             var tracer = _traceFactory.GetTracer();
             using (tracer.Step("FunctionsController.list()"))
             {
-                return Request.CreateResponse(HttpStatusCode.OK, await _manager.ListFunctionsConfig());
+                return Request.CreateResponse(HttpStatusCode.OK, ArmUtils.AddEnvelopeOnArmRequest(await _manager.ListFunctionsConfig(), Request));
             }
         }
 
@@ -65,7 +77,7 @@ namespace Kudu.Services.Functions
             var tracer = _traceFactory.GetTracer();
             using (tracer.Step($"FunctionsController.Get({name})"))
             {
-                return Request.CreateResponse(HttpStatusCode.OK, await _manager.GetFunctionConfig(name));
+                return Request.CreateResponse(HttpStatusCode.OK, ArmUtils.AddEnvelopeOnArmRequest(await _manager.GetFunctionConfig(name), Request));
             }
         }
 
