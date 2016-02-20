@@ -33,5 +33,8 @@ namespace Kudu.Contracts.Jobs
 
         [JsonProperty(PropertyName = "config")]
         public JObject Config { get; set; }
+
+        [JsonProperty(PropertyName = "files")]
+        public JObject Files { get; set; }
     }
 }
