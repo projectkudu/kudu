@@ -8,7 +8,6 @@ using Kudu.Core.Functions;
 using Kudu.Core.Tracing;
 using Kudu.Services.Arm;
 using System.IO;
-using Kudu.Contracts.Jobs;
 using Newtonsoft.Json.Linq;
 
 namespace Kudu.Services.Functions
@@ -45,7 +44,7 @@ namespace Kudu.Services.Functions
                 try
                 {
                     var functionEnvelope = await functionEnvelopeBuilder;
-                    functionEnvelope = await _manager.CreateOrUpdate(name, functionEnvelope);
+                    functionEnvelope = await _manager.CreateOrUpdateAsync(name, functionEnvelope);
                     return Request.CreateResponse(HttpStatusCode.Created, ArmUtils.AddEnvelopeOnArmRequest(functionEnvelope, Request));
                 }
                 catch (FileNotFoundException ex)
@@ -67,7 +66,7 @@ namespace Kudu.Services.Functions
             var tracer = _traceFactory.GetTracer();
             using (tracer.Step("FunctionsController.list()"))
             {
-                return Request.CreateResponse(HttpStatusCode.OK, ArmUtils.AddEnvelopeOnArmRequest(await _manager.ListFunctionsConfig(), Request));
+                return Request.CreateResponse(HttpStatusCode.OK, ArmUtils.AddEnvelopeOnArmRequest(await _manager.ListFunctionsConfigAsync(), Request));
             }
         }
 
@@ -77,7 +76,7 @@ namespace Kudu.Services.Functions
             var tracer = _traceFactory.GetTracer();
             using (tracer.Step($"FunctionsController.Get({name})"))
             {
-                return Request.CreateResponse(HttpStatusCode.OK, ArmUtils.AddEnvelopeOnArmRequest(await _manager.GetFunctionConfig(name), Request));
+                return Request.CreateResponse(HttpStatusCode.OK, ArmUtils.AddEnvelopeOnArmRequest(await _manager.GetFunctionConfigAsync(name), Request));
             }
         }
 
@@ -107,7 +106,7 @@ namespace Kudu.Services.Functions
             var tracer = _traceFactory.GetTracer();
             using (tracer.Step("FunctionsController.GetHostSettings()"))
             {
-                return Request.CreateResponse(HttpStatusCode.OK, await _manager.GetHostConfig());
+                return Request.CreateResponse(HttpStatusCode.OK, await _manager.GetHostConfigAsync());
             }
         }
 
@@ -117,17 +116,7 @@ namespace Kudu.Services.Functions
             var tracer = _traceFactory.GetTracer();
             using (tracer.Step("FunctionsController.PutHostSettings()"))
             {
-                return Request.CreateResponse(HttpStatusCode.Created, await _manager.PutHostConfig(await Request.Content.ReadAsAsync<JObject>()));
-            }
-        }
-
-        [HttpGet]
-        public HttpResponseMessage GetFunctionsTemplates()
-        {
-            var tracer = _traceFactory.GetTracer();
-            using (tracer.Step("FunctionsController.GetFunctionsTemplates()"))
-            {
-                return Request.CreateResponse(HttpStatusCode.OK, _manager.GetTemplates());
+                return Request.CreateResponse(HttpStatusCode.Created, await _manager.PutHostConfigAsync(await Request.Content.ReadAsAsync<JObject>()));
             }
         }
 
@@ -139,7 +128,7 @@ namespace Kudu.Services.Functions
             {
                 try
                 {
-                    await _manager.SyncTriggers();
+                    await _manager.SyncTriggersAsync();
 
                     return Request.CreateResponse(HttpStatusCode.OK);
                 }

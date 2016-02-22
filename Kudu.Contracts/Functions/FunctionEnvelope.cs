@@ -4,7 +4,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 
-namespace Kudu.Contracts.Jobs
+namespace Kudu.Core.Functions
 {
     public class FunctionEnvelope : INamedObject
     {

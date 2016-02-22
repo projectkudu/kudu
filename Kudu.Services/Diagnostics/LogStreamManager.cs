@@ -555,7 +555,10 @@ namespace Kudu.Services.Performance
 
                 _context.Response.Buffer = false;
                 _context.Response.BufferOutput = false;
-                _context.Response.ContentType = _context.Request.Headers["FunctionsPortal"] != null
+                // Serving mime type 'text/plain' causes IIS to automatically gzip the response
+                // Changing the type to a custom mime-type fixes this but causes the browser to attempt a download instead of a stream
+                // Hence, change only if the request is coming from the FunctionsPortal
+                _context.Response.ContentType = _context.Request.Headers[Constants.FunctionsPortal] != null
                     ? "custom-functions/stream"
                     : "text/plain";
                 _context.Response.StatusCode = 200;

@@ -283,7 +283,13 @@ namespace Kudu.Core
         {
             get
             {
-                return HttpContext.Current?.Request?.Url?.GetLeftPart(UriPartial.Authority);
+                // GetLeftPart(Authority) returns the https://www.example.com of any Uri
+                var url = HttpContext.Current?.Request?.Url?.GetLeftPart(UriPartial.Authority);
+                if (string.IsNullOrEmpty(url))
+                {
+                    throw new InvalidOperationException("There is no request context");
+                }
+                return url;
             }
         }
 
