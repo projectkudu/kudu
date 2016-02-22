@@ -123,9 +123,9 @@ namespace Kudu.Core.Functions
                     // Delete all existing files in the directory. This will also delete current function.json, but it gets recreated below
                     FileSystemHelpers.DeleteDirectoryContentsSafe(functionDir);
 
-                    foreach (JProperty prop in functionEnvelope?.Files.Properties())
+                    foreach (var fileEntry in functionEnvelope?.Files)
                     {
-                        await FileSystemHelpers.WriteAllTextToFileAsync(Path.Combine(functionDir, prop.Name), (string)prop.Value);
+                        await FileSystemHelpers.WriteAllTextToFileAsync(Path.Combine(functionDir, fileEntry.Key), fileEntry.Value);
                     }
                 }
 
