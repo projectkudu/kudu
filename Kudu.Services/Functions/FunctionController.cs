@@ -45,7 +45,8 @@ namespace Kudu.Services.Functions
                 try
                 {
                     var functionEnvelope = await functionEnvelopeBuilder;
-                    return Request.CreateResponse(HttpStatusCode.Created, await _manager.CreateOrUpdate(name, functionEnvelope));
+                    functionEnvelope = await _manager.CreateOrUpdate(name, functionEnvelope);
+                    return Request.CreateResponse(HttpStatusCode.Created, ArmUtils.AddEnvelopeOnArmRequest(functionEnvelope, Request));
                 }
                 catch (FileNotFoundException ex)
                 {
