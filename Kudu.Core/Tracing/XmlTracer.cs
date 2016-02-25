@@ -38,6 +38,7 @@ namespace Kudu.Core.Tracing
             "/api/siteextensions",
             "/api/processes",
             "/api/deployments",
+            "/api/deployments/latest",
         };
 
         private Stack<TraceInfo> _infos;
