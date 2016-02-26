@@ -7,7 +7,8 @@ using System.Web.Http.Filters;
 
 namespace Kudu.Services.Filters
 {
-    public class FunctionExceptionFilterAttribute : ExceptionFilterAttribute
+    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, Inherited = true, AllowMultiple = true)]
+    public sealed class FunctionExceptionFilterAttribute : ExceptionFilterAttribute
     {
         public override void OnException(HttpActionExecutedContext context)
         {
