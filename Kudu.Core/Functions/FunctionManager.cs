@@ -8,9 +8,6 @@ using Kudu.Core.Tracing;
 using Newtonsoft.Json.Linq;
 using System.Linq;
 using Newtonsoft.Json;
-using System.Net;
-using NuGet;
-using System.Net.Http;
 
 namespace Kudu.Core.Functions
 {
@@ -106,10 +103,7 @@ namespace Kudu.Core.Functions
                 // Delete all existing files in the directory. This will also delete current function.json, but it gets recreated below
                 FileSystemHelpers.DeleteDirectoryContentsSafe(functionDir);
 
-                foreach (var fileEntry in functionEnvelope?.Files)
-                {
-                    await FileSystemHelpers.WriteAllTextToFileAsync(Path.Combine(functionDir, fileEntry.Key), fileEntry.Value);
-                }
+                await Task.WhenAll(functionEnvelope.Files.Select(e => FileSystemHelpers.WriteAllTextToFileAsync(Path.Combine(functionDir, e.Key), e.Value)));
             }
             else
             {
