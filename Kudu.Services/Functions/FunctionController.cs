@@ -9,10 +9,13 @@ using Kudu.Core.Tracing;
 using Kudu.Services.Arm;
 using System.IO;
 using Newtonsoft.Json.Linq;
+using Kudu.Contracts.Tracing;
+using Kudu.Services.Filters;
 
 namespace Kudu.Services.Functions
 {
     [ArmControllerConfiguration]
+    [FunctionExceptionFilter]
     public class FunctionController : ApiController
     {
         private readonly IFunctionManager _manager;
@@ -41,22 +44,9 @@ namespace Kudu.Services.Functions
             var tracer = _traceFactory.GetTracer();
             using (tracer.Step($"FunctionsController.CreateOrUpdate({name})"))
             {
-                try
-                {
                     var functionEnvelope = await functionEnvelopeBuilder;
                     functionEnvelope = await _manager.CreateOrUpdateAsync(name, functionEnvelope);
                     return Request.CreateResponse(HttpStatusCode.Created, ArmUtils.AddEnvelopeOnArmRequest(functionEnvelope, Request));
-                }
-                catch (FileNotFoundException ex)
-                {
-                    tracer.TraceError(ex);
-                    return Request.CreateResponse(HttpStatusCode.NotFound, ex.Message);
-                }
-                catch (InvalidOperationException ex)
-                {
-                    tracer.TraceError(ex);
-                    return Request.CreateResponse(HttpStatusCode.Conflict, ex.Message);
-                }
             }
         }
 
@@ -86,17 +76,8 @@ namespace Kudu.Services.Functions
             var tracer = _traceFactory.GetTracer();
             using (tracer.Step($"FunctionsController.Delete({name})"))
             {
-                try
-                {
-                    _manager.DeleteFunction(name);
-                    return Request.CreateResponse(HttpStatusCode.NoContent);
-                }
-                catch (FileNotFoundException ex)
-                {
-                    tracer.TraceError(ex);
-                    return Request.CreateResponse(HttpStatusCode.NotFound, ex.Message);
-                }
-
+                _manager.DeleteFunction(name);
+                return Request.CreateResponse(HttpStatusCode.NoContent);
             }
         }
 
@@ -126,18 +107,8 @@ namespace Kudu.Services.Functions
             var tracer = _traceFactory.GetTracer();
             using (tracer.Step("FunctionController.SyncTriggers"))
             {
-                try
-                {
-                    await _manager.SyncTriggersAsync();
-
-                    return Request.CreateResponse(HttpStatusCode.OK);
-                }
-                catch (Exception ex)
-                {
-                    tracer.TraceError(ex);
-
-                    return ArmUtils.CreateErrorResponse(Request, HttpStatusCode.BadRequest, ex);
-                }
+                await _manager.SyncTriggersAsync();
+                return Request.CreateResponse(HttpStatusCode.OK);
             }
         }
     }
