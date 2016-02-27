@@ -105,9 +105,11 @@ namespace Kudu.Core.Functions
 
                 await Task.WhenAll(functionEnvelope.Files.Select(e => FileSystemHelpers.WriteAllTextToFileAsync(Path.Combine(functionDir, e.Key), e.Value)));
             }
-            else
+
+            // Write out the config file if it's in the manifest
+            if (functionEnvelope?.Config != null)
             {
-                await FileSystemHelpers.WriteAllTextToFileAsync(Path.Combine(functionDir, Constants.FunctionsConfigFile), JsonConvert.SerializeObject(functionEnvelope?.Config ?? new JObject()));
+                await FileSystemHelpers.WriteAllTextToFileAsync(Path.Combine(functionDir, Constants.FunctionsConfigFile), JsonConvert.SerializeObject(functionEnvelope?.Config, Formatting.Indented));
             }
 
             return await GetFunctionConfigAsync(name);
