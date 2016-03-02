@@ -27,11 +27,6 @@ namespace Kudu.Core.Infrastructure
             _tracer = tracer;
         }
 
-        public async Task<HttpResponseMessage> PostAsync(string path)
-        {
-            return await PostAsync<string>(path);
-        }
-
         public async Task<HttpResponseMessage> PostAsync<T>(string path, T content = default(T))
         {
             var jwt = System.Environment.GetEnvironmentVariable(Constants.X_MS_SITE_RESTRICTED_JWT);
