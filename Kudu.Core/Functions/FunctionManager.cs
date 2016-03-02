@@ -181,6 +181,7 @@ namespace Kudu.Core.Functions
             return new FunctionEnvelope
             {
                 Name = functionName,
+                TriggerUrl = GetFunctionTriggerUrl(functionName),
                 ScriptRootPathHref = FilePathToVfsUri(GetFunctionPath(functionName), isDirectory: true),
                 ScriptHref = FilePathToVfsUri(GetFunctionScriptPath(functionName, config)),
                 ConfigHref = FilePathToVfsUri(GetFunctionConfigPath(functionName)),
@@ -189,6 +190,17 @@ namespace Kudu.Core.Functions
                 Href = GetFunctionHref(functionName),
                 Config = config
             };
+        }
+
+        private string GetFunctionTriggerUrl(string functionName)
+        {
+            FunctionSecrets functionSecrets = GetFunctionSecrets(functionName);
+
+            // TODO: 'code' is only valid for WebHooks. Need to generalize
+            return String.Format(@"https://{0}/api/{1}?code={2}",
+                System.Environment.GetEnvironmentVariable("WEBSITE_HOSTNAME") ?? "localhost",
+                functionName,
+                functionSecrets.Key);
         }
 
         // Logic for this function is copied from here
@@ -284,9 +296,40 @@ namespace Kudu.Core.Functions
             return Path.Combine(_environment.DataPath, Constants.Functions, Constants.SampleData, $"{functionName}.dat");
         }
 
+        private FunctionSecrets GetFunctionSecrets(string functionName)
+        {
+            FunctionSecrets secrets;
+            string secretFilePath = GetFunctionSecretsFilePath(functionName);
+            if (File.Exists(secretFilePath))
+            {
+                // load the secrets file
+                string secretsJson = FileSystemHelpers.ReadAllTextFromFile(secretFilePath);
+                secrets = JsonConvert.DeserializeObject<FunctionSecrets>(secretsJson);
+            }
+            else
+            {
+                // initialize with new secrets and save it
+                secrets = new FunctionSecrets
+                {
+                    Key = SecurityUtility.GenerateSecretString()
+                };
+
+                FileSystemHelpers.EnsureDirectory(Path.GetDirectoryName(secretFilePath));
+                FileSystemHelpers.WriteAllText(secretFilePath, JsonConvert.SerializeObject(secrets, Formatting.Indented));
+            }
+
+            return secrets;
+        }
+
         private string GetFunctionSecretsFilePath(string functionName)
         {
             return Path.Combine(_environment.DataPath, Constants.Functions, Constants.Secrets, $"{functionName}.json");
+        }
+
+        class FunctionSecrets
+        {
+            [JsonProperty(PropertyName = "key")]
+            public string Key { get; set; }
         }
     }
 }

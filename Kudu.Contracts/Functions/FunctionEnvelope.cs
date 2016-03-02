@@ -11,6 +11,9 @@ namespace Kudu.Core.Functions
         [JsonProperty(PropertyName = "name")]
         public string Name { get; set; }
 
+        [JsonProperty(PropertyName = "trigger_url")]
+        public string TriggerUrl { get; set; }
+
         [JsonProperty(PropertyName = "script_root_path_href")]
         public Uri ScriptRootPathHref { get; set; }
 

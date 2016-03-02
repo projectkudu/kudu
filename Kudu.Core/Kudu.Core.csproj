@@ -161,6 +161,7 @@
     <Compile Include="Infrastructure\AspNet5Helper.cs" />
     <Compile Include="Infrastructure\InstanceIdUtility.cs" />
     <Compile Include="Infrastructure\IServerConfiguration.cs" />
+    <Compile Include="Infrastructure\SecurityUtility.cs" />
     <Compile Include="Infrastructure\ServerConfiguration.cs" />
     <Compile Include="Infrastructure\SettingsProcessor.cs" />
     <Compile Include="Infrastructure\ZipArchiveExtensions.cs" />
