@@ -40,8 +40,11 @@ namespace Kudu.Core.Functions
                     return;
                 }
 
-                var client = new OperationClient(tracer);
-                await client.PostAsync("/operations/settriggers", inputs);
+                if (Environment.IsAzureEnvironment())
+                {
+                    var client = new OperationClient(tracer);
+                    await client.PostAsync("/operations/settriggers", inputs);
+                }
             }
         }
 
@@ -58,7 +61,6 @@ namespace Kudu.Core.Functions
             {
                 try
                 {
-
                     JToken disabled;
                     if (functionJson.Config.TryGetValue("disabled", out disabled) && (bool)disabled)
                     {
@@ -66,8 +68,7 @@ namespace Kudu.Core.Functions
                         continue;
                     }
 
-                    var binding = functionJson.Config.Value<JObject>("bindings");
-                    foreach (JObject input in binding.Value<JArray>("input"))
+                    foreach (JObject input in functionJson.Config.Value<JArray>("bindings"))
                     {
                         var type = input.Value<string>("type");
                         if (type.EndsWith("Trigger", StringComparison.OrdinalIgnoreCase))
