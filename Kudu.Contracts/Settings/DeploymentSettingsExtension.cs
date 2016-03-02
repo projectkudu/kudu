@@ -55,6 +55,11 @@ namespace Kudu.Contracts.Settings
             return GetTimeSpan(settings, SettingsKeys.LogStreamTimeout, DefaultLogStreamTimeout);
         }
 
+        public static string GetCustomLogStreamPath(this IDeploymentSettingsManager settings, string streamKey)
+        {
+            return String.Concat(SettingsKeys.LogStreamCustomLog, streamKey.ToUpperInvariant());
+        }
+
         public static string GetPostDeploymentActionsDir(this IDeploymentSettingsManager settings, string defaultPath)
         {
             string value = settings.GetValue(SettingsKeys.PostDeploymentActionsDirectory);
@@ -140,7 +145,7 @@ namespace Kudu.Contracts.Settings
             string repositoryPath = settings.GetValue(SettingsKeys.RepositoryPath);
             if (!String.IsNullOrEmpty(repositoryPath))
             {
-                return System.Environment.ExpandEnvironmentVariables(repositoryPath);
+                return Environment.ExpandEnvironmentVariables(repositoryPath);
             }
 
             // in case of no repository, we will default to webroot (preferring inplace).
@@ -157,7 +162,7 @@ namespace Kudu.Contracts.Settings
             string targetPath = settings.GetValue(SettingsKeys.TargetPath);
             if (!String.IsNullOrEmpty(targetPath))
             {
-                return System.Environment.ExpandEnvironmentVariables(targetPath);
+                return Environment.ExpandEnvironmentVariables(targetPath);
             }
 
             return null;

@@ -15,9 +15,8 @@ using Kudu.Core.Infrastructure;
 using Kudu.Core.Settings;
 using Kudu.Core.Tracing;
 using Kudu.Services.Infrastructure;
-
-using Environment = System.Environment;
 using System.Diagnostics.CodeAnalysis;
+using Environment = System.Environment;
 
 namespace Kudu.Services.Performance
 {
@@ -48,6 +47,7 @@ namespace Kudu.Services.Performance
 
         private ShutdownDetector _shutdownDetector;
         private CancellationTokenRegistration _cancellationTokenRegistration;
+        private IDeploymentSettingsManager _settings;
 
         public LogStreamManager(string logPath, 
                                 IEnvironment environment,
@@ -60,6 +60,7 @@ namespace Kudu.Services.Performance
             _tracer = tracer;
             _environment = environment;
             _shutdownDetector = shutdownDetector;
+            _settings = settings;
             _timeout = settings.GetLogStreamTimeout();
             _operationLock = operationLock;
             _results = new List<ProcessRequestAsyncResult>();
@@ -279,21 +280,31 @@ namespace Kudu.Services.Performance
                 return _logPath;
             }
 
-            // in case of application or http log, we ensure directory
+            // find the first part after /logstream/ which can be application, http or a custom defined path.
             string firstPath = routePath.Split(new char[] { '/' }, StringSplitOptions.RemoveEmptyEntries)[0];
             bool isApplication = String.Equals(firstPath, "Application", StringComparison.OrdinalIgnoreCase);
             if (isApplication)
             {
                 _enableTrace = true;
-                FileSystemHelpers.EnsureDirectory(Path.Combine(_logPath, firstPath));
             }
-            else
+
+            // in case of application or http log, we ensure directory
+            bool isHttp = String.Equals(firstPath, "http", StringComparison.OrdinalIgnoreCase);
+            if (isHttp || isApplication)
             {
-                bool isHttp = String.Equals(firstPath, "http", StringComparison.OrdinalIgnoreCase);
-                if (isHttp)
-                {
-                    FileSystemHelpers.EnsureDirectory(Path.Combine(_logPath, firstPath));
-                }
+                FileSystemHelpers.EnsureDirectory(Path.Combine(_logPath, firstPath));
+                return Path.Combine(_logPath, routePath);
+            }
+
+            // Given that SCM_LOGSTREAM_MYLOG is used in "appsettings"
+            // And the value for the key supplies a relative path like "site\wwwroot\app_data\logs\"
+            // Then return the custom log path: env root path + custom log path => D:\home + site\wwwroot\app_data\logs\
+            string path = _settings.GetValue(_settings.GetCustomLogStreamPath(firstPath));
+            if (!string.IsNullOrEmpty(path))
+            {
+                var customLogPath = Path.Combine(_environment.RootPath, path.TrimStart('\\'));
+                FileSystemHelpers.EnsureDirectory(customLogPath);
+                return customLogPath;
             }
 
             return Path.Combine(_logPath, routePath);

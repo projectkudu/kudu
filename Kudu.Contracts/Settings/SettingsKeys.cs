@@ -13,6 +13,7 @@
         public const string TraceLevel = "SCM_TRACE_LEVEL";
         public const string CommandIdleTimeout = "SCM_COMMAND_IDLE_TIMEOUT";
         public const string LogStreamTimeout = "SCM_LOGSTREAM_TIMEOUT";
+        public const string LogStreamCustomLog = "SCM_LOGSTREAM_";
         public const string GitUsername = "SCM_GIT_USERNAME";
         public const string GitEmail = "SCM_GIT_EMAIL";
         public const string ScmType = "ScmType";
