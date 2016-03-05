@@ -100,7 +100,7 @@ namespace Kudu.Core.Functions
             return inputs;
         }
 
-        public async Task<FunctionEnvelope> CreateOrUpdateAsync(string name, FunctionEnvelope functionEnvelope)
+        public async Task<FunctionEnvelope> CreateOrUpdateAsync(string name, FunctionEnvelope functionEnvelope, Action setConfigChanged)
         {
             var functionDir = Path.Combine(_environment.FunctionsPath, name);
 
@@ -119,7 +119,23 @@ namespace Kudu.Core.Functions
             // Write out the config file if it's in the manifest
             if (functionEnvelope?.Config != null)
             {
-                await FileSystemHelpers.WriteAllTextToFileAsync(Path.Combine(functionDir, Constants.FunctionsConfigFile), JsonConvert.SerializeObject(functionEnvelope?.Config, Formatting.Indented));
+                string configPath = Path.Combine(functionDir, Constants.FunctionsConfigFile);
+
+                // Get the current config, if any
+                string currentConfig = null;
+                if (FileSystemHelpers.FileExists(configPath))
+                {
+                    currentConfig = await FileSystemHelpers.ReadAllTextFromFileAsync(configPath);
+                }
+
+                string newConfig = JsonConvert.SerializeObject(functionEnvelope?.Config, Formatting.Indented);
+
+                // Only save new config if it changed. This helps optimize the syncTriggers call
+                if (newConfig != currentConfig)
+                {
+                    await FileSystemHelpers.WriteAllTextToFileAsync(configPath, JsonConvert.SerializeObject(functionEnvelope?.Config, Formatting.Indented));
+                    setConfigChanged();
+                }
             }
 
             return await GetFunctionConfigAsync(name);

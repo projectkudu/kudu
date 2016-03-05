@@ -9,7 +9,7 @@ namespace Kudu.Core.Functions
     public interface IFunctionManager
     {
         Task SyncTriggersAsync();
-        Task<FunctionEnvelope> CreateOrUpdateAsync(string name, FunctionEnvelope functionEnvelope);
+        Task<FunctionEnvelope> CreateOrUpdateAsync(string name, FunctionEnvelope functionEnvelope, Action setConfigChanged);
         Task<IEnumerable<FunctionEnvelope>> ListFunctionsConfigAsync();
         Task<FunctionEnvelope> GetFunctionConfigAsync(string name);
         Task<JObject> GetHostConfigAsync();

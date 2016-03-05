@@ -45,11 +45,15 @@ namespace Kudu.Services.Functions
             using (tracer.Step($"FunctionsController.CreateOrUpdate({name})"))
             {
                 var functionEnvelope = await functionEnvelopeBuilder;
-                functionEnvelope = await _manager.CreateOrUpdateAsync(name, functionEnvelope);
+                bool configChanged = false;
+                functionEnvelope = await _manager.CreateOrUpdateAsync(name, functionEnvelope, () => { configChanged = true; });
 
                 // Don't await this call since we don't want slow down the operation. Sync can happen later
 #pragma warning disable 4014
-                _manager.SyncTriggersAsync();
+                if (configChanged)
+                {
+                    _manager.SyncTriggersAsync();
+                }
 #pragma warning restore 4014
 
                 return Request.CreateResponse(HttpStatusCode.Created, ArmUtils.AddEnvelopeOnArmRequest(functionEnvelope, Request));
