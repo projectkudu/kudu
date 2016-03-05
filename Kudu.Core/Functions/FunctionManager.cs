@@ -33,6 +33,14 @@ namespace Kudu.Core.Functions
                     return; 
                 }
 
+                var jwt = System.Environment.GetEnvironmentVariable(Constants.X_MS_SITE_RESTRICTED_JWT);
+                if (String.IsNullOrEmpty(jwt))
+                {
+                    // If there is no token, do nothing. This can happen on non-dynamic stamps
+                    tracer.Trace("Ignoring operation as we don't have a token");
+                    return;
+                }
+
                 var inputs = await GetTriggerInputsAsync(tracer);
                 if (inputs.Count == 0)
                 {
@@ -43,6 +51,7 @@ namespace Kudu.Core.Functions
                 if (Environment.IsAzureEnvironment())
                 {
                     var client = new OperationClient(tracer);
+
                     await client.PostAsync("/operations/settriggers", inputs);
                 }
             }

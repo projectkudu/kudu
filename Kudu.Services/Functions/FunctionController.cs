@@ -44,9 +44,15 @@ namespace Kudu.Services.Functions
             var tracer = _traceFactory.GetTracer();
             using (tracer.Step($"FunctionsController.CreateOrUpdate({name})"))
             {
-                    var functionEnvelope = await functionEnvelopeBuilder;
-                    functionEnvelope = await _manager.CreateOrUpdateAsync(name, functionEnvelope);
-                    return Request.CreateResponse(HttpStatusCode.Created, ArmUtils.AddEnvelopeOnArmRequest(functionEnvelope, Request));
+                var functionEnvelope = await functionEnvelopeBuilder;
+                functionEnvelope = await _manager.CreateOrUpdateAsync(name, functionEnvelope);
+
+                // Don't await this call since we don't want slow down the operation. Sync can happen later
+#pragma warning disable 4014
+                _manager.SyncTriggersAsync();
+#pragma warning restore 4014
+
+                return Request.CreateResponse(HttpStatusCode.Created, ArmUtils.AddEnvelopeOnArmRequest(functionEnvelope, Request));
             }
         }
 
@@ -77,6 +83,10 @@ namespace Kudu.Services.Functions
             using (tracer.Step($"FunctionsController.Delete({name})"))
             {
                 _manager.DeleteFunction(name);
+
+                // Don't await this call since we don't want slow down the operation. Sync can happen later
+                _manager.SyncTriggersAsync();
+
                 return Request.CreateResponse(HttpStatusCode.NoContent);
             }
         }
