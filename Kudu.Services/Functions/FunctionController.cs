@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Diagnostics;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -7,10 +7,8 @@ using System.Web.Http;
 using Kudu.Core.Functions;
 using Kudu.Core.Tracing;
 using Kudu.Services.Arm;
-using System.IO;
-using Newtonsoft.Json.Linq;
-using Kudu.Contracts.Tracing;
 using Kudu.Services.Filters;
+using Newtonsoft.Json.Linq;
 
 namespace Kudu.Services.Functions
 {
@@ -47,6 +45,7 @@ namespace Kudu.Services.Functions
                 var functionEnvelope = await functionEnvelopeBuilder;
                 bool configChanged = false;
                 functionEnvelope = await _manager.CreateOrUpdateAsync(name, functionEnvelope, () => { configChanged = true; });
+                AddFunctionAppIdToEnvelope(functionEnvelope);
 
                 // Don't await this call since we don't want slow down the operation. Sync can happen later
 #pragma warning disable 4014
@@ -66,7 +65,8 @@ namespace Kudu.Services.Functions
             var tracer = _traceFactory.GetTracer();
             using (tracer.Step("FunctionsController.list()"))
             {
-                return Request.CreateResponse(HttpStatusCode.OK, ArmUtils.AddEnvelopeOnArmRequest(await _manager.ListFunctionsConfigAsync(), Request));
+                var functions = (await _manager.ListFunctionsConfigAsync()).Select(f => AddFunctionAppIdToEnvelope(f));
+                return Request.CreateResponse(HttpStatusCode.OK, ArmUtils.AddEnvelopeOnArmRequest(functions, Request));
             }
         }
 
@@ -76,7 +76,9 @@ namespace Kudu.Services.Functions
             var tracer = _traceFactory.GetTracer();
             using (tracer.Step($"FunctionsController.Get({name})"))
             {
-                return Request.CreateResponse(HttpStatusCode.OK, ArmUtils.AddEnvelopeOnArmRequest(await _manager.GetFunctionConfigAsync(name), Request));
+                return Request.CreateResponse(HttpStatusCode.OK,
+                    ArmUtils.AddEnvelopeOnArmRequest(
+                        AddFunctionAppIdToEnvelope(await _manager.GetFunctionConfigAsync(name)), Request));
             }
         }
 
@@ -124,6 +126,40 @@ namespace Kudu.Services.Functions
                 await _manager.SyncTriggersAsync();
                 return Request.CreateResponse(HttpStatusCode.OK);
             }
+        }
+
+        // Compute the site ID, for both the top level function API case and the regular nested case
+        private FunctionEnvelope AddFunctionAppIdToEnvelope(FunctionEnvelope function)
+        {
+            Uri referrer = Request.Headers.Referrer;
+            if (referrer == null) return function;
+
+            string armId = referrer.AbsolutePath;
+
+            const string msWeb = "Microsoft.Web";
+            const string functionResource = msWeb + "/functions";
+            const string sitesResource = msWeb + "/sites";
+
+            // Input: /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Web/functions/{funcname}
+            int index = armId.IndexOf(functionResource, StringComparison.OrdinalIgnoreCase);
+            if (index > 0)
+            {
+                // Produce: /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Web/sites/{sitename}
+                function.FunctionAppId = $"{armId.Substring(0, index)}{sitesResource}/{Environment.GetEnvironmentVariable("WEBSITE_SITE_NAME")}";
+                return function;
+            }
+
+            // Input: /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Web/sites/{sitename}/functions/{funcname}
+            index = armId.IndexOf(sitesResource, StringComparison.OrdinalIgnoreCase);
+            if (index > 0)
+            {
+                // Produce: /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Web/sites/{sitename}
+                index = armId.IndexOf("/", index + sitesResource.Length + 1, StringComparison.OrdinalIgnoreCase);
+                function.FunctionAppId = armId.Substring(0, index);
+                return function;
+            }
+
+            return function;
         }
     }
 }
