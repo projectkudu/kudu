@@ -18,6 +18,7 @@ using Kudu.Services.Infrastructure;
 
 using Environment = System.Environment;
 using System.Diagnostics.CodeAnalysis;
+using Kudu.Services.Diagnostics;
 
 namespace Kudu.Services.Performance
 {
@@ -74,10 +75,6 @@ namespace Kudu.Services.Performance
             });
 
             string path = ParseRequest(context);
-            if (!Directory.Exists(path))
-            {
-                throw new HttpException((Int32)HttpStatusCode.NotFound, string.Format("The directory name {0} does not exist.", path)); 
-            }
 
             ProcessRequestAsyncResult result = new ProcessRequestAsyncResult(context, cb, extraData);
 
@@ -279,24 +276,7 @@ namespace Kudu.Services.Performance
                 return _logPath;
             }
 
-            // in case of application or http log, we ensure directory
-            string firstPath = routePath.Split(new char[] { '/' }, StringSplitOptions.RemoveEmptyEntries)[0];
-            bool isApplication = String.Equals(firstPath, "Application", StringComparison.OrdinalIgnoreCase);
-            if (isApplication)
-            {
-                _enableTrace = true;
-                FileSystemHelpers.EnsureDirectory(Path.Combine(_logPath, firstPath));
-            }
-            else
-            {
-                bool isHttp = String.Equals(firstPath, "http", StringComparison.OrdinalIgnoreCase);
-                if (isHttp)
-                {
-                    FileSystemHelpers.EnsureDirectory(Path.Combine(_logPath, firstPath));
-                }
-            }
-
-            return Path.Combine(_logPath, routePath);
+            return FileSystemHelpers.EnsureDirectory(Path.Combine(_logPath, routePath));
         }
 
         private static bool MatchFilters(string fileName)
@@ -558,7 +538,7 @@ namespace Kudu.Services.Performance
                 // Serving mime type 'text/plain' causes IIS to automatically gzip the response
                 // Changing the type to a custom mime-type fixes this but causes the browser to attempt a download instead of a stream
                 // Hence, change only if the request is coming from the FunctionsPortal
-                _context.Response.ContentType = _context.Request.Headers[Constants.FunctionsPortal] != null
+                _context.Response.ContentType = _context.Request.IsFunctionsPortalRequest()
                     ? "custom-functions/stream"
                     : "text/plain";
                 _context.Response.StatusCode = 200;
