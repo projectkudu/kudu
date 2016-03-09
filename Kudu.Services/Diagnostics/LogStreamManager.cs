@@ -276,6 +276,12 @@ namespace Kudu.Services.Performance
                 return _logPath;
             }
 
+            var firstPath = routePath.Split(new char[] { '/' }, StringSplitOptions.RemoveEmptyEntries).FirstOrDefault();
+            if (string.Equals(firstPath, "Application", StringComparison.OrdinalIgnoreCase))
+            {
+                _enableTrace = true;
+            }
+
             return FileSystemHelpers.EnsureDirectory(Path.Combine(_logPath, routePath));
         }
 
