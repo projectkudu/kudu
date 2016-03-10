@@ -287,6 +287,13 @@ namespace Kudu.Core
                 var url = HttpContext.Current?.Request?.Url?.GetLeftPart(UriPartial.Authority);
                 if (string.IsNullOrEmpty(url))
                 {
+                    // if call is not done in Request context (eg. in BGThread), fall back to %host%
+                    var host = System.Environment.GetEnvironmentVariable(Constants.HttpHost);
+                    if (!string.IsNullOrEmpty(host))
+                    {
+                        return $"https://{host}";
+                    }
+
                     throw new InvalidOperationException("There is no request context");
                 }
                 return url;
