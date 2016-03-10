@@ -22,9 +22,9 @@ namespace Kudu.Core.Functions
             _traceFactory = traceFactory;
         }
 
-        public async Task SyncTriggersAsync()
+        public async Task SyncTriggersAsync(ITracer tracer = null)
         {
-            var tracer = _traceFactory.GetTracer();
+            tracer = tracer ?? _traceFactory.GetTracer();
             using (tracer.Step("FunctionManager.SyncTriggers"))
             {
                 if (!IsFunctionEnabled)

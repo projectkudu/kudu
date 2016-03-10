@@ -39,7 +39,7 @@ namespace Kudu.Core.Infrastructure
             }
 
             var host = System.Environment.GetEnvironmentVariable(Constants.HttpHost);
-            if (String.IsNullOrEmpty(jwt))
+            if (String.IsNullOrEmpty(host))
             {
                 throw new InvalidOperationException("Missing HTTP_HOST env!");
             }
@@ -48,11 +48,12 @@ namespace Kudu.Core.Infrastructure
             {
                 using (var client = ClientHandler != null ? new HttpClient(ClientHandler) : new HttpClient())
                 {
-                    client.BaseAddress = new Uri("https://" + host);
+                    client.BaseAddress = new Uri($"https://{host}");
                     client.DefaultRequestHeaders.UserAgent.Add(_userAgent.Value);
                     client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwt);
 
                     HttpResponseMessage response = await client.PostAsJsonAsync(path, content);
+                    _tracer.Trace("Response: " + response.StatusCode);
                     response.EnsureSuccessStatusCode();
                     return response;
                 }
