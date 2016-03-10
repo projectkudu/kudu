@@ -107,35 +107,42 @@ namespace Kudu.Core.Functions
             // Make sure the function folder exists
             FileSystemHelpers.EnsureDirectory(functionDir);
 
+            string newConfig = null;
+            string configPath = Path.Combine(functionDir, Constants.FunctionsConfigFile);
+
             // If files are included, write them out
             if (functionEnvelope?.Files != null)
             {
+                // If the config is passed in the file collection, save it and don't process it as a file
+                if (functionEnvelope.Files.TryGetValue(Constants.FunctionsConfigFile, out newConfig))
+                {
+                    functionEnvelope.Files.Remove(Constants.FunctionsConfigFile);
+                }
+
                 // Delete all existing files in the directory. This will also delete current function.json, but it gets recreated below
                 FileSystemHelpers.DeleteDirectoryContentsSafe(functionDir);
 
                 await Task.WhenAll(functionEnvelope.Files.Select(e => FileSystemHelpers.WriteAllTextToFileAsync(Path.Combine(functionDir, e.Key), e.Value)));
             }
 
-            // Write out the config file if it's in the manifest
-            if (functionEnvelope?.Config != null)
+            // Get the config (if it was not already passed in as a file)
+            if (newConfig == null && functionEnvelope?.Config != null)
             {
-                string configPath = Path.Combine(functionDir, Constants.FunctionsConfigFile);
+                newConfig = JsonConvert.SerializeObject(functionEnvelope?.Config, Formatting.Indented);
+            }
 
-                // Get the current config, if any
-                string currentConfig = null;
-                if (FileSystemHelpers.FileExists(configPath))
-                {
-                    currentConfig = await FileSystemHelpers.ReadAllTextFromFileAsync(configPath);
-                }
+            // Get the current config, if any
+            string currentConfig = null;
+            if (FileSystemHelpers.FileExists(configPath))
+            {
+                currentConfig = await FileSystemHelpers.ReadAllTextFromFileAsync(configPath);
+            }
 
-                string newConfig = JsonConvert.SerializeObject(functionEnvelope?.Config, Formatting.Indented);
-
-                // Only save new config if it changed. This helps optimize the syncTriggers call
-                if (newConfig != currentConfig)
-                {
-                    await FileSystemHelpers.WriteAllTextToFileAsync(configPath, JsonConvert.SerializeObject(functionEnvelope?.Config, Formatting.Indented));
-                    setConfigChanged();
-                }
+            // Save the file and set changed flag is it has changed. This helps optimize the syncTriggers call
+            if (newConfig != currentConfig)
+            {
+                await FileSystemHelpers.WriteAllTextToFileAsync(configPath, newConfig);
+                setConfigChanged();
             }
 
             return await GetFunctionConfigAsync(name);
