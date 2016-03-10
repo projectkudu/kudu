@@ -1,14 +1,19 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using System.Web.Http;
+using Kudu.Contracts.Tracing;
+using Kudu.Core;
 using Kudu.Core.Functions;
 using Kudu.Core.Tracing;
 using Kudu.Services.Arm;
 using Kudu.Services.Filters;
 using Newtonsoft.Json.Linq;
+using Environment = System.Environment;
 
 namespace Kudu.Services.Functions
 {
@@ -18,11 +23,13 @@ namespace Kudu.Services.Functions
     {
         private readonly IFunctionManager _manager;
         private readonly ITraceFactory _traceFactory;
+        private readonly IEnvironment _environment;
 
-        public FunctionController(IFunctionManager manager, ITraceFactory traceFactory)
+        public FunctionController(IFunctionManager manager, ITraceFactory traceFactory, IEnvironment environment)
         {
             _manager = manager;
             _traceFactory = traceFactory;
+            _environment = environment;
         }
 
         [HttpPut]
@@ -48,12 +55,10 @@ namespace Kudu.Services.Functions
                 AddFunctionAppIdToEnvelope(functionEnvelope);
 
                 // Don't await this call since we don't want slow down the operation. Sync can happen later
-#pragma warning disable 4014
                 if (configChanged)
                 {
-                    _manager.SyncTriggersAsync();
+                    FireSyncTriggers(tracer);
                 }
-#pragma warning restore 4014
 
                 return Request.CreateResponse(HttpStatusCode.Created, ArmUtils.AddEnvelopeOnArmRequest(functionEnvelope, Request));
             }
@@ -91,7 +96,7 @@ namespace Kudu.Services.Functions
                 _manager.DeleteFunction(name);
 
                 // Don't await this call since we don't want slow down the operation. Sync can happen later
-                _manager.SyncTriggersAsync();
+                FireSyncTriggers(tracer);
 
                 return Request.CreateResponse(HttpStatusCode.NoContent);
             }
@@ -160,6 +165,34 @@ namespace Kudu.Services.Functions
             }
 
             return function;
+        }
+
+        private void FireSyncTriggers(ITracer tracer)
+        {
+            tracer.Trace("FunctionController.FireSyncTriggers");
+
+            // create background tracer independent of request lifetime
+            var bgTracer = new XmlTracer(_environment.TracePath, tracer.TraceLevel);
+
+            // start new task to detach from request sync context
+            Task.Run(async () =>
+            {
+                using (bgTracer.Step(XmlTracer.BackgroundTrace, new Dictionary<string, string>
+                {
+                    { "url", "/api/functions/synctriggers" },
+                    { "method", "POST" }
+                }))
+                {
+                    try
+                    {
+                        await _manager.SyncTriggersAsync(bgTracer);
+                    }
+                    catch (Exception ex)
+                    {
+                        bgTracer.TraceError(ex);
+                    }
+                }
+            });
         }
     }
 }
