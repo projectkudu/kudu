@@ -42,12 +42,6 @@ namespace Kudu.Core.Functions
                 }
 
                 var inputs = await GetTriggerInputsAsync(tracer);
-                if (inputs.Count == 0)
-                {
-                    tracer.Trace("No input triggers!");
-                    return;
-                }
-
                 if (Environment.IsAzureEnvironment())
                 {
                     var client = new OperationClient(tracer);
