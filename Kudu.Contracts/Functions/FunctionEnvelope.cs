@@ -35,13 +35,13 @@ namespace Kudu.Core.Functions
         [JsonProperty(PropertyName = "href")]
         public Uri Href { get; set; }
 
-        [JsonProperty(PropertyName = "template_id")]
-        public string TemplateId { get; set; }
-
         [JsonProperty(PropertyName = "config")]
         public JObject Config { get; set; }
 
         [JsonProperty(PropertyName = "files")]
         public IDictionary<string, string> Files { get; set; }
+
+        [JsonProperty(PropertyName = "test_data")]
+        public string TestData { get; set; }
     }
 }

@@ -139,6 +139,11 @@ namespace Kudu.Core.Functions
                 setConfigChanged();
             }
 
+            if (functionEnvelope.TestData != null)
+            {
+                await FileSystemHelpers.WriteAllTextToFileAsync(GetFunctionTestDataFilePath(name), functionEnvelope.TestData);
+            }
+
             return await GetFunctionConfigAsync(name);
         }
 
@@ -179,7 +184,7 @@ namespace Kudu.Core.Functions
         public void DeleteFunction(string name)
         {
             FileSystemHelpers.DeleteDirectorySafe(GetFunctionPath(name), ignoreErrors: false);
-            FileSystemHelpers.DeleteFileSafe(GetFunctionSampleDataFilePath(name));
+            FileSystemHelpers.DeleteFileSafe(GetFunctionTestDataFilePath(name));
             FileSystemHelpers.DeleteFileSafe(GetFunctionSecretsFilePath(name));
             FileSystemHelpers.DeleteFileSafe(GetFunctionLogPath(name));
         }
@@ -211,10 +216,11 @@ namespace Kudu.Core.Functions
                 ScriptRootPathHref = FilePathToVfsUri(GetFunctionPath(functionName), isDirectory: true),
                 ScriptHref = FilePathToVfsUri(GetFunctionScriptPath(functionName, config)),
                 ConfigHref = FilePathToVfsUri(GetFunctionConfigPath(functionName)),
-                TestDataHref = FilePathToVfsUri(GetFunctionSampleDataFilePath(functionName)),
+                TestDataHref = FilePathToVfsUri(GetFunctionTestDataFilePath(functionName)),
                 SecretsFileHref = FilePathToVfsUri(GetFunctionSecretsFilePath(functionName)),
                 Href = GetFunctionHref(functionName),
-                Config = config
+                Config = config,
+                TestData = GetFunctionTestData(functionName)
             };
         }
 
@@ -317,7 +323,20 @@ namespace Kudu.Core.Functions
             return Path.Combine(_environment.ApplicationLogFilesPath, Constants.Functions, Constants.Function, name);
         }
 
-        private string GetFunctionSampleDataFilePath(string functionName)
+        private string GetFunctionTestData(string functionName)
+        {
+            string testDataFilePath = GetFunctionTestDataFilePath(functionName);
+
+            // Create an empty file if it doesn't exist
+            if (!FileSystemHelpers.FileExists(testDataFilePath))
+            {
+                FileSystemHelpers.WriteAllText(testDataFilePath, String.Empty);
+            }
+
+            return FileSystemHelpers.ReadAllText(testDataFilePath);
+        }
+
+        private string GetFunctionTestDataFilePath(string functionName)
         {
             return Path.Combine(_environment.DataPath, Constants.Functions, Constants.SampleData, $"{functionName}.dat");
         }
@@ -326,7 +345,7 @@ namespace Kudu.Core.Functions
         {
             FunctionSecrets secrets;
             string secretFilePath = GetFunctionSecretsFilePath(functionName);
-            if (File.Exists(secretFilePath))
+            if (FileSystemHelpers.FileExists(secretFilePath))
             {
                 // load the secrets file
                 string secretsJson = FileSystemHelpers.ReadAllTextFromFile(secretFilePath);
