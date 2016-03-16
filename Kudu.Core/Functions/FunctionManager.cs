@@ -330,6 +330,7 @@ namespace Kudu.Core.Functions
             // Create an empty file if it doesn't exist
             if (!FileSystemHelpers.FileExists(testDataFilePath))
             {
+                FileSystemHelpers.EnsureDirectory(Path.GetDirectoryName(testDataFilePath));
                 FileSystemHelpers.WriteAllText(testDataFilePath, String.Empty);
             }
 
