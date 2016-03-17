@@ -51,10 +51,14 @@ namespace Kudu.Core.Functions
             }
         }
 
-        private bool IsFunctionEnabled
+        private static bool IsFunctionEnabled
         {
-            // this should read appSettings instead
-            get { return FileSystemHelpers.FileExists(HostJsonPath); }
+            get 
+            {
+                var functionVersion = System.Environment.GetEnvironmentVariable("FUNCTIONS_EXTENSION_VERSION");
+                return !String.IsNullOrEmpty(functionVersion) &&
+                    !String.Equals("disabled", functionVersion, StringComparison.OrdinalIgnoreCase);
+            }
         }
 
         private async Task<JArray> GetTriggerInputsAsync(ITracer tracer)
