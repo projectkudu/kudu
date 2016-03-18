@@ -26,7 +26,7 @@ namespace Kudu.Core.Test.Deployment.Generator
             };
 
             var enviromentMock = new Mock<IEnvironment>();
-            enviromentMock.Setup(e => e.RootPath).Returns(@"e:\");
+            enviromentMock.Setup(e => e.RepositoryPath).Returns(@"e:\");
             enviromentMock.Setup(e => e.DeploymentToolsPath).Returns(DeploymentToolsPath);
 
             var deploymentSettingsMock = new Mock<IDeploymentSettingsManager>();
@@ -103,7 +103,7 @@ namespace Kudu.Core.Test.Deployment.Generator
             };
 
             var enviromentMock = new Mock<IEnvironment>();
-            enviromentMock.Setup(e => e.RootPath).Returns(@"e:\");
+            enviromentMock.Setup(e => e.RepositoryPath).Returns(@"e:\");
             enviromentMock.Setup(e => e.DeploymentToolsPath).Returns(DeploymentToolsPath);
             
             var directoryMock = new Mock<DirectoryBase>();
