@@ -7,6 +7,7 @@ using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Deployment;
+using Kudu.Core.Functions;
 using Kudu.Core.Hooks;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.SourceControl;
@@ -299,7 +300,7 @@ namespace Kudu.Core.Test.Deployment
             deploymentLock = deploymentLock ?? Mock.Of<IOperationLock>();
             globalLogger = globalLogger ?? Mock.Of<ILogger>();
 
-            return new DeploymentManager(builderFactory, environment, traceFactory, analytics, settings, status, deploymentLock, globalLogger, hooksManager, Mock.Of<IAutoSwapHandler>());
+            return new DeploymentManager(builderFactory, environment, traceFactory, analytics, settings, status, deploymentLock, globalLogger, hooksManager, Mock.Of<IAutoSwapHandler>(), Mock.Of<IFunctionManager>());
         }
     }
 }

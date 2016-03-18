@@ -11,6 +11,7 @@ using Kudu.Contracts.Tracing;
 using Kudu.Core;
 using Kudu.Core.Deployment;
 using Kudu.Core.Deployment.Generator;
+using Kudu.Core.Functions;
 using Kudu.Core.Hooks;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Settings;
@@ -101,6 +102,7 @@ namespace Kudu.Console
             IWebHooksManager hooksManager = new WebHooksManager(tracer, env, hooksLock);
             IDeploymentStatusManager deploymentStatusManager = new DeploymentStatusManager(env, analytics, statusLock);
             IAutoSwapHandler autoSwapHander = new AutoSwapHandler(deploymentStatusManager, env, settingsManager, traceFactory);
+            var functionManager = new FunctionManager(env, traceFactory);
             var logger = new ConsoleLogger();
             IDeploymentManager deploymentManager = new DeploymentManager(builderFactory,
                                                           env,
@@ -111,7 +113,8 @@ namespace Kudu.Console
                                                           deploymentLock,
                                                           GetLogger(env, level, logger),
                                                           hooksManager,
-                                                          autoSwapHander);
+                                                          autoSwapHander,
+                                                          functionManager);
 
             var step = tracer.Step(XmlTracer.ExecutingExternalProcessTrace, new Dictionary<string, string>
             {

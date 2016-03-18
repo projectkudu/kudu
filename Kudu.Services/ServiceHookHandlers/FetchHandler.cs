@@ -12,6 +12,7 @@ using Kudu.Contracts.Tracing;
 using Kudu.Core;
 using Kudu.Core.Deployment;
 using Kudu.Core.Deployment.Generator;
+using Kudu.Core.Functions;
 using Kudu.Core.Hooks;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.SourceControl;
@@ -421,7 +422,8 @@ namespace Kudu.Services
                     var repositoryFactory = new RepositoryFactory(environment, settings, traceFactory);
                     var siteBuilderFactory = new SiteBuilderFactory(new BuildPropertyProvider(), environment);
                     var webHooksManager = new WebHooksManager(tracer, environment, hooksLock);
-                    var deploymentManager = new DeploymentManager(siteBuilderFactory, environment, traceFactory, analytics, settings, deploymentStatusManager, deploymentLock, NullLogger.Instance, webHooksManager, autoSwapHandler);
+                    var functionManager = new FunctionManager(environment, traceFactory);
+                    var deploymentManager = new DeploymentManager(siteBuilderFactory, environment, traceFactory, analytics, settings, deploymentStatusManager, deploymentLock, NullLogger.Instance, webHooksManager, autoSwapHandler, functionManager);
                     var fetchHandler = new FetchHandler(tracer, deploymentManager, settings, deploymentStatusManager, deploymentLock, environment, null, repositoryFactory, null);
 
                     // Perform deployment
