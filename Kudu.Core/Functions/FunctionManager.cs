@@ -343,7 +343,9 @@ namespace Kudu.Core.Functions
 
         private string GetFunctionTestDataFilePath(string functionName)
         {
-            return Path.Combine(_environment.DataPath, Constants.Functions, Constants.SampleData, $"{functionName}.dat");
+            string folder = Path.Combine(_environment.DataPath, Constants.Functions, Constants.SampleData);
+            FileSystemHelpers.EnsureDirectory(folder);
+            return Path.Combine(folder, $"{functionName}.dat");
         }
 
         private FunctionSecrets GetFunctionSecrets(string functionName)
