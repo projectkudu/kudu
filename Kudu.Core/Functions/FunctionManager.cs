@@ -107,6 +107,7 @@ namespace Kudu.Core.Functions
 
             string newConfig = null;
             string configPath = Path.Combine(functionDir, Constants.FunctionsConfigFile);
+            string dataFilePath = GetFunctionTestDataFilePath(name);
 
             // If files are included, write them out
             if (functionEnvelope?.Files != null)
@@ -145,7 +146,7 @@ namespace Kudu.Core.Functions
 
             if (functionEnvelope.TestData != null)
             {
-                await FileSystemHelpers.WriteAllTextToFileAsync(GetFunctionTestDataFilePath(name), functionEnvelope.TestData);
+                await FileSystemHelpers.WriteAllTextToFileAsync(dataFilePath, functionEnvelope.TestData);
             }
 
             return await GetFunctionConfigAsync(name);
@@ -334,7 +335,6 @@ namespace Kudu.Core.Functions
             // Create an empty file if it doesn't exist
             if (!FileSystemHelpers.FileExists(testDataFilePath))
             {
-                FileSystemHelpers.EnsureDirectory(Path.GetDirectoryName(testDataFilePath));
                 FileSystemHelpers.WriteAllText(testDataFilePath, String.Empty);
             }
 
