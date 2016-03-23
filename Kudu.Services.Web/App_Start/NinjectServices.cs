@@ -238,25 +238,25 @@ namespace Kudu.Services.Web.App_Start
             kernel.Bind<ITriggeredJobsManager>().ToConstant(triggeredJobsManager)
                                              .InTransientScope();
 
+            TriggeredJobsScheduler triggeredJobsScheduler = new TriggeredJobsScheduler(
+                triggeredJobsManager,
+                noContextTraceFactory,
+                environment,
+                kernel.Get<IAnalytics>());
+            kernel.Bind<TriggeredJobsScheduler>().ToConstant(triggeredJobsScheduler)
+                                             .InTransientScope();
+
             IContinuousJobsManager continuousJobManager = new ContinuousJobsManager(
                 noContextTraceFactory,
                 kernel.Get<IEnvironment>(),
                 kernel.Get<IDeploymentSettingsManager>(),
                 kernel.Get<IAnalytics>());
 
-            triggeredJobsManager.CleanupDeletedJobs();
-            continuousJobManager.CleanupDeletedJobs();
+            OperationManager.SafeExecute(triggeredJobsManager.CleanupDeletedJobs);
+            OperationManager.SafeExecute(continuousJobManager.CleanupDeletedJobs);
 
             kernel.Bind<IContinuousJobsManager>().ToConstant(continuousJobManager)
                                  .InTransientScope();
-
-            TriggeredJobsScheduler triggeredJobsScheduler = new TriggeredJobsScheduler(
-                triggeredJobsManager,
-                noContextTraceFactory,
-                environment);
-
-            kernel.Bind<TriggeredJobsScheduler>().ToConstant(triggeredJobsScheduler)
-                                             .InTransientScope();
 
             kernel.Bind<ILogger>().ToMethod(context => GetLogger(environment, context.Kernel))
                                              .InRequestScope();
@@ -586,7 +586,7 @@ namespace Kudu.Services.Web.App_Start
 
         private static void EnsureNpmGlobalDirectory()
         {
-            try
+            OperationManager.SafeExecute(() =>
             {
                 string appData = System.Environment.GetEnvironmentVariable("APPDATA");
                 FileSystemHelpers.EnsureDirectory(Path.Combine(appData, "npm"));
@@ -595,25 +595,17 @@ namespace Kudu.Services.Web.App_Start
                 // this is to work around below issue with the very first npm install 
                 // npm ERR! uid must be an unsigned int
                 FileSystemHelpers.EnsureDirectory(Path.Combine(appData, "npm-cache"));
-            }
-            catch
-            {
-                // no op
-            }
+            });
         }
 
         private static void EnsureUserProfileDirectory()
         {
-            try
+            OperationManager.SafeExecute(() =>
             {
                 //this is for gulp 3.9.0 which fails if UserProfile is not there
                 string userProfile = System.Environment.GetEnvironmentVariable("USERPROFILE");
                 FileSystemHelpers.EnsureDirectory(userProfile);
-            }
-            catch
-            {
-                // no op
-            }
+            });
         }
 
         private static ITracer GetTracer(IEnvironment environment, IKernel kernel)

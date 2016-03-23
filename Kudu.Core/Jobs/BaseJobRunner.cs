@@ -10,6 +10,7 @@ using System.Xml.Linq;
 using System.Xml.XPath;
 using Kudu.Contracts.Jobs;
 using Kudu.Contracts.Settings;
+using Kudu.Contracts.Tracing;
 using Kudu.Core.Deployment;
 using Kudu.Core.Deployment.Generator;
 using Kudu.Core.Infrastructure;
@@ -228,7 +229,7 @@ namespace Kudu.Core.Jobs
             }
         }
 
-        protected void RunJobInstance(JobBase job, IJobLogger logger, string runId, string trigger, int port = -1)
+        protected void RunJobInstance(JobBase job, IJobLogger logger, string runId, string trigger, ITracer tracer, int port = -1)
         {
             string scriptFileName = Path.GetFileName(job.ScriptFilePath);
             string scriptFileFullPath = Path.Combine(WorkingDirectory, job.RunCommand);
@@ -266,7 +267,7 @@ namespace Kudu.Core.Jobs
 
                     int exitCode =
                         exe.ExecuteReturnExitCode(
-                            TraceFactory.GetTracer(),
+                            tracer,
                             logger.LogStandardOutput,
                             logger.LogStandardError,
                             job.ScriptHost.ArgumentsFormat,
@@ -284,14 +285,16 @@ namespace Kudu.Core.Jobs
                         UpdateStatus(logger, "Success");
                     }
                 }
-                catch (ThreadAbortException)
+                catch (ThreadAbortException ex)
                 {
+                    tracer.TraceError(ex);
                     // We kill the process when refreshing the job
                     logger.LogInformation("WebJob process was aborted");
                     UpdateStatus(logger, "Stopped");
                 }
                 catch (Exception ex)
                 {
+                    tracer.TraceError(ex);
                     logger.LogError(ex.ToString());
                     jobStartedReporter.Error = ex.Message;
                 }

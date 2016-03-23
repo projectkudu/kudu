@@ -14,14 +14,16 @@ namespace Kudu.Core.Jobs
         private static readonly TimeSpan MaximumTimeSpanInterval = TimeSpan.FromDays(40);
 
         private readonly Action<TriggeredJobSchedule> _onSchedule;
+        private readonly IAnalytics _analytics;
 
         private Timer _timer;
 
-        public TriggeredJobSchedule(TriggeredJob triggeredJob, Action<TriggeredJobSchedule> onSchedule, TriggeredJobSchedulerLogger logger)
+        public TriggeredJobSchedule(TriggeredJob triggeredJob, Action<TriggeredJobSchedule> onSchedule, TriggeredJobSchedulerLogger logger, IAnalytics analytics)
         {
             TriggeredJob = triggeredJob;
             _onSchedule = onSchedule;
             Logger = logger;
+            _analytics = analytics;
 
             _timer = new Timer(OnTimer, triggeredJob, Timeout.Infinite, Timeout.Infinite);
         }
@@ -50,6 +52,8 @@ namespace Kudu.Core.Jobs
                 Logger.LogInformation("Next schedule expected in " + nextInterval);
             }
 
+            _analytics.JobEvent(TriggeredJob.Name.Fuzz(), $"Reschedule {nextInterval}", TriggeredJob.JobType, String.Empty);
+
             _timer.Change(nextInterval, Timeout.InfiniteTimeSpan);
         }
 
@@ -59,8 +63,10 @@ namespace Kudu.Core.Jobs
             {
                 _onSchedule(this);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
+                _analytics.UnexpectedException(ex);
+
                 Logger.LogError(ex.ToString());
             }
         }

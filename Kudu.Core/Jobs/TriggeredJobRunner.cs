@@ -68,12 +68,14 @@ namespace Kudu.Core.Jobs
 
                 _currentRunningJobWaitHandle = new ManualResetEvent(false);
 
+                var tracer = TraceFactory.GetTracer();
+                var step = tracer.Step("Run {0} {1}", triggeredJob.JobType, triggeredJob.Name);
                 ThreadPool.QueueUserWorkItem(_ =>
                 {
                     try
                     {
                         InitializeJobInstance(triggeredJob, logger);
-                        RunJobInstance(triggeredJob, logger, logger.Id, trigger);
+                        RunJobInstance(triggeredJob, logger, logger.Id, trigger, tracer);
                     }
                     catch (Exception ex)
                     {
@@ -81,6 +83,7 @@ namespace Kudu.Core.Jobs
                     }
                     finally
                     {
+                        step.Dispose();
                         logger.ReportEndRun();
                         _lockFile.Release();
                         reportAction(triggeredJob.Name, logger.Id);

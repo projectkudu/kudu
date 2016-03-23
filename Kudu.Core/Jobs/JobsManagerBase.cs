@@ -117,12 +117,14 @@ namespace Kudu.Core.Jobs
         {
             lock (jobsListCacheLockObj)
             {
-                if (JobListCache == null || forceRefreshCache)
+                var jobList = JobListCache;
+                if (jobList == null || forceRefreshCache)
                 {
-                    JobListCache = ListJobsInternal();
+                    jobList = ListJobsInternal();
+                    JobListCache = jobList;
                 }
+                return jobList;
             }
-            return JobListCache;
         }
 
         internal static void ClearJobListCache()
@@ -308,6 +310,13 @@ namespace Kudu.Core.Jobs
                 // Return a job representing an error for no runnable script file found for job
                 if (nullJobOnError)
                 {
+                    if (ex is IOException)
+                    {
+                        // unexpected IOException given simply reading files/folders.
+                        // just rethrow and let the upper layers handle it.
+                        throw;
+                    }
+
                     return null;
                 }
 

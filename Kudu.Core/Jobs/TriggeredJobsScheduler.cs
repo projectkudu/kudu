@@ -17,14 +17,16 @@ namespace Kudu.Core.Jobs
         private readonly ITriggeredJobsManager _triggeredJobsManager;
         private readonly ITraceFactory _traceFactory;
         private readonly IEnvironment _environment;
+        private readonly IAnalytics _analytics;
 
         private readonly Dictionary<string, TriggeredJobSchedule> _triggeredJobsSchedules = new Dictionary<string, TriggeredJobSchedule>(StringComparer.OrdinalIgnoreCase);
 
-        public TriggeredJobsScheduler(ITriggeredJobsManager triggeredJobsManager, ITraceFactory traceFactory, IEnvironment environment)
+        public TriggeredJobsScheduler(ITriggeredJobsManager triggeredJobsManager, ITraceFactory traceFactory, IEnvironment environment, IAnalytics analytics)
         {
             _triggeredJobsManager = triggeredJobsManager;
             _traceFactory = traceFactory;
             _environment = environment;
+            _analytics = analytics;
 
             _triggeredJobsManager.RegisterExtraEventHandlerForFileChange(OnJobChanged);
         }
@@ -51,7 +53,7 @@ namespace Kudu.Core.Jobs
                     {
                         if (triggeredJobSchedule == null)
                         {
-                            triggeredJobSchedule = new TriggeredJobSchedule(triggeredJob, OnSchedule, logger);
+                            triggeredJobSchedule = new TriggeredJobSchedule(triggeredJob, OnSchedule, logger, _analytics);
                             _triggeredJobsSchedules[jobName] = triggeredJobSchedule;
                         }
 
