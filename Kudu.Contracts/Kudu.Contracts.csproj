@@ -117,6 +117,7 @@
     <Compile Include="Diagnostics\ProcessThreadInfo.cs" />
     <Compile Include="Diagnostics\RuntimeInfo.cs" />
     <Compile Include="Editor\VfsStatEntry.cs" />
+    <Compile Include="Functions\FunctionSecrets.cs" />
     <Compile Include="Functions\FunctionEnvelope.cs" />
     <Compile Include="Functions\IFunctionManager.cs" />
     <Compile Include="HashHelpers.cs" />
