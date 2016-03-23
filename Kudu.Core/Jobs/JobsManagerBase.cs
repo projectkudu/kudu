@@ -4,8 +4,6 @@ using System.IO;
 using System.IO.Abstractions;
 using System.IO.Compression;
 using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Web;
 using System.Web.Hosting;
 using Kudu.Contracts.Jobs;
@@ -51,8 +49,6 @@ namespace Kudu.Core.Jobs
         private readonly string _jobsTypePath;
 
         private string _lastKnownAppBaseUrlPrefix;
-
-        internal static object jobsListCacheLockObj = new object();
 
         protected IEnvironment Environment { get; private set; }
 
@@ -115,23 +111,20 @@ namespace Kudu.Core.Jobs
 
         public IEnumerable<TJob> ListJobs(bool forceRefreshCache)
         {
-            lock (jobsListCacheLockObj)
+            var jobList = JobListCache;
+            if (jobList == null || forceRefreshCache)
             {
-                if (JobListCache == null || forceRefreshCache)
-                {
-                    JobListCache = ListJobsInternal();
-                }
+                jobList = ListJobsInternal();
+                JobListCache = jobList;
             }
-            return JobListCache;
+            return jobList;
         }
 
         internal static void ClearJobListCache()
         {
-            lock (jobsListCacheLockObj)
-            {
-                JobListCache = null;
-            }
+            JobListCache = null;
         }
+
         public abstract TJob GetJob(string jobName);
 
         public TJob CreateOrReplaceJobFromZipStream(Stream zipStream, string jobName)
@@ -308,6 +301,13 @@ namespace Kudu.Core.Jobs
                 // Return a job representing an error for no runnable script file found for job
                 if (nullJobOnError)
                 {
+                    if (ex is IOException)
+                    {
+                        // unexpected IOException given simply reading files/folders.
+                        // just rethrow and let the upper layers handle it.
+                        throw;
+                    }
+
                     return null;
                 }
 

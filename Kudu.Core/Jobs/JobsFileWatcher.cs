@@ -108,6 +108,9 @@ namespace Kudu.Core.Jobs
                         return;
                     }
 
+                    // dispose existing _fileSystemWatcher in case of exception and retry
+                    DisposeWatcher();
+
                     // Start file system watcher
                     _fileSystemWatcher = _filter != null ? new FileSystemWatcher(_watchedDirectoryPath, _filter) : new FileSystemWatcher(_watchedDirectoryPath);
                     _fileSystemWatcher.Created += OnChanged;

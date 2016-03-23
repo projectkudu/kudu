@@ -80,5 +80,17 @@ namespace Kudu.Core.Infrastructure
 
             return default(TVal);
         }
+
+        public static void SafeExecute(Action action)
+        {
+            try
+            {
+                action();
+            }
+            catch
+            {
+                // no-op
+            }
+        }
     }
 }

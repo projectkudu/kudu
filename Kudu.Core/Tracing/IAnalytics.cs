@@ -8,6 +8,8 @@ namespace Kudu.Core.Tracing
 
         void JobStarted(string jobName, string scriptExtension, string jobType, string siteMode, string error, string trigger);
 
+        void JobEvent(string jobName, string message, string jobType, string error);
+
         void UnexpectedException(Exception ex, bool trace = true);
 
         void UnexpectedException(Exception ex, string method, string path, string result, string message, bool trace = true);
