@@ -48,6 +48,16 @@ namespace Kudu.Core.Tracing
                 NullToEmptyString(trigger));
         }
 
+        public void JobEvent(string jobName, string message, string jobType, string error)
+        {
+            KuduEventSource.Log.WebJobEvent(
+                _serverConfiguration.ApplicationName,
+                NullToEmptyString(jobName),
+                NullToEmptyString(message),
+                NullToEmptyString(jobType),
+                NullToEmptyString(error));
+        }
+
         public void UnexpectedException(Exception exception, bool trace = true)
         {
             KuduEventSource.Log.KuduUnexpectedException(

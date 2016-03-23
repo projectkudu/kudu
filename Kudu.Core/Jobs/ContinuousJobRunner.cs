@@ -94,11 +94,13 @@ namespace Kudu.Core.Jobs
 
                         _continuousJobLogger.StartingNewRun();
 
+                        var tracer = TraceFactory.GetTracer();
+                        using (tracer.Step("Run {0} {1}", continuousJob.JobType, continuousJob.Name))
                         using (new Timer(LogStillRunning, null, TimeSpan.FromHours(1), TimeSpan.FromHours(12)))
                         {
                             InitializeJobInstance(continuousJob, _continuousJobLogger);
                             WebJobPort = GetAvailableJobPort();
-                            RunJobInstance(continuousJob, _continuousJobLogger, String.Empty, String.Empty, WebJobPort);
+                            RunJobInstance(continuousJob, _continuousJobLogger, String.Empty, String.Empty, tracer, WebJobPort);
                         }
 
                         if (_started == 1 && !IsDisabled)
