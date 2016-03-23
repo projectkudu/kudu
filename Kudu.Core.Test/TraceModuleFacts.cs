@@ -54,6 +54,12 @@ namespace Kudu.Core.Test
         [InlineData("/api/continuouswebjobs/1", true)]
         [InlineData("/api/continuouswebjobs/1/", true)]
         [InlineData("/api/continuouswebjobs/1/dump", false)]
+        [InlineData("/api/functions", true)]
+        [InlineData("/api/functions/", true)]
+        [InlineData("/api/functions/myfunc", true)]
+        [InlineData("/api/functions/myfunc/", true)]
+        [InlineData("/api/functions/myfunc/foo", true)]
+        [InlineData("/api/functions/myfunc/foo/bar", false)]
         public void IsRbacWhiteListPathsTests(string path, bool expected)
         {
             // Test
