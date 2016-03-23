@@ -91,7 +91,7 @@ namespace Kudu.Services.Functions
         public async Task<HttpResponseMessage> GetSecrets(string name)
         {
             var tracer = _traceFactory.GetTracer();
-            using (tracer.Step($"FunctionsController.Get({name})"))
+            using (tracer.Step($"FunctionsController.GetSecrets({name})"))
             {
                 return Request.CreateResponse(HttpStatusCode.OK, await _manager.GetFunctionSecretsAsync(name));
             }
