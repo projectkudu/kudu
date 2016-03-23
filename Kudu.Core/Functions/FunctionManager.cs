@@ -173,6 +173,36 @@ namespace Kudu.Core.Functions
             return config;
         }
 
+        public async Task<FunctionSecrets> GetFunctionSecretsAsync(string functionName)
+        {
+            FunctionSecrets secrets;
+            string secretFilePath = GetFunctionSecretsFilePath(functionName);
+            if (FileSystemHelpers.FileExists(secretFilePath))
+            {
+                // load the secrets file
+                string secretsJson = await FileSystemHelpers.ReadAllTextFromFileAsync(secretFilePath);
+                secrets = JsonConvert.DeserializeObject<FunctionSecrets>(secretsJson);
+            }
+            else
+            {
+                // initialize with new secrets and save it
+                secrets = new FunctionSecrets
+                {
+                    Key = SecurityUtility.GenerateSecretString()
+                };
+
+                FileSystemHelpers.EnsureDirectory(Path.GetDirectoryName(secretFilePath));
+                await FileSystemHelpers.WriteAllTextToFileAsync(secretFilePath, JsonConvert.SerializeObject(secrets, Formatting.Indented));
+            }
+
+            secrets.TriggerUrl = String.Format(@"https://{0}/api/{1}?code={2}",
+                System.Environment.GetEnvironmentVariable("WEBSITE_HOSTNAME") ?? "localhost",
+                functionName,
+                secrets.Key);
+
+            return secrets;
+        }
+
         public async Task<JObject> GetHostConfigAsync()
         {
             return FileSystemHelpers.FileExists(HostJsonPath)
@@ -217,7 +247,6 @@ namespace Kudu.Core.Functions
             return new FunctionEnvelope
             {
                 Name = functionName,
-                TriggerUrl = GetFunctionTriggerUrl(functionName),
                 ScriptRootPathHref = FilePathToVfsUri(GetFunctionPath(functionName), isDirectory: true),
                 ScriptHref = FilePathToVfsUri(GetFunctionScriptPath(functionName, config)),
                 ConfigHref = FilePathToVfsUri(GetFunctionConfigPath(functionName)),
@@ -227,17 +256,6 @@ namespace Kudu.Core.Functions
                 Config = config,
                 TestData = GetFunctionTestData(functionName)
             };
-        }
-
-        private string GetFunctionTriggerUrl(string functionName)
-        {
-            FunctionSecrets functionSecrets = GetFunctionSecrets(functionName);
-
-            // TODO: 'code' is only valid for WebHooks. Need to generalize
-            return String.Format(@"https://{0}/api/{1}?code={2}",
-                System.Environment.GetEnvironmentVariable("WEBSITE_HOSTNAME") ?? "localhost",
-                functionName,
-                functionSecrets.Key);
         }
 
         // Logic for this function is copied from here
@@ -348,40 +366,9 @@ namespace Kudu.Core.Functions
             return Path.Combine(folder, $"{functionName}.dat");
         }
 
-        private FunctionSecrets GetFunctionSecrets(string functionName)
-        {
-            FunctionSecrets secrets;
-            string secretFilePath = GetFunctionSecretsFilePath(functionName);
-            if (FileSystemHelpers.FileExists(secretFilePath))
-            {
-                // load the secrets file
-                string secretsJson = FileSystemHelpers.ReadAllTextFromFile(secretFilePath);
-                secrets = JsonConvert.DeserializeObject<FunctionSecrets>(secretsJson);
-            }
-            else
-            {
-                // initialize with new secrets and save it
-                secrets = new FunctionSecrets
-                {
-                    Key = SecurityUtility.GenerateSecretString()
-                };
-
-                FileSystemHelpers.EnsureDirectory(Path.GetDirectoryName(secretFilePath));
-                FileSystemHelpers.WriteAllText(secretFilePath, JsonConvert.SerializeObject(secrets, Formatting.Indented));
-            }
-
-            return secrets;
-        }
-
         private string GetFunctionSecretsFilePath(string functionName)
         {
             return Path.Combine(_environment.DataPath, Constants.Functions, Constants.Secrets, $"{functionName}.json");
-        }
-
-        class FunctionSecrets
-        {
-            [JsonProperty(PropertyName = "key")]
-            public string Key { get; set; }
         }
     }
 }

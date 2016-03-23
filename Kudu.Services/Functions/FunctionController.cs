@@ -87,6 +87,16 @@ namespace Kudu.Services.Functions
             }
         }
 
+        [HttpPost]
+        public async Task<HttpResponseMessage> GetSecrets(string name)
+        {
+            var tracer = _traceFactory.GetTracer();
+            using (tracer.Step($"FunctionsController.Get({name})"))
+            {
+                return Request.CreateResponse(HttpStatusCode.OK, await _manager.GetFunctionSecretsAsync(name));
+            }
+        }
+
         [HttpDelete]
         public HttpResponseMessage Delete(string name)
         {

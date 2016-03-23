@@ -12,6 +12,7 @@ namespace Kudu.Core.Functions
         Task<FunctionEnvelope> CreateOrUpdateAsync(string name, FunctionEnvelope functionEnvelope, Action setConfigChanged);
         Task<IEnumerable<FunctionEnvelope>> ListFunctionsConfigAsync();
         Task<FunctionEnvelope> GetFunctionConfigAsync(string name);
+        Task<FunctionSecrets> GetFunctionSecretsAsync(string name);
         Task<JObject> GetHostConfigAsync();
         Task<JObject> PutHostConfigAsync(JObject content);
         void DeleteFunction(string name);

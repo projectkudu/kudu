@@ -26,6 +26,7 @@ namespace Kudu.Services.Web.Tracing
         private static Regex[] _rbacWhiteListPaths = new[]
         {
             new Regex(@"^/api/siteextensions(/|$)", RegexOptions.IgnoreCase),
+            new Regex(@"^/api/functions((/|$)([^/]*|$)){0,2}(/|$)$", RegexOptions.IgnoreCase),
             new Regex(@"^/api/deployments((/|$)([^/]*|$)){0,2}(/|$)$", RegexOptions.IgnoreCase),
             new Regex(@"^/api/(processes|webjobs|triggeredwebjobs|continuouswebjobs)((/|$)([^/]*|$)){0,1}(/|$)$", RegexOptions.IgnoreCase),
         };
