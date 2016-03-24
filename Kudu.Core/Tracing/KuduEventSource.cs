@@ -63,11 +63,11 @@ namespace Kudu.Core.Tracing
         }
 
         [Event(65513, Level = EventLevel.Informational, Message = "WebJob {1} event for site {0}", Channel = EventChannel.Operational)]
-        public void WebJobEvent(string siteName, string jobName, string message, string jobType, string error)
+        public void WebJobEvent(string siteName, string jobName, string Message, string jobType, string error)
         {
             if (IsEnabled())
             {
-                WriteEvent(65513, siteName, jobName, message, jobType, error);
+                WriteEvent(65513, siteName, jobName, Message, jobType, error);
             }
         }
     }
