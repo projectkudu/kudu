@@ -1,14 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
+using Kudu.SiteManagement;
 
 namespace Kudu.Web.Models
 {
     public interface IApplication
     {
         string Name { get; set; }
-        string ServiceUrl { get; }
-        string SiteUrl { get; }
-        IList<string> SiteUrls { get; set; }
-        IList<string> ServiceUrls { get; set; }
+        KuduBinding PrimarySiteBinding { get; }
+        KuduBinding PrimaryServiceBinding { get; }
+
+        IList<KuduBinding> SiteBindings { get; set; }
+        IList<KuduBinding> ServiceBindings { get; set; }
     }
 }

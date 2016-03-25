@@ -107,7 +107,7 @@ namespace Kudu.Web.Controllers
             }
 
             _applicationService.AddSiteBinding(slug, new KuduBinding {
-                Schema = siteSchema.Equals("https://", StringComparison.OrdinalIgnoreCase) ? UriScheme.Https : UriScheme.Http,
+                Scheme = siteSchema.Equals("https://", StringComparison.OrdinalIgnoreCase) ? UriScheme.Https : UriScheme.Http,
                 Ip = siteIp,
                 Port = int.Parse(sitePort),
                 Host = siteHost,
@@ -130,7 +130,7 @@ namespace Kudu.Web.Controllers
                 return HttpNotFound();
             }
 
-            _applicationService.RemoveLiveSiteBinding(slug, siteBinding);
+            _applicationService.RemoveLiveSiteBinding(slug, KuduBinding.Parse(siteBinding));
 
             return await GetApplicationView("settings", "Details", slug);
         }
@@ -147,8 +147,8 @@ namespace Kudu.Web.Controllers
             }
 
             _applicationService.AddSiteBinding(slug, new KuduBinding {
-                Schema = siteSchema.Equals("https://", StringComparison.OrdinalIgnoreCase) ? UriScheme.Https : UriScheme.Http,
                 Ip = siteIp,
+                Scheme = siteSchema.Equals("https://", StringComparison.OrdinalIgnoreCase) ? UriScheme.Https : UriScheme.Http,
                 Port = int.Parse(sitePort),
                 Host = siteHost,
                 Sni = bool.Parse(siteRequireSni),
@@ -170,7 +170,7 @@ namespace Kudu.Web.Controllers
                 return HttpNotFound();
             }
 
-            _applicationService.RemoveServiceSiteBinding(slug, siteBinding);
+            _applicationService.RemoveServiceSiteBinding(slug, KuduBinding.Parse(siteBinding));
 
             return await GetApplicationView("settings", "Details", slug);
         }

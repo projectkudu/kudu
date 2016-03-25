@@ -63,7 +63,7 @@ namespace Kudu.TestHarness
             Site site = siteManager.GetSite(applicationName);
             if (site != null)
             {
-                TestTracer.Trace("{0} Site already exists at {1}. Reusing site", operationName, site.SiteUrl);
+                TestTracer.Trace("{0} Site already exists at {1}. Reusing site", operationName, site.PrimarySiteBinding);
                 var appManager = new ApplicationManager(siteManager, site, applicationName)
                 {
                     SitePoolIndex = siteIndex
@@ -116,7 +116,7 @@ namespace Kudu.TestHarness
                     site = siteManager.CreateSiteAsync(applicationName).Result;
                 }
 
-                TestTracer.Trace("{0} Created new site at {1}", operationName, site.SiteUrl);
+                TestTracer.Trace("{0} Created new site at {1}", operationName, site.PrimarySiteBinding);
                 return new ApplicationManager(siteManager, site, applicationName)
                 {
                     SitePoolIndex = siteIndex
@@ -167,6 +167,11 @@ namespace Kudu.TestHarness
 
     public class KuduTestContext : IKuduContext
     {
+        public string HostName
+        {
+            get { return "N_A"; }
+        }
+
         public IPathResolver Paths { get; private set; }
         public IKuduConfiguration Configuration { get; private set; }
         public Version IISVersion { get; private set; }

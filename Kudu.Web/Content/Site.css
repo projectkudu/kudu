@@ -91,3 +91,7 @@ button.plain {
 a.site-item {
     vertical-align: middle;
 }
+
+.table td.actions {
+    text-align: right;
+}

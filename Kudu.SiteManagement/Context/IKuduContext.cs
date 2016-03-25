@@ -12,6 +12,8 @@ namespace Kudu.SiteManagement.Context
 {
     public interface IKuduContext
     {
+        string HostName { get; }
+
         IPathResolver Paths { get; }
         IKuduConfiguration Configuration { get; }
         
@@ -21,6 +23,11 @@ namespace Kudu.SiteManagement.Context
 
     public class KuduContext : IKuduContext
     {
+        public string HostName
+        {
+            get { return Dns.GetHostName(); }
+        }
+
         public IPathResolver Paths { get; private set; }
         public IKuduConfiguration Configuration { get; private set; }
         public Version IISVersion { get { return HttpRuntime.IISVersion; } }
@@ -31,10 +38,13 @@ namespace Kudu.SiteManagement.Context
             Configuration = configuration;
             Paths = paths;
         }
+
         private static IEnumerable<string> GetAddresses()
         {
             var host = Dns.GetHostEntry(Dns.GetHostName());
             return (from ip in host.AddressList where ip.AddressFamily == AddressFamily.InterNetwork select ip.ToString()).ToList();
         }        
+
+
     }
 }

@@ -89,23 +89,35 @@ namespace Kudu.SiteManagement
                 // IIS.Site devSite = iis.Sites[devSiteName];
 
                 var site = new Site();
-                site.ServiceUrls = GetSiteUrls(serviceSite);
-                site.SiteUrls = GetSiteUrls(mainSite);
+                site.ServiceBindings = GetSiteUrls(serviceSite);
+                site.SiteBindings = GetSiteUrls(mainSite);
                 return site;
             }
         }
 
-        private static List<string> GetSiteUrls(IIS.Site site)
+        private IList<KuduBinding> GetSiteUrls(IIS.Site site)
         {
             if (site == null)
-            { return null; }
-
-            return site.Bindings.Select(binding => new UriBuilder
             {
-                Host = string.IsNullOrEmpty(binding.Host) ? "localhost" : binding.Host,
-                Scheme = binding.Protocol,
-                Port = binding.EndPoint.Port == 80 ? -1 : binding.EndPoint.Port
-            }).Select(builder => builder.ToString()).ToList();
+                return null; 
+            }
+            return site.Bindings.Select(MapBinding).ToList();
+        }
+
+        private KuduBinding MapBinding(Binding binding)
+        {
+            KuduBinding kuduBinding = new KuduBinding();
+            kuduBinding.Host = binding.Host;
+            kuduBinding.Scheme = binding.Protocol.Equals("http", StringComparison.OrdinalIgnoreCase) ? UriScheme.Http : UriScheme.Https;
+            kuduBinding.Port = binding.EndPoint.Port;
+            kuduBinding.Ip = binding.EndPoint.Address.ToString();
+
+            //NOTE: A KuduBinding also has information about certificate name etc...
+            //      and SNI which we could try and fetch...
+
+            //Extra for making target URLS.
+            kuduBinding.DnsName = _context.HostName;
+            return kuduBinding;
         }
 
         public async Task<Site> CreateSiteAsync(string applicationName)
@@ -146,25 +158,19 @@ namespace Kudu.SiteManagement
                     // Commit the changes to iis
                     iis.CommitChanges();
 
-                    var serviceUrls = serviceSite.Bindings
-                        .Select(url => String.Format("{0}://{1}:{2}/", url.Protocol, String.IsNullOrEmpty(url.Host) ? "localhost" : url.Host, url.EndPoint.Port))
-                        .ToList();
+                    IList<KuduBinding> serviceBindings = GetSiteUrls(serviceSite);
 
                     // Wait for the site to start
-                    await OperationManager.AttemptAsync(() => WaitForSiteAsync(serviceUrls.First()));
+                    await OperationManager.AttemptAsync(() => WaitForSiteAsync(serviceBindings.First().ToString()));
 
                     // Set initial ScmType state to LocalGit
-                    var settings = new RemoteDeploymentSettingsManager(serviceUrls.First() + "api/settings");
+                    var settings = new RemoteDeploymentSettingsManager(serviceBindings.First() + "api/settings");
                     await settings.SetValue(SettingsKeys.ScmType, ScmType.LocalGit);
-
-                    var siteUrls = site.Bindings
-                        .Select(url => String.Format("{0}://{1}:{2}/", url.Protocol, String.IsNullOrEmpty(url.Host) ? "localhost" : url.Host, url.EndPoint.Port))
-                        .ToList();
 
                     return new Site
                     {
-                        ServiceUrls = serviceUrls,
-                        SiteUrls = siteUrls
+                        ServiceBindings = serviceBindings,
+                        SiteBindings = GetSiteUrls(site)
                     };
                 }
                 catch
@@ -284,7 +290,7 @@ namespace Kudu.SiteManagement
                     }
 
                     string bindingInformation = string.Format("{0}:{1}:{2}", binding.Ip, binding.Port, binding.Host);
-                    switch (binding.Schema)
+                    switch (binding.Scheme)
                     {
                         case UriScheme.Http:
                             site.Bindings.Add(bindingInformation, "http");
@@ -312,7 +318,7 @@ namespace Kudu.SiteManagement
             }
         }
 
-        public bool RemoveSiteBinding(string applicationName, string siteBinding, SiteType siteType)
+        public bool RemoveSiteBinding(string applicationName, KuduBinding siteBinding, SiteType siteType)
         {
             try
             {
@@ -325,11 +331,11 @@ namespace Kudu.SiteManagement
                     if (site == null)
                     { return true; }
 
-                    Uri uri = new Uri(siteBinding);
                     Binding binding = site.Bindings
-                        .FirstOrDefault(x => x.Host.Equals(uri.Host)
-                            && x.EndPoint.Port.Equals(uri.Port)
-                            && x.Protocol.Equals(uri.Scheme));
+                        .FirstOrDefault(x => x.Host.Equals(siteBinding.Host)
+                            && x.EndPoint.Port.Equals(siteBinding.Port)
+                            && x.EndPoint.Address.ToString() == siteBinding.Ip
+                            && x.Protocol.Equals(siteBinding.Scheme.ToString(), StringComparison.OrdinalIgnoreCase));
 
                     if (binding == null)
                     { return true; }
@@ -534,7 +540,7 @@ namespace Kudu.SiteManagement
                     break;
             }
 
-            return String.Format("{0}:{1}:{2}", ip, port, applicationName + "." + host);
+            return string.Format("{0}:{1}:{2}", ip, port, applicationName + "." + host);
         }
 
         private static Task DeleteSiteAsync(ServerManager iis, string siteName, bool deletePhysicalFiles = true)

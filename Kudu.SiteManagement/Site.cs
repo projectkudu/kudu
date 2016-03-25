@@ -7,23 +7,27 @@ namespace Kudu.SiteManagement
     {
         public Site()
         {
-            SiteUrls = new List<string>();
+            SiteBindings = new List<KuduBinding>();
+            ServiceBindings = new List<KuduBinding>();
         }
-        public string ServiceUrl
+
+        public KuduBinding PrimarySiteBinding
         {
             get
             {
-                return ServiceUrls.FirstOrDefault();
+                return SiteBindings.FirstOrDefault();
             }
         }
-        public string SiteUrl
+
+        public KuduBinding PrimaryServiceBinding
         {
             get
             {
-                return SiteUrls.FirstOrDefault();
+                return ServiceBindings.FirstOrDefault();
             }
         }
-        public IList<string> SiteUrls { get; set; }
-        public IList<string> ServiceUrls { get; set; }
+
+        public IList<KuduBinding> SiteBindings { get; set; }
+        public IList<KuduBinding> ServiceBindings { get; set; }
     }
 }

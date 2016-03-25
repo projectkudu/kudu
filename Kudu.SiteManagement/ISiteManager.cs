@@ -11,6 +11,6 @@ namespace Kudu.SiteManagement
 
         Task DeleteSiteAsync(string applicationName);
         bool AddSiteBinding(string applicationName, KuduBinding binding);
-        bool RemoveSiteBinding(string applicationName, string siteBinding, SiteType siteType);
+        bool RemoveSiteBinding(string applicationName, KuduBinding siteBinding, SiteType siteType);
     }
 }
