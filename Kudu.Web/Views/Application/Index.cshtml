@@ -9,22 +9,18 @@
 }
 
 <div class="well">
-    <ul class="nav nav-list">
-        <li class="nav-header">Applications</li>
-        @foreach (var item in Model)
-        {
-            <li>
-                @using (Html.BeginForm("Delete", "Application", new { slug = item.GenerateSlug() }))
-                {
-                    <div class="row-fluid">
-                        <button type="submit" class="plain"><i class="icon icon-remove"></i></button>
-                        <a href="@Url.RouteUrl("ApplicationDetails", new { slug = item })" class="site-item">
-                            <i class="icon-th-list"></i>
-                            @item
-                        </a>
-                    </div>
-                }
-            </li>
-        }
-    </ul>
+    <h1>Applications</h1>
+    @foreach (var item in Model)
+    {
+        <p>
+            @using (Html.BeginForm("Delete", "Application", new { slug = item.GenerateSlug() }))
+            {
+                <button type="submit" class="plain"><i class="glyphicon glyphicon-remove"></i></button>
+                <a href="@Url.RouteUrl("ApplicationDetails", new { slug = item })" class="site-item">
+                    <i class="glyphicon glyphicon-th-list"></i>
+                    @item
+                </a>
+            }
+        </p>
+    }
 </div>

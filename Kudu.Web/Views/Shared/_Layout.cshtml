@@ -7,12 +7,7 @@
     <meta name="description" content="">
     <meta name="author" content="">    
     <!-- Le styles -->
-    <link href="@Url.Content("~/Content/bootstrap.min.css")" rel="stylesheet">    
-    <style>
-      body {
-        padding-top: 60px; /* 60px to make the container go all the way to the bottom of the topbar */
-      }
-    </style>
+    <link href="@Url.Content("~/Content/bootstrap.min.css")" rel="stylesheet">
     <link href="@Url.Content("~/Content/bootstrap-responsive.min.css")" rel="stylesheet">
     <link href="@Url.Content("~/Content/Site.css")" rel="stylesheet">
     
@@ -26,67 +21,68 @@
     <link rel="apple-touch-icon" href="images/apple-touch-icon.png">
     <link rel="apple-touch-icon" sizes="72x72" href="images/apple-touch-icon-72x72.png">
     <link rel="apple-touch-icon" sizes="114x114" href="images/apple-touch-icon-114x114.png">*@
-    <script src="@Url.Content("~/Scripts/jquery-1.7.min.js")"></script>
+    <script src="@Url.Content("~/Scripts/jquery-2.2.1.min.js")"></script>
     <script src="@Url.Content("~/Scripts/bootstrap.min.js")"></script>
     @RenderSection("head", required: false)
-  </head>
+</head>
+<body>
 
-  <body>
-
-    <div class="navbar navbar-fixed-top">
-      <div class="navbar-inner">
+    <div class="navbar navbar-fixed-top navbar-inverse">
         <div class="container">
-          <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-          </a>
-          <a class="brand" href="@Url.Content("~/")">Kudu Dashboard</a>
-          <div class="nav-collapse">
-            <ul class="nav">
-              <li>@Html.RouteLink("Create Application", "ApplicationCreate")</li>
-            </ul>
-            <ul class="nav pull-right">
-              <li>@Html.ActionLink("Admin", "index", "admin")</li>               
-            </ul>
-          </div><!--/.nav-collapse -->
+          <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+              <span class="sr-only">Toggle navigation</span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="@Url.Content("~/")">Kudu Dashboard</a>
+          </div>
+
+          <div id="navbar" class="collapse navbar-collapse">
+              <ul class="nav navbar-nav">
+                  <li>@Html.RouteLink("Create Application", "ApplicationCreate")</li>
+              </ul>
+              <ul class="nav navbar-nav navbar-right">
+                  <li>@Html.ActionLink("Admin", "index", "admin")</li>
+              </ul>
+          </div>
         </div>
-      </div>
     </div>
 
     <div class="container">
-    @{ bool showWarning = ViewBag.showAdmingWarning != null && ViewBag.showAdmingWarning; }
+      @{ bool showWarning = ViewBag.showAdmingWarning != null && ViewBag.showAdmingWarning; }
 
-    @if (showWarning) 
-    {
-        <p class="alert alert-error">You are running kudu against a local kudu service and are not an Administrator. Re-run this process as Administrator in order to continue.</p>
-    }
-    else if (!String.IsNullOrEmpty(ViewBag.slug))
-    { 
-    <div class="subnav subnav-fixed">
-    <ul class="nav nav-pills">
-          <li @if (ViewBag.tab == "settings")
-              {<text>class="active"</text> }>@Html.RouteLink("Settings", "ApplicationDetails", new { slug = ViewBag.slug }, null)</li>
-          <li @if (ViewBag.tab == "deployments")
-              {<text>class="active"</text> }>@Html.RouteLink("Deployments", "Deployments", new { slug = ViewBag.slug }, null)</li>
-          <li @if (ViewBag.tab == "configuration")
-              {<text>class="active"</text> }>@Html.RouteLink("Configuration", "Configuration", new { slug = ViewBag.slug }, null)</li>
-        </ul>
-    </div>
-        
-    <div class="page-header">
-      <h1>@ViewBag.appName</h1>
-    </div>    
-    }
+      @if (showWarning) 
+      {
+          <p class="alert alert-error">You are running kudu against a local kudu service and are not an Administrator. Re-run this process as Administrator in order to continue.</p>
+      }
+      else if (!String.IsNullOrEmpty(ViewBag.slug))
+      { 
+        <div class="subnav subnav-fixed">
+            <ul class="nav nav-pills">
+              <li @if (ViewBag.tab == "settings")
+                  {<text>class="active"</text> }>@Html.RouteLink("Settings", "ApplicationDetails", new { slug = ViewBag.slug }, null)</li>
+              <li @if (ViewBag.tab == "deployments")
+                  {<text>class="active"</text> }>@Html.RouteLink("Deployments", "Deployments", new { slug = ViewBag.slug }, null)</li>
+              <li @if (ViewBag.tab == "configuration")
+                  {<text>class="active"</text> }>@Html.RouteLink("Configuration", "Configuration", new { slug = ViewBag.slug }, null)</li>
+            </ul>
+        </div>
+
+        <div class="page-header">
+          <h1>@ViewBag.appName</h1>
+        </div>
+      }
     
-    @if (!showWarning)
-    { 
-        @RenderBody()
-    }
-    else 
-    {
-        RenderBody();
-    }
+      @if (!showWarning)
+      { 
+          @RenderBody()
+      }
+      else 
+      {
+          RenderBody();
+      }
 
     </div> <!-- /container -->
 

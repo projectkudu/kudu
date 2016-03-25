@@ -10,13 +10,13 @@
 @Html.ValidationSummary(true)
 
 <div class="well">
-    <div class="control-group">
+    <div class="form-group">
         <label class="control-label"><strong>Kudu Service Path</strong></label>
-        <div class="controls">
+        <div>
         @Model.ServiceSitePath 
         @if (!Directory.Exists(Model.ServiceSitePath))
         { 
-            <span class="label label-important">Error</span>
+            <span class="label label-danger">Error</span>
         }
         else 
         {
@@ -26,9 +26,9 @@
         </div>
     </div>
 
-    <div class="control-group">
+    <div class="form-group">
         <label class="control-label"><strong>Application Path</strong></label>
-        <div class="controls">
+        <div>
         @Model.SitesPath
         <p class="help-block">This is the physical path where sites will be created.</p>
         </div>

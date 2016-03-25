@@ -1,6 +1,7 @@
 /* Header/Footer */
 body {
-    padding-top: 40px;
+    padding-top: 70px; /* make the container go all the way to the bottom of the topbar */
+    padding-bottom: 70px;
     font-family: 'Segoe UI', "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 

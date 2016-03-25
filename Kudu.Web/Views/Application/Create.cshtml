@@ -6,25 +6,23 @@
 
 @if (!ViewData.ModelState.IsValid)
 { 
-<div class="alert alert-error">
+<div class="alert alert-danger" role="alert">
 @Html.ValidationSummary(true)
 </div>
 }
 
 @using (Html.BeginForm())
-{    
+{
   <fieldset>
     <legend>New Application</legend>
-    <div class="control-group">
+    <div class="form-group">
       @Html.LabelFor(model => model.Name)
-      <div class="controls">        
-        @Html.EditorFor(model => model.Name)
-        @Html.ValidationMessageFor(model => model.Name)
-        <p class="help-block">Name of the application</p>
-      </div>
+      @Html.TextBoxFor(model => model.Name, new { @class = "form-control" })
+      @Html.ValidationMessageFor(model => model.Name)
+      <p class="help-block">Name of the application</p>
     </div>
     <p>
-        <input type="submit" value="Create application" class="btn-primary" />
+        <input type="submit" value="Create application" class="btn btn-primary" />
     </p>
   </fieldset>
 }

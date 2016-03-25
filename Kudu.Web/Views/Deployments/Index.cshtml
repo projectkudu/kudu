@@ -8,18 +8,16 @@
 
 <form class="well form-inline">
   <label class="control-label"><strong>GIT URL</strong></label>
-  <input type="input" id="clone-url" name="name" value="@Model.GitUrl" readonly="readonly" />
+  <input type="text" id="clone-url" name="name" class="form-control" value="@Model.GitUrl" readonly="readonly" />
 </form>
 
 <form method="post" class="well form-inline" action="@Url.Action("TriggerFetch", new { slug = ViewBag.slug })" id="triggerForm">
     <fieldset>
         <legend>Trigger deployment</legend>
-        <label class="control-label">
-            <strong>Repository Url</strong>
-            <input type="text" name="repositoryUrl" data-val="true" data-val-required="*" />
-        </label>
-        @Html.DropDownList("repositoryType", new[] { new SelectListItem { Text = RepositoryType.Git.ToString() }, new SelectListItem { Text = RepositoryType.Mercurial.ToString() } })
-        <button type="submit" class="btn" data-loading-text="Fetching...">Go</button>
+        <label for="repositoryUrl"><strong>Repository Url</strong></label>
+        <input type="text" id="repositoryUrl" name="repositoryUrl" class="form-control" data-val="true" data-val-required="*" />
+        @Html.DropDownList("repositoryType", new[] { new SelectListItem { Text = RepositoryType.Git.ToString() }, new SelectListItem { Text = RepositoryType.Mercurial.ToString() } }, new { @class = "form-control" })
+        <button type="submit" class="btn btn-primary" data-loading-text="Fetching...">Go</button>
     </fieldset>
 </form>
 
@@ -74,7 +72,7 @@
                 {
                     if (d.Status == Kudu.Core.Deployment.DeployStatus.Failed) 
                     {
-                         <span class="label label-important">Failed</span>
+                         <span class="label label-danger">Failed</span>
                     }
                     else
                     {
@@ -83,30 +81,30 @@
                 }
                 else
                 {
-                    <span class="label">@d.Status</span>
+                    <span class="label label-info">@d.Status</span>
                 }
             </td>
-            <td style="width: 100px">
+            <td style="width: 85px">
                 @if (d.Current)
                 {
-                    <div class="icon-ok"></div>
+                    <div class="glyphicon glyphicon-ok"></div>
                 }
                 else if (d.Complete)
                 {
-<div class="btn-group">
-  <a class="btn" href="#">Action</a>
-  <a class="btn dropdown-toggle" data-toggle="dropdown" href="#">
+<div class="dropdown">
+  <button class="btn btn-default btn-xs dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+    Action
     <span class="caret"></span>
-  </a>
+  </button>
   <ul class="dropdown-menu">
-    <li><a href="@Url.Action("deploy", "deployments", new { slug = ViewBag.slug, id = d.Id })"><i class="icon-repeat"></i> Deploy</a></li>
-    <li><a href="@Url.Action("deploy", "deployments", new { slug = ViewBag.slug, id = d.Id, clean = true })"><i class="icon-repeat"></i> Deploy (clean)</a></li>
+    <li><a href="@Url.Action("deploy", "deployments", new { slug = ViewBag.slug, id = d.Id })"><i class="glyphicon glyphicon-repeat"></i> Deploy</a></li>
+    <li><a href="@Url.Action("deploy", "deployments", new { slug = ViewBag.slug, id = d.Id, clean = true })"><i class="glyphicon glyphicon-repeat"></i> Deploy (clean)</a></li>
   </ul>
 </div>
                 }
             </td>
-            <td style="width:60px">
-                <a href="@Url.Action("log", "deployments", new { slug = ViewBag.slug, id = d.Id })">View Log</a>
+            <td style="width: 65px">
+                <a href="@Url.Action("log", "deployments", new { slug = ViewBag.slug, id = d.Id })" class="btn btn-link btn-xs">View Log</a>
             </td>
             </tr>
         }

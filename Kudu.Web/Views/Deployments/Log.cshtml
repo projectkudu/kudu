@@ -18,15 +18,15 @@
 @{ var index = 0; }
 @foreach (var log in Model)
 {
-    string icon = "icon-ok";
+    string icon = "glyphicon glyphicon-ok";
 
     switch (log.Type)
     {
         case LogEntryType.Warning:
-            icon = "icon-info-sign";
+            icon = "glyphicon glyphicon-info-sign";
             break;
         case LogEntryType.Error:
-            icon = "icon-remove";
+            icon = "glyphicon glyphicon-remove";
             break;
     }
     

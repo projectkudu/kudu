@@ -108,11 +108,14 @@
   <ItemGroup>
     <Content Include="Content\bootstrap-responsive.css" />
     <Content Include="Content\bootstrap-responsive.min.css" />
+    <Content Include="Content\bootstrap-theme.css" />
+    <Content Include="Content\bootstrap-theme.min.css" />
     <Content Include="Content\bootstrap.css" />
     <Content Include="Content\bootstrap.min.css" />
     <Content Include="Content\img\glyphicons-halflings-white.png" />
     <Content Include="Content\img\glyphicons-halflings.png" />
     <Content Include="Content\Site.css" />
+    <Content Include="fonts\glyphicons-halflings-regular.svg" />
     <Content Include="Global.asax" />
     <Content Include="images\arrow_refresh.png" />
     <Content Include="images\book_previous.png" />
@@ -125,9 +128,8 @@
     <Content Include="images\world_go.png" />
     <Content Include="Scripts\bootstrap.js" />
     <Content Include="Scripts\bootstrap.min.js" />
-    <Content Include="Scripts\jquery-1.7-vsdoc.js" />
-    <Content Include="Scripts\jquery-1.7.js" />
-    <Content Include="Scripts\jquery-1.7.min.js" />
+    <Content Include="Scripts\jquery-2.2.1.js" />
+    <Content Include="Scripts\jquery-2.2.1.min.js" />
     <Content Include="images\addfile.png" />
     <Content Include="images\application_side_list.png" />
     <Content Include="images\asax-edit.png" />
@@ -180,21 +182,6 @@
     <Content Include="images\tick.png" />
     <Content Include="images\tt.png" />
     <Content Include="images\warning.png" />
-    <Content Include="Styles\ui-lightness\images\ui-bg_diagonals-thick_18_b81900_40x40.png" />
-    <Content Include="Styles\ui-lightness\images\ui-bg_diagonals-thick_20_666666_40x40.png" />
-    <Content Include="Styles\ui-lightness\images\ui-bg_flat_10_000000_40x100.png" />
-    <Content Include="Styles\ui-lightness\images\ui-bg_glass_100_f6f6f6_1x400.png" />
-    <Content Include="Styles\ui-lightness\images\ui-bg_glass_100_fdf5ce_1x400.png" />
-    <Content Include="Styles\ui-lightness\images\ui-bg_glass_65_ffffff_1x400.png" />
-    <Content Include="Styles\ui-lightness\images\ui-bg_gloss-wave_35_f6a828_500x100.png" />
-    <Content Include="Styles\ui-lightness\images\ui-bg_highlight-soft_100_eeeeee_1x100.png" />
-    <Content Include="Styles\ui-lightness\images\ui-bg_highlight-soft_75_ffe45c_1x100.png" />
-    <Content Include="Styles\ui-lightness\images\ui-icons_222222_256x240.png" />
-    <Content Include="Styles\ui-lightness\images\ui-icons_228ef1_256x240.png" />
-    <Content Include="Styles\ui-lightness\images\ui-icons_ef8c08_256x240.png" />
-    <Content Include="Styles\ui-lightness\images\ui-icons_ffd27a_256x240.png" />
-    <Content Include="Styles\ui-lightness\images\ui-icons_ffffff_256x240.png" />
-    <Content Include="Styles\ui-lightness\jquery-ui-1.8.16.custom.css" />
     <Content Include="Web.config">
       <SubType>Designer</SubType>
     </Content>
@@ -280,6 +267,17 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Views\Deployments\Log.cshtml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="fonts\glyphicons-halflings-regular.woff2" />
+    <Content Include="fonts\glyphicons-halflings-regular.woff" />
+    <Content Include="fonts\glyphicons-halflings-regular.ttf" />
+    <Content Include="fonts\glyphicons-halflings-regular.eot" />
+    <Content Include="Content\bootstrap.min.css.map" />
+    <Content Include="Content\bootstrap.css.map" />
+    <Content Include="Content\bootstrap-theme.min.css.map" />
+    <Content Include="Content\bootstrap-theme.css.map" />
+    <None Include="Scripts\jquery-2.2.1.min.map" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>

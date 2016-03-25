@@ -10,20 +10,20 @@
 
 <form class="well form-inline">
     <label class="control-label"><strong>GIT URL</strong></label>
-    <input type="input" id="clone-url" name="name" value="@Model.GitUrl" readonly="readonly" />
+    <input type="text" id="clone-url"class="form-control" name="name" value="@Model.GitUrl" readonly="readonly" />
 </form>
 
 <div class="well">
-    <div class="control-group">
+    <div class="form-group">
         <label class="control-label"><strong>Application URL</strong></label>
-        <div class="controls">
+        <div>
             <a href="@Model.SiteUrl" target="_blank">@Model.SiteUrl</a>
             <p class="help-block">This is the link to your website.</p>
         </div>
     </div>
-    <div class="control-group">
+    <div class="form-group">
         <label class="control-label"><strong>Service URL</strong></label>
-        <div class="controls">
+        <div>
             <a href="@Model.ServiceUrl" target="_blank">@Model.ServiceUrl</a>
             <p class="help-block">This is the link to the kudu service.</p>
         </div>
@@ -139,37 +139,41 @@
         <div class="row">
             <div class="span2">
                 <label class="control-label">Type:</label>
-                @Html.DropDownList("siteSchema", Model.Schemas, new { onchange = "schemaChanged('" + name + "')", id = name + "SiteSchema", style = "width: 100%;" })
+                @Html.DropDownList("siteSchema", Model.Schemas, new { onchange = "schemaChanged('" + name + "')", id = name + "SiteSchema", style = "width: 100%;", @class = "form-control" })
             </div>
             <div class="span4">
                 <label class="control-label">IP address:</label>
-                @Html.DropDownList("siteIp", Model.IpAddresses, new { style = "width: 100%", id = name + "SiteIp" })
+                @Html.DropDownList("siteIp", Model.IpAddresses, new { style = "width: 100%", id = name + "SiteIp", @class = "form-control" })
             </div>
             <div class="span2">
                 <label class="control-label">Port:</label>
-                @Html.TextBox("sitePort", "80", new { style = "width: 50%", id = name + "SitePort" })
+                @Html.TextBox("sitePort", "80", new { style = "width: 50%", id = name + "SitePort", @class = "form-control" })
             </div>
         </div>
         <div class="row">
             <div class="span5">
                 <label>Host name:</label>
-                @Html.TextBox("siteHost", "", new { placeholder = "example.org", style = "width: 100%", id = name + "SiteHost" })
+                @Html.TextBox("siteHost", "", new { placeholder = "example.org", style = "width: 100%", id = name + "SiteHost", @class = "form-control" })
             </div>
         </div>
         if (Model.SupportsSni)
         {
             <div style="display: none;" class="row @(name + "HttpsFields")">
-                <div class="span5">
+                <div class="checkbox span5">
                     <label class="checkbox">
                         @Html.CheckBox("siteRequireSni", false, new { id = name + "SniEnabled", onchange = "httpsChanged('" + name + "')" }) Require Server Name Indication
                     </label>
                 </div>
             </div>
         }
-        <div style="display: none; margin-top: 20px;" class="row @(name + "HttpsFields")">
+        else
+        {
+            @Html.Hidden("siteRequireSni", false)
+        }
+        <div style="display: none;" class="row @(name + "HttpsFields")">
             <div class="span5">
                 <label>SSL certificate:</label>
-                @Html.DropDownList("siteCertificate", Model.Certificates, "Select certificate...", new { onchange = "httpsChanged('" + name + "')", style = "width: 100%", id = name + "SiteCertificate" })
+                @Html.DropDownList("siteCertificate", Model.Certificates, "Select certificate...", new { onchange = "httpsChanged('" + name + "')", style = "width: 100%", id = name + "SiteCertificate", @class = "form-control" })
             </div>
         </div>
         <button id="add_sitebinding" type="submit" class="btn btn-primary">Add binding</button>
@@ -179,7 +183,7 @@
 @if (Model.CustomHostNames)
 {
     <div class="well">
-        <div class="control-group">
+        <div class="form-group">
             <label class="control-label"><strong>Custom Application Site Bindings</strong></label>
             <p class="help-block">
             Specify additional site bindings for the service site.  Can be of the format 'hostname', 'hostname:port', 'example.org' or 'example.org:port'.
@@ -207,7 +211,7 @@
                             <td><a href="@uri.AbsoluteUri">@uri.Host</a></td>
                             <td>@uri.Port</td>
                             <td class="actions">
-                                <button type="button" class="btn btn-primary" onclick=" removeBinding('@siteBinding', '#removesitebinding') ">Remove</button>
+                                <button type="button" class="btn btn-danger" onclick=" removeBinding('@siteBinding', '#removesitebinding') ">Remove</button>
                             </td>
                         </tr>
                     }
@@ -227,7 +231,7 @@
     </div>
     
     <div class="well">
-        <div class="control-group">
+        <div class="form-group">
             <label class="control-label"><strong>Custom Service Site Bindings</strong></label>
             
             <p class="help-block">
@@ -277,5 +281,5 @@
 
 @using (Html.BeginForm("Delete", "Application", new { slug = Model.Name.GenerateSlug() }))
 { 
-    <input type="submit" class="btn-danger btn-large" name="name" value="Delete Application" />
+    <input type="submit" class="btn btn-danger" name="name" value="Delete Application" />
 }
