@@ -5,6 +5,7 @@ using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 using Kudu.Contracts.Infrastructure;
+using Kudu.Core.Helpers;
 using Kudu.Core.Tracing;
 
 namespace Kudu.Core.Infrastructure
@@ -16,7 +17,7 @@ namespace Kudu.Core.Infrastructure
     public class LockFile : IOperationLock
     {
         private const string NotEnoughSpaceText = "There is not enough space on the disk.";
-        
+
         private readonly string _path;
         private readonly ITraceFactory _traceFactory;
 

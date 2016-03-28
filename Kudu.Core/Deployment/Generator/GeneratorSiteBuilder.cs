@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Kudu.Contracts.Settings;
+using Kudu.Core.Helpers;
 using Kudu.Core.Tracing;
 
 namespace Kudu.Core.Deployment.Generator
@@ -169,7 +170,14 @@ namespace Kudu.Core.Deployment.Generator
         {
             get
             {
-                return Path.Combine(Environment.NodeModulesPath, ".bin", "kuduscript.cmd");
+                if (OSDetecter.IsOnWindows())
+                {
+                    return Path.Combine(Environment.NodeModulesPath, ".bin", "kuduscript.cmd");
+                }
+                else
+                {
+                    return Path.Combine(Environment.NodeModulesPath, ".bin", "kuduscript");
+                }
             }
         }
     }

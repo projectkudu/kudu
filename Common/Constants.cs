@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 
 namespace Kudu
 {
@@ -22,7 +23,7 @@ namespace Kudu
         public const string SiteFolder = @"site";
         public const string LogFilesPath = @"LogFiles";
         public const string ApplicationLogFilesDirectory = "Application";
-        public const string TracePath = LogFilesPath + @"\kudu\trace";
+        public readonly static string TracePath = Path.Combine(LogFilesPath, "kudu", "trace");
         public const string SiteExtensionLogsDirectory = "siteExtLogs";
         public const string DeploySettingsPath = "settings.xml";
         public const string ActiveDeploymentFile = "active";

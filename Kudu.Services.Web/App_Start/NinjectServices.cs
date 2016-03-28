@@ -693,7 +693,7 @@ namespace Kudu.Services.Web.App_Start
 
         private static void PrependFoldersToPath(IEnvironment environment)
         {
-            List<string> folders = PathUtility.GetPathFolders(environment);
+            List<string> folders = PathUtilityFactory.Instance.GetPathFolders(environment);
 
             string path = System.Environment.GetEnvironmentVariable("PATH");
             string additionalPaths = String.Join(";", folders);

@@ -24,8 +24,8 @@ namespace Kudu.Core.Infrastructure
         /// </summary>
         public static IList<VsSolution> FindContainingSolutions(string repositoryPath, string targetPath, IFileFinder fileFinder)
         {
-            string solutionsPath = PathUtility.CleanPath(targetPath);
-            repositoryPath = PathUtility.CleanPath(repositoryPath);
+            string solutionsPath = PathUtilityFactory.Instance.CleanPath(targetPath);
+            repositoryPath = PathUtilityFactory.Instance.CleanPath(repositoryPath);
 
             while (solutionsPath != null && solutionsPath.Contains(repositoryPath))
             {
@@ -38,7 +38,7 @@ namespace Kudu.Core.Infrastructure
                     return solutionsFound.ToList();
                 }
 
-                if (PathUtility.PathsEquals(solutionsPath, repositoryPath))
+                if (PathUtilityFactory.Instance.PathsEquals(solutionsPath, repositoryPath))
                 {
                     break;
                 }
@@ -127,7 +127,7 @@ namespace Kudu.Core.Infrastructure
         private static bool ExistsInSolution(VsSolution solution, string targetPath)
         {
             return (from p in solution.Projects
-                    where PathUtility.PathsEquals(p.AbsolutePath, targetPath)
+                    where PathUtilityFactory.Instance.PathsEquals(p.AbsolutePath, targetPath)
                     select p).Any();
         }
 

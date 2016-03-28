@@ -43,26 +43,29 @@
             <div class="collapse navbar-collapse">
                 <ul class="nav navbar-nav">
                     <li><a href="~/Env">Environment</a></li>
-                    <li class="dropdown">
-                        <a href="#" data-toggle="dropdown" class="dropdown-toggle">Debug console <b class="caret"></b></a>
-                        <ul class="dropdown-menu">
-                            <li><a href="~/DebugConsole">CMD</a></li>
-                            <li><a href="~/DebugConsole/?shell=powershell">PowerShell</a></li>
-                        </ul>
-                    </li>
-                    <li><a href="~/ProcessExplorer/">Process explorer</a></li>
-                    <li class="dropdown">
-                        <a href="#" data-toggle="dropdown">Tools <b class="caret"></b></a>
-                        <ul class="dropdown-menu">
-                            <li><a href="~/api/dump">Diagnostic dump</a></li>
-                            <li><a href="~/api/logstream" title="If no log events are being generated the page may not load.">Log stream</a></li>
-                            <li><a href="~/azurejobs/">WebJobs dashboard</a></li>
-                            <li><a href="~/WebHooks">Web hooks</a></li>
-                            <li><a href="~/api/deploymentscript">Download deployment script</a></li>
-                            <li><a href="~/Support">Support</a></li>
-                        </ul>
-                    </li>
-                    <li><a href="~/SiteExtensions/">Site extensions</a></li>
+                    @if (Kudu.Core.Helpers.OSDetecter.IsOnWindows())
+                    {
+                        <li class="dropdown">
+                            <a href="#" data-toggle="dropdown" class="dropdown-toggle">Debug console <b class="caret"></b></a>
+                            <ul class="dropdown-menu">
+                                <li><a href="~/DebugConsole">CMD</a></li>
+                                <li><a href="~/DebugConsole/?shell=powershell">PowerShell</a></li>
+                            </ul>
+                        </li>
+                        <li><a href="~/ProcessExplorer/">Process explorer</a></li>
+                        <li class="dropdown">
+                            <a href="#" data-toggle="dropdown">Tools <b class="caret"></b></a>
+                            <ul class="dropdown-menu">
+                                <li><a href="~/api/dump">Diagnostic dump</a></li>
+                                <li><a href="~/api/logstream" title="If no log events are being generated the page may not load.">Log stream</a></li>
+                                <li><a href="~/azurejobs/">WebJobs dashboard</a></li>
+                                <li><a href="~/WebHooks">Web hooks</a></li>
+                                <li><a href="~/api/deploymentscript">Download deployment script</a></li>
+                                <li><a href="~/Support">Support</a></li>
+                            </ul>
+                        </li>
+                        <li><a href="~/SiteExtensions/">Site extensions</a></li>
+                    }
                 </ul>
                 @{
                     var email = Request.Headers["X-MS-CLIENT-PRINCIPAL-NAME"];
