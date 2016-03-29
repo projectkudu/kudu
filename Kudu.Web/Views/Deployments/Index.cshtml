@@ -6,10 +6,7 @@
     ViewBag.Title = "Deployments";
 }
 
-<form class="well form-inline">
-  <label class="control-label"><strong>GIT URL</strong></label>
-  <input type="text" id="clone-url" name="name" class="form-control" value="@Model.GitUrl" readonly="readonly" />
-</form>
+@Html.Partial("_GitUrlTextbox", Model.GitUrl)
 
 <form method="post" class="well form-inline" action="@Url.Action("TriggerFetch", new { slug = ViewBag.slug })" id="triggerForm">
     <fieldset>

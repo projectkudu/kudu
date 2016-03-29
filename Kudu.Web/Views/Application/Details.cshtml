@@ -8,10 +8,7 @@
     ViewBag.Title = Model.Name;
 }
 
-<form class="well form-inline">
-    <label class="control-label"><strong>GIT URL</strong></label>
-    <input type="text" id="clone-url"class="form-control" name="name" value="@Model.GitUrl" readonly="readonly" />
-</form>
+@Html.Partial("_GitUrlTextbox", Model.GitUrl)
 
 <div class="well">
     <div class="form-group">
