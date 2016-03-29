@@ -92,3 +92,26 @@ button.plain {
 a.site-item {
     vertical-align: middle;
 }
+
+
+.input-group-button {
+    padding: 0;
+    border: 0;
+}
+.input-group-button .btn {
+    border-radius: 0 4px 4px 0;
+
+    background-color: #eee;
+    background-image: linear-gradient(#fcfcfc, #eee);
+    border: 1px solid #d5d5d5;
+    border-left: none;
+}
+.input-group-button .btn:hover {
+    background-color: #ddd;
+    background-image: linear-gradient(#eee, #ddd);
+    border-color: #ccc;
+}
+
+.btn-clipboard img {
+  max-width: 13px;
+}

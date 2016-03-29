@@ -1,0 +1,15 @@
+﻿@model string
+
+<div class="well form-inline">
+  <div class="form-group">
+      <label class="control-label"><strong>GIT URL</strong></label>
+      <div class="input-group">
+        <input type="text" id="clone-url"class="form-control" name="name" value="@Model" readonly="readonly">
+        <span class="input-group-addon input-group-button">
+            <button class="btn btn-clipboard" data-clipboard-target="#clone-url">
+                <img src="@Url.Content("~/Content/clippy.svg")" alt="Copy to clipboard">
+            </button>
+        </span>
+      </div>
+  </div>
+</div>
