@@ -43,7 +43,7 @@ namespace Kudu.Web.Models
                 .Union(context.IPAddresses.Select(ip => new SelectListItem { Text = ip, Value = ip }))
                 .ToArray();
 
-            SupportsSni = context.IISVersion.Major == 8;
+            SupportsSni = context.IISVersion.Major >= 8;
         }
 
         [Required]
