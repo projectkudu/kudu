@@ -250,7 +250,6 @@ namespace Kudu.Core.Functions
                 ScriptRootPathHref = FilePathToVfsUri(GetFunctionPath(functionName), isDirectory: true),
                 ScriptHref = FilePathToVfsUri(GetFunctionScriptPath(functionName, config)),
                 ConfigHref = FilePathToVfsUri(GetFunctionConfigPath(functionName)),
-                TestDataHref = FilePathToVfsUri(GetFunctionTestDataFilePath(functionName)),
                 SecretsFileHref = FilePathToVfsUri(GetFunctionSecretsFilePath(functionName)),
                 Href = GetFunctionHref(functionName),
                 Config = config,

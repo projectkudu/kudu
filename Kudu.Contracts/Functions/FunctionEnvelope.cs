@@ -23,9 +23,6 @@ namespace Kudu.Core.Functions
         [JsonProperty(PropertyName = "config_href")]
         public Uri ConfigHref { get; set; }
 
-        [JsonProperty(PropertyName = "test_data_href")]
-        public Uri TestDataHref { get; set; }
-
         [JsonProperty(PropertyName = "secrets_file_href")]
         public Uri SecretsFileHref { get; set; }
 
