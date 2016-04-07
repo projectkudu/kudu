@@ -26,6 +26,18 @@
         });
     </script>
 
+    @if (Kudu.Core.Helpers.OSDetecter.IsOnWindows())
+    {
+        <script>
+            $.serverOS = "windows";
+        </script>
+    }
+    else
+    {
+        <script>
+            $.serverOS = "linux";
+        </script>
+    }
 </head>
 
 <body>
@@ -38,11 +50,11 @@
                     <span class="icon-bar"></span>
                     <span class="icon-bar"></span>
                 </button>
-                <a class="navbar-brand" href="~/" style="padding-top: 13px"><img src="/Content/Images/kudu.svg" style="width: 50px; height: 18px"></a>
+                <a class="navbar-brand" href="~/" style="padding-top: 13px"><img src="/Content/Images/Kudu.svg" style="width: 50px; height: 18px"></a>
             </div>
             <div class="collapse navbar-collapse">
                 <ul class="nav navbar-nav">
-                    <li><a href="~/Env">Environment</a></li>
+                    <li><a href="~/Env.cshtml">Environment</a></li>
                     @if (Kudu.Core.Helpers.OSDetecter.IsOnWindows())
                     {
                         <li class="dropdown">
@@ -65,6 +77,15 @@
                             </ul>
                         </li>
                         <li><a href="~/SiteExtensions/">Site extensions</a></li>
+                    }
+                    else
+                    {
+                        <li class="dropdown">
+                            <a href="#" data-toggle="dropdown" class="dropdown-toggle">Debug console <b class="caret"></b></a>
+                            <ul class="dropdown-menu">
+                                <li><a href="~/DebugConsole/Default.cshtml">Bash</a></li>
+                            </ul>
+                        </li>
                     }
                 </ul>
                 @{

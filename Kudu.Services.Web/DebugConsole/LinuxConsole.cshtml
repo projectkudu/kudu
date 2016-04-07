@@ -1,0 +1,23 @@
+﻿@{
+    Layout = "~/_Layout.cshtml";
+    Page.Title = "Diagnostic Console";
+}
+
+@section PageHead {
+    <link href="~/Content/Styles/FileBrowser.css" rel="stylesheet" />
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.2/css/font-awesome.css" rel="stylesheet" />
+    <script src="//ajax.aspnetcdn.com/ajax/knockout/knockout-2.2.1.js" type="text/javascript"></script>
+}
+
+<div id="main" class="container">
+    <div class="view main-view">
+        <div id="KuduExecConsole" class="left-aligned" style="height: 70%"></div>
+    </div>
+</div>
+
+<script src="~/Content/Scripts/KuduExec.js"></script>
+<script>
+    LoadConsole();
+</script>
+<script src="~/Content/Scripts/jquery-console/jquery.console.js"></script>
+<script src="~/Content/Scripts/HelperScript.js"></script>

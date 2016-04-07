@@ -1,9 +1,29 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
+using System.Net.Http;
 
 namespace Kudu.Services.Infrastructure
 {
     public static class UriHelper
     {
+        public static Uri GetBaseUri(HttpRequestMessage request)
+        {
+            if (request == null)
+            {
+                throw new ArgumentNullException("request");
+            }
+
+            IEnumerable<string> disguisedHostValues = new List<string>();
+            if (request.Headers.TryGetValues("DISGUISED-HOST", out disguisedHostValues) && disguisedHostValues.Count() > 0)
+            {
+                return new UriBuilder("https", disguisedHostValues.First()).Uri;
+            }
+
+            return new Uri(request.RequestUri.GetComponents(UriComponents.SchemeAndServer, UriFormat.Unescaped));
+        }
+
         public static Uri MakeRelative(Uri baseUri, string relativeUri)
         {
             var builder = new UriBuilder(baseUri);
