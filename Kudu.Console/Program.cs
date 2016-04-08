@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.IO;
 using Kudu.Console.Services;
 using Kudu.Contracts.Infrastructure;
+using Kudu.Contracts.Permissions;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
 using Kudu.Core;
@@ -13,6 +14,7 @@ using Kudu.Core.Deployment.Generator;
 using Kudu.Core.Functions;
 using Kudu.Core.Hooks;
 using Kudu.Core.Infrastructure;
+using Kudu.Core.Permissions;
 using Kudu.Core.Settings;
 using Kudu.Core.SourceControl;
 using Kudu.Core.SourceControl.Git;
@@ -114,15 +116,17 @@ namespace Kudu.Console
 
             IBuildPropertyProvider buildPropertyProvider = new BuildPropertyProvider();
             ISiteBuilderFactory builderFactory = new SiteBuilderFactory(buildPropertyProvider, env);
+            var logger = new ConsoleLogger();
+            IPermissionHandler permissionHandler = new PermissionHandler(env, settingsManager, logger);
 
             IRepository gitRepository;
             if (settingsManager.UseLibGit2SharpRepository())
             {
-                gitRepository = new LibGit2SharpRepository(env, settingsManager, traceFactory);
+                gitRepository = new LibGit2SharpRepository(env, settingsManager, traceFactory, permissionHandler);
             }
             else
             {
-                gitRepository = new GitExeRepository(env, settingsManager, traceFactory);
+                gitRepository = new GitExeRepository(env, settingsManager, traceFactory, permissionHandler);
             }
 
             IServerConfiguration serverConfiguration = new ServerConfiguration();
@@ -132,7 +136,6 @@ namespace Kudu.Console
             IDeploymentStatusManager deploymentStatusManager = new DeploymentStatusManager(env, analytics, statusLock);
             IAutoSwapHandler autoSwapHander = new AutoSwapHandler(deploymentStatusManager, env, settingsManager, traceFactory);
             var functionManager = new FunctionManager(env, traceFactory);
-            var logger = new ConsoleLogger();
             IDeploymentManager deploymentManager = new DeploymentManager(builderFactory,
                                                           env,
                                                           traceFactory,

@@ -6,6 +6,7 @@ using System.Runtime.InteropServices;
 using System.Security;
 using Kudu.Core.Infrastructure;
 using System.Web;
+using Kudu.Core.Helpers;
 
 namespace Kudu.Core
 {
@@ -95,7 +96,17 @@ namespace Kudu.Core
             _siteExtensionSettingsPath = Path.Combine(SiteRootPath, Constants.SiteExtensionsCachePath);
             _diagnosticsPath = Path.Combine(SiteRootPath, Constants.DiagnosticsPath);
             _locksPath = Path.Combine(SiteRootPath, Constants.LocksPath);
-            _sshKeyPath = Path.Combine(rootPath, Constants.SSHKeyPath);
+
+            string siteName = System.Environment.GetEnvironmentVariable("WEBSITE_SITE_NAME");
+            if (OSDetecter.IsOnWindows() || rootPath.TrimEnd(new char[] { '/', '\\' }).EndsWith(siteName, StringComparison.OrdinalIgnoreCase))
+            {
+                _sshKeyPath = Path.Combine(rootPath, Constants.SSHKeyPath);
+            }
+            else
+            {
+                // in linux, rootPath is "/home", while .ssh folder need to under "/home/{user}"
+                _sshKeyPath = Path.Combine(rootPath, System.Environment.GetEnvironmentVariable("WEBSITE_SITE_NAME"), Constants.SSHKeyPath);
+            }
             _scriptPath = Path.Combine(binPath, Constants.ScriptsPath);
             _nodeModulesPath = Path.Combine(binPath, Constants.NodeModulesPath);
             _logFilesPath = Path.Combine(rootPath, Constants.LogFilesPath);

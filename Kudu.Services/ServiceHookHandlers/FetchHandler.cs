@@ -6,6 +6,7 @@ using System.Net;
 using System.Threading.Tasks;
 using System.Web;
 using Kudu.Contracts.Infrastructure;
+using Kudu.Contracts.Permissions;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.SourceControl;
 using Kudu.Contracts.Tracing;
@@ -34,6 +35,7 @@ namespace Kudu.Services
         private readonly ITracer _tracer;
         private readonly IRepositoryFactory _repositoryFactory;
         private readonly IAutoSwapHandler _autoSwapHandler;
+        private readonly IPermissionHandler _permissionHandler;
         private readonly string _markerFilePath;
 
         public FetchHandler(ITracer tracer,
@@ -44,7 +46,8 @@ namespace Kudu.Services
                             IEnvironment environment,
                             IEnumerable<IServiceHookHandler> serviceHookHandlers,
                             IRepositoryFactory repositoryFactory,
-                            IAutoSwapHandler autoSwapHandler)
+                            IAutoSwapHandler autoSwapHandler,
+                            IPermissionHandler permissionHandler)
         {
             _tracer = tracer;
             _deploymentLock = deploymentLock;
@@ -56,6 +59,7 @@ namespace Kudu.Services
             _repositoryFactory = repositoryFactory;
             _autoSwapHandler = autoSwapHandler;
             _markerFilePath = Path.Combine(environment.DeploymentsPath, "pending");
+            _permissionHandler = permissionHandler;
 
             // Prefer marker creation in ctor to delay create when needed.
             // This is to keep the code simple and avoid creation synchronization.
@@ -152,7 +156,7 @@ namespace Kudu.Services
                                                             deployInfo.Deployer);
                         }
 
-                        PerformBackgroundDeployment(deployInfo, _environment, _settings, _tracer.TraceLevel, context.Request.Url, tempDeployment, _autoSwapHandler, tempChangeSet);
+                        PerformBackgroundDeployment(deployInfo, _environment, _settings, _tracer.TraceLevel, context.Request.Url, tempDeployment, _autoSwapHandler, tempChangeSet, _permissionHandler);
                     }
 
                     // to avoid regression, only set location header if isAsync
@@ -393,7 +397,7 @@ namespace Kudu.Services
         }
 
         // key goal is to create background tracer that is independent of request.
-        public static void PerformBackgroundDeployment(DeploymentInfo deployInfo, IEnvironment environment, IDeploymentSettingsManager settings, TraceLevel traceLevel, Uri uri, IDisposable tempDeployment, IAutoSwapHandler autoSwapHandler, ChangeSet tempChangeSet)
+        public static void PerformBackgroundDeployment(DeploymentInfo deployInfo, IEnvironment environment, IDeploymentSettingsManager settings, TraceLevel traceLevel, Uri uri, IDisposable tempDeployment, IAutoSwapHandler autoSwapHandler, ChangeSet tempChangeSet, IPermissionHandler permissionHandler)
         {
             var tracer = traceLevel <= TraceLevel.Off ? NullTracer.Instance : new XmlTracer(environment.TracePath, traceLevel);
             var traceFactory = new TracerFactory(() => tracer);
@@ -419,12 +423,12 @@ namespace Kudu.Services
 
                     var analytics = new Analytics(settings, new ServerConfiguration(), traceFactory);
                     var deploymentStatusManager = new DeploymentStatusManager(environment, analytics, statusLock);
-                    var repositoryFactory = new RepositoryFactory(environment, settings, traceFactory);
+                    var repositoryFactory = new RepositoryFactory(environment, settings, traceFactory, permissionHandler);
                     var siteBuilderFactory = new SiteBuilderFactory(new BuildPropertyProvider(), environment);
                     var webHooksManager = new WebHooksManager(tracer, environment, hooksLock);
                     var functionManager = new FunctionManager(environment, traceFactory);
                     var deploymentManager = new DeploymentManager(siteBuilderFactory, environment, traceFactory, analytics, settings, deploymentStatusManager, deploymentLock, NullLogger.Instance, webHooksManager, autoSwapHandler, functionManager);
-                    var fetchHandler = new FetchHandler(tracer, deploymentManager, settings, deploymentStatusManager, deploymentLock, environment, null, repositoryFactory, null);
+                    var fetchHandler = new FetchHandler(tracer, deploymentManager, settings, deploymentStatusManager, deploymentLock, environment, null, repositoryFactory, null, permissionHandler);
 
                     // Perform deployment
                     var acquired = deploymentLock.TryLockOperation(() =>

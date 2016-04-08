@@ -2,7 +2,9 @@
 using System.IO;
 using System.IO.Abstractions;
 using System.Security.Cryptography;
+using Kudu.Contracts.Permissions;
 using Kudu.Contracts.Tracing;
+using Kudu.Core.Helpers;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Tracing;
 
@@ -20,14 +22,16 @@ namespace Kudu.Core.SSHKey
         private readonly string _id_rsa;
         private readonly string _id_rsaPub;
         private readonly string _config;
+        private readonly IPermissionHandler _permissionHandler;
 
-        public SSHKeyManager(IEnvironment environment, ITraceFactory traceFactory)
+        public SSHKeyManager(IEnvironment environment, ITraceFactory traceFactory, IPermissionHandler permissionHandler)
         {
             if (environment == null)
             {
                 throw new ArgumentNullException("environment");
             }
 
+            _permissionHandler = permissionHandler;
             _traceFactory = traceFactory ?? NullTracerFactory.Instance;
             _sshPath = environment.SSHKeyPath;
             _id_rsa = Path.Combine(_sshPath, PrivateKeyFile);
@@ -53,6 +57,7 @@ namespace Kudu.Core.SSHKey
 
                 // This overrides if file exists
                 FileSystemHelpers.WriteAllText(_id_rsa, key);
+                EnsureFilePermission();
             }
         }
 
@@ -112,7 +117,7 @@ namespace Kudu.Core.SSHKey
                     FileSystemHelpers.WriteAllText(_id_rsaPub, publicKey);
 
                     FileSystemHelpers.WriteAllText(_config, ConfigContent);
-
+                    EnsureFilePermission();
                     return publicKey;
                 }
                 finally
@@ -123,6 +128,15 @@ namespace Kudu.Core.SSHKey
                         rsa.Dispose();
                     }
                 }
+            }
+        }
+
+        private void EnsureFilePermission()
+        {
+            if (!OSDetecter.IsOnWindows())
+            {
+                _permissionHandler.Chmod("600", _id_rsa);
+                _permissionHandler.Chmod("644", _id_rsaPub);
             }
         }
     }

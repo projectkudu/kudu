@@ -10,6 +10,7 @@ using Kudu.Core.Infrastructure;
 using LibGit2Sharp;
 using Kudu.Contracts.Tracing;
 using System.Text.RegularExpressions;
+using Kudu.Contracts.Permissions;
 
 namespace Kudu.Core.SourceControl.Git
 {
@@ -20,12 +21,12 @@ namespace Kudu.Core.SourceControl.Git
         private readonly IDeploymentSettingsManager _settings;
         private readonly GitExeRepository _legacyGitExeRepository;
 
-        public LibGit2SharpRepository(IEnvironment environment, IDeploymentSettingsManager settings, ITraceFactory tracerFactory)
+        public LibGit2SharpRepository(IEnvironment environment, IDeploymentSettingsManager settings, ITraceFactory tracerFactory, IPermissionHandler permissionHandler)
         {
             _tracerFactory = tracerFactory;
             _settings = settings;
             RepositoryPath = environment.RepositoryPath;
-            _legacyGitExeRepository = new GitExeRepository(environment, settings, tracerFactory);
+            _legacyGitExeRepository = new GitExeRepository(environment, settings, tracerFactory, permissionHandler);
         }
 
         public string CurrentId
