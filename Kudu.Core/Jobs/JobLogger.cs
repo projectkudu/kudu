@@ -110,7 +110,7 @@ namespace Kudu.Core.Jobs
             }
             catch (Exception ex)
             {
-                traceFactory.GetTracer().TraceError(ex);
+                Analytics.UnexpectedException(ex, traceFactory);
                 return null;
             }
         }

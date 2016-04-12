@@ -172,6 +172,11 @@ namespace Kudu.Core.Jobs
 
             var triggeredJobStatus = GetStatus<TriggeredJobStatus>(statusFilePath);
 
+            if (triggeredJobStatus == null)
+            {
+                return null;
+            }
+
             if (triggeredJobStatus.Status == JobStatus.Running)
             {
                 if (isLatest)
