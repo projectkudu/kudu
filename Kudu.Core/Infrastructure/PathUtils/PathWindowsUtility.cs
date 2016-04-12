@@ -6,7 +6,7 @@ using SystemEnvironment = System.Environment;
 
 namespace Kudu.Core.Infrastructure
 {
-    public static class PathUtility
+    public class PathWindowsUtility : PathUtilityBase
     {
         private const string ProgramFiles64bitKey = "ProgramW6432";
 
@@ -20,48 +20,19 @@ namespace Kudu.Core.Infrastructure
         /// </summary>
         private const string DefaultNpmVersion = "1.4.9";
 
-        // Return a list of folders that need to be on the %PATH%
-        public static List<string> GetPathFolders(IEnvironment environment)
-        {
-            // Add the msbuild path and git path to the %PATH% so more tools are available
-            var toolsPaths = new List<string> {
-                environment.ScriptPath,
-                Path.GetDirectoryName(ResolveMSBuildPath()),
-                Path.GetDirectoryName(ResolveGitPath()),
-                Path.GetDirectoryName(ResolveVsTestPath()),
-                Path.GetDirectoryName(ResolveSQLCmdPath()),
-                Path.GetDirectoryName(ResolveFSharpCPath())
-            };
-
-            toolsPaths.AddRange(ResolveNodeNpmPaths());
-            toolsPaths.Add(ResolveNpmGlobalPrefix());
-
-            toolsPaths.AddRange(new[]
-            {
-                ResolveBowerPath(),
-                ResolveGruntPath(),
-                ResolveGulpPath()
-            }.Where(p => !String.IsNullOrEmpty(p)).Select(Path.GetDirectoryName));
-
-            // Add /site/deployments/tools to the path to allow users to drop tools in there
-            toolsPaths.Add(environment.DeploymentToolsPath);
-
-            return toolsPaths;
-        }
-
-        internal static string ResolveGitPath()
+        internal override string ResolveGitPath()
         {
             string relativePath = Path.Combine("Git", "bin", "git.exe");
             return ResolveRelativePathToProgramFiles(relativePath, relativePath, Resources.Error_FailedToLocateGit);
         }
 
-        internal static string ResolveHgPath()
+        internal override string ResolveHgPath()
         {
             string relativePath = Path.Combine("Mercurial", "hg.exe");
             return ResolveRelativePathToProgramFiles(relativePath, relativePath, Resources.Error_FailedToLocateHg);
         }
 
-        internal static string ResolveSSHPath()
+        internal override string ResolveSSHPath()
         {
             // version that before 2.5, ssh.exe has different path than in version 2.5
             string relativeX86Path = Path.Combine("Git", "bin", "ssh.exe");
@@ -76,13 +47,13 @@ namespace Kudu.Core.Infrastructure
             return ResolveRelativePathToProgramFiles(relativePath, relativePath, Resources.Error_FailedToLocateSsh);
         }
 
-        internal static string ResolveBashPath()
+        internal override string ResolveBashPath()
         {
             string relativePath = Path.Combine("Git", "bin", "bash.exe");
             return ResolveRelativePathToProgramFiles(relativePath, relativePath, Resources.Error_FailedToLocateBash);
         }
 
-        internal static string ResolveNpmJsPath()
+        internal override string ResolveNpmJsPath()
         {
             string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);
             string npmCliPath = Path.Combine("node_modules", "npm", "bin", "npm-cli.js");
@@ -109,42 +80,95 @@ namespace Kudu.Core.Infrastructure
             return Path.Combine(programFiles, "nodejs", npmCliPath);
         }
 
-        internal static string ResolveMSBuildPath()
+        internal override string ResolveMSBuildPath()
         {
             string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);
             return Path.Combine(programFiles, @"MSBuild", "14.0", "Bin", "MSBuild.exe");
         }
 
-        internal static string ResolveVsTestPath()
+        internal override string ResolveVsTestPath()
         {
             string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);
             return Path.Combine(programFiles, "Microsoft Visual Studio 11.0", "Common7", "IDE", "CommonExtensions", "Microsoft", "TestWindow", "vstest.console.exe");
         }
 
-        internal static string ResolveSQLCmdPath()
+        internal override string ResolveSQLCmdPath()
         {
             string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);
             return Path.Combine(programFiles, "Microsoft SQL Server", "110", "Tools", "Binn", "sqlcmd.exe");
         }
 
-        internal static string ResolveNpmGlobalPrefix()
+        internal override string ResolveNpmGlobalPrefix()
         {
             string appDataDirectory = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ApplicationData);
             return Path.Combine(appDataDirectory, "npm");
         }
 
-        internal static string ResolveVCTargetsPath()
+        internal override string ResolveVCTargetsPath()
         {
             string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);
             //This path has to end with \ for the environment variable to work
             return Path.Combine(programFiles, "MSBuild", "Microsoft.Cpp", "v4.0", @"V140\");
         }
 
-        internal static string ResolveVCInstallDirPath()
+        internal override string ResolveVCInstallDirPath()
         {
             string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);
             //This path has to end with \ for the environment variable to work
             return Path.Combine(programFiles, "Microsoft Visual Studio 14.0", @"VC\");
+        }
+
+        internal override List<string> ResolveNodeNpmPaths()
+        {
+            var paths = new List<string>();
+            string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);
+            bool fromAppSetting;
+            string nodeVersion = ResolveNodeVersion(out fromAppSetting);
+
+            // Only set node.exe path when WEBSITE_NODE_DEFAULT_VERSION is not set in app setting and the path is invalid.
+            if (!fromAppSetting)
+            {
+                string nodePath = Path.Combine(programFiles, "nodejs", nodeVersion);
+                if (FileSystemHelpers.FileExists(Path.Combine(nodePath, "node.exe")))
+                {
+                    paths.Add(nodePath);
+                }
+            }
+
+            // Only set npm.cmd path when npm.cmd can be found
+            string npmVersion = ResolveNpmVersion(nodeVersion);
+            string npmPath = Path.Combine(programFiles, "npm", npmVersion);
+            if (FileSystemHelpers.FileExists(Path.Combine(npmPath, "npm.cmd")))
+            {
+                paths.Add(npmPath);
+            }
+
+            return paths;
+        }
+
+        internal override bool PathsEquals(string path1, string path2)
+        {
+            if (path1 == null)
+            {
+                return path2 == null;
+            }
+
+            return String.Equals(CleanPath(path1), CleanPath(path2), StringComparison.OrdinalIgnoreCase);
+        }
+
+        internal override string ResolveBowerPath()
+        {
+            return ResolveNpmToolsPath("bower");
+        }
+
+        internal override string ResolveGulpPath()
+        {
+            return ResolveNpmToolsPath("gulp");
+        }
+
+        internal override string ResolveGruntPath()
+        {
+            return ResolveNpmToolsPath("grunt");
         }
 
         private static string ResolveNodeVersion()
@@ -203,75 +227,6 @@ namespace Kudu.Core.Infrastructure
             string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);
             return (!String.IsNullOrEmpty(version)) &&
                    FileSystemHelpers.FileExists(Path.Combine(programFiles, "nodejs", version, "node.exe"));
-        }
-
-        internal static List<string> ResolveNodeNpmPaths()
-        {
-            var paths = new List<string>();
-            string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);
-            bool fromAppSetting;
-            string nodeVersion = ResolveNodeVersion(out fromAppSetting);
-
-            // Only set node.exe path when WEBSITE_NODE_DEFAULT_VERSION is not set in app setting and the path is invalid.
-            if (!fromAppSetting)
-            {
-                string nodePath = Path.Combine(programFiles, "nodejs", nodeVersion);
-                if (FileSystemHelpers.FileExists(Path.Combine(nodePath, "node.exe")))
-                {
-                    paths.Add(nodePath);
-                }
-            }
-
-            // Only set npm.cmd path when npm.cmd can be found
-            string npmVersion = ResolveNpmVersion(nodeVersion);
-            string npmPath = Path.Combine(programFiles, "npm", npmVersion);
-            if (FileSystemHelpers.FileExists(Path.Combine(npmPath, "npm.cmd")))
-            {
-                paths.Add(npmPath);
-            }
-
-            return paths;
-        }
-
-        internal static string CleanPath(string path)
-        {
-            if (path == null)
-            {
-                return null;
-            }
-
-            return Path.GetFullPath(path.Trim()).TrimEnd(Path.DirectorySeparatorChar);
-        }
-
-        internal static bool PathsEquals(string path1, string path2)
-        {
-            if (path1 == null)
-            {
-                return path2 == null;
-            }
-
-            return String.Equals(CleanPath(path1), CleanPath(path2), StringComparison.OrdinalIgnoreCase);
-        }
-
-        internal static string ResolveBowerPath()
-        {
-            return ResolveNpmToolsPath("bower");
-        }
-
-        internal static string ResolveGulpPath()
-        {
-            return ResolveNpmToolsPath("gulp");
-        }
-
-        internal static string ResolveGruntPath()
-        {
-            return ResolveNpmToolsPath("grunt");
-        }
-
-        internal static string ResolveFSharpCPath()
-        {
-            string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);
-            return Path.Combine(programFiles, @"Microsoft SDKs", "F#", "3.1", "Framework", "v4.0", "Fsc.exe");
         }
 
         private static string ResolveNpmToolsPath(string toolName)

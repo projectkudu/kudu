@@ -8,21 +8,21 @@ namespace Kudu.Core.Test
         [Fact]
         public void CleanFixesOtherSlashes()
         {
-            Assert.Equal(@"c:\foo\bar", PathUtility.CleanPath(@"c:/foo/bar"));
+            Assert.Equal(@"c:\foo\bar", PathUtilityFactory.Instance.CleanPath(@"c:/foo/bar"));
         }
 
         [Fact]
         public void CleanTrimsTrailingSlashes()
         {
-            Assert.Equal(@"c:\foo\BAR", PathUtility.CleanPath(@"c:/foo/BAR/"));
-            Assert.Equal(@"c:\foo\bar", PathUtility.CleanPath(@"c:\foo\bar\"));
+            Assert.Equal(@"c:\foo\BAR", PathUtilityFactory.Instance.CleanPath(@"c:/foo/BAR/"));
+            Assert.Equal(@"c:\foo\bar", PathUtilityFactory.Instance.CleanPath(@"c:\foo\bar\"));
         }
 
         [Fact]
         public void CleanTrimsWhiteSpaces()
         {
-            Assert.Equal(@"c:\foo\BAR", PathUtility.CleanPath(@" c:/foo/BAR/ "));
-            Assert.Equal(@"c:\foo\bar", PathUtility.CleanPath("\tc:\\foo\\bar\\"));
+            Assert.Equal(@"c:\foo\BAR", PathUtilityFactory.Instance.CleanPath(@" c:/foo/BAR/ "));
+            Assert.Equal(@"c:\foo\bar", PathUtilityFactory.Instance.CleanPath("\tc:\\foo\\bar\\"));
         }
     }
 }
