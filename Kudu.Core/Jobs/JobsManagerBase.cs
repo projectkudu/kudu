@@ -50,6 +50,8 @@ namespace Kudu.Core.Jobs
 
         private string _lastKnownAppBaseUrlPrefix;
 
+        internal static object jobsListCacheLockObj = new object();
+
         protected IEnvironment Environment { get; private set; }
 
         protected IDeploymentSettingsManager Settings { get; private set; }
@@ -112,10 +114,13 @@ namespace Kudu.Core.Jobs
         public IEnumerable<TJob> ListJobs(bool forceRefreshCache)
         {
             var jobList = JobListCache;
-            if (jobList == null || forceRefreshCache)
+            lock (jobsListCacheLockObj)
             {
-                jobList = ListJobsInternal();
-                JobListCache = jobList;
+                if (jobList == null || forceRefreshCache)
+                {
+                    jobList = ListJobsInternal();
+                    JobListCache = jobList;
+                }
             }
             return jobList;
         }
