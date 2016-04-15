@@ -3,6 +3,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Web;
+using Kudu.Contracts.Permissions;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.SourceControl;
 using Kudu.Contracts.Tracing;
@@ -18,12 +19,14 @@ namespace Kudu.Core.SourceControl
         private readonly IEnvironment _environment;
         private readonly ITraceFactory _traceFactory;
         private readonly IDeploymentSettingsManager _settings;
+        private readonly IPermissionHandler _permissionHandler;
 
-        public RepositoryFactory(IEnvironment environment, IDeploymentSettingsManager settings, ITraceFactory traceFactory)
+        public RepositoryFactory(IEnvironment environment, IDeploymentSettingsManager settings, ITraceFactory traceFactory, IPermissionHandler permissionHandler)
         {
             _environment = environment;
             _settings = settings;
             _traceFactory = traceFactory;
+            _permissionHandler = permissionHandler;
         }
 
         /// <summary>
@@ -159,11 +162,11 @@ namespace Kudu.Core.SourceControl
         {
             if (_settings.UseLibGit2SharpRepository())
             {
-                return new LibGit2SharpRepository(_environment, _settings, _traceFactory);
+                return new LibGit2SharpRepository(_environment, _settings, _traceFactory, _permissionHandler);
             }
             else
             {
-                return new GitExeRepository(_environment, _settings, _traceFactory);
+                return new GitExeRepository(_environment, _settings, _traceFactory, _permissionHandler);
             }
         }
     }

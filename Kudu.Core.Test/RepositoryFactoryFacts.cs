@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Web;
+using Kudu.Contracts.Permissions;
 using Kudu.Contracts.Settings;
 using Kudu.Core.SourceControl;
 using Kudu.Core.Tracing;
@@ -23,7 +23,11 @@ namespace Kudu.Core.Test
                     }
 
                     // Arrange
-                    var repoFactory = new Mock<RepositoryFactory>(Mock.Of<IEnvironment>(), Mock.Of<IDeploymentSettingsManager>(), Mock.Of<ITraceFactory>()) { CallBase = true };
+                    var repoFactory = new Mock<RepositoryFactory>(
+                        Mock.Of<IEnvironment>(), 
+                        Mock.Of<IDeploymentSettingsManager>(),
+                        Mock.Of<ITraceFactory>(),
+                        Mock.Of<IPermissionHandler>()) { CallBase = true };
                     repoFactory.SetupGet(f => f.IsNullRepository)
                                .Returns(currentType == RepositoryType.None);
                     repoFactory.SetupGet(f => f.IsGitRepository)

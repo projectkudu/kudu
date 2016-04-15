@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Kudu.Contracts.Permissions;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.SourceControl;
 using Kudu.Core.Deployment;
@@ -78,7 +79,7 @@ Date:   Thu Jul 7 19:05:40 2011 -0700
             var settings = new Mock<IDeploymentSettingsManager>();
             var trace = new Mock<ITraceFactory>();
 
-            var repository = new GitExeRepository(Mock.Of<IEnvironment>(), settings.Object, trace.Object);
+            var repository = new GitExeRepository(Mock.Of<IEnvironment>(), settings.Object, trace.Object, Mock.Of<IPermissionHandler>());
             Exception exception = null;
             var actual = 0;
 

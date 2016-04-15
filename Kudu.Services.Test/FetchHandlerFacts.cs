@@ -5,6 +5,7 @@ using System.IO.Abstractions;
 using System.Linq;
 using System.Threading.Tasks;
 using Kudu.Contracts.Infrastructure;
+using Kudu.Contracts.Permissions;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.SourceControl;
 using Kudu.Contracts.Tracing;
@@ -107,7 +108,8 @@ namespace Kudu.Services.Test
                                     environment ?? Mock.Of<IEnvironment>(),
                                     new[] { serviceHookHandler ?? Mock.Of<IServiceHookHandler>() },
                                     repositoryFactory ?? Mock.Of<IRepositoryFactory>(),
-                                    autoSwapHandler ?? Mock.Of<IAutoSwapHandler>());
+                                    autoSwapHandler ?? Mock.Of<IAutoSwapHandler>(),
+                                    Mock.Of<IPermissionHandler>());
         }
 
         private Mock<IFileSystem> GetFileSystem(string siteRoot, params DateTime[] writeTimeUtcs)

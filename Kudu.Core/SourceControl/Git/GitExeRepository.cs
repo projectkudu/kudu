@@ -4,6 +4,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
+using Kudu.Contracts.Permissions;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Deployment;
@@ -32,19 +33,19 @@ namespace Kudu.Core.SourceControl.Git
 
         private static readonly string[] _lockFileNames = new[] { "index.lock", "HEAD.lock" };
 
-        private IEnvironment _environment;
         private readonly GitExecutable _gitExe;
         private readonly ITraceFactory _tracerFactory;
         private readonly IDeploymentSettingsManager _settings;
+        private readonly IPermissionHandler _permissionHandler;
 
-        public GitExeRepository(IEnvironment environment, IDeploymentSettingsManager settings, ITraceFactory profilerFactory)
+        public GitExeRepository(IEnvironment environment, IDeploymentSettingsManager settings, ITraceFactory profilerFactory, IPermissionHandler permissionHandler)
         {
             _gitExe = new GitExecutable(environment.RepositoryPath, settings.GetCommandIdleTimeout());
-            _environment = environment;
             _tracerFactory = profilerFactory;
             _settings = settings;
             SkipPostReceiveHookCheck = false;
             _gitExe.SetHomePath(environment);
+            _permissionHandler = permissionHandler;
         }
 
         public string CurrentId
@@ -191,12 +192,9 @@ fi" + "\n";
 
                     if (!OSDetecter.IsOnWindows())
                     {
-                        using (tracer.Step("Non-Windows enviroment, granting full permission to post-receive hook file"))
+                        using (tracer.Step("Non-Windows enviroment, granting 755 permission to post-receive hook file"))
                         {
-                            var hooksDir = new DirectoryInfo(PostReceiveHookPath).Parent;
-                            var exeFactory = new ExternalCommandFactory(_environment, _settings, null);
-                            Executable exe = exeFactory.BuildCommandExecutable("/bin/chmod", hooksDir.FullName, _settings.GetCommandIdleTimeout(), NullLogger.Instance);
-                            exe.Execute("777 {0}", PostReceiveHookPath);
+                            _permissionHandler.Chmod("755", PostReceiveHookPath);
                         }
                     }
                 }
