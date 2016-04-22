@@ -35,6 +35,8 @@ namespace Kudu.Core.Tracing
         {
             // portal polling
             "/api/webjobs",
+            "/api/continuousjobs",
+            "/api/triggeredjobs",
             "/api/siteextensions",
             "/api/processes",
             "/api/deployments",
