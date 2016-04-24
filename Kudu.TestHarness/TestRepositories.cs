@@ -16,7 +16,7 @@ namespace Kudu.TestHarness
             new TestRepositoryInfo("https://github.com/KuduApps/AspNet5With2ProjectsNoSlnFile.git", "175b9d3"),
             new TestRepositoryInfo("https://github.com/KuduApps/Bakery.git",                        "2f29dc6"),
             new TestRepositoryInfo("https://github.com/KuduApps/BasicConsoleWorker.git",            "ce1ec74"),
-            new TestRepositoryInfo("https://github.com/KuduApps/ConditionalCompilation.git",        "1ca687d"),
+            new TestRepositoryInfo("https://github.com/KuduApps/ConditionalCompilation.git",        "946159e"),
             new TestRepositoryInfo("https://github.com/KuduApps/ConsoleWorker.git",                 "a2c2bc7"),
             new TestRepositoryInfo("https://github.com/KuduApps/CustomBuildScript.git",             "2c156bd"),
             new TestRepositoryInfo("https://github.com/KuduApps/CustomDeploymentSettingsTest.git",  "bc0ce04"),
