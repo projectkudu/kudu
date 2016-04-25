@@ -67,6 +67,10 @@ namespace Kudu.Core.Jobs
         protected JobsFileWatcher JobsWatcher { get; set; }
         internal static IEnumerable<TJob> JobListCache { get; set; }
 
+        private DateTime _jobListCacheExpiryDate;
+
+        private const int _jobListCacheTimeOutInMinutes = 10;
+
         List<Action<string>> FileWatcherExtraEventHandlers;
 
         protected JobsManagerBase(ITraceFactory traceFactory, IEnvironment environment, IDeploymentSettingsManager settings, IAnalytics analytics, string jobsTypePath)
@@ -116,10 +120,11 @@ namespace Kudu.Core.Jobs
             var jobList = JobListCache;
             lock (jobsListCacheLockObj)
             {
-                if (jobList == null || forceRefreshCache)
+                if (jobList == null || forceRefreshCache || _jobListCacheExpiryDate < DateTime.Now)
                 {
                     jobList = ListJobsInternal();
                     JobListCache = jobList;
+                    _jobListCacheExpiryDate = DateTime.Now.AddMinutes(_jobListCacheTimeOutInMinutes);
                 }
             }
             return jobList;
@@ -193,6 +198,8 @@ namespace Kudu.Core.Jobs
                     FileSystemHelpers.DeleteDirectorySafe(jobDirectory.FullName, ignoreErrors: false);
                     FileSystemHelpers.DeleteDirectorySafe(jobsSpecificDataPath, ignoreErrors: false);
                 }, retries: 3, delayBeforeRetry: 2000);
+
+                ClearJobListCache();
             }
             catch (Exception ex)
             {
