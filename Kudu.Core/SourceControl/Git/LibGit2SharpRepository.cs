@@ -328,7 +328,7 @@ echo $i > pushinfo
 
         public IEnumerable<string> ListFiles(string path, SearchOption searchOption, params string[] lookupList)
         {
-            path = PathUtility.CleanPath(path);
+            path = PathUtilityFactory.Instance.CleanPath(path);
 
             if (!FileSystemHelpers.IsSubfolder(RepositoryPath, path))
             {

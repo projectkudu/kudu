@@ -158,11 +158,16 @@
     <Compile Include="Deployment\StructuredTextDocumentEntry.cs" />
     <Compile Include="Deployment\StructuredTextLogger.cs" />
     <Compile Include="Functions\FunctionManager.cs" />
+    <Compile Include="Helpers\OSDetecter.cs" />
     <Compile Include="Hooks\WebHooksManager.cs" />
     <Compile Include="Infrastructure\AspNet5Helper.cs" />
     <Compile Include="Infrastructure\InstanceIdUtility.cs" />
     <Compile Include="Infrastructure\IServerConfiguration.cs" />
     <Compile Include="Infrastructure\SecurityUtility.cs" />
+    <Compile Include="Infrastructure\PathUtils\PathLinuxUtility.cs" />
+    <Compile Include="Infrastructure\PathUtils\PathUtilityBase.cs" />
+    <Compile Include="Infrastructure\PathUtils\PathUtilityFactory.cs" />
+    <Compile Include="Infrastructure\PathUtils\PathWindowsUtility.cs" />
     <Compile Include="Infrastructure\ServerConfiguration.cs" />
     <Compile Include="Infrastructure\SettingsProcessor.cs" />
     <Compile Include="Infrastructure\ZipArchiveExtensions.cs" />
@@ -291,7 +296,6 @@
     <Compile Include="SourceControl\Git\GitExecutable.cs" />
     <Compile Include="SourceControl\Git\GitExeRepository.cs" />
     <Compile Include="SourceControl\Git\GitExeServer.cs" />
-    <Compile Include="Infrastructure\PathUtility.cs" />
     <Compile Include="SourceControl\Hg\HgRepository.cs" />
   </ItemGroup>
   <ItemGroup>
