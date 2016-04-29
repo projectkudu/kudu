@@ -726,23 +726,7 @@ namespace Kudu.Services.Web.App_Start
             string siteRoot = Path.Combine(root, Constants.SiteFolder);
             string repositoryPath = Path.Combine(siteRoot, settings == null ? Constants.RepositoryPath : settings.GetRepositoryPath());
             string binPath = HttpRuntime.BinDirectory;
-
-            if (!string.IsNullOrWhiteSpace(binPath) && !OSDetector.IsOnWindows())
-            {
-                int binIdx = binPath.LastIndexOf("Bin", StringComparison.Ordinal);
-                if (binIdx >= 0)
-                {
-                    string subStr = binPath.Substring(binIdx);
-                    // make sure file path is end with ".....Bin" or "....Bin/"
-                    if (subStr.Length < 5 && binPath.EndsWith(subStr, StringComparison.OrdinalIgnoreCase))
-                    {
-                        // real bin folder is lower case, but in mono, value is "Bin" instead of "bin"
-                        binPath = binPath.Substring(0, binIdx) + subStr.ToLowerInvariant();
-                    }
-                }
-            }
-
-            return new Kudu.Core.Environment(root, binPath, repositoryPath);
+            return new Core.Environment(root, EnvironmentHelper.NormalizeBinPath(binPath), repositoryPath);
         }
     }
 }

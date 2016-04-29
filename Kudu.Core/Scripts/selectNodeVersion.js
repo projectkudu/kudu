@@ -103,20 +103,27 @@ function getNodeDefaultStartFile(sitePath) {
 }
 
 // Determine the installation location of node.js and iisnode
-var programFilesDir = process.env['programfiles(x86)'] || process.env.programfiles,
-    nodejsDir = path.resolve(programFilesDir, 'nodejs'),
+var programFilesDir, nodejsDir, npmRootPath;
+
+if (process.platform === "linux") {
+    nodejsDir = "/opt/nodejs";
+    npmRootPath = "/opt/npm";
+} else {
+    programFilesDir = process.env['programfiles(x86)'] || process.env.programfiles;
+    nodejsDir = path.resolve(programFilesDir, 'nodejs');
     npmRootPath = path.resolve(programFilesDir, 'npm');
+
+    var interceptorJs = path.resolve(process.env['programfiles(x86)'], 'iisnode', 'interceptor.js');
+    if (!existsSync(interceptorJs)) {
+        interceptorJs = path.resolve(process.env.programfiles, 'iisnode', 'interceptor.js');
+        if (!existsSync(interceptorJs)) {
+            throw new Error('Unable to locate iisnode installation directory with interceptor.js file');
+        }
+    }
+}
 
 if (!existsSync(nodejsDir)) {
     throw new Error('Unable to locate node.js installation directory at ' + nodejsDir);
-}
-
-var interceptorJs = path.resolve(process.env['programfiles(x86)'], 'iisnode', 'interceptor.js');
-if (!existsSync(interceptorJs)) {
-    interceptorJs = path.resolve(process.env.programfiles, 'iisnode', 'interceptor.js');
-    if (!existsSync(interceptorJs)) {
-        throw new Error('Unable to locate iisnode installation directory with interceptor.js file');
-    }
 }
 
 // Validate input parameters
@@ -174,13 +181,15 @@ var nodeStartFilePath = (function createIisNodeWebConfigIfNeeded() {
             console.log('Using start-up script ' + nodeStartFilePath);
         }
 
-        var iisNodeConfigTemplatePath = path.join(__dirname, 'iisnode.config.template');
-        var webConfigContent = fs.readFileSync(iisNodeConfigTemplatePath, 'utf8');
-        webConfigContent = webConfigContent.replace(/\{NodeStartFile\}/g, nodeStartFilePath);
+        if (process.platform !== "linux") {
+            var iisNodeConfigTemplatePath = path.join(__dirname, 'iisnode.config.template');
+            var webConfigContent = fs.readFileSync(iisNodeConfigTemplatePath, 'utf8');
+            webConfigContent = webConfigContent.replace(/\{NodeStartFile\}/g, nodeStartFilePath);
 
-        fs.writeFileSync(webConfigWwwRootPath, webConfigContent, 'utf8');
+            fs.writeFileSync(webConfigWwwRootPath, webConfigContent, 'utf8');
 
-        console.log('Generated web.config.');
+            console.log('Generated web.config.');
+        }
     }
 
     return nodeStartFilePath;
@@ -232,8 +241,14 @@ try {
             // Determine the set of node.js versions available on the platform
             var versions = [];
             fs.readdirSync(nodejsDir).forEach(function (dir) {
-                if (dir.match(/^\d+\.\d+\.\d+$/) && existsSync(path.resolve(nodejsDir, dir, 'node.exe'))) {
-                    versions.push(dir);
+                if (process.platform === "linux") {
+                    if (dir.match(/^\d+\.\d+\.\d+$/) && existsSync(path.resolve(nodejsDir, dir, "bin", "node"))) {
+                        versions.push(dir);
+                    }
+                } else {
+                    if (dir.match(/^\d+\.\d+\.\d+$/) && existsSync(path.resolve(nodejsDir, dir, 'node.exe'))) {
+                        versions.push(dir);
+                    }
                 }
             });
 
@@ -254,8 +269,12 @@ try {
     }
 
     var nodeVersionPath = path.resolve(nodejsDir, nodeVersion),
-        nodeExePath = path.resolve(nodeVersionPath, 'node.exe'),        
+        nodeExePath = path.resolve(nodeVersionPath, 'node.exe'),
         npmPath;
+
+    if (process.platform === "linux") {
+        nodeExePath = path.resolve(nodeVersionPath, "bin", "node");
+    }
 
     npmVersion = npmVersion || getDefaultNpmVersion(nodeVersionPath);
     npmPath = resolveNpmPath(npmRootPath, npmVersion)
@@ -269,7 +288,7 @@ try {
         console.log("One or more of the selected node/npm paths do not exist.");
     }
 
-    if (shouldUpdateIisNodeYml) {
+    if (shouldUpdateIisNodeYml && process.platform !== "linux") {
         // Save the version information to iisnode.yml in the start script directory
 
         if (yml !== '') {
