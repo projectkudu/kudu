@@ -33,6 +33,7 @@ namespace Kudu.Core.Infrastructure
                 Path.GetDirectoryName(ResolveFSharpCPath())
             };
 
+            toolsPaths.AddRange(ResolveGitToolPaths());
             toolsPaths.AddRange(ResolveNodeNpmPaths());
             toolsPaths.Add(ResolveNpmGlobalPrefix());
 
@@ -49,10 +50,25 @@ namespace Kudu.Core.Infrastructure
             return toolsPaths;
         }
 
+        // this api is used to add git path to %path% and pick git.exe to be used for GitExecutable
         internal static string ResolveGitPath()
         {
-            string relativePath = Path.Combine("Git", "bin", "git.exe");
-            return ResolveRelativePathToProgramFiles(relativePath, relativePath, Resources.Error_FailedToLocateGit);
+            // as of git 2.8.1, git.exe exists in multiple locations.
+            // we explicitly prefer one under Git\cmd.
+            string gitPath = ResolveGitInstallDirPath();
+            return Path.Combine(gitPath, "cmd", "git.exe");
+        }
+
+        internal static string[] ResolveGitToolPaths()
+        {
+            // as of git 2.8.1, various unix tools are installed in multiple paths.
+            // add them to %path%.
+            string gitPath = ResolveGitInstallDirPath();
+            return new[]
+            {
+                Path.Combine(gitPath, "bin"),
+                Path.Combine(gitPath, "usr", "bin")
+            };
         }
 
         internal static string ResolveHgPath()
@@ -64,22 +80,22 @@ namespace Kudu.Core.Infrastructure
         internal static string ResolveSSHPath()
         {
             // version that before 2.5, ssh.exe has different path than in version 2.5
-            string relativeX86Path = Path.Combine("Git", "bin", "ssh.exe");
-            string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);
-            string path = Path.Combine(programFiles, relativeX86Path);
+            string gitPath = ResolveGitInstallDirPath();
+            string path = Path.Combine(gitPath, "bin", "ssh.exe");
             if (File.Exists(path))
             {
                 return path;
             }
 
-            string relativePath = Path.Combine("Git", "usr", "bin", "ssh.exe");
-            return ResolveRelativePathToProgramFiles(relativePath, relativePath, Resources.Error_FailedToLocateSsh);
+            // as of git 2.8.1, ssh.exe is under Git\usr\bin folder
+            return Path.Combine(gitPath, "usr", "bin", "ssh.exe");
         }
 
         internal static string ResolveBashPath()
         {
-            string relativePath = Path.Combine("Git", "bin", "bash.exe");
-            return ResolveRelativePathToProgramFiles(relativePath, relativePath, Resources.Error_FailedToLocateBash);
+            // as of git 2.8.1, bash.exe is under Git\bin folder
+            string gitPath = ResolveGitInstallDirPath();
+            return Path.Combine(gitPath, "bin", "bash.exe");
         }
 
         internal static string ResolveNpmJsPath()
@@ -145,6 +161,26 @@ namespace Kudu.Core.Infrastructure
             string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);
             //This path has to end with \ for the environment variable to work
             return Path.Combine(programFiles, "Microsoft Visual Studio 14.0", @"VC\");
+        }
+
+        internal static string ResolveGitInstallDirPath()
+        {
+            // look up whether x86 or x64 of git was installed.
+            string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);
+            string path = Path.Combine(programFiles, "Git");
+            if (Directory.Exists(path))
+            {
+                return path;
+            }
+
+            programFiles = SystemEnvironment.GetEnvironmentVariable(ProgramFiles64bitKey) ?? SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFiles);
+            path = Path.Combine(programFiles, "Git");
+            if (Directory.Exists(path))
+            {
+                return path;
+            }
+
+            throw new InvalidOperationException(Resources.Error_FailedToLocateGit);
         }
 
         private static string ResolveNodeVersion()
