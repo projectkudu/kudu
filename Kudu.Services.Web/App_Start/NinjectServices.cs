@@ -703,6 +703,14 @@ namespace Kudu.Services.Web.App_Start
             {
                 path = additionalPaths + ";" + path;
 
+                // PHP 7 was mistakenly added to the path unconditionally on Azure. To work around, if we detect
+                // some PHP v5.x anywhere on the path, we yank the unwanted PHP 7
+                // TODO: remove once the issue is fixed on Azure
+                if (path.Contains(@"PHP\v5"))
+                {
+                    path = path.Replace(@"D:\Program Files (x86)\PHP\v7.0;", String.Empty);
+                }
+
                 System.Environment.SetEnvironmentVariable("PATH", path);
             }
         }
