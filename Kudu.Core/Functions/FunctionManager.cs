@@ -205,9 +205,28 @@ namespace Kudu.Core.Functions
 
         public async Task<JObject> GetHostConfigAsync()
         {
-            return FileSystemHelpers.FileExists(HostJsonPath)
-                ? JObject.Parse(await FileSystemHelpers.ReadAllTextFromFileAsync(HostJsonPath))
-                : new JObject();
+            var host = await TryGetHostConfigAsync();
+            if (host == null)
+            {
+                throw new FileNotFoundException("Host.json is invalid");
+            }
+            return host;
+        }
+
+        private async Task<JObject> TryGetHostConfigAsync()
+        {
+            try
+            {
+                return FileSystemHelpers.FileExists(HostJsonPath)
+                    ? JObject.Parse(await FileSystemHelpers.ReadAllTextFromFileAsync(HostJsonPath))
+                    : new JObject();
+            }
+            catch
+            {
+                // no-op
+            }
+
+            return null;
         }
 
         public async Task<JObject> PutHostConfigAsync(JObject content)
