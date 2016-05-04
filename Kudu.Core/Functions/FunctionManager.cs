@@ -296,17 +296,13 @@ namespace Kudu.Core.Functions
                     }
                 }
 
-                if (string.IsNullOrEmpty(functionPrimary))
-                {
-                    // TODO: should this be an error?
-                    return functionPath;
-                }
                 return functionPrimary;
             }
         }
 
         private Uri FilePathToVfsUri(string filePath, bool isDirectory = false)
         {
+            if (string.IsNullOrEmpty(filePath)) return null;
             filePath = filePath.Substring(_environment.RootPath.Length).Trim('\\').Replace("\\", "/");
             return new Uri($"{_environment.AppBaseUrlPrefix}/api/vfs/{filePath}{(isDirectory ? "/" : string.Empty)}");
         }
