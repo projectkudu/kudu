@@ -283,12 +283,15 @@ namespace Kudu.Core.SiteExtensions
         {
             try
             {
-                var installationLock = SiteExtensionInstallationLock.CreateLock(_environment.SiteExtensionSettingsPath, id, enableAsync: true);
-                // hold on to lock till action complete (success or fail)
-                return await installationLock.LockOperationAsync<SiteExtensionInfo>(async () =>
+                using (tracer.Step("Installing '{0}' version '{1}' from '{2}'", id, version, feedUrl))
                 {
-                    return await TryInstallExtension(id, version, feedUrl, type, tracer);
-                }, TimeSpan.Zero);
+                    var installationLock = SiteExtensionInstallationLock.CreateLock(_environment.SiteExtensionSettingsPath, id, enableAsync: true);
+                    // hold on to lock till action complete (success or fail)
+                    return await installationLock.LockOperationAsync<SiteExtensionInfo>(async () =>
+                    {
+                        return await TryInstallExtension(id, version, feedUrl, type, tracer);
+                    }, TimeSpan.Zero);
+                }
             }
             catch (Exception ex)
             {
@@ -402,7 +405,7 @@ namespace Kudu.Core.SiteExtensions
                     info = new SiteExtensionInfo();
                     info.Id = id;
                     info.ProvisioningState = Constants.SiteExtensionProvisioningStateFailed;
-                    info.Comment = string.Format(Constants.SiteExtensionProvisioningStateNotFoundMessageFormat, id);
+                    info.Comment = ex.ToString();
                     status = HttpStatusCode.NotFound;
                 }
                 catch (WebException ex)
@@ -419,7 +422,7 @@ namespace Kudu.Core.SiteExtensions
                     info = new SiteExtensionInfo();
                     info.Id = id;
                     info.ProvisioningState = Constants.SiteExtensionProvisioningStateFailed;
-                    info.Comment = string.Format(Constants.SiteExtensionProvisioningStateDownloadFailureMessageFormat, id);
+                    info.Comment = ex.ToString();
                     status = HttpStatusCode.BadRequest;
                 }
                 catch (InvalidEndpointException ex)
@@ -430,7 +433,7 @@ namespace Kudu.Core.SiteExtensions
                     info = new SiteExtensionInfo();
                     info.Id = id;
                     info.ProvisioningState = Constants.SiteExtensionProvisioningStateFailed;
-                    info.Comment = ex.Message;
+                    info.Comment = ex.ToString();
                     status = HttpStatusCode.BadRequest;
                 }
                 catch (Exception ex)
@@ -447,7 +450,7 @@ namespace Kudu.Core.SiteExtensions
                     info = new SiteExtensionInfo();
                     info.Id = id;
                     info.ProvisioningState = Constants.SiteExtensionProvisioningStateFailed;
-                    info.Comment = string.Format(Constants.SiteExtensionProvisioningStateInvalidPackageMessageFormat, id);
+                    info.Comment = ex.ToString();
                     status = HttpStatusCode.BadRequest;
                 }
             }
