@@ -188,16 +188,12 @@ fi" + "\n";
                     if (OSDetector.IsOnWindows())
                     {
                         sb.AppendLine(KnownEnvironment.KUDUCOMMAND);
+                        FileSystemHelpers.WriteAllText(PostReceiveHookPath, sb.ToString());
                     }
                     else
                     {
                         sb.AppendLine("/usr/bin/mono " + KnownEnvironment.KUDUCOMMAND);
-                    }
-                    
-                    FileSystemHelpers.WriteAllText(PostReceiveHookPath, sb.ToString().Replace("\r\n", "\n"));
-
-                    if (!OSDetector.IsOnWindows())
-                    {
+                        FileSystemHelpers.WriteAllText(PostReceiveHookPath, sb.ToString().Replace("\r\n", "\n"));
                         using (tracer.Step("Non-Windows enviroment, granting 755 permission to post-receive hook file"))
                         {
                             PermissionHelper.Chmod("755", PostReceiveHookPath, _environment, _settings, NullLogger.Instance);
