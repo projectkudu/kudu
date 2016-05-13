@@ -1,15 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Kudu.Contracts.Settings;
-using Kudu.Core.Tracing;
 using System.IO;
+using System.Linq;
+using Kudu.Contracts.Settings;
 using Kudu.Core.Infrastructure;
+using Kudu.Core.Tracing;
 using LibGit2Sharp;
-using Kudu.Contracts.Tracing;
-using System.Text.RegularExpressions;
 
 namespace Kudu.Core.SourceControl.Git
 {
@@ -328,7 +324,7 @@ echo $i > pushinfo
 
         public IEnumerable<string> ListFiles(string path, SearchOption searchOption, params string[] lookupList)
         {
-            path = PathUtility.CleanPath(path);
+            path = PathUtilityFactory.Instance.CleanPath(path);
 
             if (!FileSystemHelpers.IsSubfolder(RepositoryPath, path))
             {

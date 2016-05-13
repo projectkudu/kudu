@@ -322,7 +322,7 @@ namespace Kudu.Core.Deployment.Generator
 
             public IEnumerable<string> ListFiles(string path, SearchOption searchOption, params string[] lookupList)
             {
-                if (searchOption == SearchOption.AllDirectories && (_path == null || PathUtility.PathsEquals(_path, path)))
+                if (searchOption == SearchOption.AllDirectories && (_path == null || PathUtilityFactory.Instance.PathsEquals(_path, path)))
                 {
                     if (_cachedResults == null)
                     {

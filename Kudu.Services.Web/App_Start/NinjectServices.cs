@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
-using System.Net;
 using System.Net.Http.Formatting;
 using System.Web;
 using System.Web.Hosting;
@@ -19,6 +19,8 @@ using Kudu.Core;
 using Kudu.Core.Commands;
 using Kudu.Core.Deployment;
 using Kudu.Core.Deployment.Generator;
+using Kudu.Core.Functions;
+using Kudu.Core.Helpers;
 using Kudu.Core.Hooks;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Jobs;
@@ -40,13 +42,9 @@ using Kudu.Services.Web.Tracing;
 using Microsoft.AspNet.SignalR;
 using Microsoft.Owin;
 using Ninject;
-using Ninject.Activation;
 using Ninject.Web.Common;
 using Owin;
 using XmlSettings;
-using System.Configuration;
-using Kudu.Core.Functions;
-using System.Text;
 
 [assembly: WebActivator.PreApplicationStartMethod(typeof(Kudu.Services.Web.App_Start.NinjectServices), "Start")]
 [assembly: WebActivator.ApplicationShutdownMethodAttribute(typeof(Kudu.Services.Web.App_Start.NinjectServices), "Stop")]
@@ -693,7 +691,7 @@ namespace Kudu.Services.Web.App_Start
 
         private static void PrependFoldersToPath(IEnvironment environment)
         {
-            List<string> folders = PathUtility.GetPathFolders(environment);
+            List<string> folders = PathUtilityFactory.Instance.GetPathFolders(environment);
 
             string path = System.Environment.GetEnvironmentVariable("PATH");
             string additionalPaths = String.Join(";", folders);
@@ -728,11 +726,24 @@ namespace Kudu.Services.Web.App_Start
             string root = PathResolver.ResolveRootPath();
             string siteRoot = Path.Combine(root, Constants.SiteFolder);
             string repositoryPath = Path.Combine(siteRoot, settings == null ? Constants.RepositoryPath : settings.GetRepositoryPath());
+            string binPath = HttpRuntime.BinDirectory;
 
-            return new Kudu.Core.Environment(
-                                   root,
-                                   HttpRuntime.BinDirectory,
-                                   repositoryPath);
+            if (!string.IsNullOrWhiteSpace(binPath) && !OSDetector.IsOnWindows())
+            {
+                int binIdx = binPath.LastIndexOf("Bin", StringComparison.Ordinal);
+                if (binIdx >= 0)
+                {
+                    string subStr = binPath.Substring(binIdx);
+                    // make sure file path is end with ".....Bin" or "....Bin/"
+                    if (subStr.Length < 5 && binPath.EndsWith(subStr, StringComparison.OrdinalIgnoreCase))
+                    {
+                        // real bin folder is lower case, but in mono, value is "Bin" instead of "bin"
+                        binPath = binPath.Substring(0, binIdx) + subStr.ToLowerInvariant();
+                    }
+                }
+            }
+
+            return new Kudu.Core.Environment(root, binPath, repositoryPath);
         }
     }
 }

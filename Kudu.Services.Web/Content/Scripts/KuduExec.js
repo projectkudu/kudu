@@ -1,4 +1,8 @@
 ﻿var curWorkingDir = ko.observable("");
+var initCmd = "echo.";
+if ($.serverOS === "linux") {
+    initCmd = "echo ''";
+}
 window.KuduExec = { workingDir: curWorkingDir };
 
 function LoadConsole() {
@@ -12,7 +16,12 @@ function LoadConsole() {
         var cdIndex;
         if (resp.Output) {
             resultOutput = resp.Output.trim();
-            cdIndex = resultOutput.lastIndexOf("\r\n");
+            if ($.serverOS === "windows") {
+                cdIndex = resultOutput.lastIndexOf("\r\n");
+            } else {
+                cdIndex = resultOutput.lastIndexOf("\n");
+            }
+            
             if (cdIndex < 0) {
                 // The original command is has no output it is just our output.
                 curWorkingDir(resultOutput.trim());
@@ -54,6 +63,9 @@ function LoadConsole() {
         } else {
             // always append these commands so the working directory after the command is returned.
             var remoteCommand = command + " & echo. & cd";
+            if ($.serverOS === "linux") {
+                remoteCommand = "-c '" + command + " && echo '' && pwd'";
+            }
             var request = RemoteExecuteCommandRequest(remoteCommand, curWorkingDir());
             request.done(function (resp) {
                 deferred.resolveWith(null, [MessagesFromResponse(resp)]);
@@ -71,7 +83,7 @@ function LoadConsole() {
     }
 
     // call make console after this first command so the current working directory is set.
-    SubmitCommand("echo.").done(function () {
+    SubmitCommand(initCmd).done(function () {
         var kuduExecConsole = $('<div class="console">'),
             curReportFun,
             controller = kuduExecConsole.console({

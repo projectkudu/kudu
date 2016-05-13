@@ -219,7 +219,7 @@ namespace Kudu.Core.SourceControl
             // This doesn't work for us since ssh.exe is located under Program Files in typical Kudu scenarios.
             _hgExecutable.SetHomePath(_homePath);
             string currentPath = System.Environment.GetEnvironmentVariable(PATH_KEY);
-            currentPath = currentPath.TrimEnd(';') + ';' + Path.GetDirectoryName(PathUtility.ResolveSSHPath());
+            currentPath = currentPath.TrimEnd(';') + ';' + Path.GetDirectoryName(PathUtilityFactory.Instance.ResolveSSHPath());
             _hgExecutable.EnvironmentVariables[PATH_KEY] = currentPath;
 
             ITracer tracer = _traceFactory.GetTracer();
@@ -233,7 +233,7 @@ namespace Kudu.Core.SourceControl
         fetch:
             try
             {                
-                _hgExecutable.Execute(tracer, "pull {0} --branch {1} --noninteractive", remote, branchNameWithQuotes, PathUtility.ResolveSSHPath());
+                _hgExecutable.Execute(tracer, "pull {0} --branch {1} --noninteractive", remote, branchNameWithQuotes, PathUtilityFactory.Instance.ResolveSSHPath());
             }
             catch (CommandLineException exception)
             {
@@ -343,7 +343,7 @@ namespace Kudu.Core.SourceControl
             // If Mercurial.Net can find the location of the repository via the PATH variable, let we'll use that
             if (!Client.CouldLocateClient)
             {
-                Client.SetClientPath(PathUtility.ResolveHgPath());
+                Client.SetClientPath(PathUtilityFactory.Instance.ResolveHgPath());
             }
             return true;
         }

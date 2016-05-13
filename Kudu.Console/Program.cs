@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.Diagnostics;
 using System.IO;
-using System.IO.Abstractions;
 using Kudu.Console.Services;
 using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Settings;
@@ -18,7 +17,6 @@ using Kudu.Core.Settings;
 using Kudu.Core.SourceControl;
 using Kudu.Core.SourceControl.Git;
 using Kudu.Core.Tracing;
-using Kudu.Services;
 using XmlSettings;
 
 namespace Kudu.Console
@@ -52,11 +50,6 @@ namespace Kudu.Console
             System.Console.Error.NewLine = "\n";
             System.Console.Out.NewLine = "\n";
 
-            System.Environment.SetEnvironmentVariable("GIT_DIR", null, System.EnvironmentVariableTarget.Process);
-
-            // Skip SSL Certificate Validate
-            OperationClient.SkipSslValidationIfNeeded();
-
             string appRoot = args[0];
             string wapTargets = args[1];
             string deployer = args.Length == 2 ? null : args[2];
@@ -64,9 +57,6 @@ namespace Kudu.Console
             IEnvironment env = GetEnvironment(appRoot);
             ISettings settings = new XmlSettings.Settings(GetSettingsPath(env));
             IDeploymentSettingsManager settingsManager = new DeploymentSettingsManager(settings);
-
-            // Adjust repo path
-            env.RepositoryPath = Path.Combine(env.SiteRootPath, settingsManager.GetRepositoryPath());
 
             // Setup the trace
             TraceLevel level = settingsManager.GetTraceLevel();
@@ -76,15 +66,54 @@ namespace Kudu.Console
             // Calculate the lock path
             string lockPath = Path.Combine(env.SiteRootPath, Constants.LockPath);
             string deploymentLockPath = Path.Combine(lockPath, Constants.DeploymentLockFile);
+
+            IOperationLock deploymentLock = new LockFile(deploymentLockPath, traceFactory);
+
+            if (deploymentLock.IsHeld)
+            {
+                return PerformDeploy(appRoot, wapTargets, deployer, lockPath, env, settingsManager, level, tracer, traceFactory, deploymentLock);
+            }
+
+            // Cross child process lock is not working on linux via mono.
+            // When we reach here, deployment lock must be HELD! To solve above issue, we lock again before continue.
+            int returnCode = -1;
+            deploymentLock.TryLockOperation(() =>
+            {
+                returnCode = PerformDeploy(appRoot, wapTargets, deployer, lockPath, env, settingsManager, level, tracer, traceFactory, deploymentLock);
+            }, TimeSpan.Zero);
+
+            return returnCode;
+        }
+
+        private static int PerformDeploy(
+            string appRoot,
+            string wapTargets,
+            string deployer,
+            string lockPath,
+            IEnvironment env,
+            IDeploymentSettingsManager settingsManager,
+            TraceLevel level,
+            ITracer tracer,
+            ITraceFactory traceFactory,
+            IOperationLock deploymentLock)
+        {
+            System.Environment.SetEnvironmentVariable("GIT_DIR", null, System.EnvironmentVariableTarget.Process);
+
+            // Skip SSL Certificate Validate
+            OperationClient.SkipSslValidationIfNeeded();
+
+            // Adjust repo path
+            env.RepositoryPath = Path.Combine(env.SiteRootPath, settingsManager.GetRepositoryPath());
+
             string statusLockPath = Path.Combine(lockPath, Constants.StatusLockFile);
             string hooksLockPath = Path.Combine(lockPath, Constants.HooksLockFile);
 
-            IOperationLock deploymentLock = new LockFile(deploymentLockPath, traceFactory);
             IOperationLock statusLock = new LockFile(statusLockPath, traceFactory);
             IOperationLock hooksLock = new LockFile(hooksLockPath, traceFactory);
 
             IBuildPropertyProvider buildPropertyProvider = new BuildPropertyProvider();
             ISiteBuilderFactory builderFactory = new SiteBuilderFactory(buildPropertyProvider, env);
+            var logger = new ConsoleLogger();
 
             IRepository gitRepository;
             if (settingsManager.UseLibGit2SharpRepository())
@@ -103,7 +132,6 @@ namespace Kudu.Console
             IDeploymentStatusManager deploymentStatusManager = new DeploymentStatusManager(env, analytics, statusLock);
             IAutoSwapHandler autoSwapHander = new AutoSwapHandler(deploymentStatusManager, env, settingsManager, traceFactory);
             var functionManager = new FunctionManager(env, traceFactory);
-            var logger = new ConsoleLogger();
             IDeploymentManager deploymentManager = new DeploymentManager(builderFactory,
                                                           env,
                                                           traceFactory,
@@ -195,10 +223,16 @@ namespace Kudu.Console
             // REVIEW: this looks wrong because it ignores SCM_REPOSITORY_PATH
             string repositoryPath = Path.Combine(siteRoot, Constants.RepositoryPath);
 
-            string binPath = Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName);
+            // SCM_BIN_PATH is introduced in Kudu apache config file
+            // Provide a way to override Kudu bin path, to resolve issue where we can not find the right Kudu bin path when running on mono
+            string binPath = System.Environment.GetEnvironmentVariable("SCM_BIN_PATH");
+            if (string.IsNullOrWhiteSpace(binPath))
+            {
+                binPath = Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName);
+            }
 
-            return new Kudu.Core.Environment(root, 
-                binPath, 
+            return new Kudu.Core.Environment(root,
+                binPath,
                 repositoryPath);
         }
     }

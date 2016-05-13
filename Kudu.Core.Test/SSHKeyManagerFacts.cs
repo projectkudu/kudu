@@ -2,6 +2,7 @@
 using System.IO.Abstractions;
 using System.Security.Cryptography;
 using System.Text;
+using Kudu.Contracts.Settings;
 using Kudu.Core.Infrastructure;
 using Moq;
 using Xunit;
@@ -32,7 +33,7 @@ namespace Kudu.Core.SSHKey.Test
             IEnvironment env = null;
 
             // Act and Assert
-            var ex = Assert.Throws<ArgumentNullException>(() => new SSHKeyManager(env, traceFactory: null));
+            var ex = Assert.Throws<ArgumentNullException>(() => new SSHKeyManager(env, traceFactory: null, deploymentSettingManager: Mock.Of<IDeploymentSettingsManager>()));
             Assert.Equal("environment", ex.ParamName);
         }
 
@@ -60,7 +61,7 @@ namespace Kudu.Core.SSHKey.Test
             var environment = new Mock<IEnvironment>();
             environment.SetupGet(e => e.SSHKeyPath).Returns(sshPath);
 
-            var sshKeyManager = new SSHKeyManager(environment.Object, traceFactory: null);
+            var sshKeyManager = new SSHKeyManager(environment.Object, traceFactory: null, deploymentSettingManager: Mock.Of<IDeploymentSettingsManager>());
 
             // Act
             sshKeyManager.SetPrivateKey(_privateKey);
@@ -90,7 +91,7 @@ namespace Kudu.Core.SSHKey.Test
             var environment = new Mock<IEnvironment>();
             environment.SetupGet(e => e.SSHKeyPath).Returns(sshPath);
 
-            var sshKeyManager = new SSHKeyManager(environment.Object, traceFactory: null);
+            var sshKeyManager = new SSHKeyManager(environment.Object, traceFactory: null, deploymentSettingManager: Mock.Of<IDeploymentSettingsManager>());
 
             // Act
             sshKeyManager.SetPrivateKey(_privateKey);
@@ -127,7 +128,7 @@ namespace Kudu.Core.SSHKey.Test
             var environment = new Mock<IEnvironment>();
             environment.SetupGet(e => e.SSHKeyPath).Returns(sshPath);
 
-            var sshKeyManager = new SSHKeyManager(environment.Object, traceFactory: null);
+            var sshKeyManager = new SSHKeyManager(environment.Object, traceFactory: null, deploymentSettingManager: Mock.Of<IDeploymentSettingsManager>());
 
             // Act
             sshKeyManager.SetPrivateKey(key1);
@@ -157,7 +158,7 @@ namespace Kudu.Core.SSHKey.Test
             var environment = new Mock<IEnvironment>();
             environment.SetupGet(e => e.SSHKeyPath).Returns(sshPath);
 
-            var sshKeyManager = new SSHKeyManager(environment.Object, traceFactory: null);
+            var sshKeyManager = new SSHKeyManager(environment.Object, traceFactory: null, deploymentSettingManager: Mock.Of<IDeploymentSettingsManager>());
 
             // Act 
             var actual = sshKeyManager.GetPublicKey(ensurePublicKey);
@@ -182,7 +183,7 @@ namespace Kudu.Core.SSHKey.Test
             var environment = new Mock<IEnvironment>();
             environment.SetupGet(e => e.SSHKeyPath).Returns(sshPath);
 
-            var sshKeyManager = new SSHKeyManager(environment.Object, traceFactory: null);
+            var sshKeyManager = new SSHKeyManager(environment.Object, traceFactory: null, deploymentSettingManager: Mock.Of<IDeploymentSettingsManager>());
 
             // Act 
             var actual = sshKeyManager.GetPublicKey(ensurePublicKey: false);
@@ -216,7 +217,7 @@ namespace Kudu.Core.SSHKey.Test
             var environment = new Mock<IEnvironment>();
             environment.SetupGet(e => e.SSHKeyPath).Returns(sshPath);
 
-            var sshKeyManager = new SSHKeyManager(environment.Object, traceFactory: null);
+            var sshKeyManager = new SSHKeyManager(environment.Object, traceFactory: null, deploymentSettingManager: Mock.Of<IDeploymentSettingsManager>());
 
             // Act 
             var actual = sshKeyManager.GetPublicKey(ensurePublicKey: true);
@@ -247,7 +248,7 @@ namespace Kudu.Core.SSHKey.Test
             var environment = new Mock<IEnvironment>();
             environment.SetupGet(e => e.SSHKeyPath).Returns(sshPath);
 
-            var sshKeyManager = new SSHKeyManager(environment.Object, traceFactory: null);
+            var sshKeyManager = new SSHKeyManager(environment.Object, traceFactory: null, deploymentSettingManager: Mock.Of<IDeploymentSettingsManager>());
 
             // Act 
             var actual = sshKeyManager.GetPublicKey(ensurePublicKey);

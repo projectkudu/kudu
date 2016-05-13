@@ -66,7 +66,6 @@ namespace Kudu.Core.Deployment
                     {
                         document = XDocument.Load(stream);
                     }
-
                     return new DeploymentStatusFile(id, environment, statusLock, document);
                 }
                 catch (Exception ex)
