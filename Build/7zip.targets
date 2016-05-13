@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+   <PropertyGroup>
+       <!-- Download 7zip if it does not already exist -->
+       <Download7Zip Condition=" '$(Download7Zip)' == '' ">true</Download7Zip>
+   </PropertyGroup>
+
+    <PropertyGroup>
+       <!-- NuGet command -->
+       <File7ZipPath>$(MsBuildThisFileDirectory)\7zip.zip</File7ZipPath>
+       <Exe7ZipPath>$(MsBuildThisFileDirectory)\7zip\7za.exe</Exe7ZipPath>
+   </PropertyGroup>
+
+   <Target Name="Ensure7Zip">
+       <!--
+       Take advantage of MsBuild's build dependency tracking to make sure that we only ever download 7zip once.
+       This effectively acts as a lock that makes sure that the download operation will only happen once and all
+       parallel builds will have to wait for it to complete.
+       -->
+       <MsBuild Targets="_Download7Zip" Projects="$(MSBuildThisFileFullPath)" Properties="Configuration=NOT_IMPORTANT;Platform=AnyCPU" />
+   </Target>
+
+   <Target Name="_Download7Zip">
+       <Download7Zip OutputFileName="$(File7ZipPath)" Condition=" '$(Download7Zip)' == 'true' AND !Exists('$(Exe7ZipPath)')" />
+   </Target>
+
+   <UsingTask TaskName="Download7Zip" TaskFactory="CodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v4.0.dll">
+       <ParameterGroup>
+           <OutputFileName ParameterType="System.String" Required="true" />
+       </ParameterGroup>
+       <Task>
+           <Reference Include="System.Core" />
+           <Reference Include="System.IO.Compression"/>
+           <Reference Include="System.IO.Compression.FileSystem"/>
+           <Using Namespace="System" />
+           <Using Namespace="System.IO" />
+           <Using Namespace="System.IO.Compression" />
+           <Using Namespace="System.Net" />
+           <Using Namespace="Microsoft.Build.Framework" />
+           <Using Namespace="Microsoft.Build.Utilities" />
+           <Code Type="Fragment" Language="cs">
+               <![CDATA[
+               try {
+                   OutputFileName = Path.GetFullPath(OutputFileName);
+                   String outputFolderName = Path.Combine(Path.GetDirectoryName(OutputFileName), "7zip");
+
+                   Log.LogMessage("Downloading 7zip ...");
+                   WebClient webClient = new WebClient();
+                   webClient.DownloadFile("http://www.7-zip.org/a/7za920.zip", OutputFileName);
+                   ZipFile.ExtractToDirectory(OutputFileName, outputFolderName);
+                   File.Delete(OutputFileName);
+                   Log.LogMessage("Downloaded 7zip!");
+                   
+                   return true;
+               }
+               catch (Exception ex) {
+                   Log.LogErrorFromException(ex);
+                   return false;
+               }
+           ]]>
+           </Code>
+       </Task>
+   </UsingTask>
+</Project>

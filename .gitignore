@@ -26,3 +26,4 @@ Kudu.Services.Web/commit.txt
 Setup/WebPiCmdSetup.log
 Kudu.Services.Web/node_modules/
 .vs/
+Build/7zip/
