@@ -14,7 +14,7 @@ namespace Kudu.Core.Jobs
 
         private static string DiscoverHostPath()
         {
-            return PathUtility.ResolveBashPath();
+            return PathUtilityFactory.Instance.ResolveBashPath();
         }
 
         public override IEnumerable<string> SupportedExtensions

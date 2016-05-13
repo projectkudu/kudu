@@ -111,8 +111,11 @@ namespace Kudu.Services.Deployment
                             {
                                 CreateDeployment(deployResult, result.Value<string>("details"));
 
-                                deployResult.Url = Request.RequestUri;
-                                deployResult.LogUrl = UriHelper.MakeRelative(Request.RequestUri, "log");
+                                // e.g if final url is "https://kudutry.scm.azurewebsites.net/api/deployments/ef52ec67fc9574e726955a9cbaf7bcba791e4e95/log"
+                                // deploymentUri should be "https://kudutry.scm.azurewebsites.net/api/deployments/ef52ec67fc9574e726955a9cbaf7bcba791e4e95"
+                                Uri deploymentUri = UriHelper.MakeRelative(UriHelper.GetBaseUri(Request), Request.RequestUri.AbsolutePath);
+                                deployResult.Url = deploymentUri;
+                                deployResult.LogUrl = UriHelper.MakeRelative(deploymentUri, "log");
 
                                 response = Request.CreateResponse(HttpStatusCode.OK, ArmUtils.AddEnvelopeOnArmRequest(deployResult, Request));
                                 return;
@@ -341,7 +344,8 @@ namespace Kudu.Services.Deployment
                     {
                         if (entry.HasDetails)
                         {
-                            entry.DetailsUrl = UriHelper.MakeRelative(Request.RequestUri, entry.Id);
+                            Uri baseUri = UriHelper.MakeRelative(UriHelper.GetBaseUri(Request), Request.RequestUri.AbsolutePath);
+                            entry.DetailsUrl = UriHelper.MakeRelative(baseUri, entry.Id);
                         }
                     }
 
@@ -410,8 +414,9 @@ namespace Kudu.Services.Deployment
                     throw new HttpResponseException(response);
                 }
 
-                result.Url = Request.RequestUri;
-                result.LogUrl = UriHelper.MakeRelative(Request.RequestUri, "log");
+                Uri baseUri = UriHelper.MakeRelative(UriHelper.GetBaseUri(Request), Request.RequestUri.AbsolutePath);
+                result.Url = baseUri;
+                result.LogUrl = UriHelper.MakeRelative(baseUri, "log");
 
                 return Request.CreateResponse(HttpStatusCode.OK, ArmUtils.AddEnvelopeOnArmRequest(result, Request));
             }
@@ -499,8 +504,9 @@ namespace Kudu.Services.Deployment
         {
             foreach (var result in _deploymentManager.GetResults())
             {
-                result.Url = UriHelper.MakeRelative(request.RequestUri, result.Id);
-                result.LogUrl = UriHelper.MakeRelative(request.RequestUri, result.Id + "/log");
+                Uri baseUri = UriHelper.MakeRelative(UriHelper.GetBaseUri(request), Request.RequestUri.AbsolutePath);
+                result.Url = UriHelper.MakeRelative(baseUri, result.Id);
+                result.LogUrl = UriHelper.MakeRelative(baseUri, result.Id + "/log");
                 yield return result;
             }
         }

@@ -4,8 +4,10 @@ using System.Globalization;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Security;
-using Kudu.Core.Infrastructure;
+using System.Text.RegularExpressions;
 using System.Web;
+using Kudu.Core.Helpers;
+using Kudu.Core.Infrastructure;
 
 namespace Kudu.Core
 {
@@ -95,7 +97,19 @@ namespace Kudu.Core
             _siteExtensionSettingsPath = Path.Combine(SiteRootPath, Constants.SiteExtensionsCachePath);
             _diagnosticsPath = Path.Combine(SiteRootPath, Constants.DiagnosticsPath);
             _locksPath = Path.Combine(SiteRootPath, Constants.LocksPath);
-            _sshKeyPath = Path.Combine(rootPath, Constants.SSHKeyPath);
+            
+            if (OSDetector.IsOnWindows())
+            {
+                _sshKeyPath = Path.Combine(rootPath, Constants.SSHKeyPath);
+            }
+            else
+            {
+                // in linux, rootPath is "/home", while .ssh folder need to under "/home/{user}", 
+                // and username and site name is always the same in actual deployment
+                string siteName = System.Environment.GetEnvironmentVariable("APP_POOL_ID");
+                siteName = NormalizeAppPoolId(siteName);
+                _sshKeyPath = Path.Combine(rootPath, siteName, Constants.SSHKeyPath);
+            }
             _scriptPath = Path.Combine(binPath, Constants.ScriptsPath);
             _nodeModulesPath = Path.Combine(binPath, Constants.NodeModulesPath);
             _logFilesPath = Path.Combine(rootPath, Constants.LogFilesPath);
@@ -338,6 +352,25 @@ namespace Kudu.Core
             [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
             [return: MarshalAs(UnmanagedType.Bool)]
             public static extern bool GetDiskFreeSpaceEx(string path, out ulong freeBytes, out ulong totalBytes, out ulong diskFreeBytes);
+        }
+
+        /// <summary>
+        /// Site name could be:
+        ///     ~1{actual name}__f0do
+        ///     mobile${actual name}
+        /// 
+        /// We only interested in the {actual name}
+        /// </summary>
+        private static string NormalizeAppPoolId(string siteName)
+        {
+            var normalizedSiteName = siteName;
+            if (normalizedSiteName.StartsWith("~1", StringComparison.Ordinal))
+            {
+                normalizedSiteName = normalizedSiteName.Substring(2);
+            }
+
+            normalizedSiteName = Regex.Replace(normalizedSiteName, "__[0-9a-f]{4}$", string.Empty).Replace("mobile$", string.Empty);
+            return normalizedSiteName;
         }
     }
 }

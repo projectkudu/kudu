@@ -73,29 +73,32 @@
             <a href="api/deployments">Deployments</a>
         </li>
         <li>
-            <a href="api/vfs">Files</a>
-        </li>
-        <li>
-            <a href="api/processes">Processes and mini-dumps</a>
-        </li>
-        <li>
-            <a href="api/diagnostics/runtime">Runtime versions</a>
-        </li>
-        <li>
-            Site Extensions: <a href="api/siteextensions">installed</a> | <a href="api/extensionfeed">feed</a>
-        </li>
-        <li>
             <a href="api/scm/info">Source control info</a>
         </li>
-        <li>
-            <a href="api/hooks">Web hooks</a>
-        </li>
-        <li>
-            WebJobs: <a href="api/webjobs">all</a> | <a href="api/triggeredwebjobs">triggered</a> | <a href="api/continuouswebjobs">continuous</a>
-        </li>
-        <li>
+        @if (Kudu.Core.Helpers.OSDetector.IsOnWindows())
+        {
+            <li>
+                <a href="api/vfs">Files</a>
+            </li>
+            <li>
+                <a href="api/processes">Processes and mini-dumps</a>
+            </li>
+            <li>
+                <a href="api/diagnostics/runtime">Runtime versions</a>
+            </li>
+            <li>
+                Site Extensions: <a href="api/siteextensions">installed</a> | <a href="api/extensionfeed">feed</a>
+            </li>
+            <li>
+                <a href="api/hooks">Web hooks</a>
+            </li>
+            <li>
+                WebJobs: <a href="api/webjobs">all</a> | <a href="api/triggeredwebjobs">triggered</a> | <a href="api/continuouswebjobs">continuous</a>
+            </li>
+            <li>
             Functions: <a href="api/functions">list</a> | <a href="api/functions/config">host config</a>
         </li>
+        }
     </ul>
 
     <h3>More information about Kudu can be found on the <a href="https://github.com/projectkudu/kudu/wiki">wiki</a>.</h3>

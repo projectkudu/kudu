@@ -1354,6 +1354,35 @@ project = myproject");
         }
     }
 
+    [KuduXunitTestClass]
+    public class GitExeBasicTest : GitRepositoryManagementTests
+    {
+        [Fact]
+        public async Task PushRepoWithMultipleProjectsShouldDeploy()
+        {
+            // Arrange
+            string appName = "PushMultiProjects";
+            string verificationText = "Welcome to ASP.NET MVC!";
+            using (var repo = Git.Clone("Mvc3AppWithTestProject"))
+            {
+
+                await ApplicationManager.RunAsync(appName, async appManager =>
+                {
+                    await appManager.SettingsManager.SetValue("SCM_USE_LIBGIT2SHARP_REPOSITORY", "0");
+                    // Act
+                    appManager.GitDeploy(repo.PhysicalPath);
+                    var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
+
+                    // Assert
+                    Assert.Equal(1, results.Count);
+                    Assert.Equal(DeployStatus.Success, results[0].Status);
+                    Assert.NotNull(results[0].LastSuccessEndTime);
+                    KuduAssert.VerifyUrl(appManager.SiteUrl, verificationText);
+                });
+            }
+        }
+    }
+
     public abstract class GitRepositoryManagementTests
     {
         internal static HttpClient CreateClient(ApplicationManager appManager)

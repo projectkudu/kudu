@@ -47,7 +47,7 @@ namespace Kudu.Services.SourceControl
         [HttpGet]
         public RepositoryInfo GetRepositoryInfo(HttpRequestMessage request)
         {
-            var baseUri = new Uri(request.RequestUri.GetComponents(UriComponents.SchemeAndServer, UriFormat.Unescaped));
+            var baseUri = UriHelper.GetBaseUri(request);
             return new RepositoryInfo
             {
                 Type = _repository.RepositoryType,

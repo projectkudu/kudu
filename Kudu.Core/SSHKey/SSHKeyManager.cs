@@ -1,8 +1,10 @@
 ﻿using System;
 using System.IO;
-using System.IO.Abstractions;
 using System.Security.Cryptography;
+using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
+using Kudu.Core.Deployment;
+using Kudu.Core.Helpers;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Tracing;
 
@@ -20,15 +22,19 @@ namespace Kudu.Core.SSHKey
         private readonly string _id_rsa;
         private readonly string _id_rsaPub;
         private readonly string _config;
+        private readonly IEnvironment _environment;
+        private readonly IDeploymentSettingsManager _deploymentSettingManager;
 
-        public SSHKeyManager(IEnvironment environment, ITraceFactory traceFactory)
+        public SSHKeyManager(IEnvironment environment, ITraceFactory traceFactory, IDeploymentSettingsManager deploymentSettingManager)
         {
             if (environment == null)
             {
                 throw new ArgumentNullException("environment");
             }
 
+            _environment = environment;
             _traceFactory = traceFactory ?? NullTracerFactory.Instance;
+            _deploymentSettingManager = deploymentSettingManager;
             _sshPath = environment.SSHKeyPath;
             _id_rsa = Path.Combine(_sshPath, PrivateKeyFile);
             _id_rsaPub = Path.Combine(_sshPath, PublicKeyFile);
@@ -53,6 +59,7 @@ namespace Kudu.Core.SSHKey
 
                 // This overrides if file exists
                 FileSystemHelpers.WriteAllText(_id_rsa, key);
+                EnsureFilePermission();
             }
         }
 
@@ -112,7 +119,7 @@ namespace Kudu.Core.SSHKey
                     FileSystemHelpers.WriteAllText(_id_rsaPub, publicKey);
 
                     FileSystemHelpers.WriteAllText(_config, ConfigContent);
-
+                    EnsureFilePermission();
                     return publicKey;
                 }
                 finally
@@ -123,6 +130,15 @@ namespace Kudu.Core.SSHKey
                         rsa.Dispose();
                     }
                 }
+            }
+        }
+
+        private void EnsureFilePermission()
+        {
+            if (!OSDetector.IsOnWindows())
+            {
+                PermissionHelper.Chmod("600", _id_rsa, _environment, _deploymentSettingManager, NullLogger.Instance);
+                PermissionHelper.Chmod("644", _id_rsaPub, _environment, _deploymentSettingManager, NullLogger.Instance);
             }
         }
     }

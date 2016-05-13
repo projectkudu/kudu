@@ -6,6 +6,8 @@ using System.Linq;
 using System.Text;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
+using Kudu.Core.Deployment;
+using Kudu.Core.Helpers;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Tracing;
 
@@ -32,6 +34,7 @@ namespace Kudu.Core.SourceControl.Git
         private readonly GitExecutable _gitExe;
         private readonly ITraceFactory _tracerFactory;
         private readonly IDeploymentSettingsManager _settings;
+        private readonly IEnvironment _environment;
 
         public GitExeRepository(IEnvironment environment, IDeploymentSettingsManager settings, ITraceFactory profilerFactory)
         {
@@ -40,6 +43,7 @@ namespace Kudu.Core.SourceControl.Git
             _settings = settings;
             SkipPostReceiveHookCheck = false;
             _gitExe.SetHomePath(environment);
+            _environment = environment;
         }
 
         public string CurrentId
@@ -173,12 +177,32 @@ fi" + "\n";
                 {
                     FileSystemHelpers.EnsureDirectory(Path.GetDirectoryName(PostReceiveHookPath));
 
-                    string content = @"#!/bin/sh
-read i
-echo $i > pushinfo
-" + KnownEnvironment.KUDUCOMMAND + "\n";
+                    //#!/bin/sh
+                    //read i
+                    //echo $i > pushinfo
+                    //KnownEnvironment.KUDUCOMMAND
+                    StringBuilder sb = new StringBuilder();
+                    sb.AppendLine("#!/bin/sh");
+                    sb.AppendLine("read i");
+                    sb.AppendLine("echo $i > pushinfo");
+                    if (OSDetector.IsOnWindows())
+                    {
+                        sb.AppendLine(KnownEnvironment.KUDUCOMMAND);
+                    }
+                    else
+                    {
+                        sb.AppendLine("/usr/bin/mono " + KnownEnvironment.KUDUCOMMAND);
+                    }
+                    
+                    FileSystemHelpers.WriteAllText(PostReceiveHookPath, sb.ToString().Replace("\r\n", "\n"));
 
-                    File.WriteAllText(PostReceiveHookPath, content);
+                    if (!OSDetector.IsOnWindows())
+                    {
+                        using (tracer.Step("Non-Windows enviroment, granting 755 permission to post-receive hook file"))
+                        {
+                            PermissionHelper.Chmod("755", PostReceiveHookPath, _environment, _settings, NullLogger.Instance);
+                        }
+                    }
                 }
 
                 // NOTE: don't add any new init steps after creating the post receive hook,
@@ -401,7 +425,7 @@ echo $i > pushinfo
 
         public IEnumerable<string> ListFiles(string path, SearchOption searchOption, params string[] lookupList)
         {
-            path = PathUtility.CleanPath(path);
+            path = PathUtilityFactory.Instance.CleanPath(path);
 
             if (!FileSystemHelpers.IsSubfolder(RepositoryPath, path))
             {

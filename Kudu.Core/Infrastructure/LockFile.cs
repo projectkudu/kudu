@@ -16,7 +16,6 @@ namespace Kudu.Core.Infrastructure
     public class LockFile : IOperationLock
     {
         private const string NotEnoughSpaceText = "There is not enough space on the disk.";
-        
         private readonly string _path;
         private readonly ITraceFactory _traceFactory;
 
