@@ -521,7 +521,6 @@ namespace Kudu.Services.Web.App_Start
             routes.MapHttpRoute("list-functions", "api/functions", new { controller = "Function", action = "List" }, new { verb = new HttpMethodConstraint("GET") });
             routes.MapHttpRoute("get-function", "api/functions/{name}", new { controller = "Function", action = "Get" }, new { verb = new HttpMethodConstraint("GET") });
             // TODO: remove obsolete getsecrets route once consumer switches to listsecrets
-            routes.MapHttpRoute("get-secrets", "api/functions/{name}/getsecrets", new { controller = "Function", action = "GetSecrets" }, new { verb = new HttpMethodConstraint("POST") });
             routes.MapHttpRoute("list-secrets", "api/functions/{name}/listsecrets", new { controller = "Function", action = "GetSecrets" }, new { verb = new HttpMethodConstraint("POST") });
             routes.MapHttpRoute("delete-function", "api/functions/{name}", new { controller = "Function", action = "Delete" }, new { verb = new HttpMethodConstraint("DELETE") });
 
