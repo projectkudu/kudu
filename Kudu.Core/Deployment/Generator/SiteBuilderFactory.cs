@@ -87,7 +87,7 @@ namespace Kudu.Core.Deployment.Generator
             // figure out with some heuristic, which one to deploy.
 
             // TODO: Pick only 1 and throw if there's more than one
-            VsSolutionProject project = solution.Projects.Where(p => p.IsWap || p.IsWebSite || p.IsAspNet5).FirstOrDefault();
+            VsSolutionProject project = solution.Projects.Where(p => p.IsWap || p.IsWebSite || p.IsAspNetCore).FirstOrDefault();
 
             if (project == null)
             {
@@ -118,15 +118,13 @@ namespace Kudu.Core.Deployment.Generator
                                       solution.Path);
             }
 
-            if (project.IsAspNet5)
+            if (project.IsAspNetCore)
             {
-                return new AspNet5Builder(_environment,
+                return new AspNetCoreBuilder(_environment,
                                       settings,
                                       _propertyProvider,
-                                      fileFinder,
                                       repositoryRoot,
-                                      project.AbsolutePath,
-                                      isConsoleApp: false);
+                                      project.AbsolutePath);
             }
 
             return new WebSiteBuilder(_environment,
@@ -197,28 +195,15 @@ namespace Kudu.Core.Deployment.Generator
                 return DetermineProject(repositoryRoot, projects[0], perDeploymentSettings, fileFinder);
             }
             
-            // Check for ASP.NET 5 project without VS solution or project
+            // Check for ASP.NET Core project without VS solution or project
             string projectJson;
-            if (AspNet5Helper.TryAspNet5WebProject(targetPath, out projectJson))
+            if (AspNetCoreHelper.TryAspNetCoreWebProject(targetPath, fileFinder, out projectJson))
             {
-                return new AspNet5Builder(_environment,
+                return new AspNetCoreBuilder(_environment,
                                            perDeploymentSettings,
                                            _propertyProvider,
-                                           fileFinder,
                                            repositoryRoot,
-                                           projectJson,
-                                           isConsoleApp: false);
-            }
-
-            if (AspNet5Helper.TryAspNet5ConsoleAppProject(targetPath, out projectJson))
-            {
-                return new AspNet5Builder(_environment,
-                                           perDeploymentSettings,
-                                           _propertyProvider,
-                                           fileFinder,
-                                           repositoryRoot,
-                                           projectJson,
-                                           isConsoleApp: true);
+                                           projectJson);
             }
 
             if (tryWebSiteProject)
@@ -307,7 +292,7 @@ namespace Kudu.Core.Deployment.Generator
         {
             // The way CachedVsProjectsFileFinder works is it looks up all the files in this CachedExtensions list the first time
             // then it's the looked up list is filtered with the passed in lookupList to ListFiles()
-            private static readonly string[] CachedExtensions = DeploymentHelper.ProjectFileLookup.Concat(VsHelper.SolutionsLookupList).Concat(AspNet5Helper.GlobalJsonLookupList).ToArray();
+            private static readonly string[] CachedExtensions = DeploymentHelper.ProjectFileLookup.Concat(VsHelper.SolutionsLookupList).Concat(AspNetCoreHelper.ProjectJsonLookupList).ToArray();
 
             private const string NodeModulesDirectory = "\\node_modules\\";
 

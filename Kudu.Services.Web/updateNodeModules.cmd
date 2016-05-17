@@ -1,5 +1,5 @@
 @echo off
-setlocal enabledelayedexpansion 
+setlocal enabledelayedexpansion
 
 pushd %1
 
@@ -10,7 +10,7 @@ set counter=0
 set /a counter+=1
 echo Attempt %counter% out of %attempts%
 
-cmd /c npm install https://github.com/projectkudu/KuduScript/tarball/af63dea4db22bae730dba99d2090c27bedcde159
+cmd /c npm install https://github.com/projectkudu/KuduScript/tarball/bec1170f47c61a6529e6b41d0b6a98832cfc9b59
 IF %ERRORLEVEL% NEQ 0 goto error
 
 goto end
