@@ -725,7 +725,6 @@ namespace Kudu.FunctionalTests.Jobs
                     //"run.py",
                     //"run.php",
                     "run.js",
-                    "project.json",
                     "go.cmd",
                     "do.bat",
                     "console.exe",
@@ -757,83 +756,6 @@ namespace Kudu.FunctionalTests.Jobs
 
                     appManager.VfsManager.Delete(TriggeredJobBinPath + "/" + jobName + "/" + scriptFileName);
                 }
-            });
-        }
-
-        [Fact]
-        public void DnxWebJobRunsCorrectly()
-        {
-            RunScenario("DnxWebJobRunsCorrectly", appManager =>
-            {
-                const string jobName = "dnxJob";
-                var program = @"using System;
-namespace WebJob
-{
-    class Program
-    {
-        static void Main(string[] args)
-        {
-            Console.WriteLine(""Hello Dnx!!"");
-        }
-    }
-}";
-                var project = @"{
-    ""dependencies"": {
-    },
-    ""frameworks"": {
-        ""dnx451"": { }
-    }
-}";
-
-                appManager.VfsManager.WriteAllText(TriggeredJobBinPath + "/" + jobName + "/" + "Program.cs", program);
-                appManager.VfsManager.WriteAllText(TriggeredJobBinPath + "/" + jobName + "/" + "project.json", project);
-
-                var expectedWebJob = new TriggeredJob
-                {
-                    Name = jobName,
-                    JobType = "triggered",
-                    RunCommand = "project.json"
-                };
-
-                var webjob = appManager.JobsManager.GetTriggeredJobAsync(jobName).Result;
-                AssertTriggeredJob(expectedWebJob, webjob);
-                appManager.JobsManager.InvokeTriggeredJobAsync(jobName).Wait();
-
-                TriggeredJobRun jobRun = null;
-
-                WaitUntilAssertVerified(
-                    "Dnx Triggered job",
-                    TimeSpan.FromSeconds(30),
-                    () =>
-                    {
-                        var jobHistory = appManager.JobsManager.GetTriggeredJobHistoryAsync(jobName).Result;
-                        jobRun = jobHistory.TriggeredJobRuns.First();
-                        Assert.Equal("Success", jobRun.Status);
-                    });
-
-                var logPath = jobRun.OutputUrl.AbsoluteUri.Split(new[] { "/vfs/" }, StringSplitOptions.RemoveEmptyEntries).Last();
-                var jobOutput = appManager.VfsManager.ReadAllText(logPath);
-                Assert.True(jobOutput.Contains("Hello Dnx!!"));
-            });
-        }
-
-        [Fact]
-        public void DnxWebJobDeploymentTest()
-        {
-            RunScenario("DnxWebJobDeploymentTest", appManager =>
-            {
-                using (var repo = Git.Clone("DnxWebJobTest"))
-                {
-                    appManager.GitDeploy(repo.PhysicalPath);
-                }
-                var result = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
-                var output = appManager.VfsManager.ReadAllText("Site/deployments/" + result[0].Id + "/log.log");
-                var file = appManager.VfsManager.ReadAllText("Site/wwwroot/App_Data/jobs/continuous/deployedJob/Program.cs");
-
-                Assert.Equal(1, result.Count);
-                Assert.Equal(DeployStatus.Success, result[0].Status);
-                Assert.Contains("Generating deployment script for DNX Console Application", output);
-                Assert.Contains("namespace", file);
             });
         }
 
