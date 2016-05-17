@@ -143,7 +143,7 @@
     <Compile Include="Deployment\Generator\GoSiteEnabler.cs" />
     <Compile Include="Deployment\Generator\PythonSiteEnabler.cs" />
     <Compile Include="Deployment\Generator\PythonSiteBuilder.cs" />
-    <Compile Include="Deployment\Generator\AspNet5Builder.cs" />
+    <Compile Include="Deployment\Generator\AspNetCoreBuilder.cs" />
     <Compile Include="Deployment\IAutoSwapHandler.cs" />
     <Compile Include="Deployment\ProgressLogger.cs" />
     <Compile Include="Deployment\Generator\BasicBuilder.cs" />
@@ -162,7 +162,7 @@
     <Compile Include="Helpers\OSDetector.cs" />
     <Compile Include="Helpers\PermissionHelper.cs" />
     <Compile Include="Hooks\WebHooksManager.cs" />
-    <Compile Include="Infrastructure\AspNet5Helper.cs" />
+    <Compile Include="Infrastructure\AspNetCoreHelper.cs" />
     <Compile Include="Infrastructure\InstanceIdUtility.cs" />
     <Compile Include="Infrastructure\IServerConfiguration.cs" />
     <Compile Include="Infrastructure\SecurityUtility.cs" />

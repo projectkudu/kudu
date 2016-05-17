@@ -367,33 +367,32 @@ namespace Kudu.FunctionalTests
     }
 
     [KuduXunitTestClass]
-    public class AspNet5WithSlnTests : GitDeploymentTests
+    public class AspNetCoreRC2Yeoman2ProjectsTests : GitDeploymentTests
     {
         [Fact]
-        public void PushAndDeployAspNet5WithSln()
+        public void PushAndDeployAspNetCoreRC2Yeoman2Projects()
         {
-            PushAndDeployApps("AspNet5With2ProjectsAndSlnFile", "master", "Welcome from ClassLibrary", HttpStatusCode.OK, "Deployment successful");
+            PushAndDeployApps("AspNetCoreRC2Yeoman2Projects", "master", "AspNetCoreRC2YeomanProject", HttpStatusCode.OK, "Deployment successful");
         }
     }
 
     [KuduXunitTestClass]
-    public class AspNet5NoSlnTests : GitDeploymentTests
+    public class AspNetCoreRC2YeomanProjectTests : GitDeploymentTests
     {
         [Fact]
-        public void PushAndDeployAspNet5NoSln()
+        public void PushAndDeployAspNetCoreRC2YeomanProject()
         {
-            PushAndDeployApps("AspNet5With2ProjectsNoSlnFile", "master", "Welcome from ClassLibrary", HttpStatusCode.OK, "Deployment successful");
+            PushAndDeployApps("AspNetCoreRC2YeomanProject", "master", "AspNetCoreRC2YeomanProject", HttpStatusCode.OK, "Deployment successful");
         }
     }
 
     [KuduXunitTestClass]
-    public class CSharp6WebTests : GitDeploymentTests
+    public class AspNetCoreRC2VisualStudioSlnTests : GitDeploymentTests
     {
         [Fact]
-        [KuduXunitTest(PrivateOnly = true)]
-        public void PushAndDeployCSharp6Web()
+        public void PushAndDeployAspNetCoreRC2VisualStudioSln()
         {
-            PushAndDeployApps("CSharp6Web", "master", "ASP.NET is a free web framework", HttpStatusCode.OK, "Deployment successful");
+            PushAndDeployApps("AspNetCoreRC2VisualStudioSln", "master", "AspNetCoreRC2", HttpStatusCode.OK, "Deployment successful");
         }
     }
 

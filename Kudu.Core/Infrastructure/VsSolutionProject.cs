@@ -40,7 +40,7 @@ namespace Kudu.Core.Infrastructure
         private bool _isWap;
         private bool _isWebSite;
         private bool _isExecutable;
-        private bool _isAspNet5;
+        private bool _isAspNetCore;
         private IEnumerable<Guid> _projectTypeGuids;
         private string _projectName;
         private string _absolutePath;
@@ -101,12 +101,12 @@ namespace Kudu.Core.Infrastructure
             }
         }
 
-        public bool IsAspNet5
+        public bool IsAspNetCore
         {
             get
             {
                 EnsureProperties();
-                return _isAspNet5;
+                return _isAspNetCore;
             }
         }
 
@@ -164,9 +164,9 @@ namespace Kudu.Core.Infrastructure
             else if (projectExtension.Equals(".xproj", StringComparison.OrdinalIgnoreCase) && File.Exists(_absolutePath))
             {
                 var projectPath = Path.Combine(Path.GetDirectoryName(_absolutePath), "project.json");
-                if (AspNet5Helper.IsWebApplicationProjectJsonFile(projectPath))
+                if (AspNetCoreHelper.IsWebApplicationProjectJsonFile(projectPath))
                 {
-                    _isAspNet5 = true;
+                    _isAspNetCore = true;
                     _absolutePath = projectPath;
                 }
                 _projectTypeGuids = Enumerable.Empty<Guid>();
