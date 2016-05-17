@@ -372,7 +372,7 @@ namespace Kudu.FunctionalTests
         [Fact]
         public void PushAndDeployAspNetCoreRC2Yeoman2Projects()
         {
-            PushAndDeployApps("AspNetCoreRC2Yeoman2Projects", "master", "AspNetCoreRC2YeomanProject", HttpStatusCode.OK, "Deployment successful");
+            PushAndDeployApps("AspNetCoreRC2Yeoman2Projects", "master", "AspNetCoreRC2Yeoman2Projects", HttpStatusCode.OK, "Deployment successful");
         }
     }
 
