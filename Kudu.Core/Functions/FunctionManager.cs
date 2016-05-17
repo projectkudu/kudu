@@ -262,64 +262,60 @@ namespace Kudu.Core.Functions
 
         private FunctionEnvelope CreateFunctionConfig(string configContent, string functionName)
         {
-            var config = JObject.Parse(configContent);
+            var functionConfig = JObject.Parse(configContent);
+
             return new FunctionEnvelope
             {
                 Name = functionName,
                 ScriptRootPathHref = FilePathToVfsUri(GetFunctionPath(functionName), isDirectory: true),
-                ScriptHref = FilePathToVfsUri(GetFunctionScriptPath(functionName, config)),
+                ScriptHref = FilePathToVfsUri(GetFunctionScriptPath(functionName, functionConfig)),
                 ConfigHref = FilePathToVfsUri(GetFunctionConfigPath(functionName)),
                 SecretsFileHref = FilePathToVfsUri(GetFunctionSecretsFilePath(functionName)),
                 Href = GetFunctionHref(functionName),
-                Config = config,
+                Config = functionConfig,
                 TestData = GetFunctionTestData(functionName)
             };
         }
 
-        // Logic for this function is copied from here
-        // https://github.com/Azure/azure-webjobs-sdk-script/blob/e0a783e882dd8680bf23e3c8818fb9638071c21d/src/WebJobs.Script/Config/ScriptHost.cs#L113-L150
-        private string GetFunctionScriptPath(string functionName, JObject functionInfo)
+        private string GetFunctionScriptPath(string functionName, JObject functionConfig)
         {
             var functionPath = GetFunctionPath(functionName);
             var functionFiles = FileSystemHelpers.GetFiles(functionPath, "*.*", SearchOption.TopDirectoryOnly)
                 .Where(p => Path.GetFileName(p).ToLowerInvariant() != "function.json").ToArray();
 
-            if (functionFiles.Length == 0)
-            {
-                return functionPath;
-            }
-            else if (functionFiles.Length == 1)
+            return DeterminePrimaryScriptFile(functionConfig, functionFiles);
+        }
+
+        // Logic for this function is copied from here:
+        // https://github.com/Azure/azure-webjobs-sdk-script/blob/dev/src/WebJobs.Script/Host/ScriptHost.cs
+        // These two implementations must stay in sync!
+        internal static string DeterminePrimaryScriptFile(JObject functionConfig, string[] functionFiles)
+        {
+            if (functionFiles.Length == 1)
             {
                 // if there is only a single file, that file is primary
                 return functionFiles[0];
             }
             else
             {
-                // if there is a "run" file, that file is primary
+                // First see if there is an explicit primary file indicated
+                // in config. If so use that.
                 string functionPrimary = null;
-                functionPrimary = functionFiles.FirstOrDefault(p => Path.GetFileNameWithoutExtension(p).ToLowerInvariant() == "run");
-                if (string.IsNullOrEmpty(functionPrimary))
+                string scriptFileName = (string)functionConfig["scriptFile"];
+                if (!string.IsNullOrEmpty(scriptFileName))
                 {
+                    functionPrimary = functionFiles.FirstOrDefault(p =>
+                        string.Compare(Path.GetFileName(p), scriptFileName, StringComparison.OrdinalIgnoreCase) == 0);
+                }
+                else
+                {
+                    // if there is a "run" file, that file is primary,
                     // for Node, any index.js file is primary
-                    functionPrimary = functionFiles.FirstOrDefault(p => Path.GetFileName(p).ToLowerInvariant() == "index.js");
-                    if (string.IsNullOrEmpty(functionPrimary))
-                    {
-                        // finally, if there is an explicit primary file indicated
-                        // in config, use it
-                        JToken token = functionInfo["source"];
-                        if (token != null)
-                        {
-                            string sourceFileName = (string)token;
-                            functionPrimary = Path.Combine(functionPath, sourceFileName);
-                        }
-                    }
+                    functionPrimary = functionFiles.FirstOrDefault(p =>
+                        Path.GetFileNameWithoutExtension(p).ToLowerInvariant() == "run" ||
+                        Path.GetFileName(p).ToLowerInvariant() == "index.js");
                 }
 
-                if (string.IsNullOrEmpty(functionPrimary))
-                {
-                    // TODO: should this be an error?
-                    return functionPath;
-                }
                 return functionPrimary;
             }
         }
