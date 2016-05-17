@@ -11,6 +11,7 @@ using Kudu.Core;
 using Kudu.Core.Deployment;
 using Kudu.Core.Deployment.Generator;
 using Kudu.Core.Functions;
+using Kudu.Core.Helpers;
 using Kudu.Core.Hooks;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Settings;
@@ -232,7 +233,7 @@ namespace Kudu.Console
             }
 
             return new Kudu.Core.Environment(root,
-                binPath,
+                EnvironmentHelper.NormalizeBinPath(binPath),
                 repositoryPath);
         }
     }

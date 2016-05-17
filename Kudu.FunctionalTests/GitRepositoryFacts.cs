@@ -45,7 +45,7 @@ namespace Kudu.FunctionalTests
                 // Arrange
                 var gitRepo = (IGitRepository)Activator.CreateInstance(gitRepoType, testRepository.Environment, new MockDeploymentSettingsManager(), NullTracerFactory.Instance);
                 string postCommitHookPath = Path.Combine(testRepository.PhysicalPath, ".git", "hooks", "post-receive");
-                string expected = "#!/bin/sh\r\nread i\r\necho $i > pushinfo\r\n\"$KUDU_EXE\" \"$KUDU_APPPATH\" \"$KUDU_MSBUILD\" \"$KUDU_DEPLOYER\"\n";
+                string expected = "#!/bin/sh\r\nread i\r\necho $i > pushinfo\r\n\"$KUDU_EXE\" \"$KUDU_APPPATH\" \"$KUDU_MSBUILD\" \"$KUDU_DEPLOYER\"\r\n";
 
                 // Act
                 gitRepo.Initialize();

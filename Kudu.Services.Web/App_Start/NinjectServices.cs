@@ -521,7 +521,6 @@ namespace Kudu.Services.Web.App_Start
             routes.MapHttpRoute("list-functions", "api/functions", new { controller = "Function", action = "List" }, new { verb = new HttpMethodConstraint("GET") });
             routes.MapHttpRoute("get-function", "api/functions/{name}", new { controller = "Function", action = "Get" }, new { verb = new HttpMethodConstraint("GET") });
             // TODO: remove obsolete getsecrets route once consumer switches to listsecrets
-            routes.MapHttpRoute("get-secrets", "api/functions/{name}/getsecrets", new { controller = "Function", action = "GetSecrets" }, new { verb = new HttpMethodConstraint("POST") });
             routes.MapHttpRoute("list-secrets", "api/functions/{name}/listsecrets", new { controller = "Function", action = "GetSecrets" }, new { verb = new HttpMethodConstraint("POST") });
             routes.MapHttpRoute("delete-function", "api/functions/{name}", new { controller = "Function", action = "Delete" }, new { verb = new HttpMethodConstraint("DELETE") });
 
@@ -727,23 +726,7 @@ namespace Kudu.Services.Web.App_Start
             string siteRoot = Path.Combine(root, Constants.SiteFolder);
             string repositoryPath = Path.Combine(siteRoot, settings == null ? Constants.RepositoryPath : settings.GetRepositoryPath());
             string binPath = HttpRuntime.BinDirectory;
-
-            if (!string.IsNullOrWhiteSpace(binPath) && !OSDetector.IsOnWindows())
-            {
-                int binIdx = binPath.LastIndexOf("Bin", StringComparison.Ordinal);
-                if (binIdx >= 0)
-                {
-                    string subStr = binPath.Substring(binIdx);
-                    // make sure file path is end with ".....Bin" or "....Bin/"
-                    if (subStr.Length < 5 && binPath.EndsWith(subStr, StringComparison.OrdinalIgnoreCase))
-                    {
-                        // real bin folder is lower case, but in mono, value is "Bin" instead of "bin"
-                        binPath = binPath.Substring(0, binIdx) + subStr.ToLowerInvariant();
-                    }
-                }
-            }
-
-            return new Kudu.Core.Environment(root, binPath, repositoryPath);
+            return new Core.Environment(root, EnvironmentHelper.NormalizeBinPath(binPath), repositoryPath);
         }
     }
 }

@@ -27,7 +27,7 @@ namespace Kudu
         public const string SiteExtensionLogsDirectory = "siteExtLogs";
         public const string DeploySettingsPath = "settings.xml";
         public const string ActiveDeploymentFile = "active";
-        public const string ScriptsPath = "scripts";
+        public const string ScriptsPath = "Scripts";
         public const string NodeModulesPath = "node_modules";
         public const string FirstDeploymentManifestFileName = "firstDeploymentManifest";
         public const string ManifestFileName = "manifest";

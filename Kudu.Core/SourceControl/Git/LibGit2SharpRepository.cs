@@ -113,7 +113,7 @@ fi" + "\n";
                     string content = @"#!/bin/sh
 read i
 echo $i > pushinfo
-" + KnownEnvironment.KUDUCOMMAND + "\n";
+" + KnownEnvironment.KUDUCOMMAND + "\r\n";
 
                     File.WriteAllText(PostReceiveHookPath, content);
                 }
