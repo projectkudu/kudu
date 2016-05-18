@@ -86,6 +86,16 @@ namespace Kudu.Services.Web.Tracing
             // Skip certain paths
             if (TraceExtensions.ShouldSkipRequest(httpRequest))
             {
+                // this is to prevent Kudu being IFrame (typically where host != referer)
+                // to optimize where we return X-FRAME-OPTIONS DENY header, only return when 
+                // in Azure env, browser non-ajax requests and referer mismatch with host
+                // since browser uses referer for other scenarios (such as href, redirect), we may return 
+                // this header (safe) in such cases.
+                if (Kudu.Core.Environment.IsAzureEnvironment() && !TraceExtensions.IsAjaxRequest(httpRequest) && TraceExtensions.MismatchHostReferer(httpRequest))
+                {
+                    httpContext.Response.Headers.Add("X-FRAME-OPTIONS", "DENY");
+                }
+
                 TraceServices.RemoveRequestTracer(httpContext);
                 return;
             }

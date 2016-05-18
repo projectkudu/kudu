@@ -127,6 +127,32 @@ namespace Kudu.Core.Tracing
                     request.UserAgent.StartsWith("Opera", StringComparison.OrdinalIgnoreCase));
         }
 
+        // From System.Web.Mvc.AjaxRequestExtensions.IsAjaxRequest
+        public static bool IsAjaxRequest(HttpRequestBase request)
+        {
+            return String.Equals("XMLHttpRequest", request.Headers["X-REQUESTED-WITH"], StringComparison.OrdinalIgnoreCase);
+        }
+
+        public static bool MismatchHostReferer(HttpRequestBase request)
+        {
+            var referer = request.Headers["Referer"];
+
+            // referer is not present if already same origin
+            if (String.IsNullOrEmpty(referer))
+            {
+                return false;
+            }
+
+            // referer can be invalid uri (such as literally 'null' in some case)
+            Uri refererUri;
+            if (!Uri.TryCreate(referer, UriKind.Absolute, out refererUri))
+            {
+                return true;
+            }
+
+            return !String.Equals(request.Url.Host, refererUri.Host, StringComparison.OrdinalIgnoreCase);
+        }
+
         private static TraceLevel GetTraceLevel(IDictionary<string, string> attributes)
         {
             string type;

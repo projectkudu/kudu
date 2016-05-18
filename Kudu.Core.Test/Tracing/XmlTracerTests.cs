@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Abstractions;
@@ -243,6 +244,38 @@ namespace Kudu.Core.Test.Tracing
             mock.Setup(req => req.UserAgent).Returns(userAgent);
             HttpRequestBase request = mock.Object;
             Assert.Equal(expected, TraceExtensions.ShouldSkipRequest(request));
+        }
+
+        [Theory]
+        [InlineData(true, "XMLHttpRequest")]
+        [InlineData(false, null)]
+        [InlineData(false, "")]
+        [InlineData(false, "unknown")]
+        [InlineData(false, null)]
+        public void IsAjaxRequestTests(bool expected, string header)
+        {
+            var mock = new Mock<HttpRequestBase>();
+            var headers = new NameValueCollection();
+            headers.Add("X-REQUESTED-WITH", header);
+            mock.Setup(req => req.Headers).Returns(headers);
+            HttpRequestBase request = mock.Object;
+            Assert.Equal(expected, TraceExtensions.IsAjaxRequest(request));
+        }
+
+        [Theory]
+        [InlineData(false, null)]
+        [InlineData(false, "https://tempuri.org/")]
+        [InlineData(true, "https://attacker.org/")]
+        [InlineData(true, "null")]
+        public void MismatchHostRefererTests(bool expected, string referer)
+        {
+            var mock = new Mock<HttpRequestBase>();
+            var headers = new NameValueCollection();
+            headers.Add("Referer", referer);
+            mock.Setup(req => req.Headers).Returns(headers);
+            mock.Setup(req => req.Url).Returns(new Uri("https://tempuri.org/"));
+            HttpRequestBase request = mock.Object;
+            Assert.Equal(expected, TraceExtensions.MismatchHostReferer(request));
         }
 
         public static IEnumerable<object[]> Requests
