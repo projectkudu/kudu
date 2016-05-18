@@ -7,18 +7,28 @@ namespace Kudu.Core.Deployment.Generator
     class AspNetCoreBuilder : GeneratorSiteBuilder
     {
         private readonly string _projectPath;
+        private readonly string _solutionPath;
 
-        public AspNetCoreBuilder(IEnvironment environment, IDeploymentSettingsManager settings, IBuildPropertyProvider propertyProvider, string sourcePath, string projectPath)
+        public AspNetCoreBuilder(IEnvironment environment, IDeploymentSettingsManager settings, IBuildPropertyProvider propertyProvider, string sourcePath, string projectPath, string solutionPath = null)
             : base(environment, settings, propertyProvider, sourcePath)
         {
             _projectPath = projectPath;
+            _solutionPath = solutionPath;
         }
 
         protected override string ScriptGeneratorCommandArguments
         {
             get
             {
-                return $"--aspNetCore \"{Path.GetDirectoryName(_projectPath)}\"";
+
+                if (string.IsNullOrEmpty(_solutionPath))
+                {
+                    return $"--aspNetCore \"{Path.GetDirectoryName(_projectPath)}\"";
+                }
+                else
+                {
+                    return $"--aspNetCore \"{Path.GetDirectoryName(_projectPath)}\" --solutionFile {_solutionPath}";
+                }
             }
         }
 

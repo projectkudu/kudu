@@ -124,7 +124,8 @@ namespace Kudu.Core.Deployment.Generator
                                       settings,
                                       _propertyProvider,
                                       repositoryRoot,
-                                      project.AbsolutePath);
+                                      project.AbsolutePath,
+                                      solution.Path);
             }
 
             return new WebSiteBuilder(_environment,
