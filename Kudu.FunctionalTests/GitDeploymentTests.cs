@@ -370,6 +370,7 @@ namespace Kudu.FunctionalTests
     public class AspNetCoreRC2Yeoman2ProjectsTests : GitDeploymentTests
     {
         [Fact]
+        [KuduXunitTest(PrivateOnly = true)]
         public void PushAndDeployAspNetCoreRC2Yeoman2Projects()
         {
             PushAndDeployApps("AspNetCoreRC2Yeoman2Projects", "master", "AspNetCoreRC2Yeoman2Projects", HttpStatusCode.OK, "Deployment successful");
@@ -380,6 +381,7 @@ namespace Kudu.FunctionalTests
     public class AspNetCoreRC2YeomanProjectTests : GitDeploymentTests
     {
         [Fact]
+        [KuduXunitTest(PrivateOnly = true)]
         public void PushAndDeployAspNetCoreRC2YeomanProject()
         {
             PushAndDeployApps("AspNetCoreRC2YeomanProject", "master", "AspNetCoreRC2YeomanProject", HttpStatusCode.OK, "Deployment successful");
@@ -390,6 +392,7 @@ namespace Kudu.FunctionalTests
     public class AspNetCoreRC2VisualStudioSlnTests : GitDeploymentTests
     {
         [Fact]
+        [KuduXunitTest(PrivateOnly = true)]
         public void PushAndDeployAspNetCoreRC2VisualStudioSln()
         {
             PushAndDeployApps("AspNetCoreRC2VisualStudioSln", "master", "AspNetCoreRC2", HttpStatusCode.OK, "Deployment successful");
