@@ -185,7 +185,7 @@ namespace Kudu.Services.Jobs
                 // For non-ARM, stay with the 202 to reduce potential impact of change
                 var response = Request.CreateResponse(ArmUtils.IsArmRequest(Request) ? HttpStatusCode.OK : HttpStatusCode.Accepted);
 
-                // Add the run uri is the location so caller can get status
+                // Add the run uri in the location so caller can get status on the running job
                 response.Headers.Add("Location", runUri.AbsoluteUri);
 
                 return response;
