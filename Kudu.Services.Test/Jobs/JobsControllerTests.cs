@@ -20,7 +20,7 @@ namespace Kudu.Services.Test.Jobs
         public void InvokeTriggeredJob_ShouldReturn202()
         {
             var controller = new JobsController(
-                Mock.Of<ITriggeredJobsManager>(),
+                CreateMockTriggeredJobsManager(),
                 Mock.Of<IContinuousJobsManager>(),
                 Mock.Of<ITracer>());
 
@@ -33,10 +33,12 @@ namespace Kudu.Services.Test.Jobs
         [Fact]
         public void InvokeARMTriggeredJob_ShouldReturn200()
         {
+
             var controller = new JobsController(
-                Mock.Of<ITriggeredJobsManager>(),
+                CreateMockTriggeredJobsManager(),
                 Mock.Of<IContinuousJobsManager>(),
                 Mock.Of<ITracer>());
+
 
             controller.Request = new HttpRequestMessage();
 
@@ -45,6 +47,14 @@ namespace Kudu.Services.Test.Jobs
 
             HttpResponseMessage resMsg = controller.InvokeTriggeredJob("foo");
             Assert.Equal(HttpStatusCode.OK, resMsg.StatusCode);
+        }
+
+        private static ITriggeredJobsManager CreateMockTriggeredJobsManager()
+        {
+            var triggeredJobManagerMock = new Mock<ITriggeredJobsManager>();
+            triggeredJobManagerMock.Setup(a => a.InvokeTriggeredJob(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+                .Returns(new Uri("http://localhost:24426/api/triggeredwebjobs/MyJob/history/201605190150326541"));
+            return triggeredJobManagerMock.Object;
         }
 
         [Fact]
