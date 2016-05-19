@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -68,16 +69,19 @@ namespace Kudu.Client.Jobs
             await Client.PutJsonAsync<JobSettings, object>("continuouswebjobs/" + jobName + "/settings", jobSettings);
         }
 
-        public async Task InvokeTriggeredJobAsync(string jobName, string arguments = null)
+        public async Task<Uri> InvokeTriggeredJobAsync(string jobName, string arguments = null)
         {
+            HttpResponseMessage response;
             if (arguments != null)
             {
-                await Client.PostAsync("triggeredwebjobs/" + jobName + "/run?arguments=" + arguments);
+                response = await Client.PostAsync("triggeredwebjobs/" + jobName + "/run?arguments=" + arguments);
             }
             else
             {
-                await Client.PostAsync("triggeredwebjobs/" + jobName + "/run");
+                response = await Client.PostAsync("triggeredwebjobs/" + jobName + "/run");
             }
+
+            return new Uri(response.Headers.GetValues("Location").First());
         }
 
         public async Task CreateContinuousJobAsync(string jobName, string scriptFileName, string content = null)

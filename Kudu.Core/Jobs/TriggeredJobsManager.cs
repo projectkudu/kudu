@@ -222,7 +222,7 @@ namespace Kudu.Core.Jobs
             return null;
         }
 
-        public void InvokeTriggeredJob(string jobName, string arguments, string trigger)
+        public Uri InvokeTriggeredJob(string jobName, string arguments, string trigger)
         {
             TriggeredJob triggeredJob = GetJob(jobName);
             if (triggeredJob == null)
@@ -244,8 +244,10 @@ namespace Kudu.Core.Jobs
 
             JobSettings jobSettings = triggeredJob.Settings;
 
-            triggeredJobRunner.StartJobRun(triggeredJob, jobSettings, trigger, ReportTriggeredJobFinished);
+            string runId = triggeredJobRunner.StartJobRun(triggeredJob, jobSettings, trigger, ReportTriggeredJobFinished);
             ClearJobListCache();
+
+            return BuildJobsUrl("{0}/history/{1}".FormatInvariant(jobName, runId));
         }
 
         private async void ReportTriggeredJobFinished(string jobName, string jobRunId)

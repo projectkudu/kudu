@@ -653,7 +653,9 @@ namespace Kudu.FunctionalTests.Jobs
         {
             if (!scheduledTriggeredJob)
             {
-                appManager.JobsManager.InvokeTriggeredJobAsync(jobName, arguments).Wait();
+                Uri runLocation = appManager.JobsManager.InvokeTriggeredJobAsync(jobName, arguments).Result;
+                Assert.Contains("api/triggeredwebjobs", runLocation.AbsoluteUri);
+                Assert.Contains("history", runLocation.AbsoluteUri);
             }
 
             try

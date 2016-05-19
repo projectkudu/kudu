@@ -178,11 +178,16 @@ namespace Kudu.Services.Jobs
         {
             try
             {
-                _triggeredJobsManager.InvokeTriggeredJob(jobName, arguments, "External - " + Request.Headers.UserAgent);
+                Uri runUri = _triggeredJobsManager.InvokeTriggeredJob(jobName, arguments, "External - " + Request.Headers.UserAgent);
 
                 // Return a 200 in the ARM case, otherwise a 202 can cause it to poll on /run, which we don't support
                 // For non-ARM, stay with the 202 to reduce potential impact of change
-                return Request.CreateResponse(ArmUtils.IsArmRequest(Request) ? HttpStatusCode.OK : HttpStatusCode.Accepted);
+                var response = Request.CreateResponse(ArmUtils.IsArmRequest(Request) ? HttpStatusCode.OK : HttpStatusCode.Accepted);
+
+                // Add the run uri in the location so caller can get status on the running job
+                response.Headers.Add("Location", runUri.AbsoluteUri);
+
+                return response;
             }
             catch (JobNotFoundException)
             {
