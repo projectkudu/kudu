@@ -1,6 +1,7 @@
 ﻿using Kudu.Contracts;
 using Kudu.Contracts.Jobs;
 using Kudu.Contracts.Tracing;
+using Kudu.Core;
 using Kudu.Core.Hooks;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Jobs;
@@ -178,12 +179,16 @@ namespace Kudu.Services.Jobs
         {
             try
             {
-                string runId = _triggeredJobsManager.InvokeTriggeredJob(jobName, arguments, "External - " + Request.Headers.UserAgent);
+                Uri runUri = _triggeredJobsManager.InvokeTriggeredJob(jobName, arguments, "External - " + Request.Headers.UserAgent);
 
                 // Return a 200 in the ARM case, otherwise a 202 can cause it to poll on /run, which we don't support
                 // For non-ARM, stay with the 202 to reduce potential impact of change
-                return Request.CreateResponse(ArmUtils.IsArmRequest(Request) ? HttpStatusCode.OK : HttpStatusCode.Accepted,
-                    ArmUtils.AddEnvelopeOnArmRequest(_triggeredJobsManager.GetJobRun(jobName, runId), Request));
+                var response = Request.CreateResponse(ArmUtils.IsArmRequest(Request) ? HttpStatusCode.OK : HttpStatusCode.Accepted);
+
+                // Add the run uri is the location so caller can get status
+                response.Headers.Add("Location", runUri.AbsoluteUri);
+
+                return response;
             }
             catch (JobNotFoundException)
             {
