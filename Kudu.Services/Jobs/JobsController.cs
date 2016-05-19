@@ -1,7 +1,6 @@
 ﻿using Kudu.Contracts;
 using Kudu.Contracts.Jobs;
 using Kudu.Contracts.Tracing;
-using Kudu.Core;
 using Kudu.Core.Hooks;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Jobs;
