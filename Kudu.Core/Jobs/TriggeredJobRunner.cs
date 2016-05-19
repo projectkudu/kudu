@@ -41,7 +41,7 @@ namespace Kudu.Core.Jobs
             get { return Settings.GetWebJobsIdleTimeout(); }
         }
 
-        public void StartJobRun(TriggeredJob triggeredJob, JobSettings jobSettings, string trigger, Action<string, string> reportAction)
+        public string StartJobRun(TriggeredJob triggeredJob, JobSettings jobSettings, string trigger, Action<string, string> reportAction)
         {
             JobSettings = jobSettings;
 
@@ -97,6 +97,9 @@ namespace Kudu.Core.Jobs
                 _lockFile.Release();
                 throw;
             }
+
+            // Return the run ID
+            return logger.Id;
         }
 
         protected override string RefreshShutdownNotificationFilePath(string jobName, string jobsTypePath)
