@@ -73,6 +73,7 @@ namespace Kudu.Services.Web.App_Start
         {
             HttpApplication.RegisterModule(typeof(OnePerRequestHttpModule));
             HttpApplication.RegisterModule(typeof(NinjectHttpModule));
+            HttpApplication.RegisterModule(typeof(TraceModule));
             _bootstrapper.Initialize(CreateKernel);
         }
 
