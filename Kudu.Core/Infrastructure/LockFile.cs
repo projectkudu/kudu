@@ -5,6 +5,7 @@ using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 using Kudu.Contracts.Infrastructure;
+using Kudu.Core.Helpers;
 using Kudu.Core.Tracing;
 
 namespace Kudu.Core.Infrastructure
@@ -229,13 +230,18 @@ namespace Kudu.Core.Infrastructure
         // it does not handled IOException due to 'file in used'.
         private void DeleteFileSafe()
         {
-            try
+            // Only clean up lock on Windows Env
+            // When running on Mono with SMB share, delete action would cause wierd behavior on later OpenWrite action if a file has already been opened by another process
+            if (OSDetector.IsOnWindows())
             {
-                FileSystemHelpers.DeleteFile(_path);
-            }
-            catch (Exception ex)
-            {
-                TraceIfUnknown(ex);
+                try
+                {
+                    FileSystemHelpers.DeleteFile(_path);
+                }
+                catch (Exception ex)
+                {
+                    TraceIfUnknown(ex);
+                }
             }
         }
 
