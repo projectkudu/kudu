@@ -347,7 +347,7 @@ namespace Kudu.Services.Test
             var initLock = new Mock<IOperationLock>();
             initLock.SetupGet(l => l.IsHeld)
                     .Returns(() => locked);
-            initLock.Setup(l => l.Lock())
+            initLock.Setup(l => l.Lock(It.IsAny<string>()))
                     .Returns(() => locked = true);
             initLock.Setup(l => l.Release())
                     .Callback(() => locked = false);

@@ -19,7 +19,7 @@ namespace Kudu.Core.Test
             var actual = 0;
 
             // Test
-            var success = lockObj.TryLockOperation(() => ++actual, TimeSpan.Zero);
+            var success = lockObj.TryLockOperation(() => ++actual, "operationName", TimeSpan.Zero);
 
             // Assert
             Assert.NotEqual(isHeld, success);
@@ -46,7 +46,7 @@ namespace Kudu.Core.Test
                         var temp = actual;
                         Thread.Sleep(500);
                         actual = temp + 1;
-                    }, TimeSpan.FromSeconds(10));
+                    }, "operationName" + i, TimeSpan.FromSeconds(10));
 
                     // Assert
                     Assert.True(succeed);
@@ -79,7 +79,7 @@ namespace Kudu.Core.Test
                         var temp = actual;
                         Thread.Sleep(5000);
                         actual = temp + 1;
-                    }, TimeSpan.FromSeconds(1));
+                    }, "operationName" + i, TimeSpan.FromSeconds(1));
                 }));
             }
 
@@ -102,12 +102,12 @@ namespace Kudu.Core.Test
             if (isHeld)
             {
                 // Test
-                Assert.Throws<LockOperationException>(() => lockObj.LockOperation(() => actual + 1, TimeSpan.Zero));
+                Assert.Throws<LockOperationException>(() => lockObj.LockOperation(() => actual + 1, "operationName", TimeSpan.Zero));
             }
             else
             {
                 // Test
-                actual = lockObj.LockOperation(() => actual + 1, TimeSpan.Zero);
+                actual = lockObj.LockOperation(() => actual + 1, "operationName", TimeSpan.Zero);
             }
 
             // Assert
@@ -121,6 +121,15 @@ namespace Kudu.Core.Test
             public MockOperationLock(bool isHeld = false)
             {
                 _locked = isHeld ? 1 : 0;
+                if (_locked == 1)
+                {
+                    LockInfo = new OperationLockInfo();
+                }
+            }
+
+            public OperationLockInfo LockInfo
+            {
+                get; private set;
             }
 
             public bool IsHeld
@@ -128,17 +137,30 @@ namespace Kudu.Core.Test
                 get { return _locked != 0; }
             }
 
-            public bool Lock()
+            public bool Lock(string operationName)
             {
-                return Interlocked.CompareExchange(ref _locked, 1, 0) == 0;
+                bool acquired = Interlocked.CompareExchange(ref _locked, 1, 0) == 0;
+                if (acquired)
+                {
+                    LockInfo = new OperationLockInfo
+                    {
+                        OperationName = operationName
+                    };
+                }
+                return acquired;
             }
 
-            public async Task LockAsync()
+            public async Task LockAsync(string operationName)
             {
                 while (true)
                 {
                     if (Interlocked.CompareExchange(ref _locked, 1, 0) == 0)
                     {
+                        LockInfo = new OperationLockInfo
+                        {
+                            OperationName = operationName
+                        };
+
                         return;
                     }
                     await Task.Delay(100);
@@ -148,6 +170,7 @@ namespace Kudu.Core.Test
             public void Release()
             {
                 Assert.Equal(1, _locked);
+                LockInfo = null;
                 _locked = 0;
             }
         }

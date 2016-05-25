@@ -77,13 +77,17 @@ namespace Kudu.Console
 
             // Cross child process lock is not working on linux via mono.
             // When we reach here, deployment lock must be HELD! To solve above issue, we lock again before continue.
-            int returnCode = -1;
-            deploymentLock.TryLockOperation(() =>
+            try
             {
-                returnCode = PerformDeploy(appRoot, wapTargets, deployer, lockPath, env, settingsManager, level, tracer, traceFactory, deploymentLock);
-            }, TimeSpan.Zero);
-
-            return returnCode;
+                return deploymentLock.LockOperation(() =>
+                {
+                    return PerformDeploy(appRoot, wapTargets, deployer, lockPath, env, settingsManager, level, tracer, traceFactory, deploymentLock);
+                }, "Git Post Deployment Hook", TimeSpan.Zero);
+            }
+            catch (LockOperationException)
+            {
+                return -1;
+            }
         }
 
         private static int PerformDeploy(

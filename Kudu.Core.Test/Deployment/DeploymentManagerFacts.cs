@@ -70,7 +70,7 @@ namespace Kudu.Core.Test.Deployment
             var deploymentPath = @"x:\sites\deployments";
             var environment = Mock.Of<IEnvironment>(e => e.DeploymentsPath == deploymentPath);
             var analytics = Mock.Of<IAnalytics>();
-            var statusLock = Mock.Of<IOperationLock>(l => l.Lock() == true);
+            var statusLock = Mock.Of<IOperationLock>(l => l.Lock(It.IsAny<string>()) == true);
             var stream = new Mock<MemoryStream> { CallBase = true };
             stream.Setup(s => s.Close());
 
@@ -120,7 +120,7 @@ namespace Kudu.Core.Test.Deployment
             var deploymentPath = @"x:\sites\deployments";
             var environment = Mock.Of<IEnvironment>(e => e.DeploymentsPath == deploymentPath);
             var analytics = Mock.Of<IAnalytics>();
-            var statusLock = Mock.Of<IOperationLock>(l => l.Lock() == true);
+            var statusLock = Mock.Of<IOperationLock>(l => l.Lock(It.IsAny<string>()) == true);
 
             var statusFile = Path.Combine(deploymentPath, id, "status.xml");
 

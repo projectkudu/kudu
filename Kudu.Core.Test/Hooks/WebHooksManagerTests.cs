@@ -196,7 +196,7 @@ namespace Kudu.Core.Test.Deployment
             hooksLockMock.SetupGet(l => l.IsHeld)
                          .Returns(() => locked);
 
-            hooksLockMock.Setup(l => l.Lock())
+            hooksLockMock.Setup(l => l.Lock(It.IsAny<string>()))
                          .Returns(() => locked = true);
 
             hooksLockMock.Setup(l => l.Release())

@@ -104,7 +104,7 @@ namespace Kudu.Core.SourceControl.Git
                     {
                         InitializeRepository();
                     }
-                }, InitTimeout);
+                }, "Initialize Repository", InitTimeout);
             }
         }
 

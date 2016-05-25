@@ -95,7 +95,7 @@ namespace Kudu.Core.Settings
                     writer.Formatting = Formatting.Indented;
                     json.WriteTo(writer);
                 }
-            }, _timeout);
+            }, "Save Setting File", _timeout);
         }
 
         public override string ToString()
@@ -121,7 +121,7 @@ namespace Kudu.Core.Settings
                 {
                     return JObject.Load(reader);
                 }
-            }, _timeout);
+            }, "Read Setting File", _timeout);
         }
     }
 }

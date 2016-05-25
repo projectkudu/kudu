@@ -53,7 +53,7 @@ namespace Kudu.Core.Deployment
                 {
                     FileSystemHelpers.WriteAllText(_activeFile, String.Empty);
                 }
-            }, LockTimeout);
+            }, "Delete Deployment Status File", LockTimeout);
         }
 
         public IOperationLock Lock
@@ -73,11 +73,11 @@ namespace Kudu.Core.Deployment
                     }
 
                     return null;
-                }, LockTimeout);
+                }, "Get Active Deployment Id", LockTimeout);
             }
             set
             {
-                _statusLock.LockOperation(() => FileSystemHelpers.WriteAllText(_activeFile, value), LockTimeout);
+                _statusLock.LockOperation(() => FileSystemHelpers.WriteAllText(_activeFile, value), "Set Active Deployment Id", LockTimeout);
             }
         }
 
@@ -96,7 +96,7 @@ namespace Kudu.Core.Deployment
                     {
                         return DateTime.MinValue;
                     }
-                }, LockTimeout);
+                }, "Get Last Deployment Modified Time", LockTimeout);
             }
         }
     }

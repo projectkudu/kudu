@@ -68,37 +68,40 @@ namespace Kudu.Services.GitServer
                     return;
                 }
 
-                bool acquired = DeploymentLock.TryLockOperation(() =>
+                try
                 {
-                    context.Response.ContentType = "application/x-git-receive-pack-result";
-
-                    if (_autoSwapHandler.IsAutoSwapOngoing())
+                    DeploymentLock.LockOperation(() =>
                     {
-                        context.Response.StatusCode = (int)HttpStatusCode.Conflict;
-                        context.Response.Write(Resources.Error_AutoSwapDeploymentOngoing);
-                        context.ApplicationInstance.CompleteRequest();
-                        return;
-                    }
+                        context.Response.ContentType = "application/x-git-receive-pack-result";
 
-                    string username = null;
-                    if (AuthUtility.TryExtractBasicAuthUser(context.Request, out username))
-                    {
-                        GitServer.SetDeployer(username);
-                    }
+                        if (_autoSwapHandler.IsAutoSwapOngoing())
+                        {
+                            context.Response.StatusCode = (int)HttpStatusCode.Conflict;
+                            context.Response.Write(Resources.Error_AutoSwapDeploymentOngoing);
+                            context.ApplicationInstance.CompleteRequest();
+                            return;
+                        }
 
-                    UpdateNoCacheForResponse(context.Response);
+                        string username = null;
+                        if (AuthUtility.TryExtractBasicAuthUser(context.Request, out username))
+                        {
+                            GitServer.SetDeployer(username);
+                        }
+
+                        UpdateNoCacheForResponse(context.Response);
 
                     // This temporary deployment is for ui purposes only, it will always be deleted via finally.
                     ChangeSet tempChangeSet;
-                    using (DeploymentManager.CreateTemporaryDeployment(Resources.ReceivingChanges, out tempChangeSet))
-                    {
-                        GitServer.Receive(context.Request.GetInputStream(), context.Response.OutputStream);
-                    }
-                }, TimeSpan.Zero);
-
-                if (!acquired)
+                        using (DeploymentManager.CreateTemporaryDeployment(Resources.ReceivingChanges, out tempChangeSet))
+                        {
+                            GitServer.Receive(context.Request.GetInputStream(), context.Response.OutputStream);
+                        }
+                    }, "Git Receive Pack", TimeSpan.Zero);
+                }
+                catch (LockOperationException ex)
                 {
                     context.Response.StatusCode = 409;
+                    context.Response.Write(ex.Message);
                     context.ApplicationInstance.CompleteRequest();
                 }
             }
