@@ -193,7 +193,7 @@ namespace Kudu.Core.Jobs
                 return true;
             }
 
-            if (_singletonLock.Lock())
+            if (_singletonLock.Lock("ContinuousJobSingleton"))
             {
                 return true;
             }

@@ -20,7 +20,7 @@ namespace Kudu.Services.Test
                          .Verifiable();
             var tracer = Mock.Of<ITracer>();
             var operationLock = new Mock<IOperationLock>();
-            operationLock.Setup(l => l.Lock()).Returns(true);
+            operationLock.Setup(l => l.Lock(It.IsAny<string>())).Returns(true);
             var controller = new SSHKeyController(tracer, sshKeyManager.Object, operationLock.Object);
 
             // Act
@@ -44,7 +44,7 @@ namespace Kudu.Services.Test
                          .Verifiable();
             var tracer = Mock.Of<ITracer>();
             var operationLock = new Mock<IOperationLock>();
-            operationLock.Setup(l => l.Lock()).Returns(true);
+            operationLock.Setup(l => l.Lock(It.IsAny<string>())).Returns(true);
             var controller = new SSHKeyController(tracer, sshKeyManager.Object, operationLock.Object);
 
             // Act

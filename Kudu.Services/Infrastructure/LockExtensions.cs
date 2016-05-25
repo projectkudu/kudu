@@ -9,24 +9,30 @@ namespace Kudu.Services.Infrastructure
 {
     internal static class LockExtensions
     {
-        public static void LockHttpOperation(this IOperationLock lockObj, Action action)
+        public static void LockHttpOperation(this IOperationLock lockObj, Action action, string operationName)
         {
-            bool acquired = lockObj.TryLockOperation(action, TimeSpan.Zero);
-            if (!acquired)
+            try
+            {
+                lockObj.LockOperation(action, operationName, TimeSpan.Zero);
+            }
+            catch (LockOperationException ex)
             {
                 var response = new HttpResponseMessage(HttpStatusCode.Conflict);
-                response.Content = new StringContent(Resources.Error_DeploymentInProgess);
+                response.Content = new StringContent(ex.Message);
                 throw new HttpResponseException(response);
             }
         }
 
-        public static async Task LockHttpOperationAsync(this IOperationLock lockObj, Func<Task> action)
+        public static async Task LockHttpOperationAsync(this IOperationLock lockObj, Func<Task> action, string operationName)
         {
-            bool acquired = await lockObj.TryLockOperationAsync(action, TimeSpan.Zero);
-            if (!acquired)
+            try
+            {
+                await lockObj.LockOperationAsync(action, operationName, TimeSpan.Zero);
+            }
+            catch (LockOperationException ex)
             {
                 var response = new HttpResponseMessage(HttpStatusCode.Conflict);
-                response.Content = new StringContent(Resources.Error_DeploymentInProgess);
+                response.Content = new StringContent(ex.Message);
                 throw new HttpResponseException(response);
             }
         }

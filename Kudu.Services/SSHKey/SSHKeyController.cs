@@ -70,7 +70,7 @@ namespace Kudu.Services.SSHKey
                         {
                             throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.Conflict, ex));
                         }
-                    }, TimeSpan.FromSeconds(LockTimeoutSecs));
+                    }, "Set SSH key", TimeSpan.FromSeconds(LockTimeoutSecs));
                 }
                 catch (LockOperationException ex)
                 {
@@ -97,7 +97,7 @@ namespace Kudu.Services.SSHKey
                         {
                             throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.Conflict, ex));
                         }
-                    }, TimeSpan.FromSeconds(LockTimeoutSecs));
+                    }, "Get SSH Key", TimeSpan.FromSeconds(LockTimeoutSecs));
                 }
                 catch (LockOperationException ex)
                 {
@@ -123,7 +123,7 @@ namespace Kudu.Services.SSHKey
                         {
                             throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.Conflict, ex));
                         }
-                    }, TimeSpan.FromSeconds(LockTimeoutSecs));
+                    }, "Delete SSH Key", TimeSpan.FromSeconds(LockTimeoutSecs));
                 }
                 catch (LockOperationException ex)
                 {

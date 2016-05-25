@@ -18,8 +18,10 @@ namespace Kudu.Services.Test
             var operationLock = new Mock<IOperationLock>();
 
             // setup
-            operationLock.Setup(l => l.Lock())
+            operationLock.Setup(l => l.Lock(It.IsAny<string>()))
                          .Returns(false);
+            operationLock.Setup(l => l.LockInfo)
+                         .Returns(new OperationLockInfo());
 
             var controller = new SettingsController(settings, operationLock.Object)
             {

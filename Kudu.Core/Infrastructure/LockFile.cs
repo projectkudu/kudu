@@ -6,6 +6,8 @@ using System.Text;
 using System.Threading.Tasks;
 using Kudu.Contracts.Infrastructure;
 using Kudu.Core.Tracing;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Kudu.Core.Infrastructure
 {
@@ -33,6 +35,22 @@ namespace Kudu.Core.Infrastructure
         {
             _path = Path.GetFullPath(path);
             _traceFactory = traceFactory;
+        }
+
+        public OperationLockInfo LockInfo
+        {
+            get
+            {
+                if (IsHeld)
+                {
+                    var info = ReadLockInfo();
+                    _traceFactory.GetTracer().Trace("Lock '{0}' is currently held by '{1}' operation started at {2}.", _path, info.OperationName, info.AcquiredDateTime);
+                    return info;
+                }
+
+                // lock info represent no owner
+                return new OperationLockInfo();
+            }
         }
 
         public void InitializeAsyncLocks()
@@ -111,7 +129,7 @@ namespace Kudu.Core.Infrastructure
             }
         }
 
-        public bool Lock()
+        public bool Lock(string operationName)
         {
             Stream lockStream = null;
             try
@@ -120,7 +138,7 @@ namespace Kudu.Core.Infrastructure
 
                 lockStream = FileSystemHelpers.OpenFile(_path, FileMode.Create, FileAccess.Write, FileShare.Read);
 
-                WriteLockInfo(lockStream);
+                WriteLockInfo(operationName, lockStream);
 
                 OnLockAcquired();
 
@@ -172,22 +190,42 @@ namespace Kudu.Core.Infrastructure
 
         // we only write the lock info at lock's enter since
         // lock file will be cleaned up at release
-        private static void WriteLockInfo(Stream lockStream)
+        private static void WriteLockInfo(string operationName, Stream lockStream)
         {
-            var strb = new StringBuilder();
-            strb.Append(DateTime.UtcNow.ToString("s"));
-            strb.AppendLine(System.Environment.StackTrace);
+            var json = JObject.FromObject(new OperationLockInfo
+            {
+                OperationName = operationName,
+                StackTrace = System.Environment.StackTrace
+            });
 
-            var bytes = Encoding.UTF8.GetBytes(strb.ToString());
+            var bytes = Encoding.UTF8.GetBytes(json.ToString());
             lockStream.Write(bytes, 0, bytes.Length);
             lockStream.Flush();
+        }
+
+        private OperationLockInfo ReadLockInfo()
+        {
+            try
+            {
+                return JsonConvert.DeserializeObject<OperationLockInfo>(FileSystemHelpers.ReadAllTextFromFile(_path));
+            }
+            catch (Exception ex)
+            {
+                _traceFactory.GetTracer().TraceError(ex);
+
+                return new OperationLockInfo
+                {
+                    OperationName = "unknown",
+                    StackTrace = ex.ToString()
+                };
+            };
         }
 
         /// <summary>
         /// Returns a lock right away or waits asynchronously until a lock is available.
         /// </summary>
         /// <returns>Task indicating the task of acquiring the lock.</returns>
-        public Task LockAsync()
+        public Task LockAsync(string operationName)
         {
             if (_lockFileWatcher == null)
             {
@@ -195,12 +233,12 @@ namespace Kudu.Core.Infrastructure
             }
 
             // See if we can get the lock -- if not then enqueue lock request.
-            if (Lock())
+            if (Lock(operationName))
             {
                 return Task.FromResult(true);
             }
 
-            QueueItem item = new QueueItem();
+            QueueItem item = new QueueItem(operationName);
             _lockRequestQueue.Enqueue(item);
             return item.HasLock.Task;
         }
@@ -256,11 +294,11 @@ namespace Kudu.Core.Infrastructure
         {
             if (!_lockRequestQueue.IsEmpty)
             {
-                if (Lock())
+                QueueItem item;
+                if (_lockRequestQueue.TryPeek(out item) && Lock(item.OperationName))
                 {
                     if (!_lockRequestQueue.IsEmpty)
                     {
-                        QueueItem item;
                         if (!_lockRequestQueue.TryDequeue(out item))
                         {
                             string msg = String.Format(Resources.Error_AsyncLockNoLockRequest, _lockRequestQueue.Count);
@@ -284,10 +322,13 @@ namespace Kudu.Core.Infrastructure
 
         private class QueueItem
         {
-            public QueueItem()
+            public QueueItem(string operationName)
             {
+                OperationName = operationName;
                 HasLock = new TaskCompletionSource<bool>();
             }
+
+            public string OperationName { get; private set; }
 
             public TaskCompletionSource<bool> HasLock { get; private set; }
         }

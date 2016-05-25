@@ -61,7 +61,7 @@ namespace Kudu.Contracts {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Unable to acquire lock after {0:0} seconds.  Please retry operation later..
+        ///   Looks up a localized string similar to The &apos;{0}&apos; operation conflicts with the pending &apos;{1}&apos; operation started at {2}..
         /// </summary>
         internal static string Error_OperationLockTimeout {
             get {

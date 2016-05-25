@@ -64,7 +64,7 @@ namespace Kudu.Services.Settings
                     }
 
                     return Request.CreateResponse(HttpStatusCode.NoContent);
-                }, TimeSpan.Zero);
+                }, "Set Setting", TimeSpan.FromSeconds(5));
             }
             catch (LockOperationException ex)
             {
@@ -91,7 +91,7 @@ namespace Kudu.Services.Settings
                     _settingsManager.DeleteValue(key);
 
                     return Request.CreateResponse(HttpStatusCode.NoContent);
-                }, TimeSpan.Zero);
+                }, "Delete Setting", TimeSpan.Zero);
             }
             catch (LockOperationException ex)
             {
