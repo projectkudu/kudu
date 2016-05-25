@@ -58,7 +58,7 @@ namespace Kudu.Services.SourceControl
         public override async Task<HttpResponseMessage> GetItem()
         {
             // Get a lock on the repository
-            await GetLockAsync();
+            await GetLockAsync("Getting scm file");
 
             try
             {
@@ -90,7 +90,7 @@ namespace Kudu.Services.SourceControl
         public override async Task<HttpResponseMessage> PutItem()
         {
             // Get a lock on the repository
-            await GetLockAsync();
+            await GetLockAsync("Updating scm file");
 
             try
             {
@@ -123,7 +123,7 @@ namespace Kudu.Services.SourceControl
             }
 
             // Get a lock on the repository
-            await GetLockAsync();
+            await GetLockAsync("Deleting scm file");
 
             try
             {
@@ -463,9 +463,9 @@ namespace Kudu.Services.SourceControl
             return true;
         }
 
-        private async Task GetLockAsync()
+        private async Task GetLockAsync(string operation)
         {
-            await _operationLock.LockAsync();
+            await _operationLock.LockAsync(operation);
 
             // Make sure we have the current commit ID
             _currentEtag = GetCurrentEtag();

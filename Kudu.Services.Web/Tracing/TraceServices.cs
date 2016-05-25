@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Web;
 using Kudu.Contracts.Tracing;
@@ -41,6 +42,11 @@ namespace Kudu.Services.Web.Tracing
 
                 return httpContext.Items[_traceFileKey] as string;
             }
+        }
+
+        internal static TraceLevel TraceLevel
+        {
+            get; set;
         }
 
         public static void SetTraceFactory(Func<ITracer> traceFactory, Func<ILogger> loggerFactory)

@@ -118,6 +118,6 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="Error_OperationLockTimeout" xml:space="preserve">
-    <value>Unable to acquire lock after {0:0} seconds.  Please retry operation later.</value>
+    <value>The '{0}' operation conflicts with the pending '{1}' operation started at {2}.  Please retry operation later.</value>
   </data>
 </root>

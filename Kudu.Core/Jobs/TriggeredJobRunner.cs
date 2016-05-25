@@ -50,7 +50,7 @@ namespace Kudu.Core.Jobs
                 throw new WebJobsStoppedException();
             }
 
-            if (!_lockFile.Lock())
+            if (!_lockFile.Lock(String.Format("Starting {0} triggered WebJob", triggeredJob.Name)))
             {
                 throw new ConflictException();
             }

@@ -13,11 +13,12 @@ namespace Kudu.Contracts.Infrastructure
         // return true if lock acquired and operation executed
         public static bool TryLockOperation(this IOperationLock lockObj,
                                          Action operation,
+                                         string operationName,
                                          TimeSpan timeout)
         {
             var elapsed = TimeSpan.Zero;
 
-            while (!lockObj.Lock())
+            while (!lockObj.Lock(operationName))
             {
                 if (elapsed >= timeout)
                 {
@@ -39,20 +40,45 @@ namespace Kudu.Contracts.Infrastructure
             }
         }
 
-        public static async Task<bool> TryLockOperationAsync(this IOperationLock lockObj,
-                                               Func<Task> operation,
-                                               TimeSpan timeout)
+        // acquire lock and then execute the operation
+        public static void LockOperation(this IOperationLock lockObj, Action operation, string operationName, TimeSpan timeout)
         {
-            bool isLocked = await WaitToLockAsync(lockObj, timeout);
+            bool success = lockObj.TryLockOperation(operation, operationName, timeout);
+
+            if (!success)
+            {
+                var lockInfo = lockObj.LockInfo;
+                throw new LockOperationException(String.Format(CultureInfo.CurrentCulture, Resources.Error_OperationLockTimeout, operationName, lockInfo.OperationName, lockInfo.AcquiredDateTime));
+            }
+        }
+
+        // acquire lock and then execute the operation
+        public static T LockOperation<T>(this IOperationLock lockObj, Func<T> operation, string operationName, TimeSpan timeout)
+        {
+            T result = default(T);
+            bool success = lockObj.TryLockOperation(() => result = operation(), operationName, timeout);
+
+            if (!success)
+            {
+                var lockInfo = lockObj.LockInfo;
+                throw new LockOperationException(String.Format(CultureInfo.CurrentCulture, Resources.Error_OperationLockTimeout, operationName, lockInfo.OperationName, lockInfo.AcquiredDateTime));
+            }
+
+            return result;
+        }
+
+        public static async Task LockOperationAsync(this IOperationLock lockObj, Func<Task> operation, string operationName, TimeSpan timeout)
+        {
+            bool isLocked = await WaitToLockAsync(lockObj, operationName, timeout);
             if (!isLocked)
             {
-                return false;
+                var lockInfo = lockObj.LockInfo;
+                throw new LockOperationException(String.Format(CultureInfo.CurrentCulture, Resources.Error_OperationLockTimeout, operationName, lockInfo.OperationName, lockInfo.AcquiredDateTime));
             }
 
             try
             {
                 await operation();
-                return true;
             }
             finally
             {
@@ -60,37 +86,13 @@ namespace Kudu.Contracts.Infrastructure
             }
         }
 
-        // acquire lock and then execute the operation
-        public static void LockOperation(this IOperationLock lockObj, Action operation, TimeSpan timeout)
+        public static async Task<T> LockOperationAsync<T>(this IOperationLock lockObj, Func<Task<T>> operation, string operationName, TimeSpan timeout)
         {
-            bool success = lockObj.TryLockOperation(operation, timeout);
-
-            if (!success)
-            {
-                throw new LockOperationException(String.Format(CultureInfo.CurrentCulture, Resources.Error_OperationLockTimeout, timeout.TotalSeconds));
-            }
-        }
-
-        // acquire lock and then execute the operation
-        public static T LockOperation<T>(this IOperationLock lockObj, Func<T> operation, TimeSpan timeout)
-        {
-            T result = default(T);
-            bool success = lockObj.TryLockOperation(() => result = operation(), timeout);
-
-            if (!success)
-            {
-                throw new LockOperationException(String.Format(CultureInfo.CurrentCulture, Resources.Error_OperationLockTimeout, timeout.TotalSeconds));
-            }
-
-            return result;
-        }
-
-        public static async Task<T> LockOperationAsync<T>(this IOperationLock lockObj, Func<Task<T>> operation, TimeSpan timeout)
-        {
-            bool isLocked = await WaitToLockAsync(lockObj, timeout);
+            bool isLocked = await WaitToLockAsync(lockObj, operationName, timeout);
             if (!isLocked)
             {
-                throw new LockOperationException(String.Format(CultureInfo.CurrentCulture, Resources.Error_OperationLockTimeout, timeout.TotalSeconds));
+                var lockInfo = lockObj.LockInfo;
+                throw new LockOperationException(String.Format(CultureInfo.CurrentCulture, Resources.Error_OperationLockTimeout, operationName, lockInfo.OperationName, lockInfo.AcquiredDateTime));
             }
 
             try
@@ -103,11 +105,11 @@ namespace Kudu.Contracts.Infrastructure
             }
         }
 
-        private static async Task<bool> WaitToLockAsync(IOperationLock lockObj, TimeSpan timeout)
+        private static async Task<bool> WaitToLockAsync(IOperationLock lockObj, string operationName, TimeSpan timeout)
         {
             var elapsed = TimeSpan.Zero;
 
-            while (!lockObj.Lock())
+            while (!lockObj.Lock(operationName))
             {
                 if (elapsed >= timeout)
                 {

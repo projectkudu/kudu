@@ -290,7 +290,7 @@ namespace Kudu.Core.SiteExtensions
                     return await installationLock.LockOperationAsync<SiteExtensionInfo>(async () =>
                     {
                         return await TryInstallExtension(id, version, feedUrl, type, tracer);
-                    }, TimeSpan.Zero);
+                    }, "Installing SiteExtension", TimeSpan.Zero);
                 }
             }
             catch (Exception ex)

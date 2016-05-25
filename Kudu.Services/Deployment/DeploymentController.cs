@@ -78,7 +78,7 @@ namespace Kudu.Services.Deployment
                     {
                         throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.Conflict, ex));
                     }
-                });
+                }, "Deleting deployment");
             }
         }
 
@@ -158,7 +158,7 @@ namespace Kudu.Services.Deployment
                     {
                         throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.NotFound, ex));
                     }
-                });
+                }, "Performing deployment");
 
                 return response;
             }

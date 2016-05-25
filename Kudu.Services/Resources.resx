@@ -144,9 +144,6 @@
   <data name="ByteRangeStreamReadOnly" xml:space="preserve">
     <value>This is a read-only stream.</value>
   </data>
-  <data name="Error_DeploymentInProgess" xml:space="preserve">
-    <value>There's a deployment already in progress.</value>
-  </data>
   <data name="Error_DeploymentNotFound" xml:space="preserve">
     <value>Deployment '{0}' not found.</value>
   </data>

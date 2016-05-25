@@ -64,7 +64,7 @@ namespace Kudu.Services.Settings
                     }
 
                     return Request.CreateResponse(HttpStatusCode.NoContent);
-                }, TimeSpan.Zero);
+                }, "Updating deployment setting", TimeSpan.FromSeconds(5));
             }
             catch (LockOperationException ex)
             {
@@ -91,7 +91,7 @@ namespace Kudu.Services.Settings
                     _settingsManager.DeleteValue(key);
 
                     return Request.CreateResponse(HttpStatusCode.NoContent);
-                }, TimeSpan.Zero);
+                }, "Deleting deployment setting", TimeSpan.Zero);
             }
             catch (LockOperationException ex)
             {

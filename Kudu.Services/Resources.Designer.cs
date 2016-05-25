@@ -214,15 +214,6 @@ namespace Kudu.Services {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to There&apos;s a deployment already in progress..
-        /// </summary>
-        internal static string Error_DeploymentInProgess {
-            get {
-                return ResourceManager.GetString("Error_DeploymentInProgess", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Deployment &apos;{0}&apos; not found..
         /// </summary>
         internal static string Error_DeploymentNotFound {

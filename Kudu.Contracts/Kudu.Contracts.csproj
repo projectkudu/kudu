@@ -127,6 +127,7 @@
     <Compile Include="IEnvironment.cs" />
     <Compile Include="Infrastructure\INamedObject.cs" />
     <Compile Include="Infrastructure\IOperationLock.cs" />
+    <Compile Include="Infrastructure\OperationLockInfo.cs" />
     <Compile Include="Infrastructure\LockExtensions.cs" />
     <Compile Include="Infrastructure\LockOperationException.cs" />
     <Compile Include="Infrastructure\RS.cs" />

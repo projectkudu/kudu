@@ -95,7 +95,7 @@ namespace Kudu.Services.Performance
                 {
                     var diagnostics = new DiagnosticsSettingsManager(Path.Combine(_environment.DiagnosticsPath, Constants.SettingsJsonFile), _tracer);
                     diagnostics.UpdateSetting(AzureDriveEnabledKey, true);
-                }, TimeSpan.FromSeconds(30));
+                }, "Updating diagnostics setting", TimeSpan.FromSeconds(30));
             }
 
             return result;

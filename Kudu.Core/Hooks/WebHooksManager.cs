@@ -56,12 +56,10 @@ namespace Kudu.Core.Hooks
                 {
                     IEnumerable<WebHook> webHooks = null;
 
-                    bool lockAcquired = _hooksLock.TryLockOperation(() =>
+                    _hooksLock.LockOperation(() =>
                     {
                         webHooks = ReadWebHooksFromFile();
-                    }, LockTimeout);
-
-                    VerifyLockAcquired(lockAcquired);
+                    }, "Getting WebHooks", LockTimeout);
 
                     return webHooks;
                 }
@@ -79,7 +77,7 @@ namespace Kudu.Core.Hooks
 
                 WebHook createdWebHook = null;
 
-                bool lockAcquired = _hooksLock.TryLockOperation(() =>
+                _hooksLock.LockOperation(() =>
                 {
                     var webHooks = new List<WebHook>(ReadWebHooksFromFile());
                     WebHook existingWebHook = webHooks.FirstOrDefault(h => String.Equals(h.HookAddress, webHook.HookAddress, StringComparison.OrdinalIgnoreCase));
@@ -103,9 +101,7 @@ namespace Kudu.Core.Hooks
                         // if web hook exists but with a different hook event type then throw a conflict exception
                         throw new ConflictException();
                     }
-                }, LockTimeout);
-
-                VerifyLockAcquired(lockAcquired);
+                }, "Adding WebHook", LockTimeout);
 
                 return createdWebHook;
             }
@@ -115,12 +111,10 @@ namespace Kudu.Core.Hooks
         {
             using (_tracer.Step("WebHooksManager.RemoveWebHook"))
             {
-                bool lockAcquired = _hooksLock.TryLockOperation(() =>
+                _hooksLock.LockOperation(() =>
                 {
                     RemoveWebHookNotUnderLock(hookId);
-                }, LockTimeout);
-
-                VerifyLockAcquired(lockAcquired);
+                }, "Deleting WebHook", LockTimeout);
             }
         }
 
@@ -138,12 +132,10 @@ namespace Kudu.Core.Hooks
             {
                 string jsonString = JsonConvert.SerializeObject(eventContent, JsonSerializerSettings);
 
-                bool lockAcquired = await _hooksLock.TryLockOperationAsync(async () =>
+                await _hooksLock.LockOperationAsync(async () =>
                 {
                     await PublishToHooksAsync(jsonString, hookEventType);
-                }, LockTimeout);
-
-                VerifyLockAcquired(lockAcquired);
+                }, "Publishing WebHook event", LockTimeout);
             }
         }
 
@@ -156,14 +148,6 @@ namespace Kudu.Core.Hooks
         {
             IEnumerable<WebHook> hooks = ReadWebHooksFromFile();
             SaveHooksToFile(hooks.Where(h => !String.Equals(h.Id, hookId, StringComparison.OrdinalIgnoreCase)));
-        }
-
-        private static void VerifyLockAcquired(bool lockAcquired)
-        {
-            if (!lockAcquired)
-            {
-                throw new LockOperationException("Failed to acquire lock");
-            }
         }
 
         private async Task PublishToHookAsync(WebHook webHook, string jsonString)

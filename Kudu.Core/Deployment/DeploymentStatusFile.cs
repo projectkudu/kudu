@@ -79,7 +79,7 @@ namespace Kudu.Core.Deployment
                     // it is ok to return null as callers already handle null.
                     return null;
                 }
-            }, DeploymentStatusManager.LockTimeout);
+            }, "Getting deployment status", DeploymentStatusManager.LockTimeout);
         }
 
         private void Initialize(XDocument document)
@@ -191,7 +191,7 @@ namespace Kudu.Core.Deployment
                 {
                     FileSystemHelpers.WriteAllText(_activeFile, String.Empty);
                 }
-            }, DeploymentStatusManager.LockTimeout);
+            }, "Updating deployment status", DeploymentStatusManager.LockTimeout);
         }
 
         private static string GetOptionalElementValue(XElement element, string localName, string namespaceName = null)

@@ -297,7 +297,7 @@ namespace Kudu.TestHarness
             if (Debugger.IsAttached)
             {
                 // Set to verbose level
-                appManager.SettingsManager.SetValue("trace_level", "4").Wait();
+                appManager.SettingsManager.SetValue("SCM_TRACE_LEVEL", "4").Wait();
 
                 RemoteLogStreamManager mgr = appManager.CreateLogStreamManager("kudu");
                 waitHandle = new LogStreamWaitHandle(mgr.GetStream().Result);

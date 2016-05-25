@@ -61,84 +61,86 @@ namespace Kudu.Services.SourceControl
         [HttpDelete]
         public void Delete(int deleteWebRoot = 0, int ignoreErrors = 0)
         {
-            // Fail if a deployment is in progress
-            bool acquired = _deploymentLock.TryLockOperation(() =>
+            try
             {
-                using (_tracer.Step("Deleting repository"))
+                // Fail if a deployment is in progress
+                _deploymentLock.LockOperation(() =>
                 {
-                    string repositoryPath = Path.Combine(_environment.SiteRootPath, Constants.RepositoryPath);
-                    if (String.Equals(repositoryPath, _environment.RepositoryPath, StringComparison.OrdinalIgnoreCase))
+                    using (_tracer.Step("Deleting repository"))
                     {
-                        // Delete the repository
-                        FileSystemHelpers.DeleteDirectorySafe(_environment.RepositoryPath, ignoreErrors != 0);
+                        string repositoryPath = Path.Combine(_environment.SiteRootPath, Constants.RepositoryPath);
+                        if (String.Equals(repositoryPath, _environment.RepositoryPath, StringComparison.OrdinalIgnoreCase))
+                        {
+                            // Delete the repository
+                            FileSystemHelpers.DeleteDirectorySafe(_environment.RepositoryPath, ignoreErrors != 0);
+                        }
+                        else
+                        {
+                            // Just delete .git folder
+                            FileSystemHelpers.DeleteDirectorySafe(Path.Combine(_environment.RepositoryPath, ".git"), ignoreErrors != 0);
+
+                            FileSystemHelpers.DeleteDirectorySafe(Path.Combine(_environment.RepositoryPath, ".hg"), ignoreErrors != 0);
+                        }
+                    }
+
+                    using (_tracer.Step("Delete auto swap lock file"))
+                    {
+                        FileSystemHelpers.DeleteFileSafe(Path.Combine(_environment.LocksPath, AutoSwapHandler.AutoSwapLockFile));
+                    }
+
+                    using (_tracer.Step("Deleting ssh key"))
+                    {
+                        // Delete the ssh key
+                        FileSystemHelpers.DeleteDirectorySafe(_environment.SSHKeyPath, ignoreErrors != 0);
+                    }
+
+                    if (deleteWebRoot != 0)
+                    {
+                        // This logic is primarily used to help with site reuse during test.
+                        // The flag is not documented for general use.
+
+                        using (_tracer.Step("Deleting web root"))
+                        {
+                            // Delete the wwwroot folder
+                            FileSystemHelpers.DeleteDirectoryContentsSafe(_environment.WebRootPath, ignoreErrors != 0);
+                        }
+
+                        using (_tracer.Step("Deleting diagnostics"))
+                        {
+                            // Delete the diagnostic log. This is a slight abuse of deleteWebRoot, but the
+                            // real semantic is more to reset the site to a fully clean state
+                            FileSystemHelpers.DeleteDirectorySafe(_environment.DiagnosticsPath, ignoreErrors != 0);
+                        }
+
+                        using (_tracer.Step("Deleting ASP.NET 5 approot"))
+                        {
+                            // Delete the approot folder used by ASP.NET 5 apps
+                            FileSystemHelpers.DeleteDirectorySafe(Path.Combine(_environment.SiteRootPath, "approot"), ignoreErrors != 0);
+                        }
+
+                        // Delete first deployment manifest since it is no longer needed
+                        FileSystemHelpers.DeleteFileSafe(Path.Combine(_environment.SiteRootPath, Constants.FirstDeploymentManifestFileName));
                     }
                     else
                     {
-                        // Just delete .git folder
-                        FileSystemHelpers.DeleteDirectorySafe(Path.Combine(_environment.RepositoryPath, ".git"), ignoreErrors != 0);
-
-                        FileSystemHelpers.DeleteDirectorySafe(Path.Combine(_environment.RepositoryPath, ".hg"), ignoreErrors != 0);
+                        using (_tracer.Step("Updating initial deployment manifest"))
+                        {
+                            // The active deployment manifest becomes the baseline initial deployment manifest
+                            // When SCM is reconnected, the new deployment will use this manifest to clean the wwwroot
+                            SaveInitialDeploymentManifest();
+                        }
                     }
-                }
 
-                using (_tracer.Step("Delete auto swap lock file"))
-                {
-                    FileSystemHelpers.DeleteFileSafe(Path.Combine(_environment.LocksPath, AutoSwapHandler.AutoSwapLockFile));
-                }
-
-                using (_tracer.Step("Deleting ssh key"))
-                {
-                    // Delete the ssh key
-                    FileSystemHelpers.DeleteDirectorySafe(_environment.SSHKeyPath, ignoreErrors != 0);
-                }
-
-                if (deleteWebRoot != 0)
-                {
-                    // This logic is primarily used to help with site reuse during test.
-                    // The flag is not documented for general use.
-
-                    using (_tracer.Step("Deleting web root"))
+                    using (_tracer.Step("Deleting deployment cache"))
                     {
-                        // Delete the wwwroot folder
-                        FileSystemHelpers.DeleteDirectoryContentsSafe(_environment.WebRootPath, ignoreErrors != 0);
+                        // Delete the deployment cache
+                        FileSystemHelpers.DeleteDirectorySafe(_environment.DeploymentsPath, ignoreErrors != 0);
                     }
-
-                    using (_tracer.Step("Deleting diagnostics"))
-                    {
-                        // Delete the diagnostic log. This is a slight abuse of deleteWebRoot, but the
-                        // real semantic is more to reset the site to a fully clean state
-                        FileSystemHelpers.DeleteDirectorySafe(_environment.DiagnosticsPath, ignoreErrors != 0);
-                    }
-
-                    using (_tracer.Step("Deleting ASP.NET 5 approot"))
-                    {
-                        // Delete the approot folder used by ASP.NET 5 apps
-                        FileSystemHelpers.DeleteDirectorySafe(Path.Combine(_environment.SiteRootPath, "approot"), ignoreErrors != 0);
-                    }
-
-                    // Delete first deployment manifest since it is no longer needed
-                    FileSystemHelpers.DeleteFileSafe(Path.Combine(_environment.SiteRootPath, Constants.FirstDeploymentManifestFileName));
-                }
-                else
-                {
-                    using (_tracer.Step("Updating initial deployment manifest"))
-                    {
-                        // The active deployment manifest becomes the baseline initial deployment manifest
-                        // When SCM is reconnected, the new deployment will use this manifest to clean the wwwroot
-                        SaveInitialDeploymentManifest();
-                    }
-                }
-
-                using (_tracer.Step("Deleting deployment cache"))
-                {
-                    // Delete the deployment cache
-                    FileSystemHelpers.DeleteDirectorySafe(_environment.DeploymentsPath, ignoreErrors != 0);
-                }
-            }, TimeSpan.Zero);
-
-            if (!acquired)
+                }, "Deleting repository", TimeSpan.Zero);
+            }
+            catch (LockOperationException ex)
             {
-                HttpResponseMessage response = Request.CreateErrorResponse(HttpStatusCode.Conflict, Resources.Error_DeploymentInProgess);
+                HttpResponseMessage response = Request.CreateErrorResponse(HttpStatusCode.Conflict, ex.Message);
                 throw new HttpResponseException(response);
             }
         }

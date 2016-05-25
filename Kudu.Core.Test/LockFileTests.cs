@@ -26,14 +26,14 @@ namespace Kudu.Core.Test
             {
                 // Acquire
                 Assert.Equal(false, lockFile.IsHeld);
-                Assert.Equal(true, lockFile.Lock());
+                Assert.Equal(true, lockFile.Lock("operationName"));
 
                 // Test
                 Assert.Equal(true, lockFile.IsHeld);
-                Assert.Equal(false, lockFile.Lock());
+                Assert.Equal(false, lockFile.Lock("operationName"));
 
                 Assert.Equal(true, lockFile2.IsHeld);
-                Assert.Equal(false, lockFile2.Lock());
+                Assert.Equal(false, lockFile2.Lock("operationName"));
 
                 // Release
                 lockFile.Release();
@@ -69,7 +69,7 @@ namespace Kudu.Core.Test
                             Assert.Contains("at Kudu.Core.Test.LockFileTests", reader.ReadToEnd());
                         }
 
-                    }, TimeSpan.FromSeconds(60));
+                    }, "operationName", TimeSpan.FromSeconds(60));
                 }
             });
 
@@ -107,10 +107,10 @@ namespace Kudu.Core.Test
 
             // Test
             lockFile.RepositoryFactory = repositoryFactory.Object;
-            var locked = lockFile.Lock();
+            var locked = lockFile.Lock("operationName");
 
             // Assert
-            Assert.True(locked, "lock should be successfule!");
+            Assert.True(locked, "lock should be successful!");
             repository.Verify(r => r.ClearLock(), Times.Once);
         }
 
@@ -166,10 +166,10 @@ namespace Kudu.Core.Test
             var lockFile = new FailOnLockAcquiredLock(file);
 
             // 1st attempt lock unsuccessful since OnLockAcquired failed
-            Assert.False(lockFile.Lock());
+            Assert.False(lockFile.Lock("operationName"));
 
             // Next attempt successful
-            Assert.True(lockFile.Lock());
+            Assert.True(lockFile.Lock("operationName"));
             lockFile.Release();
 
             FileSystemHelpers.DeleteFileSafe(file);

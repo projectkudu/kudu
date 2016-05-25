@@ -413,33 +413,40 @@ namespace Kudu.Services.SiteExtensions
 
                 bool isAnyUpdate = false;
 
-                bool islocked = batchUpdateLock.TryLockOperation(() =>
+                try
                 {
-                    string[] packageDirs = FileSystemHelpers.GetDirectories(_environment.SiteExtensionSettingsPath);
-                    foreach (var dir in packageDirs)
+                    batchUpdateLock.LockOperation(() =>
                     {
-                        var dirInfo = new DirectoryInfo(dir);   // arm setting folder name is same as package id
-                        SiteExtensionStatus armSettings = new SiteExtensionStatus(_environment.SiteExtensionSettingsPath, dirInfo.Name, tracer);
-                        if (string.Equals(armSettings.Operation, Constants.SiteExtensionOperationInstall, StringComparison.OrdinalIgnoreCase)
-                            && string.Equals(armSettings.ProvisioningState, Constants.SiteExtensionProvisioningStateSucceeded, StringComparison.OrdinalIgnoreCase))
+                        string[] packageDirs = FileSystemHelpers.GetDirectories(_environment.SiteExtensionSettingsPath);
+                        foreach (var dir in packageDirs)
                         {
-                            try
+                            var dirInfo = new DirectoryInfo(dir);   // arm setting folder name is same as package id
+                            SiteExtensionStatus armSettings = new SiteExtensionStatus(_environment.SiteExtensionSettingsPath, dirInfo.Name, tracer);
+                            if (string.Equals(armSettings.Operation, Constants.SiteExtensionOperationInstall, StringComparison.OrdinalIgnoreCase)
+                                && string.Equals(armSettings.ProvisioningState, Constants.SiteExtensionProvisioningStateSucceeded, StringComparison.OrdinalIgnoreCase))
                             {
-                                armSettings.Operation = null;
-                                isAnyUpdate = true;
-                                tracer.Trace("Updated {0}", dir);
-                            }
-                            catch (Exception ex)
-                            {
-                                tracer.TraceError(ex);
-                                // no-op
+                                try
+                                {
+                                    armSettings.Operation = null;
+                                    isAnyUpdate = true;
+                                    tracer.Trace("Updated {0}", dir);
+                                }
+                                catch (Exception ex)
+                                {
+                                    tracer.TraceError(ex);
+                                    // no-op
+                                }
                             }
                         }
-                    }
 
-                }, TimeSpan.FromSeconds(5));
+                    }, "Updating SiteExtension success status", TimeSpan.FromSeconds(5));
 
-                return islocked && isAnyUpdate;
+                    return isAnyUpdate;
+                }
+                catch (LockOperationException)
+                {
+                    return false;
+                }
             }
         }
 

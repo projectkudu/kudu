@@ -193,7 +193,7 @@ namespace Kudu.Services.GitServer
 
                 repository.Commit("Initial Commit", authorName: null, emailAddress: null);
 
-            }, GitExeServer.InitTimeout);
+            }, "Cloning repository", GitExeServer.InitTimeout);
         }
     }
 }

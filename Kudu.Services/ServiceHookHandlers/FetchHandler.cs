@@ -168,20 +168,22 @@ namespace Kudu.Services
                 }
 
                 _tracer.Trace("Attempting to fetch target branch {0}", targetBranch);
-                bool acquired = await _deploymentLock.TryLockOperationAsync(async () =>
+                try
                 {
-                    if (_autoSwapHandler.IsAutoSwapOngoing())
+                    await _deploymentLock.LockOperationAsync(async () =>
                     {
-                        context.Response.StatusCode = (int)HttpStatusCode.Conflict;
-                        context.Response.Write(Resources.Error_AutoSwapDeploymentOngoing);
-                        context.ApplicationInstance.CompleteRequest();
-                        return;
-                    }
+                        if (_autoSwapHandler.IsAutoSwapOngoing())
+                        {
+                            context.Response.StatusCode = (int)HttpStatusCode.Conflict;
+                            context.Response.Write(Resources.Error_AutoSwapDeploymentOngoing);
+                            context.ApplicationInstance.CompleteRequest();
+                            return;
+                        }
 
-                    await PerformDeployment(deployInfo);
-                }, TimeSpan.Zero);
-
-                if (!acquired)
+                        await PerformDeployment(deployInfo);
+                    }, "Performing continuous deployment", TimeSpan.Zero);
+                }
+                catch (LockOperationException)
                 {
                     // Create a marker file that indicates if there's another deployment to pull
                     // because there was a deployment in progress.
@@ -426,13 +428,15 @@ namespace Kudu.Services
                     var deploymentManager = new DeploymentManager(siteBuilderFactory, environment, traceFactory, analytics, settings, deploymentStatusManager, deploymentLock, NullLogger.Instance, webHooksManager, autoSwapHandler, functionManager);
                     var fetchHandler = new FetchHandler(tracer, deploymentManager, settings, deploymentStatusManager, deploymentLock, environment, null, repositoryFactory, null);
 
-                    // Perform deployment
-                    var acquired = deploymentLock.TryLockOperation(() =>
+                    try
                     {
-                        fetchHandler.PerformDeployment(deployInfo, tempDeployment, tempChangeSet).Wait();
-                    }, TimeSpan.Zero);
-
-                    if (!acquired)
+                        // Perform deployment
+                        deploymentLock.LockOperation(() =>
+                        {
+                            fetchHandler.PerformDeployment(deployInfo, tempDeployment, tempChangeSet).Wait();
+                        }, "Performing continuous deployment", TimeSpan.Zero);
+                    }
+                    catch (LockOperationException)
                     {
                         if (tempDeployment != null)
                         {

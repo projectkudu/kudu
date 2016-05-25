@@ -96,8 +96,11 @@ namespace Kudu.Services.Web.Tracing
                     httpContext.Response.Headers.Add("X-FRAME-OPTIONS", "DENY");
                 }
 
-                TraceServices.RemoveRequestTracer(httpContext);
-                return;
+                if (TraceServices.TraceLevel != TraceLevel.Verbose)
+                {
+                    TraceServices.RemoveRequestTracer(httpContext);
+                    return;
+                }
             }
 
             tracer = tracer ?? TraceServices.CreateRequestTracer(httpContext);

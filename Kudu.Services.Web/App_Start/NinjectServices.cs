@@ -176,6 +176,8 @@ namespace Kudu.Services.Web.App_Start
             IDeploymentSettingsManager noContextDeploymentsSettingsManager =
                 new DeploymentSettingsManager(new XmlSettings.Settings(GetSettingsPath(environment)));
 
+            TraceServices.TraceLevel = noContextDeploymentsSettingsManager.GetTraceLevel();
+
             var noContextTraceFactory = new TracerFactory(() => GetTracerWithoutContext(environment, noContextDeploymentsSettingsManager));
 
             kernel.Bind<IAnalytics>().ToMethod(context => new Analytics(context.Kernel.Get<IDeploymentSettingsManager>(),
