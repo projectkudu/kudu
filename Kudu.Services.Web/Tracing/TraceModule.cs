@@ -63,7 +63,7 @@ namespace Kudu.Services.Web.Tracing
                 !String.Equals(httpRequest.Headers["X-MS-CLIENT-AUTHORIZATION-SOURCE"], "legacy", StringComparison.OrdinalIgnoreCase) &&
                 !IsRbacWhiteListPaths(httpRequest.Url.AbsolutePath))
             {
-                httpContext.Response.StatusCode = (int)HttpStatusCode.Forbidden;
+                httpContext.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
                 httpContext.Response.End();
             }
 
