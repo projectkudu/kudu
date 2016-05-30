@@ -277,7 +277,7 @@ namespace Kudu.Core.Test
             controller.Object.Request = new HttpRequestMessage();
 
             // Test
-            var ex = await Assert.ThrowsAsync<HttpResponseException>(() => controller.Object.StopProfileAsync(100));
+            var ex = await Assert.ThrowsAsync<HttpResponseException>(() => controller.Object.StopProfileAsync(-2));
 
             // Assert
             Assert.Equal(HttpStatusCode.NotFound, ex.Response.StatusCode);
