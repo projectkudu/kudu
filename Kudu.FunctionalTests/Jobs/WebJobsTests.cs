@@ -242,13 +242,15 @@ namespace Kudu.FunctionalTests.Jobs
 
                 TestTracer.Trace("Copying the script to the triggered job directory");
 
-                appManager.JobsManager.CreateTriggeredJobAsync(jobName, "run.cmd", JobScript).Wait();
+                string scriptFileName = "Job file with long name and accents àéè.cmd";
+
+                appManager.JobsManager.CreateTriggeredJobAsync(jobName, scriptFileName, JobScript).Wait();
 
                 var expectedTriggeredJob = new TriggeredJob()
                 {
                     Name = jobName,
                     JobType = "triggered",
-                    RunCommand = "run.cmd"
+                    RunCommand = scriptFileName
                 };
 
                 TestTracer.Trace("Verify triggered job exists");
