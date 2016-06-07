@@ -13,6 +13,7 @@ namespace Kudu.Core.Infrastructure
         {
             // Add the msbuild path and git path to the %PATH% so more tools are available
             var toolsPaths = new List<string> {
+                environment.DeploymentToolsPath, // Add /site/deployments/tools to the path to allow users to drop tools in there
                 environment.ScriptPath,
                 Path.GetDirectoryName(ResolveMSBuildPath()),
                 Path.GetDirectoryName(ResolveGitPath()),
@@ -31,9 +32,6 @@ namespace Kudu.Core.Infrastructure
                 ResolveGruntPath(),
                 ResolveGulpPath()
             }.Where(p => !String.IsNullOrEmpty(p)).Select(Path.GetDirectoryName));
-
-            // Add /site/deployments/tools to the path to allow users to drop tools in there
-            toolsPaths.Add(environment.DeploymentToolsPath);
 
             return toolsPaths;
         }
