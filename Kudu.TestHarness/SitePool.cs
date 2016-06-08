@@ -186,6 +186,7 @@ namespace Kudu.TestHarness
         public string RootPath { get; private set; }
         public string ApplicationsPath { get; private set; }
         public string ServiceSitePath { get; private set; }
+        public string IISConfigurationFile { get; private set; }
         public bool CustomHostNamesEnabled { get; private set; }
         public IEnumerable<IBindingConfiguration> Bindings { get; private set; }
         public IEnumerable<ICertificateStoreConfiguration> CertificateStores { get; private set; }

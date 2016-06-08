@@ -24,6 +24,12 @@ namespace Kudu.SiteManagement.Configuration.Section
             get { return this["applications"] as PathConfigurationElement; }
         }
 
+        [ConfigurationProperty("iisConfigurationFile", IsRequired = false)]
+        public PathConfigurationElement IisConfigurationFile
+        {
+            get { return this["iisConfigurationFile"] as PathConfigurationElement; }
+        }
+
         [ConfigurationProperty("bindings", IsRequired = false)]
         public BindingsConfigurationElementCollection Bindings
         {
