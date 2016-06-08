@@ -18,6 +18,7 @@ namespace Kudu.SiteManagement.Configuration
         string RootPath { get; }
         string ApplicationsPath { get; }
         string ServiceSitePath { get; }
+        string IisConfigurationFile { get; }
         bool CustomHostNamesEnabled { get; }
 
         IEnumerable<IBindingConfiguration> Bindings { get; }
@@ -76,6 +77,21 @@ namespace Kudu.SiteManagement.Configuration
                 return _section == null
                     ? PathRelativeToRoot(_appSettings["sitesPath"])
                     : PathRelativeToRoot(_section.Applications.Path);
+            }
+        }
+
+        private const string DefaultIisConfigurationFile = "%windir%\\system32\\inetsrv\\config\\applicationHost.config";
+
+        public string IisConfigurationFile
+        {
+            get
+            {
+                if(_section == null || _section.IisConfigurationFile == null)
+                    return Environment.ExpandEnvironmentVariables(DefaultIisConfigurationFile);
+
+                return string.IsNullOrEmpty(_section.IisConfigurationFile.Path)
+                    ? Environment.ExpandEnvironmentVariables(DefaultIisConfigurationFile)
+                    : _section.IisConfigurationFile.Path;
             }
         }
 
