@@ -171,7 +171,7 @@ namespace Kudu.SiteManagement
                 {
                     try
                     {
-                        DeleteSiteAsync(applicationName).Wait();
+                        await DeleteSiteAsync(applicationName);
                     }
                     catch
                     {
