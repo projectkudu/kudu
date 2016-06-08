@@ -171,7 +171,7 @@ namespace Kudu.SiteManagement
                 {
                     try
                     {
-                        DeleteSiteAsync(applicationName).Wait();
+                        await DeleteSiteAsync(applicationName);
                     }
                     catch
                     {
@@ -584,9 +584,9 @@ namespace Kudu.SiteManagement
             FileSystemHelpers.DeleteDirectorySafe(physicalPath);
         }
 
-        private static ServerManager GetServerManager()
+        private ServerManager GetServerManager()
         {
-            return new ServerManager(Environment.ExpandEnvironmentVariables("%windir%\\system32\\inetsrv\\config\\applicationHost.config"));
+            return new ServerManager(_context.Configuration.IISConfigurationFile);
         }
 
         private static async Task WaitForSiteAsync(string serviceUrl)
