@@ -1,4 +1,5 @@
 ﻿@using System.IO
+@using System.Reflection
 @using System.Web.Hosting
 @using Kudu.Services.Web
 @using Kudu.Services
@@ -6,6 +7,25 @@
 @{
     Layout = "~/_Layout.cshtml";
     Page.Title = "Kudu Services";
+
+    string appServiceVersion = GetAppServiceVersion();
+}
+
+@functions {
+    string GetAppServiceVersion()
+    {
+        Assembly assembly;
+        try
+        {
+            assembly = Assembly.Load("Microsoft.Web.Hosting, Version=7.1.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35");
+            var fileVersionInfo = System.Diagnostics.FileVersionInfo.GetVersionInfo(assembly.Location);
+            return fileVersionInfo.ProductVersion;
+        }
+        catch
+        {
+            return null;
+        }
+    }
 }
 
 @section PageHead {
@@ -38,6 +58,18 @@
             }
         </div>
     </div>
+
+    @if (appServiceVersion != null)
+    {
+    <div class="row">
+        <div class="col-xs-2">
+            <strong>Azure App Service</strong>
+        </div>
+        <div>
+            @GetAppServiceVersion()
+        </div>
+    </div>
+    }
 
     <div class="row">
         <div class="col-xs-2">
