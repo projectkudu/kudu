@@ -18,7 +18,7 @@ namespace Kudu.SiteManagement.Configuration
         string RootPath { get; }
         string ApplicationsPath { get; }
         string ServiceSitePath { get; }
-        string IisConfigurationFile { get; }
+        string IISConfigurationFile { get; }
         bool CustomHostNamesEnabled { get; }
 
         IEnumerable<IBindingConfiguration> Bindings { get; }
@@ -82,7 +82,7 @@ namespace Kudu.SiteManagement.Configuration
 
         private const string DefaultIisConfigurationFile = "%windir%\\system32\\inetsrv\\config\\applicationHost.config";
 
-        public string IisConfigurationFile
+        public string IISConfigurationFile
         {
             get
             {

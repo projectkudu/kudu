@@ -586,7 +586,7 @@ namespace Kudu.SiteManagement
 
         private ServerManager GetServerManager()
         {
-            return new ServerManager(_context.Configuration.IisConfigurationFile);
+            return new ServerManager(_context.Configuration.IISConfigurationFile);
         }
 
         private static async Task WaitForSiteAsync(string serviceUrl)
