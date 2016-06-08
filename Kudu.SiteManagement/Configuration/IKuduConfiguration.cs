@@ -42,7 +42,9 @@ namespace Kudu.SiteManagement.Configuration
             get
             {
                 if (_section != null)
+                {
                     return _section.CustomHostNamesEnabled;
+                }
 
                 bool value;
                 bool.TryParse(_appSettings["enableCustomHostNames"], out value);
@@ -86,8 +88,10 @@ namespace Kudu.SiteManagement.Configuration
         {
             get
             {
-                if(_section == null || _section.IisConfigurationFile == null)
+                if (_section == null || _section.IisConfigurationFile == null)
+                {
                     return Environment.ExpandEnvironmentVariables(DefaultIisConfigurationFile);
+                }
 
                 return string.IsNullOrEmpty(_section.IisConfigurationFile.Path)
                     ? Environment.ExpandEnvironmentVariables(DefaultIisConfigurationFile)
@@ -100,9 +104,11 @@ namespace Kudu.SiteManagement.Configuration
             get
             {
                 if (_section == null || _section.Bindings == null)
+                {
                     return Enumerable.Empty<IBindingConfiguration>()
                         .Union(LegacyBinding("urlBaseValue", SiteType.Live))
                         .Union(LegacyBinding("serviceUrlBaseValue", SiteType.Service));
+                }
 
                 return _section.Bindings.Items.Select(binding => new BindingConfiguration(binding));
             }
@@ -113,7 +119,9 @@ namespace Kudu.SiteManagement.Configuration
             get
             {
                 if (_section == null || _section.CertificateStores == null || !_section.CertificateStores.Items.Any())
-                    return new[] { new CertificateStoreConfiguration(StoreName.My) };                
+                {
+                    return new[] { new CertificateStoreConfiguration(StoreName.My) };
+                }
 
                 return _section.CertificateStores.Items.Select(store => new CertificateStoreConfiguration(store));
             }
@@ -136,7 +144,9 @@ namespace Kudu.SiteManagement.Configuration
         {
             string legacyBinding = _appSettings[key];
             if (string.IsNullOrEmpty(legacyBinding))
+            {
                 yield break;
+            }
             yield return new BindingConfiguration(legacyBinding, UriScheme.Http, type, null);
         }
     }
