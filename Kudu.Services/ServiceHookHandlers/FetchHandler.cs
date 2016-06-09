@@ -206,6 +206,7 @@ namespace Kudu.Services
         {
             DateTime currentMarkerFileUTC;
             DateTime nextMarkerFileUTC = FileSystemHelpers.GetLastWriteTimeUtc(_markerFilePath);
+            ChangeSet lastChange = null;
 
             do
             {
@@ -262,6 +263,8 @@ namespace Kudu.Services
                                 throw new InvalidOperationException(String.Format("Invalid revision '{0}'!", deploymentInfo.CommitId));
                             }
 
+                            lastChange = changeSet;
+
                             // Here, we don't need to update the working files, since we know Fetch left them in the correct state
                             // unless for GenericHandler where specific commitId is specified
                             bool deploySpecificCommitId = !String.IsNullOrEmpty(deploymentInfo.CommitId);
@@ -296,6 +299,13 @@ namespace Kudu.Services
                 // check marker file and, if changed (meaning new /deploy request), redeploy.
                 nextMarkerFileUTC = FileSystemHelpers.GetLastWriteTimeUtc(_markerFilePath);
             } while (deploymentInfo.IsReusable && currentMarkerFileUTC != nextMarkerFileUTC);
+
+            if (lastChange != null)
+            {
+                // if last change is not null, mean there was at least one deployoment happened
+                // since deployment is now done, trigger swap if enabled
+                await _autoSwapHandler.HandleAutoSwap(lastChange.Id, _deploymentManager.GetLogger(lastChange.Id), _tracer);
+            }
         }
 
         // For continuous integration, we will only build/deploy if fetch new changes
@@ -425,8 +435,8 @@ namespace Kudu.Services
                     var siteBuilderFactory = new SiteBuilderFactory(new BuildPropertyProvider(), environment);
                     var webHooksManager = new WebHooksManager(tracer, environment, hooksLock);
                     var functionManager = new FunctionManager(environment, traceFactory);
-                    var deploymentManager = new DeploymentManager(siteBuilderFactory, environment, traceFactory, analytics, settings, deploymentStatusManager, deploymentLock, NullLogger.Instance, webHooksManager, autoSwapHandler, functionManager);
-                    var fetchHandler = new FetchHandler(tracer, deploymentManager, settings, deploymentStatusManager, deploymentLock, environment, null, repositoryFactory, null);
+                    var deploymentManager = new DeploymentManager(siteBuilderFactory, environment, traceFactory, analytics, settings, deploymentStatusManager, deploymentLock, NullLogger.Instance, webHooksManager, functionManager);
+                    var fetchHandler = new FetchHandler(tracer, deploymentManager, settings, deploymentStatusManager, deploymentLock, environment, null, repositoryFactory, autoSwapHandler);
 
                     try
                     {

@@ -30,7 +30,6 @@ namespace Kudu.Core.Test
 
             enviromentMock.Setup(e => e.LocksPath).Returns(@"x:\foo");
             var handler = new AutoSwapHandler(
-                Mock.Of<IDeploymentStatusManager>(),
                 enviromentMock.Object,
                 deploymentSettingsMock.Object,
                 traceFactoryMock.Object);
@@ -43,7 +42,6 @@ namespace Kudu.Core.Test
             ).Returns("someslot");
 
             handler = new AutoSwapHandler(
-                Mock.Of<IDeploymentStatusManager>(),
                 enviromentMock.Object,
                 deploymentSettingsMock.Object,
                 traceFactoryMock.Object);
@@ -91,13 +89,12 @@ namespace Kudu.Core.Test
             deploymentStatusManagerMock.Setup(d => d.ActiveDeploymentId).Returns(deploymentId);
 
             var handler = new AutoSwapHandler(
-                deploymentStatusManagerMock.Object,
                 enviromentMock.Object,
                 deploymentSettingsMock.Object,
                 Mock.Of<ITraceFactory>());
 
             TestTracer.Trace("Autoswap will not happen, since it is not enabled.");
-            await handler.HandleAutoSwap(deploymentId, deploymentContextMock);
+            await handler.HandleAutoSwap(deploymentId, deploymentContextMock.Logger, deploymentContextMock.Tracer);
 
             TestTracer.Trace("Autoswap will not happen, since there is no JWT token.");
             System.Environment.SetEnvironmentVariable(Constants.SiteRestrictedJWT, null);
@@ -106,7 +103,6 @@ namespace Kudu.Core.Test
             ).Returns("someslot");
 
             handler = new AutoSwapHandler(
-                deploymentStatusManagerMock.Object,
                 enviromentMock.Object,
                 deploymentSettingsMock.Object,
                 Mock.Of<ITraceFactory>());
@@ -120,7 +116,7 @@ namespace Kudu.Core.Test
             fileInfoMock.Setup(f => f.FromFileName(It.IsAny<string>())).Returns(fileInfoBaseMock.Object);
             fileInfoBaseMock.Setup(f => f.Exists).Returns(true);
             fileInfoBaseMock.Setup(f => f.LastWriteTimeUtc).Returns(DateTime.UtcNow);
-            await handler.HandleAutoSwap(deploymentId, deploymentContextMock);
+            await handler.HandleAutoSwap(deploymentId, deploymentContextMock.Logger, deploymentContextMock.Tracer);
 
             try
             {
@@ -128,16 +124,9 @@ namespace Kudu.Core.Test
                 string hostName = "foo.scm.bar";
                 System.Environment.SetEnvironmentVariable(Constants.SiteRestrictedJWT, jwtToken);
                 System.Environment.SetEnvironmentVariable(Constants.HttpHost, hostName);
-
-                TestTracer.Trace("Autoswap will not happen, since there deploymet id not changed");
-                await handler.HandleAutoSwap(deploymentId, deploymentContextMock);
-
+                
                 tracerMock.Verify(l => l.Trace("AutoSwap is not enabled", It.IsAny<IDictionary<string, string>>()), Times.Once);
                 tracerMock.Verify(l => l.Trace("AutoSwap is not enabled", It.IsAny<IDictionary<string, string>>()), Times.Once);
-                tracerMock.Verify(l =>
-                    l.Trace(string.Format(CultureInfo.InvariantCulture, "Deployment haven't changed, no need for auto swap: {0}", deploymentId),
-                    It.IsAny<IDictionary<string, string>>()),
-                Times.Once);
 
                 TestTracer.Trace("Autoswap will be triggered");
                 string newDeploymentId = Guid.NewGuid().ToString();
@@ -151,7 +140,7 @@ namespace Kudu.Core.Test
                     return new HttpResponseMessage(HttpStatusCode.OK);
                 });
 
-                await handler.HandleAutoSwap(newDeploymentId, deploymentContextMock);
+                await handler.HandleAutoSwap(newDeploymentId, deploymentContextMock.Logger, deploymentContextMock.Tracer);
                 Assert.NotNull(autoSwapRequestUrl);
                 Assert.True(autoSwapRequestUrl.StartsWith("https://foo.scm.bar/operations/autoswap?slot=someslot&operationId=AUTOSWAP"));
 

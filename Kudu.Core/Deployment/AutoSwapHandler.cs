@@ -14,15 +14,13 @@ namespace Kudu.Core.Deployment
     public class AutoSwapHandler : IAutoSwapHandler
     {
         public const string AutoSwapLockFile = "autoswap.lock";
-
-        private readonly IDeploymentStatusManager _deploymentStatusManager;
+        
         private readonly ITraceFactory _traceFactory;
         private readonly string _autoSwapSlotName;
         private readonly string _autoSwapLockFilePath;
 
-        public AutoSwapHandler(IDeploymentStatusManager deploymentStatusManager, IEnvironment environment, IDeploymentSettingsManager settings, ITraceFactory traceFactory)
+        public AutoSwapHandler(IEnvironment environment, IDeploymentSettingsManager settings, ITraceFactory traceFactory)
         {
-            _deploymentStatusManager = deploymentStatusManager;
             _traceFactory = traceFactory;
             _autoSwapSlotName = settings.GetValue("WEBSITE_SWAP_SLOTNAME");
             _autoSwapLockFilePath = Path.Combine(environment.LocksPath, AutoSwapLockFile);
@@ -47,9 +45,8 @@ namespace Kudu.Core.Deployment
             return isAutoSwapOngoing;
         }
 
-        public async Task HandleAutoSwap(string currentDeploymetId, DeploymentContext context)
+        public async Task HandleAutoSwap(string currentDeploymetId, ILogger logger, ITracer tracer)
         {
-            ITracer tracer = context.Tracer;
             if (!IsAutoSwapEnabled())
             {
 
@@ -63,15 +60,7 @@ namespace Kudu.Core.Deployment
                 tracer.Trace("Jwt token is null");
                 return;
             }
-
-            // active deployment is always a success deployment
-            string lastDeploymentId = _deploymentStatusManager.ActiveDeploymentId;
-            if (string.Equals(currentDeploymetId, lastDeploymentId, StringComparison.OrdinalIgnoreCase))
-            {
-                tracer.Trace("Deployment haven't changed, no need for auto swap: {0}", lastDeploymentId);
-                return;
-            }
-
+            
             try
             {
                 FileSystemHelpers.WriteAllTextToFile(_autoSwapLockFilePath, String.Empty);
@@ -87,9 +76,9 @@ namespace Kudu.Core.Deployment
             queryStrings["slot"] = _autoSwapSlotName;
             queryStrings["operationId"] = operationId;
 
-            var client = new OperationClient(context.Tracer);
+            var client = new OperationClient(tracer);
             await client.PostAsync<string>("/operations/autoswap?" + queryStrings.ToString());
-            context.Logger.Log("Requesting auto swap to slot - '{0}' operation id - '{1}' deployment id - '{2}'".FormatInvariant(_autoSwapSlotName, operationId, currentDeploymetId));
+            logger.Log("Requesting auto swap to slot - '{0}' operation id - '{1}' deployment id - '{2}'".FormatInvariant(_autoSwapSlotName, operationId, currentDeploymetId));
         }
 
         public bool IsAutoSwapEnabled()

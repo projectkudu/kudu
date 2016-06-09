@@ -35,7 +35,6 @@ namespace Kudu.Core.Deployment
         private readonly IDeploymentSettingsManager _settings;
         private readonly IDeploymentStatusManager _status;
         private readonly IWebHooksManager _hooksManager;
-        private readonly IAutoSwapHandler _autoSwapHandler;
         private readonly IFunctionManager _functionManager;
 
         private const string XmlLogFile = "log.xml";
@@ -52,7 +51,6 @@ namespace Kudu.Core.Deployment
                                  IOperationLock deploymentLock,
                                  ILogger globalLogger,
                                  IWebHooksManager hooksManager,
-                                 IAutoSwapHandler autoSwapHandler,
                                  IFunctionManager functionManager)
         {
             _builderFactory = builderFactory;
@@ -64,7 +62,6 @@ namespace Kudu.Core.Deployment
             _settings = settings;
             _status = status;
             _hooksManager = hooksManager;
-            _autoSwapHandler = autoSwapHandler;
             _functionManager = functionManager;
         }
 
@@ -158,7 +155,7 @@ namespace Kudu.Core.Deployment
             }
         }
 
-        public async Task DeployAsync(IRepository repository, ChangeSet changeSet, string deployer, bool clean, bool needFileUpdate)
+        public async Task DeployAsync(IRepository repository, ChangeSet changeSet, string deployer, bool clean, bool needFileUpdate = true)
         {
             using (var deploymentAnalytics = new DeploymentAnalytics(_analytics, _settings))
             {
@@ -617,8 +614,6 @@ namespace Kudu.Core.Deployment
                     {
                         await builder.Build(context);
                         builder.PostBuild(context);
-                        await _autoSwapHandler.HandleAutoSwap(id, context);
-
                         await _functionManager.SyncTriggersAsync();
 
                         if (_settings.TouchWebConfigAfterDeployment())

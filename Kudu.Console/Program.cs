@@ -135,7 +135,7 @@ namespace Kudu.Console
 
             IWebHooksManager hooksManager = new WebHooksManager(tracer, env, hooksLock);
             IDeploymentStatusManager deploymentStatusManager = new DeploymentStatusManager(env, analytics, statusLock);
-            IAutoSwapHandler autoSwapHander = new AutoSwapHandler(deploymentStatusManager, env, settingsManager, traceFactory);
+            IAutoSwapHandler autoSwapHander = new AutoSwapHandler(env, settingsManager, traceFactory);
             var functionManager = new FunctionManager(env, traceFactory);
             IDeploymentManager deploymentManager = new DeploymentManager(builderFactory,
                                                           env,
@@ -146,7 +146,6 @@ namespace Kudu.Console
                                                           deploymentLock,
                                                           GetLogger(env, level, logger),
                                                           hooksManager,
-                                                          autoSwapHander,
                                                           functionManager);
 
             var step = tracer.Step(XmlTracer.ExecutingExternalProcessTrace, new Dictionary<string, string>
@@ -162,6 +161,10 @@ namespace Kudu.Console
                 {
                     deploymentManager.DeployAsync(gitRepository, changeSet: null, deployer: deployer, clean: false)
                         .Wait();
+
+                    string branch = settingsManager.GetBranch();
+                    ChangeSet changeSet = gitRepository.GetChangeSet(branch);
+                    autoSwapHander.HandleAutoSwap(changeSet.Id, deploymentManager.GetLogger(changeSet.Id), tracer).Wait();
                 }
                 catch (Exception e)
                 {

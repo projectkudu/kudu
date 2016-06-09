@@ -300,7 +300,7 @@ namespace Kudu.Core.Test.Deployment
             deploymentLock = deploymentLock ?? Mock.Of<IOperationLock>();
             globalLogger = globalLogger ?? Mock.Of<ILogger>();
 
-            return new DeploymentManager(builderFactory, environment, traceFactory, analytics, settings, status, deploymentLock, globalLogger, hooksManager, Mock.Of<IAutoSwapHandler>(), Mock.Of<IFunctionManager>());
+            return new DeploymentManager(builderFactory, environment, traceFactory, analytics, settings, status, deploymentLock, globalLogger, hooksManager, Mock.Of<IFunctionManager>());
         }
     }
 }
