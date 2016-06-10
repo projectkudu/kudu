@@ -34,11 +34,11 @@ namespace Kudu.Core
         // Does not check for reserved words.
         public static string ToSafeFileName(this string str)
         {
+            str = str.Trim()
+                     .Replace(' ', '-');
             foreach (char c in Path.GetInvalidFileNameChars())
             {
-                str = str.Trim()
-                         .Replace(c, '-')
-                         .Replace(' ', '-');
+                str = str.Replace(c, '-');
             }
             return str;
         }
