@@ -62,7 +62,7 @@ namespace Kudu.Services.FetchHelpers
             ChangeSet changeSet = null;
             string cursor = _settings.GetValue(CursorKey);
             ChangesResult changes = null;
-            using (_tracer.Step("Getting delta changes with cursor: {0} ...", cursor))
+            using (_tracer.Step("Getting delta changes with cursor: {0}...", cursor.Truncate(5)))
             {
                 changes = await GetChanges(info.TargetChangeset.Id, info.AccessToken, info.RepositoryUrl, cursor);
             }
