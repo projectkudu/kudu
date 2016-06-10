@@ -323,12 +323,12 @@ namespace Kudu.Core.Tracing
             if (info.Title == XmlTracer.IncomingRequestTrace)
             {
                 var path = info.Attributes["url"].Split('?')[0].Trim('/');
-                strb.AppendFormat("_{0}_{1}", info.Attributes["method"], path.Replace('/', '-'));
+                strb.AppendFormat("_{0}_{1}", info.Attributes["method"], path.ToSafeFileName());
             }
             else if (info.Title == XmlTracer.StartupRequestTrace)
             {
                 var path = info.Attributes["url"].Split('?')[0].Trim('/');
-                strb.AppendFormat("_Startup_{0}_{1}", info.Attributes["method"], path.Replace('/', '-'));
+                strb.AppendFormat("_Startup_{0}_{1}", info.Attributes["method"], path.ToSafeFileName());
             }
             else if (info.Title == XmlTracer.ProcessShutdownTrace)
             {
@@ -342,11 +342,11 @@ namespace Kudu.Core.Tracing
             else if (string.Equals(XmlTracer.BackgroundTrace, info.Title, StringComparison.Ordinal))
             {
                 var path = info.Attributes["url"].Split('?')[0].Trim('/');
-                strb.AppendFormat("_Background_{0}_{1}", info.Attributes["method"], path.Replace('/', '-'));
+                strb.AppendFormat("_Background_{0}_{1}", info.Attributes["method"], path.ToSafeFileName());
             }
             else if (!String.IsNullOrEmpty(info.Title))
             {
-                strb.AppendFormat("_{0}", info.Title.Replace(' ', '-'));
+                strb.AppendFormat("_{0}", info.Title.ToSafeFileName());
             }
 
             strb.Append(PendingXml);
