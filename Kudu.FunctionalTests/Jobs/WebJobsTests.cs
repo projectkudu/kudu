@@ -31,7 +31,7 @@ namespace Kudu.FunctionalTests.Jobs
         private const string JobsDataPath = "data/jobs";
         private const string ExpectedVerificationFileContent = "Verified!!!";
         private const string ExpectedChangedFileContent = "Changed!!!";
-        private const string JobScript = "echo " + ExpectedVerificationFileContent + " >> %WEBROOT_PATH%\\..\\..\\LogFiles\\verification.txt.%WEBSITE_INSTANCE_ID%\n";
+        private const string JobScript = "set _args=%~1,%~2\necho " + ExpectedVerificationFileContent + " >> %WEBROOT_PATH%\\..\\..\\LogFiles\\verification.txt.%WEBSITE_INSTANCE_ID%\n";
 
         private const string ContinuousJobsBinPath = JobsBinPath + "/continuous";
         private const string ConsoleWorkerJobPath = ContinuousJobsBinPath + "/deployedJob";
@@ -264,9 +264,9 @@ namespace Kudu.FunctionalTests.Jobs
 
                 VerifyVerificationFile(appManager, new string[] { ExpectedVerificationFileContent });
 
-                TestTracer.Trace("Trigger the job again");
+                TestTracer.Trace("Trigger the job again with arguments");
 
-                VerifyTriggeredJobTriggers(appManager, jobName, 2, "Success", "echo ");
+                VerifyTriggeredJobTriggers(appManager, jobName, 2, "Success", "set _args=first arg,second arg", arguments: "\"first arg\" \"second arg\"");
 
                 VerifyVerificationFile(appManager, new string[] { ExpectedVerificationFileContent, ExpectedVerificationFileContent });
 
