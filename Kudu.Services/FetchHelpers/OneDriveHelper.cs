@@ -62,7 +62,7 @@ namespace Kudu.Services.FetchHelpers
             ChangeSet changeSet = null;
             string cursor = _settings.GetValue(CursorKey);
             ChangesResult changes = null;
-            // We truncate cursor value in trace filename but keep in unharmed in the trace content
+            // We truncate cursor value in filename but keep it unharmed in the trace content
             using (_tracer.Step("Getting delta changes with cursor: {0}...", cursor.Truncate(5)))
             using (_tracer.Step("cursor: {0}", cursor))
             {
