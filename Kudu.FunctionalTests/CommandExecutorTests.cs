@@ -85,6 +85,21 @@ namespace Kudu.FunctionalTests
                 commandTestSettings.ExpectedResult.Output = "AppData";
                 tests.Add(commandTestSettings);
 
+                // Test mv
+                var batches = new[]
+                {
+                    "if exist \"%HOME%\\LogFiles\\xyz.txt\" del \"%HOME%\\LogFiles\\*.txt\" /q",
+                    "touch \"%HOME%\\LogFiles\\abc.txt\"",
+                    "mv \"%HOME%\\LogFiles\\abc.txt\" \"%HOME%\\LogFiles\\xyz.txt\"",
+                    "if exist \"%HOME%\\LogFiles\\xyz.txt\" del \"%HOME%\\LogFiles\\*.txt\" /q"
+                };
+
+                foreach (var cmd in batches)
+                {
+                    commandTestSettings = new CommandTestSettings(cmd);
+                    tests.Add(commandTestSettings);
+                }
+
                 foreach (CommandTestSettings test in tests)
                 {
                     VerifyCommand(test, appManager);
