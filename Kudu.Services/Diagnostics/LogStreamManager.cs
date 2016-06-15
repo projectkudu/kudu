@@ -112,23 +112,8 @@ namespace Kudu.Services.Performance
         {
             System.Diagnostics.Debug.Assert(_watcher == null, "we only allow one manager per request!");
 
-            if (_watcher == null)
-            {
-                FileSystemWatcher watcher = new FileSystemWatcher(path);
-                watcher.Changed += new FileSystemEventHandler(DoSafeAction<object, FileSystemEventArgs>(OnChanged, "LogStreamManager.OnChanged"));
-                watcher.Deleted += new FileSystemEventHandler(DoSafeAction<object, FileSystemEventArgs>(OnDeleted, "LogStreamManager.OnDeleted"));
-                watcher.Renamed += new RenamedEventHandler(DoSafeAction<object, RenamedEventArgs>(OnRenamed, "LogStreamManager.OnRenamed"));
-                watcher.Error += new ErrorEventHandler(DoSafeAction<object, ErrorEventArgs>(OnError, "LogStreamManager.OnError"));
-                watcher.IncludeSubdirectories = true;
-                watcher.EnableRaisingEvents = true;
-                _watcher = watcher;
-            }
-
-            if (_heartbeat == null)
-            {
-                _heartbeat = new Timer(OnHeartbeat, null, HeartbeatInterval, HeartbeatInterval);
-            }
-
+            // initalize _logFiles before the file watcher since file watcher event handlers reference _logFiles
+            // this mirrors the Reset() where we stop the file watcher before nulling _logFile.
             if (_logFiles == null)
             {
                 var logFiles = new Dictionary<string, long>(StringComparer.OrdinalIgnoreCase);
@@ -149,6 +134,23 @@ namespace Kudu.Services.Performance
                 }
 
                 _logFiles = logFiles;
+            }
+
+            if (_watcher == null)
+            {
+                FileSystemWatcher watcher = new FileSystemWatcher(path);
+                watcher.Changed += new FileSystemEventHandler(DoSafeAction<object, FileSystemEventArgs>(OnChanged, "LogStreamManager.OnChanged"));
+                watcher.Deleted += new FileSystemEventHandler(DoSafeAction<object, FileSystemEventArgs>(OnDeleted, "LogStreamManager.OnDeleted"));
+                watcher.Renamed += new RenamedEventHandler(DoSafeAction<object, RenamedEventArgs>(OnRenamed, "LogStreamManager.OnRenamed"));
+                watcher.Error += new ErrorEventHandler(DoSafeAction<object, ErrorEventArgs>(OnError, "LogStreamManager.OnError"));
+                watcher.IncludeSubdirectories = true;
+                watcher.EnableRaisingEvents = true;
+                _watcher = watcher;
+            }
+
+            if (_heartbeat == null)
+            {
+                _heartbeat = new Timer(OnHeartbeat, null, HeartbeatInterval, HeartbeatInterval);
             }
         }
 
@@ -433,11 +435,6 @@ namespace Kudu.Services.Performance
 
         private void OnError(object sender, ErrorEventArgs e)
         {
-            using (_tracer.Step("FileSystemWatcher.OnError"))
-            {
-                _tracer.TraceError(e.GetException());
-            }
-
             try
             {
                 lock (_thisLock)
