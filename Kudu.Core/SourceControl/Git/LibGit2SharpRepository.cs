@@ -226,25 +226,39 @@ echo $i > pushinfo
                         // This will only retrieve the "master"
                         repo.Network.Fetch(remote);
                     }
-
+                    
                     using (tracer.Step("LibGit2SharpRepository Update"))
                     {
-                        // Optionally set up the branch tracking configuration
-                        var trackedBranch = repo.Branches[trackedBranchName];
-                        if (trackedBranch == null)
+                        // Are we fetching a tag?
+                        if (branchName.ToLower().Trim().StartsWith("refs/tags/"))
                         {
-                            throw new BranchNotFoundException(branchName, null);
+                            var trackedTag = repo.Tags[branchName];
+                            if (trackedTag == null)
+                                 throw new BranchNotFoundException(branchName, null);
+
+                            // Update the raw ref to point to the tag
+                            UpdateRawRef(branchName, branchName);
+
+                            // Now checkout out the tag, which points to the right place
+                            Update(branchName);
                         }
+                        else
+                        {
+                            // Optionally set up the branch tracking configuration
+                            var trackedBranch = repo.Branches[trackedBranchName];
+                            if (trackedBranch == null)
+                                throw new BranchNotFoundException(branchName, null);
 
-                        var branch = repo.Branches[branchName] ?? repo.CreateBranch(branchName, trackedBranch.Tip);
-                        repo.Branches.Update(branch,
-                            b => b.TrackedBranch = trackedBranch.CanonicalName);
+                            var branch = repo.Branches[branchName] ?? repo.CreateBranch(branchName, trackedBranch.Tip);
+                            repo.Branches.Update(branch,
+                                b => b.TrackedBranch = trackedBranch.CanonicalName);
 
-                        // Update the raw ref to point the head of branchName to the latest fetched branch
-                        UpdateRawRef(string.Format("refs/heads/{0}", branchName), trackedBranchName);
+                            // Update the raw ref to point the head of branchName to the latest fetched branch
+                            UpdateRawRef(string.Format("refs/heads/{0}", branchName), trackedBranchName);
 
-                        // Now checkout out our branch, which points to the right place
-                        Update(branchName);
+                            // Now checkout out our branch, which points to the right place
+                            Update(branchName);
+                        }
                     }
                 }
             }
