@@ -230,11 +230,13 @@ echo $i > pushinfo
                     using (tracer.Step("LibGit2SharpRepository Update"))
                     {
                         // Are we fetching a tag?
-                        if (branchName.ToLower().Trim().StartsWith("refs/tags/"))
+                        if (branchName.Trim().StartsWith("refs/tags/", StringComparison.OrdinalIgnoreCase))
                         {
                             var trackedTag = repo.Tags[branchName];
                             if (trackedTag == null)
-                                 throw new BranchNotFoundException(branchName, null);
+                            {
+                                throw new BranchNotFoundException(branchName, null);
+                            }
 
                             // Update the raw ref to point to the tag
                             UpdateRawRef(branchName, branchName);
@@ -247,7 +249,9 @@ echo $i > pushinfo
                             // Optionally set up the branch tracking configuration
                             var trackedBranch = repo.Branches[trackedBranchName];
                             if (trackedBranch == null)
+                            {
                                 throw new BranchNotFoundException(branchName, null);
+                            }
 
                             var branch = repo.Branches[branchName] ?? repo.CreateBranch(branchName, trackedBranch.Tip);
                             repo.Branches.Update(branch,
