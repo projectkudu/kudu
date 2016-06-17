@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Net.Http;
+using Kudu.Core.Helpers;
 
 namespace Kudu.Services.Infrastructure
 {
@@ -15,9 +16,12 @@ namespace Kudu.Services.Infrastructure
             // Azure will always pass this header to Kudu, and it always carry the right host name.
             // when running Kudu on mono in a container, container is bound to a local ip
             // so we cannot rely on "request.RequestUri", which will be "127.0.0.1:xxxx".
-            if (request.Headers.TryGetValues("DISGUISED-HOST", out disguisedHostValues) && disguisedHostValues.Count() > 0)
+            if (!OSDetector.IsOnWindows()
+                && request.Headers.TryGetValues("DISGUISED-HOST", out disguisedHostValues)
+                && disguisedHostValues.Count() > 0)
             {
-                return new UriBuilder("https", disguisedHostValues.First()).Uri;
+                // host value can be "{site name}.scm.azurewebsites.net:443" or "{site name}.scm.azurewebsites.net"
+                return new Uri(string.Format(CultureInfo.InvariantCulture, "https://{0}", disguisedHostValues.First()));
             }
 
             return new Uri(request.RequestUri.GetComponents(UriComponents.SchemeAndServer, UriFormat.Unescaped));
