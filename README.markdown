@@ -3,7 +3,10 @@
 
 ### Kudu
 
-Kudu is the engine behind [git deployments in Azure Web Sites](https://www.windowsazure.com/en-us/develop/nodejs/common-tasks/publishing-with-git/). It can also run outside of Azure.
+Kudu is the engine behind [git deployments in Azure App Service](https://www.windowsazure.com/en-us/develop/nodejs/common-tasks/publishing-with-git/). It can also run outside of Azure.
+
+![KuduDebugConsole](https://cloud.githubusercontent.com/assets/6472374/16232400/0ba1d0e4-37d3-11e6-9880-4c5bc4a0c217.png)
+
 
 ### Documentation
 
