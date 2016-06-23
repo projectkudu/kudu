@@ -14,8 +14,6 @@ namespace Kudu.Contracts.SiteExtensions
         public enum SiteExtensionType
         {
             Gallery,
-            PreInstalledMonaco,
-            PreInstalledEnabled,
             WebRoot
         }
 
