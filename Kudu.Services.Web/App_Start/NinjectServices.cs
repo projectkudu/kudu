@@ -125,6 +125,8 @@ namespace Kudu.Services.Web.App_Start
 
             EnsureSiteBitnessEnvironmentVariable();
 
+            EnsureDotNetCoreEnvironmentVariable();
+
             IEnvironment environment = GetEnvironment();
 
             // Add various folders that never change to the process path. All child processes will inherit
@@ -717,10 +719,7 @@ namespace Kudu.Services.Web.App_Start
 
         private static void EnsureSiteBitnessEnvironmentVariable()
         {
-            if (System.Environment.GetEnvironmentVariable("SITE_BITNESS") == null)
-            {
-                System.Environment.SetEnvironmentVariable("SITE_BITNESS", System.Environment.Is64BitProcess ? Constants.X64Bit : Constants.X86Bit);
-            }
+            SetEnvironmentVariableIfNotYetSet("SITE_BITNESS", System.Environment.Is64BitProcess ? Constants.X64Bit : Constants.X86Bit);
         }
 
         private static IEnvironment GetEnvironment(IDeploymentSettingsManager settings = null)
@@ -730,6 +729,20 @@ namespace Kudu.Services.Web.App_Start
             string repositoryPath = Path.Combine(siteRoot, settings == null ? Constants.RepositoryPath : settings.GetRepositoryPath());
             string binPath = HttpRuntime.BinDirectory;
             return new Core.Environment(root, EnvironmentHelper.NormalizeBinPath(binPath), repositoryPath);
+        }
+
+        private static void EnsureDotNetCoreEnvironmentVariable()
+        {
+            SetEnvironmentVariableIfNotYetSet("DOTNET_SKIP_FIRST_TIME_EXPERIENCE", "true");
+            SetEnvironmentVariableIfNotYetSet("NUGET_XMLDOC_MODE", "skip");
+        }
+
+        private static void SetEnvironmentVariableIfNotYetSet(string name, string value)
+        {
+            if (System.Environment.GetEnvironmentVariable(name) == null)
+            {
+                System.Environment.SetEnvironmentVariable(name, value);
+            }
         }
     }
 }
