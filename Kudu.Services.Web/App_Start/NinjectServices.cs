@@ -733,7 +733,10 @@ namespace Kudu.Services.Web.App_Start
 
         private static void EnsureDotNetCoreEnvironmentVariable()
         {
+            // Skip this as it causes huge files to be downloaded to the temp folder
             SetEnvironmentVariableIfNotYetSet("DOTNET_SKIP_FIRST_TIME_EXPERIENCE", "true");
+
+            // Don't download xml comments, as they're large and provide no benefits outside of a dev machine
             SetEnvironmentVariableIfNotYetSet("NUGET_XMLDOC_MODE", "skip");
         }
 
