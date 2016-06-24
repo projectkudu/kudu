@@ -80,6 +80,7 @@ namespace Kudu.Core.Functions
                         var type = input.Value<string>("type");
                         if (type.EndsWith("Trigger", StringComparison.OrdinalIgnoreCase))
                         {
+                            input.Add("functionName", functionJson.Name);
                             tracer.Trace(String.Format("Sync {0} of {1}", type, functionJson.Name));
                             inputs.Add(input);
                         }
