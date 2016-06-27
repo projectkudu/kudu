@@ -44,7 +44,7 @@ namespace Kudu.Core.Jobs
             }
             catch (Exception ex)
             {
-                LogInformation(String.Format("Failed to create Status File {0} with exception {1}", GetStatusFilePath(), ex));
+                TraceFactory.GetTracer().TraceError(ex);
                 throw;
             }
         }
