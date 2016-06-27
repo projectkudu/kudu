@@ -38,7 +38,15 @@ namespace Kudu.Core.Jobs
                 TraceFactory.GetTracer().TraceError(ex);
             }
 
-            _lockedStatusFile = File.Open(GetStatusFilePath(), FileMode.OpenOrCreate, FileAccess.Read, FileShare.ReadWrite);
+            try
+            {
+                _lockedStatusFile = File.Open(GetStatusFilePath(), FileMode.OpenOrCreate, FileAccess.Read, FileShare.ReadWrite);
+            }
+            catch (Exception ex)
+            {
+                TraceFactory.GetTracer().TraceError(ex);
+                throw;
+            }
         }
 
         protected override void ReportStatus<TJobStatus>(TJobStatus status, bool logStatus)
