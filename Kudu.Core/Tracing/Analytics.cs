@@ -60,25 +60,17 @@ namespace Kudu.Core.Tracing
 
         public void UnexpectedException(Exception exception, bool trace = true)
         {
-            KuduEventSource.Log.KuduUnexpectedException(
+            KuduEventSource.Log.KuduException(
                 _serverConfiguration.ApplicationName,
+                string.Empty,
+                string.Empty,
+                string.Empty,
+                string.Empty,
                 GetExceptionContent(exception, trace));
         }
 
         public void UnexpectedException(Exception ex, string method, string path, string result, string message, bool trace = true)
         {
-            // ETW event for KuduException is not existed yet in current Antares deployment
-            // "duplicate" log with KuduUnexpectedException so that we will have some data for trouble shooting for now
-            // TODO: once next antares release is out, KuduUnexpectedException will be merge into KuduException
-            KuduEventSource.Log.KuduUnexpectedException(
-                 _serverConfiguration.ApplicationName,
-                 string.Format(CultureInfo.InvariantCulture, "Method: {0}, Path: {1}, Result: {2}, Message: {3}, Exception: {4}",
-                     NullToEmptyString(method),
-                     NullToEmptyString(path),
-                     NullToEmptyString(result),
-                     NullToEmptyString(message),
-                     GetExceptionContent(ex, trace)));
-
             KuduEventSource.Log.KuduException(
                 _serverConfiguration.ApplicationName,
                 NullToEmptyString(method),

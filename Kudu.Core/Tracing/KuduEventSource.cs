@@ -25,16 +25,6 @@ namespace Kudu.Core.Tracing
             }
         }
 
-        // TODO: once next Antares is out, removed event 65509, and only keep 65512
-        [Event(65509, Level = EventLevel.Warning, Message = "Unexpected exception for site {0}", Channel = EventChannel.Operational)]
-        public void KuduUnexpectedException(string siteName, string exception)
-        {
-            if (IsEnabled())
-            {
-                WriteEvent(65509, siteName, exception);
-            }
-        }
-
         [Event(65512, Level = EventLevel.Warning, Message = "Unexpected exception for site {0}", Channel = EventChannel.Operational)]
         public void KuduException(string siteName, string method, string path, string result, string Message, string exception)
         {
