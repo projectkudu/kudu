@@ -52,42 +52,6 @@ namespace Kudu.Core.SiteExtensions
 
         private static readonly string _toBeDeletedDirectoryPath = System.Environment.ExpandEnvironmentVariables(@"%HOME%\data\Temp\SiteExtensions");
 
-        private static readonly Dictionary<string, SiteExtensionInfo> _preInstalledExtensionDictionary
-            = new Dictionary<string, SiteExtensionInfo>(StringComparer.OrdinalIgnoreCase)
-        {
-            {
-                "monaco",
-                new SiteExtensionInfo
-                {
-                    Id = "Monaco",
-                    Title = "Visual Studio Online",
-                    Type = SiteExtensionInfo.SiteExtensionType.PreInstalledMonaco,
-                    Authors = new [] {"Microsoft"},
-                    IconUrl = "https://www.siteextensions.net/Content/Images/vso50x50.png",
-                    LicenseUrl = "http://azure.microsoft.com/en-us/support/legal/",
-                    ProjectUrl = "http://blogs.msdn.com/b/monaco/",
-                    Description = "A full featured browser based development environment for editing your website",
-                    // API will return a full url instead of this relative url.
-                    ExtensionUrl = "/Dev"
-                }
-            },
-            {
-                "daas",
-                new SiteExtensionInfo
-                {
-                    Id = "Daas",
-                    Title = "Diagnostics as a Service",
-                    Type = SiteExtensionInfo.SiteExtensionType.PreInstalledEnabled,
-                    Authors = new [] {"Microsoft"},
-                    IconUrl = "https://www.siteextensions.net/Content/Images/DaaS50x50.png",
-                    LicenseUrl = "http://azure.microsoft.com/en-us/support/legal/",
-                    ProjectUrl = "http://azure.microsoft.com/blog/?p=157471",
-                    Description = "Site diagnostic tools, including Event Viewer logs, memory dumps and http logs.",
-                    // API will return a full url instead of this relative url.
-                    ExtensionUrl = "/DaaS"
-                }
-            }
-        };
 
         private const string _installScriptName = "install.cmd";
         private const string _uninstallScriptName = "uninstall.cmd";
@@ -109,7 +73,7 @@ namespace Kudu.Core.SiteExtensions
         public async Task<IEnumerable<SiteExtensionInfo>> GetRemoteExtensions(string filter, bool allowPrereleaseVersions, string feedUrl)
         {
             ITracer tracer = _traceFactory.GetTracer();
-            var extensions = new List<SiteExtensionInfo>(GetPreInstalledExtensions(filter, showEnabledOnly: false));
+            var extensions = new List<SiteExtensionInfo>();
             SourceRepository remoteRepo = GetRemoteRepository(feedUrl);
 
             SearchFilter filterOptions = new SearchFilter();
@@ -142,12 +106,6 @@ namespace Kudu.Core.SiteExtensions
         {
             ITracer tracer = _traceFactory.GetTracer();
 
-            SiteExtensionInfo info = GetPreInstalledExtension(id);
-            if (info != null)
-            {
-                return info;
-            }
-
             SourceRepository remoteRepo = GetRemoteRepository(feedUrl);
             UIPackageMetadata package = null;
 
@@ -178,15 +136,8 @@ namespace Kudu.Core.SiteExtensions
         public async Task<IEnumerable<SiteExtensionInfo>> GetLocalExtensions(string filter, bool checkLatest)
         {
             ITracer tracer = _traceFactory.GetTracer();
-            IEnumerable<SiteExtensionInfo> preInstalledExtensions = GetPreInstalledExtensions(filter, showEnabledOnly: true);
             IEnumerable<UIPackageMetadata> searchResult = null;
             List<SiteExtensionInfo> siteExtensionInfos = new List<SiteExtensionInfo>();
-
-            foreach (var item in preInstalledExtensions)
-            {
-                SiteExtensionStatus armSettings = new SiteExtensionStatus(_environment.SiteExtensionSettingsPath, item.Id, tracer);
-                armSettings.FillSiteExtensionInfo(item, defaultProvisionState: Constants.SiteExtensionProvisioningStateSucceeded);
-            }
 
             using (tracer.Step("Search packages locally with filter: {0}", filter))
             {
@@ -202,80 +153,34 @@ namespace Kudu.Core.SiteExtensions
                     });
             }
 
-            return preInstalledExtensions.Concat(siteExtensionInfos);
+            return siteExtensionInfos;
         }
 
         // <inheritdoc />
         public async Task<SiteExtensionInfo> GetLocalExtension(string id, bool checkLatest = true)
         {
             ITracer tracer = _traceFactory.GetTracer();
-            SiteExtensionInfo info = GetPreInstalledExtension(id);
-            if (info != null && info.ExtensionUrl != null)
+            UIPackageMetadata package = null;
+            using (tracer.Step("Now querying from local repo for package '{0}'.", id))
             {
-                tracer.Trace("Pre-installed site extension found: {0}", id);
+                package = await _localRepository.GetLatestPackageById(id);
             }
-            else
+
+            if (package == null)
             {
-                UIPackageMetadata package = null;
-                using (tracer.Step("{0} is not a pre-installed package. Now querying from local repo.", id))
-                {
-                    package = await _localRepository.GetLatestPackageById(id);
-                }
+                tracer.Trace("No package found from local repo with id: {0}.", id);
+                return null;
+            }
 
-                if (package == null)
-                {
-                    tracer.Trace("No package found from local repo with id: {0}.", id);
-                    return null;
-                }
-
-                using (tracer.Step("Converting NuGet object to SiteExtensionInfo"))
-                {
-                    info = await ConvertLocalPackageToSiteExtensionInfo(package, checkLatest, tracer: tracer);
-                }
+            SiteExtensionInfo info;
+            using (tracer.Step("Converting NuGet object to SiteExtensionInfo"))
+            {
+                info = await ConvertLocalPackageToSiteExtensionInfo(package, checkLatest, tracer: tracer);
             }
 
             SiteExtensionStatus armSettings = new SiteExtensionStatus(_environment.SiteExtensionSettingsPath, id, tracer);
             armSettings.FillSiteExtensionInfo(info);
             return info;
-        }
-
-        private IEnumerable<SiteExtensionInfo> GetPreInstalledExtensions(string filter, bool showEnabledOnly)
-        {
-            var list = new List<SiteExtensionInfo>();
-
-            foreach (SiteExtensionInfo extension in _preInstalledExtensionDictionary.Values)
-            {
-                if (String.IsNullOrEmpty(filter) ||
-                    JsonConvert.SerializeObject(extension).IndexOf(filter, StringComparison.OrdinalIgnoreCase) >= 0)
-                {
-                    SiteExtensionInfo info = GetPreInstalledExtension(extension.Id);
-
-                    if (!showEnabledOnly || info.ExtensionUrl != null)
-                    {
-                        list.Add(info);
-                    }
-                }
-            }
-
-            return list;
-        }
-
-        private SiteExtensionInfo GetPreInstalledExtension(string id)
-        {
-            if (_preInstalledExtensionDictionary.ContainsKey(id))
-            {
-                var info = new SiteExtensionInfo(_preInstalledExtensionDictionary[id]);
-
-                SetLocalInfo(info);
-
-                SetPreInstalledExtensionInfo(info);
-
-                return info;
-            }
-            else
-            {
-                return null;
-            }
         }
 
         // <inheritdoc />
@@ -325,134 +230,125 @@ namespace Kudu.Core.SiteExtensions
             HttpStatusCode status = HttpStatusCode.OK;  // final status when success
             bool alreadyInstalled = false;
 
-            if (_preInstalledExtensionDictionary.ContainsKey(id))
+            try
             {
-                tracer.Trace("Pre-installed site extension found: {0}, not going to perform new installation.", id);
-                info = EnablePreInstalledExtension(_preInstalledExtensionDictionary[id], tracer);
-                alreadyInstalled = true;
-            }
-            else
-            {
-                try
+                // Check if site extension already installed (id, version, feedUrl), if already install return right away
+                if (await this.IsSiteExtensionInstalled(id, version, feedUrl))
                 {
-                    // Check if site extension already installed (id, version, feedUrl), if already install return right away
-                    if (await this.IsSiteExtensionInstalled(id, version, feedUrl))
+                    // package already installed, return package from local repo.
+                    tracer.Trace("Package {0} with version {1} from {2} already installed.", id, version, feedUrl);
+                    info = await GetLocalExtension(id);
+                    alreadyInstalled = true;
+                }
+                else
+                {
+                    JsonSettings siteExtensionSettings = GetSettingManager(id);
+                    feedUrl = (string.IsNullOrEmpty(feedUrl) ? siteExtensionSettings.GetValue(_feedUrlSetting) : feedUrl);
+                    SourceRepository remoteRepo = GetRemoteRepository(feedUrl);
+                    UIPackageMetadata localPackage = null;
+                    UIPackageMetadata repoPackage = null;
+
+                    if (this.IsInstalledToWebRoot(id))
                     {
-                        // package already installed, return package from local repo.
-                        tracer.Trace("Package {0} with version {1} from {2} already installed.", id, version, feedUrl);
-                        info = await GetLocalExtension(id);
-                        alreadyInstalled = true;
+                        // override WebRoot type from setting
+                        // WebRoot is a special type that install package to wwwroot, when perform update we need to update new content to wwwroot even if type is not specified
+                        type = SiteExtensionInfo.SiteExtensionType.WebRoot;
+                    }
+
+                    if (string.IsNullOrWhiteSpace(version))
+                    {
+                        using (tracer.Step("Version is null, search latest package by id: {0}, will not search for unlisted package.", id))
+                        {
+                            repoPackage = await remoteRepo.GetLatestPackageById(id);
+                        }
                     }
                     else
                     {
-                        JsonSettings siteExtensionSettings = GetSettingManager(id);
-                        feedUrl = (string.IsNullOrEmpty(feedUrl) ? siteExtensionSettings.GetValue(_feedUrlSetting) : feedUrl);
-                        SourceRepository remoteRepo = GetRemoteRepository(feedUrl);
-                        UIPackageMetadata localPackage = null;
-                        UIPackageMetadata repoPackage = null;
-
-                        if (this.IsInstalledToWebRoot(id))
+                        using (tracer.Step("Search package by id: {0} and version: {1}, will also search for unlisted package.", id, version))
                         {
-                            // override WebRoot type from setting
-                            // WebRoot is a special type that install package to wwwroot, when perform update we need to update new content to wwwroot even if type is not specified
-                            type = SiteExtensionInfo.SiteExtensionType.WebRoot;
+                            repoPackage = await remoteRepo.GetPackageByIdentity(id, version);
                         }
-
-                        if (string.IsNullOrWhiteSpace(version))
-                        {
-                            using (tracer.Step("Version is null, search latest package by id: {0}, will not search for unlisted package.", id))
-                            {
-                                repoPackage = await remoteRepo.GetLatestPackageById(id);
-                            }
-                        }
-                        else
-                        {
-                            using (tracer.Step("Search package by id: {0} and version: {1}, will also search for unlisted package.", id, version))
-                            {
-                                repoPackage = await remoteRepo.GetPackageByIdentity(id, version);
-                            }
-                        }
-
-                        if (repoPackage != null)
-                        {
-                            using (tracer.Step("Install package: {0}.", id))
-                            {
-                                string installationDirectory = GetInstallationDirectory(id);
-                                localPackage = await InstallExtension(repoPackage, installationDirectory, feedUrl, type, tracer);
-                                siteExtensionSettings.SetValues(new KeyValuePair<string, JToken>[] {
-                                    new KeyValuePair<string, JToken>(_versionSetting, localPackage.Identity.Version.ToNormalizedString()),
-                                    new KeyValuePair<string, JToken>(_feedUrlSetting, feedUrl),
-                                    new KeyValuePair<string, JToken>(_installUtcTimestampSetting, DateTime.UtcNow.ToString("u")),
-                                    new KeyValuePair<string, JToken>(_packageType, Enum.GetName(typeof(SiteExtensionInfo.SiteExtensionType), type))
-                                });
-                            }
-                        }
-
-                        info = await ConvertLocalPackageToSiteExtensionInfo(localPackage, checkLatest: true, tracer: tracer);
                     }
-                }
-                catch (FileNotFoundException ex)
-                {
-                    _analytics.UnexpectedException(
-                        ex,
-                        method: "PUT",
-                        path: string.Format(CultureInfo.InvariantCulture, "/api/siteextensions/{0}", id),
-                        result: Constants.SiteExtensionProvisioningStateFailed,
-                        message: string.Format(CultureInfo.InvariantCulture, "{{\"version\": {0}, \"feed_url\": {1}}}", version, feedUrl),
-                        trace: false);
 
-                    tracer.TraceError(ex);
-                    info = new SiteExtensionInfo();
-                    info.Id = id;
-                    info.ProvisioningState = Constants.SiteExtensionProvisioningStateFailed;
-                    info.Comment = ex.ToString();
-                    status = HttpStatusCode.NotFound;
-                }
-                catch (WebException ex)
-                {
-                    _analytics.UnexpectedException(
-                        ex,
-                        method: "PUT",
-                        path: string.Format(CultureInfo.InvariantCulture, "/api/siteextensions/{0}", id),
-                        result: Constants.SiteExtensionProvisioningStateFailed,
-                        message: string.Format(CultureInfo.InvariantCulture, "{{\"version\": {0}, \"feed_url\": {1}}}", version, feedUrl),
-                        trace: false);
+                    if (repoPackage != null)
+                    {
+                        using (tracer.Step("Install package: {0}.", id))
+                        {
+                            string installationDirectory = GetInstallationDirectory(id);
+                            localPackage = await InstallExtension(repoPackage, installationDirectory, feedUrl, type, tracer);
+                            siteExtensionSettings.SetValues(new KeyValuePair<string, JToken>[] {
+                                new KeyValuePair<string, JToken>(_versionSetting, localPackage.Identity.Version.ToNormalizedString()),
+                                new KeyValuePair<string, JToken>(_feedUrlSetting, feedUrl),
+                                new KeyValuePair<string, JToken>(_installUtcTimestampSetting, DateTime.UtcNow.ToString("u")),
+                                new KeyValuePair<string, JToken>(_packageType, Enum.GetName(typeof(SiteExtensionInfo.SiteExtensionType), type))
+                            });
+                        }
+                    }
 
-                    tracer.TraceError(ex);
-                    info = new SiteExtensionInfo();
-                    info.Id = id;
-                    info.ProvisioningState = Constants.SiteExtensionProvisioningStateFailed;
-                    info.Comment = ex.ToString();
-                    status = HttpStatusCode.BadRequest;
+                    info = await ConvertLocalPackageToSiteExtensionInfo(localPackage, checkLatest: true, tracer: tracer);
                 }
-                catch (InvalidEndpointException ex)
-                {
-                    _analytics.UnexpectedException(ex, trace: false);
+            }
+            catch (FileNotFoundException ex)
+            {
+                _analytics.UnexpectedException(
+                    ex,
+                    method: "PUT",
+                    path: string.Format(CultureInfo.InvariantCulture, "/api/siteextensions/{0}", id),
+                    result: Constants.SiteExtensionProvisioningStateFailed,
+                    message: string.Format(CultureInfo.InvariantCulture, "{{\"version\": {0}, \"feed_url\": {1}}}", version, feedUrl),
+                    trace: false);
 
-                    tracer.TraceError(ex);
-                    info = new SiteExtensionInfo();
-                    info.Id = id;
-                    info.ProvisioningState = Constants.SiteExtensionProvisioningStateFailed;
-                    info.Comment = ex.ToString();
-                    status = HttpStatusCode.BadRequest;
-                }
-                catch (Exception ex)
-                {
-                    _analytics.UnexpectedException(
-                        ex,
-                        method: "PUT",
-                        path: string.Format(CultureInfo.InvariantCulture, "/api/siteextensions/{0}", id),
-                        result: Constants.SiteExtensionProvisioningStateFailed,
-                        message: string.Format(CultureInfo.InvariantCulture, "{{\"version\": {0}, \"feed_url\": {1}}}", version, feedUrl),
-                        trace: false);
+                tracer.TraceError(ex);
+                info = new SiteExtensionInfo();
+                info.Id = id;
+                info.ProvisioningState = Constants.SiteExtensionProvisioningStateFailed;
+                info.Comment = ex.ToString();
+                status = HttpStatusCode.NotFound;
+            }
+            catch (WebException ex)
+            {
+                _analytics.UnexpectedException(
+                    ex,
+                    method: "PUT",
+                    path: string.Format(CultureInfo.InvariantCulture, "/api/siteextensions/{0}", id),
+                    result: Constants.SiteExtensionProvisioningStateFailed,
+                    message: string.Format(CultureInfo.InvariantCulture, "{{\"version\": {0}, \"feed_url\": {1}}}", version, feedUrl),
+                    trace: false);
 
-                    tracer.TraceError(ex);
-                    info = new SiteExtensionInfo();
-                    info.Id = id;
-                    info.ProvisioningState = Constants.SiteExtensionProvisioningStateFailed;
-                    info.Comment = ex.ToString();
-                    status = HttpStatusCode.BadRequest;
-                }
+                tracer.TraceError(ex);
+                info = new SiteExtensionInfo();
+                info.Id = id;
+                info.ProvisioningState = Constants.SiteExtensionProvisioningStateFailed;
+                info.Comment = ex.ToString();
+                status = HttpStatusCode.BadRequest;
+            }
+            catch (InvalidEndpointException ex)
+            {
+                _analytics.UnexpectedException(ex, trace: false);
+
+                tracer.TraceError(ex);
+                info = new SiteExtensionInfo();
+                info.Id = id;
+                info.ProvisioningState = Constants.SiteExtensionProvisioningStateFailed;
+                info.Comment = ex.ToString();
+                status = HttpStatusCode.BadRequest;
+            }
+            catch (Exception ex)
+            {
+                _analytics.UnexpectedException(
+                    ex,
+                    method: "PUT",
+                    path: string.Format(CultureInfo.InvariantCulture, "/api/siteextensions/{0}", id),
+                    result: Constants.SiteExtensionProvisioningStateFailed,
+                    message: string.Format(CultureInfo.InvariantCulture, "{{\"version\": {0}, \"feed_url\": {1}}}", version, feedUrl),
+                    trace: false);
+
+                tracer.TraceError(ex);
+                info = new SiteExtensionInfo();
+                info.Id = id;
+                info.ProvisioningState = Constants.SiteExtensionProvisioningStateFailed;
+                info.Comment = ex.ToString();
+                status = HttpStatusCode.BadRequest;
             }
 
             if (info == null)
@@ -551,7 +447,7 @@ namespace Kudu.Core.SiteExtensions
                     // If there is no xdt file, generate default.
                     using (tracer.Step("Check if applicationhost.xdt file existed."))
                     {
-                        GenerateApplicationHostXdt(installationDirectory, '/' + package.Identity.Id, isPreInstalled: false, tracer: tracer);
+                        GenerateApplicationHostXdt(installationDirectory, '/' + package.Identity.Id, tracer: tracer);
                     }
 
                     using (tracer.Step("Trigger site extension job"))
@@ -670,42 +566,7 @@ namespace Kudu.Core.SiteExtensions
             return isInstalled;
         }
 
-        private SiteExtensionInfo EnablePreInstalledExtension(SiteExtensionInfo info, ITracer tracer)
-        {
-            string id = info.Id;
-            string installationDirectory = GetInstallationDirectory(id);
-
-            try
-            {
-                if (FileSystemHelpers.DirectoryExists(installationDirectory))
-                {
-                    FileSystemHelpers.DeleteDirectorySafe(installationDirectory);
-                }
-
-                if (ExtensionRequiresApplicationHost(info))
-                {
-                    if (info.Type == SiteExtensionInfo.SiteExtensionType.PreInstalledMonaco)
-                    {
-                        GenerateApplicationHostXdt(installationDirectory,
-                            _preInstalledExtensionDictionary[id].ExtensionUrl, isPreInstalled: true);
-                    }
-                }
-                else
-                {
-                    FileSystemHelpers.CreateDirectory(installationDirectory);
-                }
-            }
-            catch (Exception ex)
-            {
-                tracer.TraceError(ex);
-                FileSystemHelpers.DeleteDirectorySafe(installationDirectory);
-                return null;
-            }
-
-            return GetPreInstalledExtension(id);
-        }
-
-        private static void GenerateApplicationHostXdt(string installationDirectory, string relativeUrl, bool isPreInstalled, ITracer tracer = null)
+        private static void GenerateApplicationHostXdt(string installationDirectory, string relativeUrl, ITracer tracer = null)
         {
             // If there is no xdt file, generate default.
             FileSystemHelpers.CreateDirectory(installationDirectory);
@@ -717,8 +578,7 @@ namespace Kudu.Core.SiteExtensions
                     tracer.Trace("Missing xdt file, creating one.");
                 }
 
-                string physicalPath = isPreInstalled ? "%XDT_LATEST_EXTENSIONPATH%" : "%XDT_EXTENSIONPATH%";
-                string xdtContent = CreateDefaultXdtFile(relativeUrl, physicalPath);
+                string xdtContent = CreateDefaultXdtFile(relativeUrl, "%XDT_EXTENSIONPATH%");
                 OperationManager.Attempt(() => FileSystemHelpers.WriteAllText(xdtPath, xdtContent));
             }
         }
@@ -806,12 +666,6 @@ namespace Kudu.Core.SiteExtensions
             return Path.Combine(GetInstallationDirectory(id), String.Format(CultureInfo.InvariantCulture, "{0}.{1}.nupkg", id, version));
         }
 
-        private static string GetPreInstalledDirectory(string id)
-        {
-            string programFiles = System.Environment.GetFolderPath(System.Environment.SpecialFolder.ProgramFilesX86);
-            return Path.Combine(programFiles, "SiteExtensions", id);
-        }
-
         private static string CreateDefaultXdtFile(string relativeUrl, string physicalPath)
         {
             string template = null;
@@ -838,11 +692,6 @@ namespace Kudu.Core.SiteExtensions
             {
                 info.ExtensionUrl = FileSystemHelpers.FileExists(Path.Combine(localPath, Constants.ApplicationHostXdtFileName))
                     ? GetFullUrl(GetUrlFromApplicationHost(info)) : null;
-            }
-            else if (String.Equals(info.Id, "Monaco", StringComparison.OrdinalIgnoreCase))
-            {
-                // Monaco does not need ApplicationHost only when it is enabled through app setting
-                info.ExtensionUrl = GetFullUrl(info.ExtensionUrl);
             }
             else
             {
@@ -951,63 +800,7 @@ namespace Kudu.Core.SiteExtensions
         private static bool ExtensionRequiresApplicationHost(SiteExtensionInfo info)
         {
             string appSettingName = info.Id.ToUpper(CultureInfo.CurrentCulture) + "_EXTENSION_VERSION";
-            bool enabledInSetting = ConfigurationManager.AppSettings[appSettingName] == "beta";
-            return !(enabledInSetting || info.Type == SiteExtensionInfo.SiteExtensionType.PreInstalledEnabled);
-        }
-
-        private static void SetPreInstalledExtensionInfo(SiteExtensionInfo info)
-        {
-            string directory = GetPreInstalledDirectory(info.Id);
-
-            if (FileSystemHelpers.DirectoryExists(directory))
-            {
-                if (info.Type == SiteExtensionInfo.SiteExtensionType.PreInstalledMonaco)
-                {
-                    info.Version = GetPreInstalledLatestVersion(directory);
-                }
-                else if (info.Type == SiteExtensionInfo.SiteExtensionType.PreInstalledEnabled)
-                {
-                    info.Version = typeof(SiteExtensionManager).Assembly.GetName().Version.ToString();
-                }
-
-                info.PublishedDateTime = FileSystemHelpers.GetLastWriteTimeUtc(directory);
-            }
-            else
-            {
-                info.Version = null;
-                info.PublishedDateTime = null;
-            }
-
-            info.LocalIsLatestVersion = true;
-        }
-
-        private static string GetPreInstalledLatestVersion(string directory)
-        {
-            if (!FileSystemHelpers.DirectoryExists(directory))
-            {
-                return null;
-            }
-
-            string[] pathStrings = FileSystemHelpers.GetDirectories(directory);
-
-            if (pathStrings.Length == 0)
-            {
-                return null;
-            }
-
-            return pathStrings.Max(path =>
-            {
-                string versionString = FileSystemHelpers.DirectoryInfoFromDirectoryName(path).Name;
-                SemanticVersion semVer;
-                if (SemanticVersion.TryParse(versionString, out semVer))
-                {
-                    return semVer;
-                }
-                else
-                {
-                    return new SemanticVersion(0, 0, 0, 0);
-                }
-            }).ToString();
+            return ConfigurationManager.AppSettings[appSettingName] != "beta";
         }
 
         private string GetFullUrl(string url)

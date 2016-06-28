@@ -170,62 +170,6 @@ namespace Kudu.FunctionalTests.SiteExtensions
         }
 
         [Fact]
-        public async Task SiteExtensionPreInstalledTests()
-        {
-            const string appName = "SiteExtensionBasicTests";
-
-            await ApplicationManager.RunAsync(appName, async appManager =>
-            {
-                var manager = appManager.SiteExtensionManager;
-                await CleanSiteExtensions(manager);
-
-                // list
-                List<SiteExtensionInfo> results = await (await manager.GetRemoteExtensions()).Content.ReadAsAsync<List<SiteExtensionInfo>>();
-                Assert.True(results.Any(), "GetRemoteExtensions expects results > 0");
-
-                // pick site extension
-                var expectedId = _preInstalledExtensions.Keys.ToArray()[new Random().Next(_preInstalledExtensions.Count)];
-                var expected = results.Find(ext => String.Equals(ext.Id, expectedId, StringComparison.OrdinalIgnoreCase));
-                TestTracer.Trace("Testing Against Site Extension {0}", expectedId);
-
-                // get
-                SiteExtensionInfo result = await (await manager.GetRemoteExtension(expectedId)).Content.ReadAsAsync<SiteExtensionInfo>();
-                Assert.Equal(expected.Id, result.Id);
-                Assert.Equal(expected.Version, result.Version);
-
-                // clear local extensions
-                results = await (await manager.GetLocalExtensions()).Content.ReadAsAsync<List<SiteExtensionInfo>>();
-                bool deleteResult = false;
-                foreach (var ext in results)
-                {
-                    deleteResult = await (await manager.UninstallExtension(ext.Id)).Content.ReadAsAsync<bool>();
-                    Assert.True(deleteResult, "Delete must return true");
-                }
-
-                // install/update
-                result = await (await manager.InstallExtension(expected.Id)).Content.ReadAsAsync<SiteExtensionInfo>();
-                Assert.Equal(expected.Id, result.Id);
-                Assert.Equal(expected.Version, result.Version);
-
-                // list
-                results = await (await manager.GetLocalExtensions()).Content.ReadAsAsync<List<SiteExtensionInfo>>();
-                Assert.True(results.Any(), "GetLocalExtensions expects results > 0");
-
-                // get
-                result = await (await manager.GetLocalExtension(expected.Id)).Content.ReadAsAsync<SiteExtensionInfo>();
-                Assert.Equal(expected.Id, result.Id);
-
-                // delete
-                deleteResult = await (await manager.UninstallExtension(expected.Id)).Content.ReadAsAsync<bool>();
-                Assert.True(deleteResult, "Delete must return true");
-
-                // list installed
-                results = await (await manager.GetLocalExtensions()).Content.ReadAsAsync<List<SiteExtensionInfo>>();
-                Assert.False(results.Exists(ext => ext.Id == expected.Id), "After deletion extension " + expected.Id + " should not exist.");
-            });
-        }
-
-        [Fact]
         public async Task SiteExtensionShouldDeployWebJobs()
         {
             const string appName = "SiteExtensionShouldDeployWebJobs";
