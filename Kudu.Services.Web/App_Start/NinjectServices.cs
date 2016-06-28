@@ -448,8 +448,7 @@ namespace Kudu.Services.Web.App_Start
 
             // Settings
             routes.MapHttpRouteDual("set-setting", "settings", new { controller = "Settings", action = "Set" }, new { verb = new HttpMethodConstraint("POST") });
-            routes.MapHttpRoute("get-all-settings-old", "settings", new { controller = "Settings", action = "GetAll" }, new { verb = new HttpMethodConstraint("GET") }, deprecated: true);
-            routes.MapHttpRoute("get-all-settings", "api/settings", new { controller = "Settings", action = "GetAll", version = 2 }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpRouteDual("get-all-settings", "settings", new { controller = "Settings", action = "GetAll" }, new { verb = new HttpMethodConstraint("GET") });
             routes.MapHttpRouteDual("get-setting", "settings/{key}", new { controller = "Settings", action = "Get" }, new { verb = new HttpMethodConstraint("GET") });
             routes.MapHttpRouteDual("delete-setting", "settings/{key}", new { controller = "Settings", action = "Delete" }, new { verb = new HttpMethodConstraint("DELETE") });
 
