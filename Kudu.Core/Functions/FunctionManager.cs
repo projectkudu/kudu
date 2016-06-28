@@ -27,9 +27,9 @@ namespace Kudu.Core.Functions
             tracer = tracer ?? _traceFactory.GetTracer();
             using (tracer.Step("FunctionManager.SyncTriggers"))
             {
-                if (!IsFunctionEnabled)
+                if (!IsFunctionsSiteExtensionEnabled)
                 {
-                    tracer.Trace("This is not a function-enabled site!");
+                    tracer.Trace("Functions are not enabled for this site.");
                     return; 
                 }
 
@@ -41,62 +41,74 @@ namespace Kudu.Core.Functions
                     return;
                 }
 
-                var inputs = await GetTriggerInputsAsync(tracer);
+                var functions = await ListFunctionsConfigAsync();
+                var triggers = GetTriggers(functions, tracer);
                 if (Environment.IsAzureEnvironment())
                 {
                     var client = new OperationClient(tracer);
-
-                    await client.PostAsync("/operations/settriggers", inputs);
+                    await client.PostAsync("/operations/settriggers", triggers);
                 }
             }
         }
 
-        private static bool IsFunctionEnabled
+        private static bool IsFunctionsSiteExtensionEnabled
         {
             get 
             {
                 var functionVersion = System.Environment.GetEnvironmentVariable("FUNCTIONS_EXTENSION_VERSION");
                 return !String.IsNullOrEmpty(functionVersion) &&
-                    !String.Equals("disabled", functionVersion, StringComparison.OrdinalIgnoreCase);
+                       !String.Equals("disabled", functionVersion, StringComparison.OrdinalIgnoreCase);
             }
         }
 
-        private async Task<JArray> GetTriggerInputsAsync(ITracer tracer)
+        internal static bool FunctionIsDisabled(JObject functionConfig)
         {
-            JArray inputs = new JArray();
-            foreach (var functionJson in await ListFunctionsConfigAsync())
+            // Inspect the per function config values that are used to disable a function
+            JToken value;
+            if ((functionConfig.TryGetValue("disabled", out value) ||
+                 functionConfig.TryGetValue("excluded", out value)) && (bool)value)
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        internal static JArray GetTriggers(IEnumerable<FunctionEnvelope> functions, ITracer tracer)
+        {
+            JArray triggers = new JArray();
+            foreach (var function in functions)
             {
                 try
                 {
-                    JToken disabled;
-                    if (functionJson.Config.TryGetValue("disabled", out disabled) && (bool)disabled)
+                    if (FunctionIsDisabled(function.Config))
                     {
-                        tracer.Trace(String.Format("{0} is disabled", functionJson));
+                        tracer.Trace(String.Format("{0} is disabled", function));
                         continue;
                     }
 
-                    foreach (JObject input in functionJson.Config.Value<JArray>("bindings"))
+                    foreach (JObject binding in function.Config.Value<JArray>("bindings"))
                     {
-                        var type = input.Value<string>("type");
+                        var type = binding.Value<string>("type");
                         if (type.EndsWith("Trigger", StringComparison.OrdinalIgnoreCase))
                         {
-                            input.Add("functionName", functionJson.Name);
-                            tracer.Trace(String.Format("Sync {0} of {1}", type, functionJson.Name));
-                            inputs.Add(input);
+                            binding.Add("functionName", function.Name);
+                            tracer.Trace(String.Format("Syncing {0} of {1}", type, function.Name));
+                            triggers.Add(binding);
                         }
                         else
                         {
-                            tracer.Trace(String.Format("Skip {0} of {1}", type, functionJson.Name));
+                            tracer.Trace(String.Format("Skipping {0} of {1}", type, function.Name));
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    tracer.Trace(String.Format("{0} is invalid. {1}", functionJson.Name, ex.Message));
+                    tracer.Trace(String.Format("{0} is invalid. {1}", function.Name, ex.Message));
                 }
             }
 
-            return inputs;
+            return triggers;
         }
 
         public async Task<FunctionEnvelope> CreateOrUpdateAsync(string name, FunctionEnvelope functionEnvelope, Action setConfigChanged)
