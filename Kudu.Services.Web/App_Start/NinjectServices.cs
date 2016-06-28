@@ -125,9 +125,9 @@ namespace Kudu.Services.Web.App_Start
 
             EnsureSiteBitnessEnvironmentVariable();
 
-            EnsureDotNetCoreEnvironmentVariable();
-
             IEnvironment environment = GetEnvironment();
+
+            EnsureDotNetCoreEnvironmentVariable(environment);
 
             // Add various folders that never change to the process path. All child processes will inherit
             PrependFoldersToPath(environment);
@@ -730,13 +730,21 @@ namespace Kudu.Services.Web.App_Start
             return new Core.Environment(root, EnvironmentHelper.NormalizeBinPath(binPath), repositoryPath);
         }
 
-        private static void EnsureDotNetCoreEnvironmentVariable()
+        private static void EnsureDotNetCoreEnvironmentVariable(IEnvironment environment)
         {
             // Skip this as it causes huge files to be downloaded to the temp folder
             SetEnvironmentVariableIfNotYetSet("DOTNET_SKIP_FIRST_TIME_EXPERIENCE", "true");
 
             // Don't download xml comments, as they're large and provide no benefits outside of a dev machine
             SetEnvironmentVariableIfNotYetSet("NUGET_XMLDOC_MODE", "skip");
+
+            if (Core.Environment.IsAzureEnvironment())
+            {
+                // On Azure, restore nuget packages to d:\home\.nuget so they're persistent. It also helps
+                // work around https://github.com/projectkudu/kudu/issues/2056.
+                // Note that this only applies to project.json scenarios (not packages.config)
+                SetEnvironmentVariableIfNotYetSet("NUGET_PACKAGES", Path.Combine(environment.RootPath, ".nuget"));
+            }
         }
 
         private static void SetEnvironmentVariableIfNotYetSet(string name, string value)
