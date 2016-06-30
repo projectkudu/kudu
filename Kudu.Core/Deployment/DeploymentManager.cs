@@ -16,7 +16,6 @@ using Kudu.Core.Infrastructure;
 using Kudu.Core.Settings;
 using Kudu.Core.SourceControl;
 using Kudu.Core.Tracing;
-using Microsoft.VisualStudio.Web;
 
 namespace Kudu.Core.Deployment
 {
