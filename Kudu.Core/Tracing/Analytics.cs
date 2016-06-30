@@ -1,10 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Globalization;
 using System.Text;
 using Kudu.Contracts.Settings;
-using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
 
 namespace Kudu.Core.Tracing
@@ -24,7 +21,7 @@ namespace Kudu.Core.Tracing
             _traceFactory = traceFactory;
         }
 
-        public void ProjectDeployed(string projectType, string result, string error, long deploymentDurationInMilliseconds, string siteMode)
+        public void ProjectDeployed(string projectType, string result, string error, long deploymentDurationInMilliseconds, string siteMode, string vsProjectId = "")
         {
             KuduEventSource.Log.ProjectDeployed(
                 _serverConfiguration.ApplicationName,
@@ -33,7 +30,8 @@ namespace Kudu.Core.Tracing
                 NullToEmptyString(error),
                 deploymentDurationInMilliseconds,
                 NullToEmptyString(siteMode),
-                NullToEmptyString(_settings.GetValue(SettingsKeys.ScmType)));
+                NullToEmptyString(_settings.GetValue(SettingsKeys.ScmType)),
+                NullToEmptyString(vsProjectId));
         }
 
         public void JobStarted(string jobName, string scriptExtension, string jobType, string siteMode, string error, string trigger)

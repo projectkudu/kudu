@@ -161,6 +161,7 @@
     <Compile Include="Helpers\EnvironmentHelper.cs" />
     <Compile Include="Helpers\OSDetector.cs" />
     <Compile Include="Helpers\PermissionHelper.cs" />
+    <Compile Include="Helpers\ProjectGuidParser.cs" />
     <Compile Include="Hooks\WebHooksManager.cs" />
     <Compile Include="Infrastructure\AspNetCoreHelper.cs" />
     <Compile Include="Infrastructure\InstanceIdUtility.cs" />

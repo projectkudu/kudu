@@ -8,11 +8,11 @@ namespace Kudu.Core.Tracing
         public static readonly KuduEventSource Log = new KuduEventSource();
 
         [Event(65501, Level = EventLevel.Informational, Message = "Project was deployed for site {0} with result {2}", Channel = EventChannel.Operational)]
-        public void ProjectDeployed(string siteName, string projectType, string result, string error, long deploymentDurationInMilliseconds, string siteMode, string scmType)
+        public void ProjectDeployed(string siteName, string projectType, string result, string error, long deploymentDurationInMilliseconds, string siteMode, string scmType, string vsProjectId)
         {
             if (IsEnabled())
             {
-                WriteEvent(65501, siteName, projectType, result, error, deploymentDurationInMilliseconds, siteMode, scmType);
+                WriteEvent(65501, siteName, projectType, result, error, deploymentDurationInMilliseconds, siteMode, scmType, vsProjectId);
             }
         }
 

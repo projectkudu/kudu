@@ -9,7 +9,6 @@ using System.Threading.Tasks;
 using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
-using Kudu.Core.Deployment.Generator;
 using Kudu.Core.Functions;
 using Kudu.Core.Helpers;
 using Kudu.Core.Hooks;
@@ -17,6 +16,7 @@ using Kudu.Core.Infrastructure;
 using Kudu.Core.Settings;
 using Kudu.Core.SourceControl;
 using Kudu.Core.Tracing;
+using Microsoft.VisualStudio.Web;
 
 namespace Kudu.Core.Deployment
 {
@@ -623,6 +623,7 @@ namespace Kudu.Core.Deployment
 
                         FinishDeployment(id, deployStep);
 
+                        deploymentAnalytics.VsProjectId = TryGetVsProjectId(context);
                         deploymentAnalytics.Result = DeployStatus.Success.ToString();
                     }
                     catch (Exception ex)
@@ -797,6 +798,29 @@ namespace Kudu.Core.Deployment
             }
         }
 
+        private static string TryGetVsProjectId(DeploymentContext context)
+        {
+            try
+            {
+                // Read web.config
+                string webConfigPath = Path.Combine(context.OutputPath, "web.config");
+                if (File.Exists(webConfigPath))
+                {
+                    using (var stream = File.OpenRead(webConfigPath))
+                    {
+                        Guid? projectId = ProjectGuidParser.GetProjectGuidFromWebConfig(stream);
+                        return projectId.HasValue ? projectId.Value.ToString() : null;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                context.Tracer.TraceError(ex);
+            }
+
+            return null;
+        }
+
         private static string TrimId(string id)
         {
             return id.Substring(0, 10);
@@ -920,12 +944,14 @@ namespace Kudu.Core.Deployment
 
             public string Error { get; set; }
 
+            public string VsProjectId { get; set; }
+
             public void Dispose()
             {
                 if (!_disposed)
                 {
                     _stopwatch.Stop();
-                    _analytics.ProjectDeployed(ProjectType, Result, Error, _stopwatch.ElapsedMilliseconds, _siteMode);
+                    _analytics.ProjectDeployed(ProjectType, Result, Error, _stopwatch.ElapsedMilliseconds, _siteMode, VsProjectId);
                     _disposed = true;
                 }
             }
