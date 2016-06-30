@@ -48,7 +48,7 @@ namespace Kudu.Core.Infrastructure
             var requestId = HttpContext.Current?.Request?.Headers?[Constants.RequestIdHeader];
             requestId = !String.IsNullOrEmpty(requestId) ? requestId : Guid.NewGuid().ToString();
 
-            using (_tracer.Step($"POST {path}, x-ms-request-id: {requestId}"))
+            using (_tracer.Step($"POST {host}{path}, x-ms-request-id: {requestId}"))
             {
                 using (var client = ClientHandler != null ? new HttpClient(ClientHandler) : new HttpClient())
                 {

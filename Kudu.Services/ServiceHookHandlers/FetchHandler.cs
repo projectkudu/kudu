@@ -105,6 +105,7 @@ namespace Kudu.Services
                     DeployAction action = GetRepositoryInfo(request, payload, targetBranch, out deployInfo);
                     if (action == DeployAction.NoOp)
                     {
+                        _tracer.Trace("No-op for deployment.");
                         return;
                     }
 
@@ -117,6 +118,7 @@ namespace Kudu.Services
                     {
                         context.Response.StatusCode = (int)HttpStatusCode.Forbidden;
                         context.ApplicationInstance.CompleteRequest();
+                        _tracer.Trace("Scm is not enabled, reject all requests.");
                         return;
                     }
                 }

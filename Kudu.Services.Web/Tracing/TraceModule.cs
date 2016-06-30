@@ -9,7 +9,6 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Web;
 using Kudu.Contracts.Tracing;
-using Kudu.Core.Infrastructure;
 using Kudu.Core.Tracing;
 
 namespace Kudu.Services.Web.Tracing
@@ -267,7 +266,12 @@ namespace Kudu.Services.Web.Tracing
 
             try
             {
-                System.Environment.SetEnvironmentVariable(Constants.HttpHost, request.Url.Host);
+                // RDBug 6738223 : AlwaysOn request again SCM has wrong Host Name to main site
+                // Ignore Always on request for now till bug is fixed
+                if (!string.Equals("AlwaysOn", request.UserAgent, StringComparison.OrdinalIgnoreCase))
+                {
+                    System.Environment.SetEnvironmentVariable(Constants.HttpHost, request.Url.Host);
+                }
             }
             catch
             {
