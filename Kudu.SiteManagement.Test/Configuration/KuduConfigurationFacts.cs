@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
+using Kudu.Client.Infrastructure;
 using Kudu.SiteManagement.Configuration;
 using Kudu.SiteManagement.Configuration.Section;
 using Kudu.SiteManagement.Configuration.Section.Cert;
@@ -14,6 +15,25 @@ namespace Kudu.SiteManagement.Test.Configuration
 {
     public class KuduConfigurationFacts
     {
+        [Fact]
+        public void BasicAuthCredential_NoConfiguration_ReturnDefaultCredential( ) {
+            var appSettingsFake = new NameValueCollection( );
+
+            IKuduConfiguration config = CreateConfiguration( null , appSettingsFake );
+            var defaultCredential = new System.Net.NetworkCredential( "admin" , "kudu" );
+            Assert.Equal( defaultCredential , config.BasicAuthCredential.GetCredentials( ) );
+        }
+        
+        [Fact]
+        public void BasicAuthCredential_WithConfigurationSection_ReturnBasicAuthCredentialProvider( ) {
+            var configFake = new KuduConfigurationSectionFake( );
+            configFake.SetFake( "basicAuth" , BasicAuthConfigurationElementFake.Fake( "testingUser" , "testingPw" ) );
+
+            IKuduConfiguration config = CreateConfiguration( configFake , new NameValueCollection( ) );
+            var testingCredential = new System.Net.NetworkCredential( "testingUser" , "testingPw" );
+            Assert.Equal( testingCredential , config.BasicAuthCredential.GetCredentials( ) );
+        }
+
         [Fact]
         public void CustomHostNamesEnabled_NoConfiguration_DefaultsToFalse()
         {

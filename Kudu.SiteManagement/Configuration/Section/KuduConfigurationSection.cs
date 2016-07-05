@@ -41,5 +41,13 @@ namespace Kudu.SiteManagement.Configuration.Section
         {
             get { return this["certificateStores"] as CertificateStoresConfigurationElementCollection; }
         }
+
+
+        [ConfigurationProperty( "basicAuth" , IsRequired = false )]
+        public BasicAuthConfigurationElement BasicAuthCredential
+        {
+            get { return this[ "basicAuth" ] as BasicAuthConfigurationElement; }
+        }
+
     }
 }
