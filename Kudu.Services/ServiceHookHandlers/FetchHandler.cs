@@ -302,11 +302,15 @@ namespace Kudu.Services
                 nextMarkerFileUTC = FileSystemHelpers.GetLastWriteTimeUtc(_markerFilePath);
             } while (deploymentInfo.IsReusable && currentMarkerFileUTC != nextMarkerFileUTC);
 
-            if (lastChange != null)
+            if (lastChange != null && deploymentInfo.TargetChangeset != null)
             {
-                // if last change is not null, mean there was at least one deployoment happened
-                // since deployment is now done, trigger swap if enabled
-                await _autoSwapHandler.HandleAutoSwap(lastChange.Id, _deploymentManager.GetLogger(lastChange.Id), _tracer);
+                IDeploymentStatusFile statusFile = _status.Open(deploymentInfo.TargetChangeset.Id);
+                if (statusFile.Status == DeployStatus.Success)
+                {
+                    // if last change is not null and finish successfully, mean there was at least one deployoment happened
+                    // since deployment is now done, trigger swap if enabled
+                    await _autoSwapHandler.HandleAutoSwap(lastChange.Id, _deploymentManager.GetLogger(lastChange.Id), _tracer);
+                }
             }
         }
 
