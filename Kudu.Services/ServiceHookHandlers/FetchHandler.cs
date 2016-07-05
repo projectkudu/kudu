@@ -302,9 +302,9 @@ namespace Kudu.Services
                 nextMarkerFileUTC = FileSystemHelpers.GetLastWriteTimeUtc(_markerFilePath);
             } while (deploymentInfo.IsReusable && currentMarkerFileUTC != nextMarkerFileUTC);
 
-            if (lastChange != null && deploymentInfo.TargetChangeset != null)
+            if (lastChange != null)
             {
-                IDeploymentStatusFile statusFile = _status.Open(deploymentInfo.TargetChangeset.Id);
+                IDeploymentStatusFile statusFile = _status.Open(lastChange.Id);
                 if (statusFile.Status == DeployStatus.Success)
                 {
                     // if last change is not null and finish successfully, mean there was at least one deployoment happened
