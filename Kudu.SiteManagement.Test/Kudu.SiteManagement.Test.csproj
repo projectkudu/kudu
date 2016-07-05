@@ -72,6 +72,7 @@
     <Compile Include="Certificates\CertificateSearcherFacts.cs" />
     <Compile Include="Certificates\Fakes\X509Certificate2CollectionFake.cs" />
     <Compile Include="Configuration\Fakes\ApplicationBindingConfigurationElementFake.cs" />
+    <Compile Include="Configuration\Fakes\BasicAuthConfigurationElementFake.cs" />
     <Compile Include="Configuration\Fakes\BindingsConfigurationElementCollectionFake.cs" />
     <Compile Include="Configuration\Fakes\CertificateStoreConfigurationElementFake.cs" />
     <Compile Include="Configuration\Fakes\CertificateStoresConfigurationElementCollectionFake.cs" />
@@ -88,6 +89,10 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Kudu.Client\Kudu.Client.csproj">
+      <Project>{222E740B-EF14-4976-A9DC-C12CF57A46A2}</Project>
+      <Name>Kudu.Client</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Kudu.SiteManagement\Kudu.SiteManagement.csproj">
       <Project>{D5669C1D-3408-4CEE-8C1B-D86D03D27EE2}</Project>
       <Name>Kudu.SiteManagement</Name>

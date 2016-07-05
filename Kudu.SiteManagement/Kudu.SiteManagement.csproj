@@ -70,6 +70,7 @@
     <Compile Include="Configuration\IBindingConfiguration.cs" />
     <Compile Include="Configuration\ICertificateConfiguration.cs" />
     <Compile Include="Configuration\IKuduConfiguration.cs" />
+    <Compile Include="Configuration\Section\BasicAuthConfigurationElement.cs" />
     <Compile Include="Configuration\Section\Bindings\ApplicationBindingConfigurationElement.cs" />
     <Compile Include="Configuration\Section\Bindings\BindingConfigurationElement.cs" />
     <Compile Include="Configuration\Section\Bindings\BindingsConfigurationElementCollection.cs" />

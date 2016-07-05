@@ -10,6 +10,7 @@ using System.Net.Sockets;
 using System.Security.Cryptography.X509Certificates;
 using System.Web;
 using Kudu.SiteManagement.Configuration.Section;
+using Kudu.Client.Infrastructure;
 
 namespace Kudu.SiteManagement.Configuration
 {
@@ -20,6 +21,7 @@ namespace Kudu.SiteManagement.Configuration
         string ServiceSitePath { get; }
         string IISConfigurationFile { get; }
         bool CustomHostNamesEnabled { get; }
+        BasicAuthCredentialProvider BasicAuthCredential { get; }
 
         IEnumerable<IBindingConfiguration> Bindings { get; }
         IEnumerable<ICertificateStoreConfiguration> CertificateStores { get; }
@@ -127,6 +129,21 @@ namespace Kudu.SiteManagement.Configuration
             }
         }
 
+        public BasicAuthCredentialProvider BasicAuthCredential
+        {
+            get
+            {
+                if ( _section == null ||
+                    _section.BasicAuthCredential == null ||
+                    string.IsNullOrEmpty( _section.BasicAuthCredential.Username ) ||
+                    string.IsNullOrEmpty( _section.BasicAuthCredential.Password ) ) {
+                    return new BasicAuthCredentialProvider( "admin" , "kudu" );
+                }
+                return new BasicAuthCredentialProvider( _section.BasicAuthCredential.Username , _section.BasicAuthCredential.Password );
+            }
+        }
+
+
         private KuduConfiguration(string root, KuduConfigurationSection section, NameValueCollection appSettings)
         {
             RootPath = root;
@@ -149,5 +166,7 @@ namespace Kudu.SiteManagement.Configuration
             }
             yield return new BindingConfiguration(legacyBinding, UriScheme.Http, type, null);
         }
+
+
     }
 }

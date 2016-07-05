@@ -14,6 +14,7 @@ using Kudu.SiteManagement.Certificates;
 using Kudu.SiteManagement.Configuration;
 using Kudu.SiteManagement.Context;
 using Kudu.TestHarness.Xunit;
+using Kudu.Client.Infrastructure;
 
 namespace Kudu.TestHarness
 {
@@ -190,6 +191,7 @@ namespace Kudu.TestHarness
         public bool CustomHostNamesEnabled { get; private set; }
         public IEnumerable<IBindingConfiguration> Bindings { get; private set; }
         public IEnumerable<ICertificateStoreConfiguration> CertificateStores { get; private set; }
+        public BasicAuthCredentialProvider BasicAuthCredential { get; private set; }
 
         public KuduTestConfiguration()
         {
