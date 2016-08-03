@@ -226,7 +226,7 @@
 			promptBox.append(pid.text("").show());
 			promptBox.append(label.text(labelText).show());
 			label.html(label.html().replace(' ','&nbsp;'));
-			prompt = $('<span class="jquery-console-prompt"></span>');
+			prompt = $('<span class="jquery-console-prompt" aria-live="polite"></span>');
 			promptBox.append(prompt);
 			inner.append(promptBox);
 			updatePromptDisplay();
@@ -543,7 +543,7 @@
 		////////////////////////////////////////////////////////////////////////
 		// Display a message
 		function message(msg,className) {
-			var mesg = $('<div class="jquery-console-message" style="display: inline"></div>');
+			var mesg = $('<div class="jquery-console-message" aria-live="polite" style="display: inline"></div>');
 			if (className) mesg.addClass(className);
 			mesg.filledText(msg).hide();
 			inner.append(mesg);
