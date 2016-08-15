@@ -32,7 +32,7 @@
           <productId>NodeJS_0_10_35</productId>
         </dependency>
         <dependency>
-          <productId>iisnode_0_2_11</productId>
+          <productId>iisnode_0_2_21</productId>
         </dependency>
         <dependency>
           <productId>StaticContent</productId>
@@ -223,11 +223,11 @@
   </entry>
   <!-- entry for iisnode locked to a known version -->
   <entry>
-    <productId>iisnode_0_2_11</productId>
+    <productId>iisnode_0_2_21</productId>
     <metadata>
       <title>iisnode for iis 7/8 (x64)</title>
-      <id>https://github.com/azure/iisnode/releases/download/v0.2.11/iisnode-full-v0.2.11-x64.msi</id>
-      <version>0.2.11</version>
+      <id>https://github.com/tjanczuk/iisnode/releases/download/v0.2.21/iisnode-full-v0.2.21-x64.msi</id>
+      <version>0.2.21</version>
       <updated>2014-10-07</updated>
       <published>2014-10-07</published>
       <summary>iisnode for iis 7/8 (x64)</summary>
@@ -243,13 +243,13 @@
         <discoveryHint>
           <file>
             <filePath>%programfiles%\iisnode\iisnode.dll</filePath>
-            <minimumVersion>0.2.11.0</minimumVersion>
+            <minimumVersion>0.2.21.0</minimumVersion>
           </file>
         </discoveryHint>
         <discoveryHint>
           <file>
             <filePath>%programfiles(x86)%\iisnode\iisnode.dll</filePath>
-            <minimumVersion>0.2.11.0</minimumVersion>
+            <minimumVersion>0.2.21.0</minimumVersion>
           </file>
         </discoveryHint>
       </or>
@@ -268,8 +268,8 @@
         </osList>
         <installerFile>
           <fileSize>2072576</fileSize>
-          <installerURL>https://github.com/azure/iisnode/releases/download/v0.2.11/iisnode-full-v0.2.11-x64.msi</installerURL>
-          <sha1>D2AA5A51D54B7695A93257E4B3507759789A9887</sha1>
+          <installerURL>https://github.com/tjanczuk/iisnode/releases/download/v0.2.21/iisnode-full-v0.2.21-x64.msi</installerURL>
+          <sha1>c12ea95d03ed60fe7b9a8952580039902fdde37a</sha1>
         </installerFile>
         <installCommands>
           <msiInstall>
@@ -359,14 +359,26 @@
     </dependency>
     <!-- 
 			Visual Studio 2013: HKEY_CLASSES_ROOT\VisualStudio.DTE.12.0
+			Visual Studio 2014: HKEY_CLASSES_ROOT\VisualStudio.DTE.13.0
+			Visual Studio 2015: HKEY_CLASSES_ROOT\VisualStudio.DTE.14.0
 			Visual Studio Express 2013: HKEY_CLASSES_ROOT\VWDExpress.DTE.12.0
-			which mean, if machine already had any version of VS 2013 installed, we will skip VS installation
+			which mean, if machine already if these VS installed, we will skip VS installation
 		-->
     <discoveryHint>
       <or>
         <discoveryHint>
           <registry>
             <keyPath>HKEY_CLASSES_ROOT\VisualStudio.DTE.12.0</keyPath>
+          </registry>
+        </discoveryHint>
+		<discoveryHint>
+          <registry>
+            <keyPath>HKEY_CLASSES_ROOT\VisualStudio.DTE.13.0</keyPath>
+          </registry>
+        </discoveryHint>
+		<discoveryHint>
+          <registry>
+            <keyPath>HKEY_CLASSES_ROOT\VisualStudio.DTE.14.0</keyPath>
           </registry>
         </discoveryHint>
         <discoveryHint>
