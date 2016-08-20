@@ -1128,6 +1128,7 @@ project = myproject");
     public class HangProcessTestTests : GitRepositoryManagementTests
     {
         [Fact]
+        [KuduXunitTest(PrivateOnly = true)]
         public void HangProcessTest()
         {
             // Arrange
