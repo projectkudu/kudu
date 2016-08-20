@@ -164,7 +164,11 @@ namespace Kudu.Console
 
                     string branch = settingsManager.GetBranch();
                     ChangeSet changeSet = gitRepository.GetChangeSet(branch);
-                    autoSwapHander.HandleAutoSwap(changeSet.Id, deploymentManager.GetLogger(changeSet.Id), tracer).Wait();
+                    IDeploymentStatusFile statusFile = deploymentStatusManager.Open(changeSet.Id);
+                    if (statusFile != null && statusFile.Status == DeployStatus.Success)
+                    {
+                        autoSwapHander.HandleAutoSwap(changeSet.Id, deploymentManager.GetLogger(changeSet.Id), tracer).Wait();
+                    }
                 }
                 catch (Exception e)
                 {
