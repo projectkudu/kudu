@@ -186,6 +186,9 @@
   <data name="Log_PreparingDeployment" xml:space="preserve">
     <value>Preparing deployment for commit id '{0}'.</value>
   </data>
+  <data name="Log_DelayingBeforeDeployment" xml:space="preserve">
+    <value>Delaying deployment for {0}s.</value>
+  </data>
   <data name="Log_UnexpectedError" xml:space="preserve">
     <value>An unknown error has occurred. Check the diagnostic log for details.</value>
   </data>

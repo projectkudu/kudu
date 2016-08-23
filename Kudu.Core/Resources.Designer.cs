@@ -268,6 +268,15 @@ namespace Kudu.Core {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Delaying deployment for {0}s..
+        /// </summary>
+        internal static string Log_DelayingBeforeDeployment {
+            get {
+                return ResourceManager.GetString("Log_DelayingBeforeDeployment", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Using the following command to generate deployment script: &apos;azure site deploymentscript {0}&apos;..
         /// </summary>
         internal static string Log_DeploymentScriptGeneratorCommand {

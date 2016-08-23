@@ -544,6 +544,27 @@ namespace Kudu.Core.Deployment
                 string repositoryRoot = _environment.RepositoryPath;
                 var perDeploymentSettings = DeploymentSettingsManager.BuildPerDeploymentSettingsManager(repositoryRoot, _settings);
 
+                string delayMaxInStr = perDeploymentSettings.GetValue(SettingsKeys.MaxRandomDelayInSec);
+                if (!String.IsNullOrEmpty(delayMaxInStr))
+                {
+                    int maxDelay;
+                    if (!Int32.TryParse(delayMaxInStr, out maxDelay) || maxDelay < 0)
+                    {
+                        tracer.Trace("Invalid {0} value, expect a positive integer, received {1}", SettingsKeys.MaxRandomDelayInSec, delayMaxInStr);
+                    }
+                    else
+                    {
+                        tracer.Trace("{0} is set to {1}s", SettingsKeys.MaxRandomDelayInSec, maxDelay);
+                        Random rdn = new Random();
+                        int gap = rdn.Next(maxDelay);
+                        using (tracer.Step("Randomization applied to {0}, Start sleeping for {1}s", maxDelay, gap))
+                        {
+                            logger.Log(Resources.Log_DelayingBeforeDeployment, gap);
+                            await Task.Delay(TimeSpan.FromSeconds(gap));
+                        }
+                    }
+                }
+
                 try
                 {
                     using (tracer.Step("Determining deployment builder"))

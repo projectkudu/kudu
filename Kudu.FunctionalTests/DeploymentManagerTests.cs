@@ -71,6 +71,7 @@ namespace Kudu.FunctionalTests
             {
                 await ApplicationManager.RunAsync(appName, async appManager =>
                 {
+                    await appManager.SettingsManager.SetValue(SettingsKeys.MaxRandomDelayInSec, "10");
                     appManager.GitDeploy(repo.PhysicalPath);
                     var results = (await appManager.DeploymentManager.GetResultsAsync()).ToList();
 
@@ -100,7 +101,7 @@ namespace Kudu.FunctionalTests
                     Assert.NotNull(resultAgain.Url);
                     Assert.NotNull(resultAgain.LogUrl);
                     KuduAssert.VerifyUrl(resultAgain.Url, cred);
-                    KuduAssert.VerifyUrl(resultAgain.LogUrl, cred);
+                    KuduAssert.VerifyUrl(resultAgain.LogUrl, cred, "Delaying deployment");
 
                     repo.WriteFile("HelloWorld.txt", "This is a test");
                     Git.Commit(repo.PhysicalPath, "Another commit");
