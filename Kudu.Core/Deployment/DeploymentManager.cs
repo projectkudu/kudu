@@ -23,7 +23,7 @@ namespace Kudu.Core.Deployment
     {
         public readonly static string DeploymentScriptFileName = OSDetector.IsOnWindows() ? "deploy.cmd" : "deploy.sh";
 
-        private static readonly Random _random = new Random();
+        private static readonly Random _random = new Random(Guid.NewGuid().GetHashCode());
 
         private readonly ISiteBuilderFactory _builderFactory;
         private readonly IEnvironment _environment;
@@ -555,8 +555,7 @@ namespace Kudu.Core.Deployment
                     else
                     {
                         tracer.Trace("{0} is set to {1}s", SettingsKeys.MaxRandomDelayInSec, maxDelay);
-                        Random rdn = new Random();
-                        int gap = rdn.Next(maxDelay);
+                        int gap = _random.Next(maxDelay);
                         using (tracer.Step("Randomization applied to {0}, Start sleeping for {1}s", maxDelay, gap))
                         {
                             logger.Log(Resources.Log_DelayingBeforeDeployment, gap);
