@@ -23,7 +23,7 @@ namespace Kudu.Core.Deployment
     {
         public readonly static string DeploymentScriptFileName = OSDetector.IsOnWindows() ? "deploy.cmd" : "deploy.sh";
 
-        private static readonly Random _random = new Random( String.IsNullOrEmpty(System.Environment.GetEnvironmentVariable(Constants.HttpHost))? DateTime.Now.Millisecond : System.Environment.GetEnvironmentVariable(Constants.HttpHost).GetHashCode());
+        private static readonly Random _random = new Random(Guid.NewGuid().GetHashCode());
 
         private readonly ISiteBuilderFactory _builderFactory;
         private readonly IEnvironment _environment;
