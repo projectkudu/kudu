@@ -104,11 +104,8 @@ namespace Kudu.Core
             }
             else
             {
-                // in linux, rootPath is "/home", while .ssh folder need to under "/home/{user}", 
-                // and username and site name is always the same in actual deployment
-                string siteName = System.Environment.GetEnvironmentVariable("WEBSITE_SITE_NAME");
-                siteName = NormalizeSiteName(siteName);
-                _sshKeyPath = Path.Combine(rootPath, siteName, Constants.SSHKeyPath);
+                // in linux, rootPath is "/home", while .ssh folder need to under "/home/{user}"
+                _sshKeyPath = Path.Combine(rootPath, System.Environment.GetEnvironmentVariable("KUDU_RUN_USER"), Constants.SSHKeyPath);
             }
             _scriptPath = Path.Combine(binPath, Constants.ScriptsPath);
             _nodeModulesPath = Path.Combine(binPath, Constants.NodeModulesPath);
