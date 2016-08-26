@@ -345,7 +345,7 @@ fi" + "\n";
                 // git submodule sync will update related git/config to reflect that change
                 Execute("submodule sync");
 
-                ExecuteGenericGitCommandWithRetryAndCatchingWellKnownGitErrors(() => Execute("submodule update --init --recursive"));
+                ExecuteGenericGitCommandWithRetryAndCatchingWellKnownGitErrors(() => Execute("submodule update --init --recursive --force"));
             }
         }
 
