@@ -350,24 +350,5 @@ namespace Kudu.Core
             [return: MarshalAs(UnmanagedType.Bool)]
             public static extern bool GetDiskFreeSpaceEx(string path, out ulong freeBytes, out ulong totalBytes, out ulong diskFreeBytes);
         }
-
-        /// <summary>
-        /// Site name could be:
-        ///     ~1{actual name}__f0do
-        ///     mobile${actual name}
-        /// 
-        /// We only interested in the {actual name}
-        /// </summary>
-        private static string NormalizeSiteName(string siteName)
-        {
-            var normalizedSiteName = siteName;
-            if (normalizedSiteName.StartsWith("~1", StringComparison.Ordinal))
-            {
-                normalizedSiteName = normalizedSiteName.Substring(2);
-            }
-
-            normalizedSiteName = Regex.Replace(normalizedSiteName, "__[0-9a-f]{4}$", string.Empty).Replace("mobile$", string.Empty);
-            return normalizedSiteName;
-        }
     }
 }
