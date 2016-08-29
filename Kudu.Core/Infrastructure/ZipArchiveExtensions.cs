@@ -116,6 +116,8 @@ namespace Kudu.Core.Infrastructure
                     {
                         zipStream.CopyTo(fileStream);
                     }
+
+                    fileInfo.LastWriteTimeUtc = entry.LastWriteTime.ToUniversalTime().DateTime;
                 }
             }
         }
