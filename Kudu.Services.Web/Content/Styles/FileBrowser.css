@@ -1,4 +1,4 @@
-﻿html, body {
+html, body {
     height: 100%;
     margin: 0;
     padding: 0;
@@ -115,7 +115,7 @@ div.console {
     }
 
     div.console div.jquery-console-focus span.jquery-console-cursor {
-        background: white;
+        background: #5bc0de;
         color: black;
         animation: blink 1s steps(5, start) infinite;
         -webkit-animation: blink 1s steps(5, start) infinite;
@@ -148,6 +148,10 @@ div.console {
     div.console span.jquery-console-prompt-pid {
         color: green;
     }
+
+a#SwitchConsoleLink {
+    color: #222;
+}
 
 .edit-view {
     width: 100%;
@@ -214,4 +218,59 @@ div.editor {
 .table-nonfluid {
   table-layout: fixed;
   word-wrap: break-word;
+}
+
+.table-bordered > thead > tr > th {
+    border-width: 0 0 2px 0;
+    border-bottom-color: #5bc0de;
+    font-weight: normal;
+    background-color: #efefef;
+    color: #222;
+    text-shadow: 0 0 1px rgba(0,0,0,0.4);
+}
+
+/* Toast notifications */
+#toast {
+  font-size: 14px;
+  position: fixed;
+  z-index: 999;
+  margin-top: 66px;
+  top: 12px;
+  right: 12px;
+}
+
+.notification {
+  position: relative;
+  overflow: hidden;
+  margin-left: 60px;
+  margin-top: 10px;
+  margin-right: 10px;
+  width: 380px;
+  border-radius: 3px;
+  color: #fff;
+  right: -400px;
+  box-shadow: 0 0 8px #999;
+}
+
+.error {
+  color: #fff;
+  background-color: #222;
+}
+
+.row-eq-height {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+}
+
+#toast-close {
+  background-color: #ef0000;
+  color: #fff;
+  padding: 10px 30px 10px 10px;
+  cursor: default;
+}
+
+#toast-msg {
+  padding: 10px;
 }

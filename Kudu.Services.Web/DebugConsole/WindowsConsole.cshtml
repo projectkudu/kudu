@@ -1,4 +1,4 @@
-﻿@{
+@{
     Layout = "~/_Layout.cshtml";
     Page.Title = "Diagnostic Console";
 }
@@ -12,6 +12,10 @@
 }
 
 <div id="main" class="container">
+
+    <!-- Render toast notifications here -->
+    <div id="toast"></div>
+
     <div class="view main-view" data-bind="visible: !fileEdit()">
         <div id="fileList">
             <div id="operations" class="h3" style="position: relative">
@@ -19,11 +23,23 @@
                     <a href="#" data-bind="click: selected().selectParent, attr: { title: selected().parent && ('Up to ' + selected().parent.name()) }">...</a> /
                 </span>
                 <span data-bind="text: selected().name()">/</span>
-                <a href="#">
-                    <i class="glyphicon glyphicon-plus " title="Add Folder" id="createFolder"></i>
-                </a>
-                |
+
+                <span class="dropdown">
+                  <button style="padding: 2px 6px" class="btn dropdown-toggle" type="button" id="new-item-dropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                      <i class="glyphicon glyphicon-plus "></i>
+                  </button>
+                  <ul class="dropdown-menu" aria-labelledby="new-item-dropdown">
+                    <li><a href="#" id="createFolder">New folder</a></li>
+                    <li><a href="#" id="createFile">New file</a></li>
+                  </ul>
+                </span>
+
+                <span style="color: #ddd; margin-left: 5px; margin-right: 5px">|</span>
+
                 <span data-bind="text: selected().children().length">0</span> items
+
+                <span style="color: #ddd; margin-left: 5px; margin-right: 0">|</span>
+
                 <a class="btn" href="#" data-bind="click: function() { root.selectNode() }">
                     <i class="h4 glyphicon glyphicon-home" title="Home"></i>
                 </a>
@@ -33,6 +49,7 @@
                 <a class="btn" href="#" data-bind="click: function() { selectSpecialDir('SystemDrive') }">
                     <i class="h4 glyphicon glyphicon-hdd" title="System Drive"></i>
                 </a>
+
                 <div class="spinner">
                     <button class="btn btn-info box-border" style="display: none" data-bind="visible: isTransferInProgress(), click: showCopyProgressModal">
                         <span id="copy-percentage" title="percentage copy"></span>
@@ -40,6 +57,7 @@
                     <img data-bind="visible: koprocessing()" class="paKman" src="/Content/Images/paKman.gif" title="Please wait" />
                     <i data-bind="visible: errorText, attr: {title: errorText}" class="alert-warning glyphicon glyphicon-exclamation-sign" style="display: none"></i>
                 </div>
+
             </div>
             <div class="table-container">
                 <div id="upload-unzip" class="show-on-hover">
@@ -84,6 +102,7 @@
                                 <span data-bind="if: !isDirectory()">
                                     <i class="glyphicon glyphicon-file" title="File"></i>
                                     <span data-bind="text: name"></span>
+                                    <input type="text" data-bind="value: name, valueUpdate: 'afterKeyDown', visible: editing()" />
                                 </span>
 
                             </td>

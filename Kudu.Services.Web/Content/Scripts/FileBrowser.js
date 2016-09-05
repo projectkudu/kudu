@@ -200,8 +200,28 @@ $.connection.hub.start().done(function () {
 
         createFolder: function (folder) {
             return $.ajax({
+                // Add trailing slash for new folder when calling VFS
+                // https://github.com/projectkudu/kudu/wiki/REST-API
                 url: folder.href.replace(/#/g, encodeURIComponent("#")) + "/",
-                method: "PUT"
+                method: "PUT",
+                error:  function (xhr, status, error) {
+                    if (xhr.statusText === 'error') {
+                        showErrorAsToast('Error when calling virtual file system REST backend. Check F12 Console for more.');
+                    }
+                    else {
+                        showErrorAsToast(xhr);
+                    }
+                }
+            });
+        },
+
+        createFile: function (file) {
+            return $.ajax({
+                // No trailing slash for new file when calling VFS
+                // https://github.com/projectkudu/kudu/wiki/REST-API
+                url: file.href.replace(/#/g, encodeURIComponent("#")),
+                method: "PUT",
+                error: function (xhr, status, error) { showErrorAsToast(xhr); }
             });
         },
 
@@ -299,7 +319,9 @@ $.connection.hub.start().done(function () {
                         viewModel.selected(this.parent);
                     }
                     viewModel.processing(false);
-                }).fail(showError);
+                }).fail(function(error) {
+                    showErrorAsToast(error);
+                });
             }
         }
         this.selectNode = function () {
@@ -374,7 +396,8 @@ $.connection.hub.start().done(function () {
                 .done(function () {
                     statusbar.acknowledgeSave();
                 }).fail(function (error) {
-                    showErrorAsAlert(error);
+                    removeAllToasts();
+                    showErrorAsToast(error);
                     statusbar.errorState.set();
                 });
         }
@@ -387,8 +410,9 @@ $.connection.hub.start().done(function () {
                     viewModel.fileEdit(null);
                     statusbar.reset();
                 }).fail(function (error) {
-                    showErrorAsAlert(error);
-                    statusbar.errorState.set()
+                    removeAllToasts();
+                    showErrorAsToast(error);
+                    statusbar.errorState.set();
                 });
         }
     }
@@ -408,6 +432,7 @@ $.connection.hub.start().done(function () {
             cancelEdit: function () {
                 viewModel.fileEdit(null);
                 statusbar.reset();
+                removeAllToasts();
             },
             selectSpecialDir: function (name) {
                 var item = viewModel.specialDirsIndex()[name];
@@ -449,12 +474,6 @@ $.connection.hub.start().done(function () {
         });
         return result;
     }, viewModel),
-
-    viewModel.koprocessing.subscribe(function (newValue) {
-        if (newValue) {
-            viewModel.errorText("");
-        }
-    });
 
     viewModel.showSiteRoot = ko.computed(function () {
         if ($.isEmptyObject(viewModel.specialDirsIndex())) {
@@ -543,7 +562,7 @@ $.connection.hub.start().done(function () {
         }
     };
 
-    //monitor file upload progress 
+    //monitor file upload progress
     function copyProgressHandlingFunction(e,uniqueUrl,forceUpdateModal) {
         if (e && uniqueUrl && e.lengthComputable) {
             copyObjectsManager.addCopyStats(uniqueUrl, e.loaded, e.total); //add/update stats
@@ -552,12 +571,12 @@ $.connection.hub.start().done(function () {
         var copyObjs = copyObjectsManager.getCopyStats();
 
         $('#copy-percentage').text(perc + "%");
-        
+
         if(perc != 100 && perc != 0)  {
             viewModel.isTransferInProgress(true);
         }
 
-        //handler for clearing out cache once it gets too large 
+        //handler for clearing out cache once it gets too large
         var currentObjCount = Object.keys(copyObjs).length;
         if (currentObjCount > 2000) {
             for (var i = 0; i < 1000; i++) { //delete oldest 1000 copy prog objects
@@ -579,7 +598,7 @@ $.connection.hub.start().done(function () {
                     modalHeaderText += ' ' +((_temp = copyObjectsManager.getInfoMessage()) ? _temp : "");
                 $('#files-transfered-modal .modal-header').html(modalHeaderText);
             }
-        
+
     }
 
     function setupFileSystemWatcher() {
@@ -656,6 +675,25 @@ $.connection.hub.start().done(function () {
                 viewModel.selected().children.remove(newFolder);
             });
             $("#createFolder").prop("disabled", false);
+        });
+    });
+
+    $("#createFile").click(function (evt) {
+        evt.preventDefault();
+
+        var newFile = new node({ name: "", type: "", href: "", editing: true }, viewModel.selected());
+        $(this).prop("disabled", true);
+        viewModel.selected().children.unshift(newFile);
+        $("#fileList input[type='text']").focus();
+
+        newFile.name.subscribe(function (value) {
+            newFile.href = trimTrailingSlash(newFile.parent.href) + "/" + value;
+            newFile._href(newFile.href);
+            newFile.editing(false);
+            Vfs.createFile(newFile).fail(function () {
+                viewModel.selected().children.remove(newFile);
+            });
+            $("#createFile").prop("disabled", false);
         });
     });
 
@@ -822,13 +860,61 @@ $.connection.hub.start().done(function () {
             $('#403-error-modal').modal();
         }
         viewModel.processing(false);
-        viewModel.errorText(JSON.parse(error.responseText).Message);
+        // Should we also display a '403 Forbidden' toast? It's probably too much.
+        // showErrorAsToast(error);
     }
 
-    function showErrorAsAlert(error) {
+    function showErrorAsToast(error) {
         viewModel.processing(false);
-        var msg = JSON.parse(error.responseText).Message;
-        alert(msg);
+        // Check if 'error' has a status property.
+        // If true, treat as xhr response, otherwise string.
+        if (error.status) {
+            try {
+                var message = JSON.parse(error.responseText).Message;
+            }
+            catch (e) {
+                // error.responseText may be poisoned with HTML
+                // (i.e. session expires and the 403 Forbidden response from App Service contains tons of markup)
+                // Let's just ignore it if that's the case. We would need Cortana or something to parse that and
+                // extract a meaningful message.
+                if ( !(/\<html\>/i.test(error.responseText)) ) {
+                    var message = error.responseText;
+                }
+            }
+            var status = error.status;
+            var statusText = error.statusText;
+            var textToRender =  status + ' ' + statusText + (typeof message  !== 'undefined' ? ': '+ message : '');
+            toast(textToRender);
+        }
+        // 'error' is a string
+        else toast(error);
     }
 
 });
+
+// Toast notifications for backend errors
+function toast(errorMsg) {
+    var scaffold = '\
+        <div class="row row-eq-height error notification">\
+            <div id="toast-close" class="col-md-1">\
+                <i class="glyphicon glyphicon-remove" aria-hidden="true"></i>\
+            </div>\
+            <div id="toast-msg" class="col-md-10">\
+                <p><strong>ERROR</strong></p>' +
+                    errorMsg +
+            '</div>\
+        </div>';
+    var item = $(scaffold);
+    $('#toast').append($(item));
+    $(item).animate({'right': '12px'}, 'fast');
+    $('#toast').on('click','#toast-close', function(){
+        var notification = $(this).parent();
+        notification.animate({'right': '-400px'}, function(){
+            notification.remove();
+        });
+    });
+}
+
+function removeAllToasts() {
+    $('.notification').remove();
+}
