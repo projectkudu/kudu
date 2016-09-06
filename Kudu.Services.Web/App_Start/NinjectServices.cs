@@ -175,8 +175,19 @@ namespace Kudu.Services.Web.App_Start
             var shutdownDetector = new ShutdownDetector();
             shutdownDetector.Initialize();
 
+            //TODO 1 Setting object, 1 extra read
+            XmlSettings.Settings xmlS = new XmlSettings.Settings(GetSettingsPath(environment));
+            try
+            {
+                xmlS.GetValue("", "");
+            }
+            catch (Exception)
+            {
+                File.Delete(GetSettingsPath(environment));
+            }
+
             IDeploymentSettingsManager noContextDeploymentsSettingsManager =
-                new DeploymentSettingsManager(new XmlSettings.Settings(GetSettingsPath(environment)));
+                new DeploymentSettingsManager(xmlS);
 
             TraceServices.TraceLevel = noContextDeploymentsSettingsManager.GetTraceLevel();
 
@@ -218,7 +229,7 @@ namespace Kudu.Services.Web.App_Start
                                                      .InRequestScope();
 
             // Deployment Service
-            kernel.Bind<ISettings>().ToMethod(context => new XmlSettings.Settings(GetSettingsPath(environment)))
+            kernel.Bind<ISettings>().ToMethod(context => xmlS)
                                              .InRequestScope();
             kernel.Bind<IDeploymentSettingsManager>().To<DeploymentSettingsManager>()
                                              .InRequestScope();
@@ -677,7 +688,7 @@ namespace Kudu.Services.Web.App_Start
 
         private static string GetSettingsPath(IEnvironment environment)
         {
-            return Path.Combine(environment.DeploymentsPath, Constants.DeploySettingsPath);
+            return Path.Combine(environment.DeploymentsPath, Constants.DeploySettingsPath); 
         }
 
         private static void EnsureHomeEnvironmentVariable()
