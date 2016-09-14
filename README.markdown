@@ -1,11 +1,11 @@
 
 <img src="http://azuredeploy.net/kudu.svg" height="100" width="100">
 
-### Kudu
+# Kudu
 
 Kudu is the engine behind [git deployments in Azure App Service](https://azure.microsoft.com/en-us/documentation/articles/web-sites-publish-source-control/). It can also run outside of Azure.
 
-![KuduDebugConsole](https://cloud.githubusercontent.com/assets/6472374/16232400/0ba1d0e4-37d3-11e6-9880-4c5bc4a0c217.png)
+![KuduDebugConsole](https://cloud.githubusercontent.com/assets/6472374/18505497/32f34602-7a70-11e6-9e94-815356fb6ccf.PNG)
 
 
 ### Documentation
