@@ -5,7 +5,7 @@
 
 Kudu is the engine behind [git deployments in Azure App Service](https://azure.microsoft.com/en-us/documentation/articles/web-sites-publish-source-control/). It can also run outside of Azure.
 
-![KuduDebugConsole](https://cloud.githubusercontent.com/assets/6472374/18505978/7526dbcc-7a72-11e6-9a9a-8aa78c2a05aa.PNG)
+![KuduDebugConsole](https://cloud.githubusercontent.com/assets/6472374/18506818/58d06a20-7a76-11e6-8453-e6fa31c99b94.png)
 
 
 ### Documentation
