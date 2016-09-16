@@ -89,7 +89,7 @@ namespace Kudu.Core.Deployment
         public IEnumerable<LogEntry> GetLogEntries(string id)
         {
             ITracer tracer = _traceFactory.GetTracer();
-            using (tracer.Step("DeploymentManager.GetLogEntries(id)"))
+            using (tracer.Step($"DeploymentManager.GetLogEntries(id:{id})"))
             {
                 string path = GetLogPath(id, ensureDirectory: false);
 
@@ -116,7 +116,7 @@ namespace Kudu.Core.Deployment
         public IEnumerable<LogEntry> GetLogEntryDetails(string id, string entryId)
         {
             ITracer tracer = _traceFactory.GetTracer();
-            using (tracer.Step("DeploymentManager.GetLogEntryDetails(id, entryId)"))
+            using (tracer.Step($"DeploymentManager.GetLogEntryDetails(id:{id}, entryId:{entryId}"))
             {
                 string path = GetLogPath(id, ensureDirectory: false);
 
@@ -136,7 +136,7 @@ namespace Kudu.Core.Deployment
         public void Delete(string id)
         {
             ITracer tracer = _traceFactory.GetTracer();
-            using (tracer.Step("DeploymentManager.Delete(id)"))
+            using (tracer.Step($"DeploymentManager.Delete(id:{id})"))
             {
                 string path = GetRoot(id, ensureDirectory: false);
 
@@ -181,7 +181,7 @@ namespace Kudu.Core.Deployment
                 IDeploymentStatusFile statusFile = null;
                 try
                 {
-                    deployStep = tracer.Step("DeploymentManager.Deploy(id)");
+                    deployStep = tracer.Step($"DeploymentManager.Deploy(id:{id})");
                     // Remove the old log file for this deployment id
                     string logPath = GetLogPath(id);
                     FileSystemHelpers.DeleteFileSafe(logPath);

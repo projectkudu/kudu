@@ -136,6 +136,8 @@
     <Compile Include="Deployment\BuildPropertyProvider.cs" />
     <Compile Include="Deployment\DeploymentStatusFileExtensions.cs" />
     <Compile Include="Deployment\DeploymentStatusManager.cs" />
+    <Compile Include="Deployment\Generator\FunctionAppBuilder.cs" />
+    <Compile Include="Deployment\Generator\FunctionAppEnabler.cs" />
     <Compile Include="Deployment\Generator\DotNetConsoleBuilder.cs" />
     <Compile Include="Deployment\Generator\CustomGeneratorCommandSiteBuilder.cs" />
     <Compile Include="Deployment\Generator\ExternalCommandFactory.cs" />
