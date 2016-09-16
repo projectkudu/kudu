@@ -151,6 +151,10 @@ namespace Kudu.Core.Deployment.Generator
             {
                 return new GoSiteBuilder(_environment, perDeploymentSettings, _propertyProvider, repositoryRoot, projectPath);
             }
+            else if (IsFunctionApp(sourceProjectPath))
+            {
+                return new FunctionAppBuilder(_environment, perDeploymentSettings, _propertyProvider, repositoryRoot, projectPath);
+            }
 
             return new BasicBuilder(_environment, perDeploymentSettings, _propertyProvider, repositoryRoot, projectPath);
         }
@@ -168,6 +172,11 @@ namespace Kudu.Core.Deployment.Generator
         private static bool IsPythonSite(string projectPath)
         {
             return PythonSiteEnabler.LooksLikePython(projectPath);
+        }
+
+        private static bool IsFunctionApp(string projectPath)
+        {
+            return FunctionAppEnabler.LooksLikeFunctionApp(projectPath);
         }
 
         private ISiteBuilder ResolveProject(string repositoryRoot, IDeploymentSettingsManager perDeploymentSettings, IFileFinder fileFinder, bool tryWebSiteProject = false, SearchOption searchOption = SearchOption.AllDirectories)
