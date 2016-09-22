@@ -60,12 +60,12 @@ namespace Kudu.Services.ServiceHookHandlers
 
             info.TargetChangeset = ParseChangeSet(info.NewRef, commits);
 
-            info.RepositoryUrl = determineSecurityProtocol(repository);
+            info.RepositoryUrl = DetermineSecurityProtocol(repository);
 
             return info;            
         }
 
-        protected virtual string determineSecurityProtocol(JObject repository)
+        protected virtual string DetermineSecurityProtocol(JObject repository)
         {
             // keep the old code
             string repositoryUrl = repository.Value<string>("url");

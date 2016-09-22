@@ -1,27 +1,26 @@
-﻿using System.Web;
-using Newtonsoft.Json.Linq;
-using Kudu.Core;
-using System;
+﻿using Kudu.Core;
 using Kudu.Core.Infrastructure;
+using Newtonsoft.Json.Linq;
+using System;
 using System.IO;
+using System.Web;
 
 namespace Kudu.Services.ServiceHookHandlers
 {
     public class GitHubHandler : GitHubCompatHandler
     {
-        private IEnvironment environmentInject { get; set; } = null;
-
+        private IEnvironment _environment;
         private const string PrivateKeyFile = "id_rsa";
-        // check for its presence to determine whether we use ssh or https
 
         public GitHubHandler()
         {
             // do nothing, 5 tests called this function
+            _environment = null;
         }
 
-        public GitHubHandler(IEnvironment enviroment)
+        public GitHubHandler(IEnvironment enviromentInject)
         {
-            environmentInject = enviroment;
+            _environment = enviromentInject;
         }
 
         public override DeployAction TryParseDeploymentInfo(HttpRequestBase request, JObject payload, string targetBranch, out DeploymentInfo deploymentInfo)
@@ -36,7 +35,7 @@ namespace Kudu.Services.ServiceHookHandlers
             return DeployAction.UnknownPayload;
         }
 
-        protected override string determineSecurityProtocol(JObject repository)
+        protected override string DetermineSecurityProtocol(JObject repository)
         {
             string repositoryUrl = repository.Value<string>("url");
             bool isPrivate = repository.Value<bool>("private");
@@ -44,11 +43,14 @@ namespace Kudu.Services.ServiceHookHandlers
             {
                 repositoryUrl = repository.Value<string>("ssh_url");
             }
-            else if (!String.Equals(new Uri(repositoryUrl).Host, "github.com"))
+            else if (!String.Equals(new Uri(repositoryUrl).Host, "github.com", StringComparison.OrdinalIgnoreCase))
             {
-                // github enterprise user, we don't really need to check for null...since only test will invoke githubhandler
-                if (environmentInject != null && FileSystemHelpers.FileExists(Path.Combine(environmentInject.SSHKeyPath, PrivateKeyFile)))
+                
+                if (_environment != null && FileSystemHelpers.FileExists(Path.Combine(_environment.SSHKeyPath, PrivateKeyFile)))
                 {
+                    // if we determine that a github request does not come from "github.com"
+                    // and it is not a private repository, but we still find a ssh key, we assume 
+                    // the request is from a private GHE 
                     repositoryUrl = repository.Value<string>("ssh_url");
                 }
             }
