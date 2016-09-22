@@ -54,26 +54,33 @@ namespace Kudu.Services.ServiceHookHandlers
             var info = new GitDeploymentInfo { RepositoryType = RepositoryType.Git };
             // github format
             // { repository: { url: "https//...", private: False }, ref: "", before: "", after: "" } 
-            info.RepositoryUrl = repository.Value<string>("url");
             info.Deployer = GetDeployer(request);
             info.NewRef = payload.Value<string>("after");
             var commits = payload.Value<JArray>("commits");
 
             info.TargetChangeset = ParseChangeSet(info.NewRef, commits);
 
+            info.RepositoryUrl = determineSecurityProtocol(repository);
+
+            return info;            
+        }
+
+        protected virtual string determineSecurityProtocol(JObject repository)
+        {
+            // keep the old code
+            string repositoryUrl = repository.Value<string>("url");
             // private repo, use SSH
             bool isPrivate = repository.Value<bool>("private");
             if (isPrivate)
             {
-                Uri uri = new Uri(info.RepositoryUrl);
+                Uri uri = new Uri(repositoryUrl);
                 if (uri.Scheme.StartsWith("http", StringComparison.OrdinalIgnoreCase))
                 {
                     var host = "git@" + uri.Host;
-                    info.RepositoryUrl = host + ":" + uri.AbsolutePath.TrimStart('/');
+                    repositoryUrl = host + ":" + uri.AbsolutePath.TrimStart('/');
                 }
             }
-
-            return info;            
+            return repositoryUrl;
         }
 
         protected static ChangeSet ParseChangeSet(string id, JArray commits)
