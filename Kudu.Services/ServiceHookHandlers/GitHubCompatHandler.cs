@@ -14,22 +14,44 @@ namespace Kudu.Services.ServiceHookHandlers
     {
         public override DeployAction TryParseDeploymentInfo(HttpRequestBase request, JObject payload, string targetBranch, out DeploymentInfo deploymentInfo)
         {
-            GitDeploymentInfo gitDeploymentInfo = GetDeploymentInfo(request, payload, targetBranch);
-            if (gitDeploymentInfo != null && gitDeploymentInfo.IsValid())
-            {
-                deploymentInfo = gitDeploymentInfo;
-                return IsDeleteCommit(gitDeploymentInfo.NewRef) ? DeployAction.NoOp : DeployAction.ProcessDeployment;
+            // check if this parser can be used to interprete request
+            if (ParserMatches(request, payload, targetBranch))
+            { 
+                // recognize request, decide whether it want to process it
+                if (IsNoop(request, payload, targetBranch))
+                {
+                    // Noop, deployment info is never used
+                    deploymentInfo = null;
+                    return DeployAction.NoOp;
+                }
+
+                // fill deploymentinfo body
+                deploymentInfo = new DeploymentInfo { RepositoryType = RepositoryType.Git, IsContinuous = true };
+                var commits = payload.Value<JArray>("commits");
+                string newRef = payload.Value<string>("after");
+                deploymentInfo.TargetChangeset = ParseChangeSet(newRef, commits);
+                deploymentInfo.RepositoryUrl = DetermineSecurityProtocol(payload);
+                deploymentInfo.Deployer = GetDeployer();
+
+                return DeployAction.ProcessDeployment;
             }
+
             deploymentInfo = null;
             return DeployAction.UnknownPayload;
+        } 
+
+        protected virtual bool IsNoop(HttpRequestBase request, JObject payload, string targetBranch)
+        { 
+            string newRef = payload.Value<string>("after");
+            return IsDeleteCommit(newRef);
         }
 
-        protected virtual GitDeploymentInfo GetDeploymentInfo(HttpRequestBase request, JObject payload, string targetBranch)
+        protected virtual bool ParserMatches(HttpRequestBase request, JObject payload, string targetBranch)
         {
             JObject repository = payload.Value<JObject>("repository");
             if (repository == null)
             {
-                return null;
+                return false;
             }
 
             // The format of ref is refs/something/something else
@@ -38,7 +60,7 @@ namespace Kudu.Services.ServiceHookHandlers
 
             if (String.IsNullOrEmpty(branch) || !branch.StartsWith("refs/", StringComparison.OrdinalIgnoreCase))
             {
-                return null;
+                return false;
             }
             else
             {
@@ -47,27 +69,16 @@ namespace Kudu.Services.ServiceHookHandlers
                 branch = branch.Substring(secondSlashIndex + 1);
                 if (!branch.Equals(targetBranch, StringComparison.OrdinalIgnoreCase))
                 {
-                    return null;
+                    return false;
                 }
             }
-
-            var info = new GitDeploymentInfo { RepositoryType = RepositoryType.Git };
-            // github format
-            // { repository: { url: "https//...", private: False }, ref: "", before: "", after: "" } 
-            info.Deployer = GetDeployer(request);
-            info.NewRef = payload.Value<string>("after");
-            var commits = payload.Value<JArray>("commits");
-
-            info.TargetChangeset = ParseChangeSet(info.NewRef, commits);
-
-            info.RepositoryUrl = DetermineSecurityProtocol(repository);
-
-            return info;            
+            return true;
         }
 
-        protected virtual string DetermineSecurityProtocol(JObject repository)
+        protected virtual string DetermineSecurityProtocol(JObject payload)
         {
             // keep the old code
+            JObject repository = payload.Value<JObject>("repository");
             string repositoryUrl = repository.Value<string>("url");
             // private repo, use SSH
             bool isPrivate = repository.Value<bool>("private");
@@ -100,7 +111,7 @@ namespace Kudu.Services.ServiceHookHandlers
             );
         }
 
-        protected virtual string GetDeployer(HttpRequestBase request)
+        protected virtual string GetDeployer()
         {
             return "External Provider";
         }

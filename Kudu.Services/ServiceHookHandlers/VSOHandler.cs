@@ -34,11 +34,11 @@ namespace Kudu.Services.ServiceHookHandlers
             return DeployAction.UnknownPayload;
         }
 
-        protected virtual GitDeploymentInfo GetDeploymentInfo(HttpRequestBase request, JObject payload, string targetBranch)
+        protected virtual DeploymentInfo GetDeploymentInfo(HttpRequestBase request, JObject payload, string targetBranch)
         {
             var sessionToken = payload.Value<JObject>("sessionToken");
 
-            var info = new GitDeploymentInfo
+            var info = new DeploymentInfo
             {
                 RepositoryType = RepositoryType.Git,
                 Deployer = GetDeployer(),

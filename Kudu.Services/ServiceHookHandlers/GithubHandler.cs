@@ -23,20 +23,20 @@ namespace Kudu.Services.ServiceHookHandlers
             _environment = enviromentInject;
         }
 
-        public override DeployAction TryParseDeploymentInfo(HttpRequestBase request, JObject payload, string targetBranch, out DeploymentInfo deploymentInfo)
+        protected override bool ParserMatches(HttpRequestBase request, JObject payload, string targetBranch)
         {
-            deploymentInfo = null;
-            if (request.Headers["X-Github-Event"] != null)
-            {
-                GitDeploymentInfo gitDeploymentInfo = GetDeploymentInfo(request, payload, targetBranch);
-                deploymentInfo = gitDeploymentInfo;
-                return deploymentInfo == null || IsDeleteCommit(gitDeploymentInfo.NewRef) ? DeployAction.NoOp : DeployAction.ProcessDeployment;
-            }
-            return DeployAction.UnknownPayload;
+            return request.Headers["X-Github-Event"] != null;
         }
 
-        protected override string DetermineSecurityProtocol(JObject repository)
+        protected override bool IsNoop(HttpRequestBase request, JObject payload, string targetBranch)
         {
+            // FIXME if githubcompathandler failed to parse the body => NOOP
+            return !(base.ParserMatches(request, payload, targetBranch)) || base.IsNoop(request, payload, targetBranch);
+        }
+
+        protected override string DetermineSecurityProtocol(JObject payload)
+        {
+            JObject repository = payload.Value<JObject>("repository");
             string repositoryUrl = repository.Value<string>("url");
             bool isPrivate = repository.Value<bool>("private");
             if (isPrivate)
@@ -57,7 +57,7 @@ namespace Kudu.Services.ServiceHookHandlers
             return repositoryUrl;
         }
 
-        protected override string GetDeployer(HttpRequestBase request)
+        protected override string GetDeployer()
         {
             return "GitHub";
         }
