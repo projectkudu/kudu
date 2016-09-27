@@ -84,7 +84,7 @@ namespace Kudu.Core.Jobs
 
             JobsBinariesPath = Path.Combine(Environment.JobsBinariesPath, jobsTypePath);
             JobsDataPath = Path.Combine(Environment.JobsDataPath, jobsTypePath);
-            JobsWatcher = new JobsFileWatcher(JobsBinariesPath, OnJobChanged, null, ListJobNames, traceFactory, analytics);
+            JobsWatcher = new JobsFileWatcher(JobsBinariesPath, OnJobChanged, null, ListJobNames, traceFactory, analytics, jobsTypePath);
             HostingEnvironment.RegisterObject(this);
         }
 

@@ -35,6 +35,7 @@ namespace Kudu.Core.Jobs
         private readonly Action<string> _onJobChanged;
         private readonly string _filter;
         private readonly Func<bool, IEnumerable<string>> _listJobNames;
+        private readonly string _jobType;
 
         public JobsFileWatcher(
             string watchedDirectoryPath,
@@ -42,7 +43,8 @@ namespace Kudu.Core.Jobs
             string filter,
             Func<bool, IEnumerable<string>> listJobNames,
             ITraceFactory traceFactory,
-            IAnalytics analytics)
+            IAnalytics analytics,
+            string jobType)
         {
             _traceFactory = traceFactory;
             _analytics = analytics;
@@ -50,6 +52,7 @@ namespace Kudu.Core.Jobs
             _onJobChanged = onJobChanged;
             _filter = filter;
             _listJobNames = listJobNames;
+            _jobType = jobType;
 
             _makeChangesTimer = new Timer(OnMakeChanges);
             _startFileWatcherTimer = new Timer(StartWatcher);
@@ -83,9 +86,13 @@ namespace Kudu.Core.Jobs
                 try
                 {
                     _onJobChanged(updatedJobName);
+
+                    _analytics.JobEvent(updatedJobName, "Job initialization success", _jobType, String.Empty);
                 }
                 catch (Exception ex)
                 {
+                    _analytics.JobEvent(updatedJobName, "Job initialization failed", _jobType, ex.ToString());
+
                     _traceFactory.GetTracer().TraceError(ex);
                 }
             }
@@ -149,6 +156,9 @@ namespace Kudu.Core.Jobs
             HostingEnvironment.QueueBackgroundWorkItem(cancellationToken =>
             {
                 Exception ex = e.GetException();
+
+                _analytics.UnexpectedException(ex, trace: false);
+
                 _traceFactory.GetTracer().TraceError(ex.ToString());
                 ResetWatcher();
             });
@@ -211,6 +221,9 @@ namespace Kudu.Core.Jobs
 
         private void MarkJobUpdated(string jobName)
         {
+            // job initialization and changed come thru this code path
+            _analytics.JobEvent(jobName, "Job initializing", _jobType, String.Empty);
+
             _updatedJobs.Add(jobName);
             _makeChangesTimer.Change(TimeoutUntilMakingChanges, Timeout.Infinite);
         }
