@@ -52,7 +52,7 @@ namespace Kudu.Core.Jobs
                 Logger.LogInformation("Next schedule expected in " + nextInterval);
             }
 
-            _analytics.JobEvent(TriggeredJob.Name.Fuzz(), $"Reschedule {nextInterval}", TriggeredJob.JobType, String.Empty);
+            _analytics.JobEvent(TriggeredJob.Name, $"Reschedule {nextInterval}", TriggeredJob.JobType, String.Empty);
 
             _timer.Change(nextInterval, Timeout.InfiniteTimeSpan);
         }

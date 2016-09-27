@@ -548,7 +548,7 @@ namespace Kudu.Core.Jobs
                         jobType += "/SDK";
                     }
 
-                    _analytics.JobStarted(_job.Name.Fuzz(), scriptFileExtension, jobType, _siteMode, Error, _trigger);
+                    _analytics.JobStarted(_job.Name, scriptFileExtension, jobType, _siteMode, Error, _trigger);
                 }
             }
 
