@@ -68,12 +68,12 @@ namespace Kudu.Services.ServiceHookHandlers
             return DeployAction.UnknownPayload;
         }
 
-        public virtual async Task Fetch(IRepository repository, DeploymentInfo deploymentInfo, string targetBranch, ILogger logger)
+        public virtual async Task Fetch(IRepository repository, DeploymentInfo deploymentInfo, string targetBranch, ILogger logger, ITracer tracer)
         {
             // (A)sync with dropbox
             var dropboxInfo = (DropboxInfo)deploymentInfo;
             _dropBoxHelper.Logger = logger;
-            deploymentInfo.TargetChangeset = await _dropBoxHelper.Sync(dropboxInfo, targetBranch, repository);
+            deploymentInfo.TargetChangeset = await _dropBoxHelper.Sync(dropboxInfo, targetBranch, repository, tracer);
         }
 
         private RepositoryType GetRepositoryType()

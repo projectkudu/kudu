@@ -65,11 +65,11 @@ namespace Kudu.Services.ServiceHookHandlers
             return DeployAction.ProcessDeployment;
         }
 
-        public async Task Fetch(IRepository repository, DeploymentInfo deploymentInfo, string targetBranch, ILogger logger)
+        public async Task Fetch(IRepository repository, DeploymentInfo deploymentInfo, string targetBranch, ILogger logger, ITracer tracer)
         {
             var oneDriveInfo = (OneDriveInfo)deploymentInfo;
             _oneDriveHelper.Logger = logger;
-            oneDriveInfo.TargetChangeset = await _oneDriveHelper.Sync(oneDriveInfo, repository);
+            oneDriveInfo.TargetChangeset = await _oneDriveHelper.Sync(oneDriveInfo, repository, tracer);
         }
     }
 }

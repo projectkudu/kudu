@@ -240,7 +240,7 @@ namespace Kudu.Services
 
                         try
                         {
-                            await deploymentInfo.Handler.Fetch(repository, deploymentInfo, targetBranch, innerLogger);
+                            await deploymentInfo.Handler.Fetch(repository, deploymentInfo, targetBranch, innerLogger, _tracer);
                         }
                         catch (BranchNotFoundException)
                         {

@@ -41,7 +41,7 @@ namespace Kudu.Services
         private const int MaxRetries = 2;
         private const int MaxFilesPerSecs = 9; // Dropbox rate-limit at 600/min or 10/s
 
-        private readonly ITracer _tracer;
+        private ITracer _tracer;
         private readonly IDeploymentStatusManager _status;
         private readonly IDeploymentSettingsManager _settings;
         private readonly IEnvironment _environment;
@@ -122,9 +122,12 @@ namespace Kudu.Services
             dropboxInfo.NewCursor = currentCursor;
         }
 
-        internal async Task<ChangeSet> Sync(DropboxInfo dropboxInfo, string branch, IRepository repository)
+        internal async Task<ChangeSet> Sync(DropboxInfo dropboxInfo, string branch, IRepository repository, ITracer tracer)
         {
             DropboxDeployInfo deployInfo = dropboxInfo.DeployInfo;
+
+            // use incoming tracer since it is background work
+            _tracer = tracer;
 
             ResetStats();
 

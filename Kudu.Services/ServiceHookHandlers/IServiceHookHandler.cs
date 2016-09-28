@@ -1,5 +1,6 @@
 ﻿using System.Threading.Tasks;
 using System.Web;
+using Kudu.Contracts.Tracing;
 using Kudu.Core.Deployment;
 using Kudu.Core.SourceControl;
 using Newtonsoft.Json.Linq;
@@ -15,7 +16,7 @@ namespace Kudu.Services.ServiceHookHandlers
         /// <returns>True if successfully parsed</returns>
         DeployAction TryParseDeploymentInfo(HttpRequestBase request, JObject payload, string targetBranch, out DeploymentInfo deploymentInfo);
 
-        Task Fetch(IRepository repository, DeploymentInfo deploymentInfo, string targetBranch, ILogger logger);
+        Task Fetch(IRepository repository, DeploymentInfo deploymentInfo, string targetBranch, ILogger logger, ITracer tracer);
     }
 
     public enum DeployAction

@@ -131,7 +131,7 @@ namespace Kudu.Services.Test
         private Mock<IServiceHookHandler> GetServiceHookHandler()
         {
             var handler = new Mock<IServiceHookHandler>();
-            handler.Setup(h => h.Fetch(It.IsAny<IRepository>(), It.IsAny<DeploymentInfo>(), It.IsAny<string>(), It.IsAny<ILogger>()))
+            handler.Setup(h => h.Fetch(It.IsAny<IRepository>(), It.IsAny<DeploymentInfo>(), It.IsAny<string>(), It.IsAny<ILogger>(), It.IsAny<ITracer>()))
                    .Returns(Task.FromResult(0));
             return handler;
         }

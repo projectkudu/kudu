@@ -99,7 +99,7 @@ namespace Kudu.Services.Test.OneDriveDeployment
 
             // perform action
             OneDriveHelper helper = CreateMockOneDriveHelper(handler: handler, tracer: mockTracer.Object);
-            await helper.Sync(info, repository);
+            await helper.Sync(info, repository, mockTracer.Object);
 
             // verification
             /*
