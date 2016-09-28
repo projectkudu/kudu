@@ -13,6 +13,7 @@ namespace Kudu.Core.Functions
         Task<IEnumerable<FunctionEnvelope>> ListFunctionsConfigAsync();
         Task<FunctionEnvelope> GetFunctionConfigAsync(string name);
         Task<FunctionSecrets> GetFunctionSecretsAsync(string name);
+        Task<MasterKey> GetMasterKeyAsync();
         Task<JObject> GetHostConfigAsync();
         Task<JObject> PutHostConfigAsync(JObject content);
         void DeleteFunction(string name, bool ignoreErrors);

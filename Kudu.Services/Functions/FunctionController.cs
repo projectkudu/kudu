@@ -86,6 +86,16 @@ namespace Kudu.Services.Functions
                         AddFunctionAppIdToEnvelope(await _manager.GetFunctionConfigAsync(name)), Request));
             }
         }
+        
+        [HttpGet]
+        public async Task<HttpResponseMessage> GetMasterKey()
+        {
+            var tracer = _traceFactory.GetTracer();
+            using (tracer.Step("FunctionsController.GetMasterKey()"))
+            {
+                return Request.CreateResponse(HttpStatusCode.OK, await _manager.GetMasterKeyAsync());
+            }
+        }
 
         [HttpPost]
         public async Task<HttpResponseMessage> GetSecrets(string name)

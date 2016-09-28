@@ -9,7 +9,7 @@
     <RootNamespace>Kudu.Performance</RootNamespace>
     <AssemblyName>Kudu.Performance</AssemblyName>
     <PlatformTarget>x86</PlatformTarget>
-    <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
     <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' OR '$(Configuration)|$(Platform)' == 'Release|x86' " />

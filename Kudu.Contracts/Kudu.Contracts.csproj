@@ -118,7 +118,11 @@
     <Compile Include="Editor\VfsStatEntry.cs" />
     <Compile Include="Functions\FunctionSecrets.cs" />
     <Compile Include="Functions\FunctionEnvelope.cs" />
+    <Compile Include="Functions\FunctionSecretsJsonOps.cs" />
     <Compile Include="Functions\IFunctionManager.cs" />
+    <Compile Include="Functions\IKeyJsonOps.cs" />
+    <Compile Include="Functions\MasterKey.cs" />
+    <Compile Include="Functions\MasterKeyJsonOps.cs" />
     <Compile Include="HashHelpers.cs" />
     <Compile Include="Hooks\ConflictException.cs" />
     <Compile Include="Hooks\WebHook.cs" />
