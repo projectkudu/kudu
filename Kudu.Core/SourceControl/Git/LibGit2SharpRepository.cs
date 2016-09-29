@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Kudu.Contracts.Settings;
+using Kudu.Core.Helpers;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Tracing;
 using LibGit2Sharp;
@@ -55,7 +56,7 @@ namespace Kudu.Core.SourceControl.Git
                 var dotGitPath = LibGit2Sharp.Repository.Init(RepositoryPath);
                 using (var repo = new LibGit2Sharp.Repository(dotGitPath))
                 {
-                    repo.Config.Set("core.autocrlf", true);
+                    repo.Config.Set("core.autocrlf", OSDetector.IsOnWindows());
 
                     // This speeds up git operations like 'git checkout', especially on slow drives like in Azure
                     repo.Config.Set("core.preloadindex", true);

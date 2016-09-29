@@ -122,7 +122,7 @@ namespace Kudu.Core.SourceControl.Git
             {
                 Execute(tracer, "init");
 
-                Execute(tracer, "config core.autocrlf true");
+                Execute(tracer, "config core.autocrlf {0}", OSDetector.IsOnWindows() ? "true" : "false");
 
                 // This speeds up git operations like 'git checkout', especially on slow drives like in Azure
                 Execute(tracer, "config core.preloadindex true");
