@@ -17,9 +17,9 @@ namespace Kudu.Services.Web.Services
             base.Dispose(disposing);
         }
 
-        public object RequestScope
+        public object GetRequestScope(IContext context)
         {
-            get { return HttpContext.Current; }
+            return HttpContext.Current;
         }
 
         public void Start()

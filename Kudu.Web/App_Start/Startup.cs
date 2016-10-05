@@ -13,8 +13,8 @@ using Kudu.Web.Models;
 using Ninject;
 using Ninject.Web.Common;
 
-[assembly: WebActivator.PreApplicationStartMethod(typeof(Kudu.Web.App_Start.Startup), "Start")]
-[assembly: WebActivator.ApplicationShutdownMethodAttribute(typeof(Kudu.Web.App_Start.Startup), "Stop")]
+[assembly: WebActivatorEx.PreApplicationStartMethod(typeof(Kudu.Web.App_Start.Startup), "Start")]
+[assembly: WebActivatorEx.ApplicationShutdownMethodAttribute(typeof(Kudu.Web.App_Start.Startup), "Stop")]
 
 namespace Kudu.Web.App_Start
 {

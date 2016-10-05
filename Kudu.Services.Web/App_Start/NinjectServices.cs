@@ -46,8 +46,8 @@ using Ninject.Web.Common;
 using Owin;
 using XmlSettings;
 
-[assembly: WebActivator.PreApplicationStartMethod(typeof(Kudu.Services.Web.App_Start.NinjectServices), "Start")]
-[assembly: WebActivator.ApplicationShutdownMethodAttribute(typeof(Kudu.Services.Web.App_Start.NinjectServices), "Stop")]
+[assembly: WebActivatorEx.PreApplicationStartMethod(typeof(Kudu.Services.Web.App_Start.NinjectServices), "Start")]
+[assembly: WebActivatorEx.ApplicationShutdownMethodAttribute(typeof(Kudu.Services.Web.App_Start.NinjectServices), "Stop")]
 [assembly: OwinStartup(typeof(Kudu.Services.Web.App_Start.NinjectServices.SignalRStartup))]
 
 namespace Kudu.Services.Web.App_Start
@@ -137,8 +137,6 @@ namespace Kudu.Services.Web.App_Start
                                              .InRequestScope();
 
             // General
-            kernel.Bind<HttpContextBase>().ToMethod(context => new HttpContextWrapper(HttpContext.Current))
-                                             .InRequestScope();
             kernel.Bind<IServerConfiguration>().ToConstant(serverConfiguration);
 
             kernel.Bind<IBuildPropertyProvider>().ToConstant(new BuildPropertyProvider());
