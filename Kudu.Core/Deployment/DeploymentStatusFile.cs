@@ -27,6 +27,7 @@ namespace Kudu.Core.Deployment
             Id = id;
 
             SiteName = GetSiteName(environment);
+            HostName = System.Environment.GetEnvironmentVariable("HTTP_HOST");
 
             if (document != null)
             {
@@ -149,6 +150,7 @@ namespace Kudu.Core.Deployment
         public bool IsTemporary { get; set; }
         public bool IsReadOnly { get; set; }
         public string SiteName { get; private set; }
+        public string HostName { get; private set; }
 
         public void Save()
         {
