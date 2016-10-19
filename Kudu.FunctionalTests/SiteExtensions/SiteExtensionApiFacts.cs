@@ -718,7 +718,7 @@ namespace Kudu.FunctionalTests.SiteExtensions
                     HttpStatusCode.Created == responseMessage.StatusCode
                     || HttpStatusCode.OK == responseMessage.StatusCode, string.Format(CultureInfo.InvariantCulture, "Action failed. Package: '{0}'", packageId));
 
-            } while ((DateTime.UtcNow - start).TotalSeconds < 30);
+            } while ((DateTime.UtcNow - start).TotalSeconds < 120);
 
             TestTracer.Trace("Polled for '{0}' seconds. Response status is '{1}'. Package: '{2}'", (DateTime.UtcNow - start).TotalSeconds, responseMessage.StatusCode, packageId);
             Assert.True(HttpStatusCode.OK == responseMessage.StatusCode, string.Format(CultureInfo.InvariantCulture, "Action failed. Package: {0}", packageId));
