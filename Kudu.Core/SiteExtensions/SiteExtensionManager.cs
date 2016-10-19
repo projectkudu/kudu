@@ -698,7 +698,21 @@ namespace Kudu.Core.SiteExtensions
                 info.ExtensionUrl = String.IsNullOrEmpty(info.LocalPath) ? null : GetFullUrl(info.ExtensionUrl);
             }
 
-            info.FeedUrl = GetSettingManager(info.Id).GetValue(_feedUrlSetting);
+            foreach (var setting in GetSettingManager(info.Id).GetValues())
+            {
+                if (String.Equals(setting.Key, _feedUrlSetting, StringComparison.OrdinalIgnoreCase))
+                {
+                    info.FeedUrl = setting.Value.Value<string>();
+                }
+                else if (String.Equals(setting.Key, _installUtcTimestampSetting, StringComparison.OrdinalIgnoreCase))
+                {
+                    DateTime installedDateTime;
+                    if (DateTime.TryParse(setting.Value.Value<string>(), out installedDateTime))
+                    {
+                        info.InstalledDateTime = installedDateTime.ToUniversalTime();
+                    }
+                }
+            }
         }
 
         private static string GetUrlFromApplicationHost(SiteExtensionInfo info)
