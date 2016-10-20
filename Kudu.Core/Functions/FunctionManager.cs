@@ -116,7 +116,12 @@ namespace Kudu.Core.Functions
             var functionDir = Path.Combine(_environment.FunctionsPath, name);
 
             // Make sure the function folder exists
-            FileSystemHelpers.EnsureDirectory(functionDir);
+            if (!FileSystemHelpers.DirectoryExists(functionDir))
+            {
+                // Cleanup any leftover artifacts from a function with the same name before.
+                DeleteFunction(name, ignoreErrors: true);
+                FileSystemHelpers.EnsureDirectory(functionDir);
+            }
 
             string newConfig = null;
             string configPath = Path.Combine(functionDir, Constants.FunctionsConfigFile);
@@ -248,9 +253,9 @@ namespace Kudu.Core.Functions
             return await GetHostConfigAsync();
         }
 
-        public void DeleteFunction(string name)
+        public void DeleteFunction(string name, bool ignoreErrors)
         {
-            FileSystemHelpers.DeleteDirectorySafe(GetFunctionPath(name), ignoreErrors: false);
+            FileSystemHelpers.DeleteDirectorySafe(GetFunctionPath(name), ignoreErrors);
             FileSystemHelpers.DeleteFileSafe(GetFunctionTestDataFilePath(name));
             FileSystemHelpers.DeleteFileSafe(GetFunctionSecretsFilePath(name));
             FileSystemHelpers.DeleteFileSafe(GetFunctionLogPath(name));

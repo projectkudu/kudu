@@ -103,7 +103,7 @@ namespace Kudu.Services.Functions
             var tracer = _traceFactory.GetTracer();
             using (tracer.Step($"FunctionsController.Delete({name})"))
             {
-                _manager.DeleteFunction(name);
+                _manager.DeleteFunction(name, ignoreErrors: false);
 
                 // Fire and forget SyncTrigger request.
                 FireSyncTriggers(tracer);
