@@ -54,7 +54,7 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.Azure.WebSites.DataProtection, Version=0.1.6.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Microsoft.Azure.WebSites.DataProtection.0.1.6-alpha43\lib\net46\Microsoft.Azure.WebSites.DataProtection.dll</HintPath>
+      <HintPath>..\packages\Microsoft.Azure.WebSites.DataProtection.0.1.6-alpha45\lib\net46\Microsoft.Azure.WebSites.DataProtection.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.Diagnostics.Tracing.EventSource">
