@@ -127,7 +127,7 @@ namespace Kudu.Core.Functions
             if (!FileSystemHelpers.DirectoryExists(functionDir))
             {
                 // Cleanup any leftover artifacts from a function with the same name before.
-                DeleteFunction(name, ignoreErrors: true);
+                DeleteFunctionArtifacts(name);
                 FileSystemHelpers.EnsureDirectory(functionDir);
             }
 
@@ -309,6 +309,11 @@ namespace Kudu.Core.Functions
         public void DeleteFunction(string name, bool ignoreErrors)
         {
             FileSystemHelpers.DeleteDirectorySafe(GetFunctionPath(name), ignoreErrors);
+            DeleteFunctionArtifacts(name);
+        }
+
+        private void DeleteFunctionArtifacts(string name)
+        {
             FileSystemHelpers.DeleteFileSafe(GetFunctionTestDataFilePath(name));
             FileSystemHelpers.DeleteFileSafe(GetFunctionSecretsFilePath(name));
             FileSystemHelpers.DeleteFileSafe(GetFunctionLogPath(name));
