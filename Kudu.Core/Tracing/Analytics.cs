@@ -56,7 +56,7 @@ namespace Kudu.Core.Tracing
                 NullToEmptyString(error));
         }
 
-        public void UnexpectedException(Exception exception, bool trace = true)
+        public void UnexpectedException(Exception exception, bool trace = true, string memberName = null, string sourceFilePath = null, int sourceLineNumber = 0)
         {
             KuduEventSource.Log.KuduException(
                 _serverConfiguration.ApplicationName,
@@ -64,7 +64,7 @@ namespace Kudu.Core.Tracing
                 string.Empty,
                 string.Empty,
                 string.Empty,
-                GetExceptionContent(exception, trace));
+                GetExceptionContent(exception, trace, memberName, sourceFilePath, sourceLineNumber));
         }
 
         public void UnexpectedException(Exception ex, string method, string path, string result, string message, bool trace = true)
@@ -114,14 +114,24 @@ namespace Kudu.Core.Tracing
             return s ?? String.Empty;
         }
 
-        private string GetExceptionContent(Exception exception, bool trace)
+        private string GetExceptionContent(Exception exception, bool trace, string memberName = null, string sourceFilePath = null, int sourceLineNumber = 0)
         {
+            string methodInfo = null;
+            if (!String.IsNullOrEmpty(memberName))
+            {
+                methodInfo = String.Format("{0}() at {1}:{2}", memberName, sourceFilePath, sourceLineNumber);
+            }
+
             if (trace)
             {
-                _traceFactory.GetTracer().TraceError(exception);
+                _traceFactory.GetTracer().TraceError(exception, methodInfo);
             }
 
             var strb = new StringBuilder();
+            if (!String.IsNullOrEmpty(methodInfo))
+            {
+                strb.AppendLine(methodInfo);
+            }
             strb.AppendLine(exception.ToString());
 
             var aggregate = exception as AggregateException;

@@ -114,7 +114,7 @@ namespace Kudu.Core.Test.Deployment
 
         [Theory]
         [MemberData("DeploymentStatusFileScenarios")]
-        public void CorruptedDeploymentStatusFileTests(string content, bool expectedNull, bool expectedError)
+        public void CorruptedDeploymentStatusFileTests(string content, bool expectedNull, string expectedError)
         {
             var id = Guid.NewGuid().ToString();
             var deploymentPath = @"x:\sites\deployments";
@@ -143,13 +143,13 @@ namespace Kudu.Core.Test.Deployment
                     .Verify(d => d.Delete(), Times.Never());
             }
 
-            if (expectedError)
+            if (!string.IsNullOrEmpty(expectedError))
             {
-                Mock.Get(analytics).Verify(a => a.UnexpectedException(It.IsAny<Exception>(), true), Times.Once());
+                Mock.Get(analytics).Verify(a => a.UnexpectedException(It.IsAny<Exception>(), true, expectedError, It.IsAny<string>(), It.IsAny<int>()), Times.Once());
             }
             else
             {
-                Mock.Get(analytics).Verify(a => a.UnexpectedException(It.IsAny<Exception>(), It.IsAny<bool>()), Times.Never());
+                Mock.Get(analytics).Verify(a => a.UnexpectedException(It.IsAny<Exception>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>()), Times.Never());
             }
         }
 
@@ -203,11 +203,11 @@ namespace Kudu.Core.Test.Deployment
   <is_temp>False</is_temp>
   <is_readonly>False</is_readonly>
 </deployment>";
-                yield return new object[] { validContent, false, false };
+                yield return new object[] { validContent, false, string.Empty };
 
                 // missing status.xml
                 string missingContent = null;
-                yield return new object[] { missingContent, true, false };
+                yield return new object[] { missingContent, true, string.Empty };
 
                 // invalid xml
                 var partialContent = "<?xml version=\"1.0\" encoding=\"utf-8\"" + @"?>
@@ -222,7 +222,7 @@ namespace Kudu.Core.Test.Deployment
   <statusText></statusText>
   <lastSuccessEndTime>2014-11-16T01:41:39.2074382Z</lastSuccessEndTime>
   <receivedTime>2014-11-16T01:4";
-                yield return new object[] { partialContent, true, true };
+                yield return new object[] { partialContent, true, "Open" };
 
                 // valid xml but missing properties
                 var missingProperty = "<?xml version=\"1.0\" encoding=\"utf-8\"" + @"?>
@@ -234,7 +234,7 @@ namespace Kudu.Core.Test.Deployment
   <message>change 28</message>
   <progress></progress>
 </deployment>";
-                yield return new object[] { missingProperty, true, true };
+                yield return new object[] { missingProperty, true, "Open" };
             }
         }
 

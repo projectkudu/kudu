@@ -220,8 +220,12 @@ namespace Kudu.Core.Jobs
                 IEnumerable<string> directoriesToRemove = allJobDataDirectories.Except(jobNames, StringComparer.OrdinalIgnoreCase);
                 foreach (string directoryToRemove in directoriesToRemove)
                 {
-                    TraceFactory.GetTracer().Trace("Removed job data path as the job was already deleted: " + directoryToRemove);
-                    FileSystemHelpers.DeleteDirectorySafe(Path.Combine(JobsDataPath, directoryToRemove));
+                    var tracer = TraceFactory.GetTracer();
+                    using (tracer.Step("CleanupDeletedJobs"))
+                    {
+                        tracer.Trace("Removed job data path as the job was already deleted: " + directoryToRemove);
+                        FileSystemHelpers.DeleteDirectorySafe(Path.Combine(JobsDataPath, directoryToRemove));
+                    }
                 }
             }
         }
