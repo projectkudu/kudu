@@ -188,6 +188,7 @@ namespace Kudu.Core.Jobs
         private bool TryGetLockIfSingleton()
         {
             bool isSingleton = JobSettings.IsSingleton;
+            _continuousJobLogger.LogInformation(string.Format("WebJob singleton setting is {0}", isSingleton));
             if (!isSingleton)
             {
                 return true;
@@ -195,6 +196,7 @@ namespace Kudu.Core.Jobs
 
             if (_singletonLock.Lock("Acquiring continuous WebJob singleton lock"))
             {
+                _continuousJobLogger.LogInformation("WebJob singleton lock is acquired");
                 return true;
             }
 

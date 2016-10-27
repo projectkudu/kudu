@@ -13,5 +13,6 @@ namespace Kudu.Contracts.Infrastructure
         public string OperationName { get; set; }
         public string AcquiredDateTime { get; set; }
         public string StackTrace { get; set; }
+        public string InstanceId { get; set; }
     }
 }
