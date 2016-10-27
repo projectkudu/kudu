@@ -24,11 +24,14 @@ namespace Kudu.Core.Jobs
         private Thread _continuousJobThread;
         private ContinuousJobLogger _continuousJobLogger;
         private readonly string _disableFilePath;
+        private readonly IAnalytics _analytics;
         private bool _alwaysOnWarningLogged;
+        private bool? _isSingleton;
 
         public ContinuousJobRunner(ContinuousJob continuousJob, IEnvironment environment, IDeploymentSettingsManager settings, ITraceFactory traceFactory, IAnalytics analytics)
             : base(continuousJob.Name, Constants.ContinuousPath, environment, settings, traceFactory, analytics)
         {
+            _analytics = analytics;
             _continuousJobLogger = new ContinuousJobLogger(continuousJob.Name, Environment, TraceFactory);
             _continuousJobLogger.RolledLogFile += OnLogFileRolled;
 
@@ -177,7 +180,7 @@ namespace Kudu.Core.Jobs
         {
             try
             {
-                _continuousJobLogger.LogInformation("WebJob is still running");
+                LogInformation("WebJob is still running");
             }
             catch
             {
@@ -188,6 +191,19 @@ namespace Kudu.Core.Jobs
         private bool TryGetLockIfSingleton()
         {
             bool isSingleton = JobSettings.IsSingleton;
+            if (_isSingleton == null || _isSingleton.Value != isSingleton)
+            {
+                if (_isSingleton == null)
+                {
+                    LogInformation("WebJob singleton setting is {0}", isSingleton);
+                }
+                else
+                {
+                    LogInformation("WebJob singleton setting changed from {0} to {1}", _isSingleton.Value, isSingleton);
+                }
+                _isSingleton = isSingleton;
+            }
+
             if (!isSingleton)
             {
                 return true;
@@ -195,6 +211,7 @@ namespace Kudu.Core.Jobs
 
             if (_singletonLock.Lock("Acquiring continuous WebJob singleton lock"))
             {
+                LogInformation("WebJob singleton lock is acquired");
                 return true;
             }
 
@@ -265,6 +282,13 @@ namespace Kudu.Core.Jobs
         protected override void UpdateStatus(IJobLogger logger, string status)
         {
             logger.ReportStatus(new ContinuousJobStatus() { Status = status });
+        }
+
+        private void LogInformation(string format, params object[] args)
+        {
+            var message = string.Format(format, args);
+            _analytics.JobEvent(JobName, message, Constants.ContinuousPath, string.Empty);
+            _continuousJobLogger.LogInformation(message);
         }
 
         private void WaitForTimeOrStop(TimeSpan timeSpan)

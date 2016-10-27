@@ -196,7 +196,8 @@ namespace Kudu.Core.Infrastructure
             var json = JObject.FromObject(new OperationLockInfo
             {
                 OperationName = operationName,
-                StackTrace = System.Environment.StackTrace
+                StackTrace = System.Environment.StackTrace,
+                InstanceId = InstanceIdUtility.GetShortInstanceId()
             });
 
             var bytes = Encoding.UTF8.GetBytes(json.ToString());
