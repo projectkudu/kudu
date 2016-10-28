@@ -58,6 +58,11 @@ namespace Kudu.Core.Tracing
 
         public void UnexpectedException(Exception exception, bool trace = true, string memberName = null, string sourceFilePath = null, int sourceLineNumber = 0)
         {
+            if (exception.AbortedByKudu())
+            {
+                return;
+            }
+
             KuduEventSource.Log.KuduException(
                 _serverConfiguration.ApplicationName,
                 string.Empty,
@@ -69,6 +74,11 @@ namespace Kudu.Core.Tracing
 
         public void UnexpectedException(Exception ex, string method, string path, string result, string message, bool trace = true)
         {
+            if (ex.AbortedByKudu())
+            {
+                return;
+            }
+
             KuduEventSource.Log.KuduException(
                 _serverConfiguration.ApplicationName,
                 NullToEmptyString(method),

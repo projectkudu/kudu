@@ -120,9 +120,12 @@ namespace Kudu.Core.Jobs
                         ReleaseSingletonLock();
                     }
                 }
-                catch (ThreadAbortException)
+                catch (ThreadAbortException ex)
                 {
-                    TraceFactory.GetTracer().TraceWarning("Thread was aborted, make sure WebJob was about to stop.");
+                    if (!ex.AbortedByKudu())
+                    {
+                        TraceFactory.GetTracer().TraceWarning("Thread was aborted, make sure WebJob was about to stop.");
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -242,7 +245,7 @@ namespace Kudu.Core.Jobs
                 // By default give the continuous job 5 seconds before killing it (after notifying the continuous job)
                 if (!_continuousJobThread.Join(JobSettings.GetStoppingWaitTime(DefaultContinuousJobStoppingWaitTimeInSeconds)))
                 {
-                    _continuousJobThread.Abort();
+                    _continuousJobThread.KuduAbort(String.Format("Stopping {0} {1} job", JobName, Constants.ContinuousPath));
                 }
 
                 _continuousJobThread = null;

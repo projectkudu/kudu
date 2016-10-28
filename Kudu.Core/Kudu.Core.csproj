@@ -360,6 +360,7 @@
     <Compile Include="Infrastructure\StringReader.cs" />
     <Compile Include="Infrastructure\Executable.cs" />
     <Compile Include="Infrastructure\IStringReader.cs" />
+    <Compile Include="Infrastructure\ThreadAbortExtensions.cs" />
     <Compile Include="Infrastructure\VsSolution.cs" />
     <Compile Include="Infrastructure\VsSolutionProject.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
