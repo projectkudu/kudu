@@ -134,7 +134,7 @@ namespace Kudu.Core.Tracing
 
             if (trace)
             {
-                _traceFactory.GetTracer().TraceError(exception, methodInfo);
+                _traceFactory.GetTracer().TraceError(exception, "{0}", methodInfo);
             }
 
             var strb = new StringBuilder();
