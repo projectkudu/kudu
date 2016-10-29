@@ -20,7 +20,7 @@ namespace Kudu.Core
         public static bool AbortedByKudu(this ThreadAbortException exception)
         {
             var state = exception?.ExceptionState as string;
-            return !String.IsNullOrEmpty(state) && state.StartsWith(KuduThreadAbortMessage);
+            return !String.IsNullOrEmpty(state) && state.StartsWith(KuduThreadAbortMessage, StringComparison.OrdinalIgnoreCase);
         }
 
         public static string GetString(this ThreadAbortException exception)
