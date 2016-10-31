@@ -1,12 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Web.Hosting;
-using Kudu.Contracts.Jobs;
-using Kudu.Contracts.Settings;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Tracing;
 
@@ -29,6 +25,7 @@ namespace Kudu.Core.Jobs
         private Timer _makeChangesTimer;
         private Timer _startFileWatcherTimer;
         private FileSystemWatcher _fileSystemWatcher;
+        private int _pendingOnError;
 
         private bool _makingChanges;
         private readonly string _watchedDirectoryPath;
@@ -83,6 +80,9 @@ namespace Kudu.Core.Jobs
 
             foreach (string updatedJobName in updatedJobs)
             {
+                // job initialization and changed come thru this code path
+                _analytics.JobEvent(updatedJobName, "Job initializing", _jobType, String.Empty);
+
                 try
                 {
                     _onJobChanged(updatedJobName);
@@ -150,17 +150,35 @@ namespace Kudu.Core.Jobs
 
         private void OnError(object sender, ErrorEventArgs e)
         {
+            // Looking at the log, we observe a burst of OnErrors in short timeframe such as ...
+            // System.ComponentModel.Win32Exception (0x80004005): The semaphore timeout period has expired
+            // System.ComponentModel.Win32Exception (0x80004005): The specified network name is no longer available
+            // System.IO.InternalBufferOverflowException: Too many changes at once in directory: ... 
+            // Many are due to storage issues - the later happened during deployment.
+            // This is to avoid queue multiple work items queueing.
+            if (Interlocked.Exchange(ref _pendingOnError, 1) == 1)
+            {
+                return;
+            }
+
             // Error event is raised when the directory being watched gets deleted
             // in cases when a parent to that directory is deleted, this handler should 
             // finish quickly so the deletion does not fail.
             HostingEnvironment.QueueBackgroundWorkItem(cancellationToken =>
             {
-                Exception ex = e.GetException();
+                try
+                {
+                    Exception ex = e.GetException();
 
-                _analytics.UnexpectedException(ex, trace: false);
+                    _analytics.UnexpectedException(ex, trace: false);
 
-                _traceFactory.GetTracer().TraceError(ex.ToString());
-                ResetWatcher();
+                    _traceFactory.GetTracer().TraceError(ex.ToString());
+                    ResetWatcher();
+                }
+                finally
+                {
+                    Interlocked.Exchange(ref _pendingOnError, 0);
+                }
             });
         }
 
@@ -214,6 +232,8 @@ namespace Kudu.Core.Jobs
 
                 if (!String.IsNullOrWhiteSpace(jobName))
                 {
+                    _analytics.JobEvent(jobName, String.Format("FileEvent {0} {1}", e.ChangeType, e.FullPath), _jobType, String.Empty);
+
                     MarkJobUpdated(jobName);
                 }
             }
@@ -221,10 +241,11 @@ namespace Kudu.Core.Jobs
 
         private void MarkJobUpdated(string jobName)
         {
-            // job initialization and changed come thru this code path
-            _analytics.JobEvent(jobName, "Job initializing", _jobType, String.Empty);
+            lock (_lockObject)
+            {
+                _updatedJobs.Add(jobName);
+            }
 
-            _updatedJobs.Add(jobName);
             _makeChangesTimer.Change(TimeoutUntilMakingChanges, Timeout.Infinite);
         }
 
