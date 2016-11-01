@@ -135,7 +135,6 @@ namespace Kudu.Core.Jobs
             {
                 _inPlaceWorkingDirectory = JobBinariesPath;
                 SafeKillAllRunningJobInstances(logger);
-                UpdateAppConfigs(WorkingDirectory, _analytics);
                 return;
             }
 
@@ -181,6 +180,10 @@ namespace Kudu.Core.Jobs
                     var tempJobInstancePath = Path.Combine(JobTempPath, Path.GetRandomFileName());
 
                     FileSystemHelpers.CopyDirectoryRecursive(JobBinariesPath, tempJobInstancePath);
+
+                    // this only applies to non-inplace job.   the reason is inplace is 
+                    // mostly applicable with nodejs and not reliable with dotnet.  
+                    // UpdateAppConfigs only applies to dotnet.
                     UpdateAppConfigs(tempJobInstancePath, _analytics);
 
                     _workingDirectory = tempJobInstancePath;
