@@ -9,6 +9,7 @@ using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using System.Web.Http;
 using Kudu.Contracts.Infrastructure;
+using Kudu.Contracts.Settings;
 using Kudu.Contracts.SourceControl;
 using Kudu.Contracts.Tracing;
 using Kudu.Core;
@@ -31,6 +32,7 @@ namespace Kudu.Services.Deployment
         private readonly IAnalytics _analytics;
         private readonly IDeploymentManager _deploymentManager;
         private readonly IDeploymentStatusManager _status;
+        private readonly IDeploymentSettingsManager _settings;
         private readonly ITracer _tracer;
         private readonly IOperationLock _deploymentLock;
         private readonly IRepositoryFactory _repositoryFactory;
@@ -41,6 +43,7 @@ namespace Kudu.Services.Deployment
                                     IAnalytics analytics,
                                     IDeploymentManager deploymentManager,
                                     IDeploymentStatusManager status,
+                                    IDeploymentSettingsManager settings,
                                     IOperationLock deploymentLock,
                                     IRepositoryFactory repositoryFactory,
                                     IAutoSwapHandler autoSwapHandler)
@@ -50,6 +53,7 @@ namespace Kudu.Services.Deployment
             _analytics = analytics;
             _deploymentManager = deploymentManager;
             _status = status;
+            _settings = settings;
             _deploymentLock = deploymentLock;
             _repositoryFactory = repositoryFactory;
             _autoSwapHandler = autoSwapHandler;
@@ -153,6 +157,22 @@ namespace Kudu.Services.Deployment
                         }
 
                         await _deploymentManager.DeployAsync(repository, changeSet, username, clean, needFileUpdate);
+
+                        // auto-swap
+                        if (_autoSwapHandler.IsAutoSwapEnabled())
+                        {
+                            if (changeSet == null)
+                            {
+                                var targetBranch = _settings.GetBranch();
+                                changeSet = repository.GetChangeSet(targetBranch);
+                            }
+
+                            IDeploymentStatusFile statusFile = _status.Open(changeSet.Id);
+                            if (statusFile != null && statusFile.Status == DeployStatus.Success)
+                            {
+                                await _autoSwapHandler.HandleAutoSwap(changeSet.Id, _deploymentManager.GetLogger(changeSet.Id), _tracer);
+                            }
+                        }
                     }
                     catch (FileNotFoundException ex)
                     {

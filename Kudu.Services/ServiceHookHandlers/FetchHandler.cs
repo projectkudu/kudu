@@ -302,7 +302,7 @@ namespace Kudu.Services
                 nextMarkerFileUTC = FileSystemHelpers.GetLastWriteTimeUtc(_markerFilePath);
             } while (deploymentInfo.IsReusable && currentMarkerFileUTC != nextMarkerFileUTC);
 
-            if (lastChange != null)
+            if (lastChange != null && _autoSwapHandler.IsAutoSwapEnabled())
             {
                 IDeploymentStatusFile statusFile = _status.Open(lastChange.Id);
                 if (statusFile.Status == DeployStatus.Success)

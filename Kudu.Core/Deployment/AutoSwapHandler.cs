@@ -49,7 +49,6 @@ namespace Kudu.Core.Deployment
         {
             if (!IsAutoSwapEnabled())
             {
-
                 tracer.Trace("AutoSwap is not enabled");
                 return;
             }
