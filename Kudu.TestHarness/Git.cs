@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using Kudu.Client.Deployment;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.SourceControl.Git;
@@ -144,8 +145,7 @@ namespace Kudu.TestHarness
                 var context = TestContext.Current;
                 if (context != null)
                 {
-                    var className = context.Test.TestCase.TestMethod.TestClass.Class.Name;
-                    repoName = String.Format("{0}_{1}", repoName, className.Substring(className.LastIndexOf(".") + 1));
+                    repoName = GetRepoNamePerContext(context, repoName);
                 }
 
                 cachedPath = Path.Combine(PathHelper.RepositoryCachePath, repoName);
@@ -210,6 +210,13 @@ namespace Kudu.TestHarness
                 }
             }
             return cachedPath;
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public static string GetRepoNamePerContext(TestContext context, string repoName)
+        {
+            var className = context.Test.TestCase.TestMethod.TestClass.Class.Name;
+            return String.Format("{0}_{1}", repoName, className.Substring(className.LastIndexOf(".") + 1));
         }
 
         public static string CloneToLocal(string cloneUri, string path = null)
