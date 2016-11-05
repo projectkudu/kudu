@@ -624,13 +624,18 @@ namespace Kudu.Services.Web.App_Start
 
         private static ITracer GetTracerWithoutContext(IEnvironment environment, IDeploymentSettingsManager settings)
         {
-            TraceLevel level = settings.GetTraceLevel();
-            if (level > TraceLevel.Off)
+            // when file system has issue, this can throw (environment.TracePath calls EnsureDirectory).
+            // prefer no-op tracer over outage.
+            return OperationManager.SafeExecute(() =>
             {
-                return new XmlTracer(environment.TracePath, level);
-            }
+                TraceLevel level = settings.GetTraceLevel();
+                if (level > TraceLevel.Off)
+                {
+                    return new XmlTracer(environment.TracePath, level);
+                }
 
-            return NullTracer.Instance;
+                return NullTracer.Instance;
+            }) ?? NullTracer.Instance;
         }
 
         private static void TraceShutdown(IEnvironment environment, IDeploymentSettingsManager settings)

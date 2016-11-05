@@ -58,34 +58,42 @@ namespace Kudu.Core.Tracing
 
         public void UnexpectedException(Exception exception, bool trace = true, string memberName = null, string sourceFilePath = null, int sourceLineNumber = 0)
         {
-            if (exception.AbortedByKudu())
+            // this happen during unexpected situation and should not throw (masking the original exception)
+            OperationManager.SafeExecute(() =>
             {
-                return;
-            }
+                if (exception.AbortedByKudu())
+                {
+                    return;
+                }
 
-            KuduEventSource.Log.KuduException(
-                _serverConfiguration.ApplicationName,
-                string.Empty,
-                string.Empty,
-                string.Empty,
-                string.Empty,
-                GetExceptionContent(exception, trace, memberName, sourceFilePath, sourceLineNumber));
+                KuduEventSource.Log.KuduException(
+                    _serverConfiguration.ApplicationName,
+                    string.Empty,
+                    string.Empty,
+                    string.Empty,
+                    string.Empty,
+                    GetExceptionContent(exception, trace, memberName, sourceFilePath, sourceLineNumber));
+            });
         }
 
         public void UnexpectedException(Exception ex, string method, string path, string result, string message, bool trace = true)
         {
-            if (ex.AbortedByKudu())
+            // this happen during unexpected situation and should not throw (masking the original exception)
+            OperationManager.SafeExecute(() =>
             {
-                return;
-            }
+                if (ex.AbortedByKudu())
+                {
+                    return;
+                }
 
-            KuduEventSource.Log.KuduException(
-                _serverConfiguration.ApplicationName,
-                NullToEmptyString(method),
-                NullToEmptyString(path),
-                NullToEmptyString(result),
-                NullToEmptyString(message),
-                GetExceptionContent(ex, trace));
+                KuduEventSource.Log.KuduException(
+                    _serverConfiguration.ApplicationName,
+                    NullToEmptyString(method),
+                    NullToEmptyString(path),
+                    NullToEmptyString(result),
+                    NullToEmptyString(message),
+                    GetExceptionContent(ex, trace));
+            });
         }
 
         public void DeprecatedApiUsed(string route, string userAgent, string method, string path)
@@ -134,7 +142,8 @@ namespace Kudu.Core.Tracing
 
             if (trace)
             {
-                _traceFactory.GetTracer().TraceError(exception, "{0}", methodInfo);
+                // best effort to handle file system failure.
+                OperationManager.SafeExecute(() => _traceFactory.GetTracer().TraceError(exception, "{0}", methodInfo));
             }
 
             var strb = new StringBuilder();

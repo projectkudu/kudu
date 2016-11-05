@@ -81,9 +81,10 @@ namespace Kudu.Core.Jobs
 
             _continuousJobThread = new Thread(() =>
             {
-                try
+                var threadAborted = false;
+                while (!threadAborted && _started == 1 && !IsDisabled)
                 {
-                    while (_started == 1 && !IsDisabled)
+                    try
                     {
                         // Try getting the singleton lock if single is enabled
                         bool acquired;
@@ -128,17 +129,25 @@ namespace Kudu.Core.Jobs
                             }
                         }
                     }
-                }
-                catch (ThreadAbortException ex)
-                {
-                    if (!ex.AbortedByKudu())
+                    catch (ThreadAbortException ex)
                     {
-                        TraceFactory.GetTracer().TraceWarning("Thread was aborted, make sure WebJob was about to stop.");
+                        // by nature, ThreadAbortException will be rethrown at the end of this catch block and
+                        // this bool may not be neccessary since while loop will be exited anyway.  we added
+                        // it to be explicit.
+                        threadAborted = true;
+
+                        if (!ex.AbortedByKudu())
+                        {
+                            TraceFactory.GetTracer().TraceWarning("Thread was aborted, make sure WebJob was about to stop.");
+                        }
                     }
-                }
-                catch (Exception ex)
-                {
-                    TraceFactory.GetTracer().TraceError(ex);
+                    catch (Exception ex)
+                    {
+                        _analytics.UnexpectedException(ex, trace: true);
+
+                        // sleep to avoid tight exception loop
+                        WaitForTimeOrStop(TimeSpan.FromSeconds(60));
+                    }
                 }
             });
 
@@ -314,7 +323,7 @@ namespace Kudu.Core.Jobs
 
         private bool IsDisabled
         {
-            get { return FileSystemHelpers.FileExists(_disableFilePath) || Settings.IsWebJobsStopped(); }
+            get { return OperationManager.Attempt(() => FileSystemHelpers.FileExists(_disableFilePath) || Settings.IsWebJobsStopped()); }
         }
 
         private void ReleaseSingletonLock()

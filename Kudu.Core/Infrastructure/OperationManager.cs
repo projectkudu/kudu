@@ -92,5 +92,17 @@ namespace Kudu.Core.Infrastructure
                 // no-op
             }
         }
+
+        public static T SafeExecute<T>(Func<T> action)
+        {
+            try
+            {
+                return action();
+            }
+            catch
+            {
+                return default(T);
+            }
+        }
     }
 }
