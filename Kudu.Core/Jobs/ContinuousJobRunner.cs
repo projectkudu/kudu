@@ -343,6 +343,12 @@ namespace Kudu.Core.Jobs
         {
             if (disposing)
             {
+                if (_continuousJobThread != null)
+                {
+                    _continuousJobThread.KuduAbort(String.Format("Dispoing {0} {1} job", JobName, Constants.ContinuousPath));
+                    _continuousJobThread = null;
+                }
+
                 if (_continuousJobLogger != null)
                 {
                     _continuousJobLogger.Dispose();
