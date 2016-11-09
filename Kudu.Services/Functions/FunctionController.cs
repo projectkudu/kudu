@@ -157,7 +157,9 @@ namespace Kudu.Services.Functions
             using (tracer.Step("FunctionController.SyncTriggers"))
             {
                 await _manager.SyncTriggersAsync();
-                return Request.CreateResponse(HttpStatusCode.OK);
+
+                // Return a dummy body to make it valid in ARM template action evaluation
+                return Request.CreateResponse(HttpStatusCode.OK, new { success = true });
             }
         }
 
