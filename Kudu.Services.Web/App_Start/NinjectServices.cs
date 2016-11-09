@@ -520,7 +520,7 @@ namespace Kudu.Services.Web.App_Start
             routes.MapHttpRoute("put-functions-host-settings", "api/functions/config", new { controller = "Function", action = "PutHostSettings" }, new { verb = new HttpMethodConstraint("PUT") });
             routes.MapHttpRoute("api-sync-functions", "api/functions/synctriggers", new { controller = "Function", action = "SyncTriggers" }, new { verb = new HttpMethodConstraint("POST") });
             // This route only needed for temporary workaround. Will yank when /syncfunctionapptriggers is supported in ARM
-            routes.MapHttpRoute("api-sync-functions-tmphack", "functions/synctriggers", new { controller = "Function", action = "SyncTriggers" }, new { verb = new HttpMethodConstraint("POST") });
+            routes.MapHttpRoute("api-sync-functions-tmphack", "functions/listsynctriggers", new { controller = "Function", action = "SyncTriggers" }, new { verb = new HttpMethodConstraint("POST") });
             routes.MapHttpRoute("put-function", "api/functions/{name}", new { controller = "Function", action = "CreateOrUpdate" }, new { verb = new HttpMethodConstraint("PUT") });
             routes.MapHttpRoute("list-functions", "api/functions", new { controller = "Function", action = "List" }, new { verb = new HttpMethodConstraint("GET") });
             routes.MapHttpRoute("get-function", "api/functions/{name}", new { controller = "Function", action = "Get" }, new { verb = new HttpMethodConstraint("GET") });

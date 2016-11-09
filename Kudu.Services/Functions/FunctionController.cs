@@ -159,7 +159,7 @@ namespace Kudu.Services.Functions
                 await _manager.SyncTriggersAsync();
 
                 // Return a dummy body to make it valid in ARM template action evaluation
-                return Request.CreateResponse(HttpStatusCode.OK, new { success = true });
+                return Request.CreateResponse(HttpStatusCode.OK, new { status = "success" });
             }
         }
 
