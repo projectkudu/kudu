@@ -40,9 +40,7 @@ namespace Kudu.Core.Test.Jobs
 
             MockDeploymentSettingsManager mockSettingsManager = new MockDeploymentSettingsManager();
             Mock<ITraceFactory> mockTraceFactory = new Mock<ITraceFactory>(MockBehavior.Strict);
-
-            Mock<IAnalytics> mockAnalytics = new Mock<IAnalytics>(MockBehavior.Strict);
-            mockAnalytics.Setup(a => a.JobEvent("testjob", It.IsAny<string>(), "continuous", It.IsAny<string>()));
+            Mock<IAnalytics> mockAnalytics = new Mock<IAnalytics>();
 
             Mock<ITracer> mockTracer = new Mock<ITracer>(MockBehavior.Strict);
             mockTracer.Setup(p => p.Trace(It.IsAny<string>(), It.IsAny<IDictionary<string, string>>()));
