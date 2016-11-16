@@ -227,8 +227,9 @@ namespace Kudu.Core.Functions
                     }
                     return keyOp.GenerateKeyObject(key, name);
                 }
-                catch (Exception)
+                catch (IOException)
                 {
+                    // don't throw exception if the file already existed
                     // fallback to read key files
                 }
             }

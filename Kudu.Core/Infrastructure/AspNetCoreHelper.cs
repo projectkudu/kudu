@@ -4,6 +4,7 @@ using System.Linq;
 using Kudu.Core.Deployment;
 using Newtonsoft.Json.Linq;
 using Kudu.Core.SourceControl;
+using System.Collections.Generic;
 
 namespace Kudu.Core.Infrastructure
 {
@@ -12,9 +13,9 @@ namespace Kudu.Core.Infrastructure
         private const string ProjectJson = "project.json";
         public static readonly string[] ProjectJsonLookupList = new string[] { $"*{ProjectJson}" };
 
-        public static bool IsWebApplicationProjectJsonFile(string projectJsonPath)
+        public static bool IsWebApplicationProjectFile(string projectFilePath)
         {
-            var projectDirectory = Path.GetDirectoryName(projectJsonPath);
+            var projectDirectory = Path.GetDirectoryName(projectFilePath);
             var webConfig = Path.Combine(projectDirectory, "web.config");
             var wwwrootDirectory = Path.Combine(projectDirectory, "wwwroot");
 
@@ -27,7 +28,7 @@ namespace Kudu.Core.Infrastructure
             projectJsonPath = null;
             var projectJsonFiles = fileFinder.ListFiles(rootPath, SearchOption.AllDirectories, ProjectJsonLookupList)
                 .Where(path => Path.GetFileName(path).Equals(ProjectJson, StringComparison.OrdinalIgnoreCase))
-                .Where(IsWebApplicationProjectJsonFile)
+                .Where(IsWebApplicationProjectFile)
                 .ToList();
 
             if (projectJsonFiles.Any())
@@ -37,6 +38,12 @@ namespace Kudu.Core.Infrastructure
             }
 
             return false;
+        }
+
+        public static bool IsDotnetCorePreview3(string projectPath, IEnumerable<Guid> projectTypeGuids)
+        {
+            // we need to verify suffix is csproj, xproj will not have projectTypeGuids either
+            return projectPath.EndsWith(".csproj", StringComparison.OrdinalIgnoreCase) && !projectTypeGuids.Any() && IsWebApplicationProjectFile(projectPath);
         }
     }
 }

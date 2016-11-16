@@ -10,7 +10,7 @@ namespace Kudu.Core.Deployment
 {
     public static class DeploymentHelper
     {
-        private static readonly string[] _projectFileExtensions = new[] { ".csproj", ".vbproj", ".fsproj" };
+        private static readonly string[] _projectFileExtensions = new[] { ".csproj", ".vbproj", ".fsproj", ".xproj" };
 
         public static readonly string[] ProjectFileLookup = _projectFileExtensions.Select(p => "*" + p).ToArray();
 
@@ -23,12 +23,6 @@ namespace Kudu.Core.Deployment
         public static bool IsProject(string path)
         {
             return _projectFileExtensions.Any(extension => path.EndsWith(extension, StringComparison.OrdinalIgnoreCase));
-        }
-
-        public static bool IsDeployableProject(string path)
-        {
-            return IsProject(path) &&
-                   (VsHelper.IsWap(path) || VsHelper.IsExecutableProject(path));
         }
 
         public static bool IsDefaultWebRootContent(string webroot)

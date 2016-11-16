@@ -65,12 +65,7 @@ namespace Kudu.Core.Infrastructure
 
             return solutions[0];
         }
-
-        public static bool IsWap(string projectPath)
-        {
-            return IsWap(GetProjectTypeGuids(projectPath));
-        }
-
+ 
         public static bool IsWap(IEnumerable<Guid> projectTypeGuids)
         {
             return projectTypeGuids.Contains(_wapGuid);
@@ -87,7 +82,6 @@ namespace Kudu.Core.Infrastructure
                         select new Guid(guid.Trim('{', '}'));
             return guids;
         }
-
         public static bool IsExecutableProject(string projectPath)
         {
             var document = XDocument.Parse(File.ReadAllText(projectPath));
