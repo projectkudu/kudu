@@ -188,6 +188,13 @@ namespace Kudu.Core.Deployment.Generator
         {
             if (DeploymentHelper.IsProject(targetPath))
             {
+                // needs to check for project file existence
+                if (!File.Exists(targetPath))
+                {
+                    throw new InvalidOperationException(String.Format(CultureInfo.CurrentCulture,
+                                                                  Resources.Error_ProjectDoesNotExist,
+                                                                  targetPath));
+                }
                 return DetermineProject(repositoryRoot, targetPath, perDeploymentSettings, fileFinder);
             }
 
@@ -204,7 +211,7 @@ namespace Kudu.Core.Deployment.Generator
             {
                 return DetermineProject(repositoryRoot, projects[0], perDeploymentSettings, fileFinder);
             }
-            
+
             // Check for ASP.NET Core project without VS solution or project
             string projectJson;
             if (AspNetCoreHelper.TryAspNetCoreWebProject(targetPath, fileFinder, out projectJson))
@@ -254,41 +261,41 @@ namespace Kudu.Core.Deployment.Generator
 
         private ISiteBuilder DetermineProject(string repositoryRoot, string targetPath, IDeploymentSettingsManager perDeploymentSettings, IFileFinder fileFinder)
         {
-            if (!DeploymentHelper.IsDeployableProject(targetPath))
+            var solution = VsHelper.FindContainingSolution(repositoryRoot, targetPath, fileFinder);
+            string solutionPath = solution?.Path;
+            var projectTypeGuids = VsHelper.GetProjectTypeGuids(targetPath);
+            if (VsHelper.IsWap(projectTypeGuids))
             {
-                throw new InvalidOperationException(String.Format(CultureInfo.CurrentCulture,
-                                                                  Resources.Error_ProjectNotDeployable,
-                                                                  targetPath));
+                return new WapBuilder(_environment,
+                                      perDeploymentSettings,
+                                      _propertyProvider,
+                                      repositoryRoot,
+                                      targetPath,
+                                      solutionPath);
             }
-            else if (File.Exists(targetPath)) // TODO: what is this if about?
+            else if (AspNetCoreHelper.IsDotnetCorePreview3(targetPath, projectTypeGuids) || targetPath.EndsWith(".xproj", StringComparison.OrdinalIgnoreCase))
             {
-                var solution = VsHelper.FindContainingSolution(repositoryRoot, targetPath, fileFinder);
-                string solutionPath = solution != null ? solution.Path : null;
-
-                if (VsHelper.IsWap(targetPath))
-                {
-                    return new WapBuilder(_environment,
-                                          perDeploymentSettings,
-                                          _propertyProvider,
-                                          repositoryRoot,
-                                          targetPath,
-                                          solutionPath);
-                }
-                else
-                {
-                    // This is a console app
-                    return new DotNetConsoleBuilder(_environment,
-                                          perDeploymentSettings,
-                                          _propertyProvider,
-                                          repositoryRoot,
-                                          targetPath,
-                                          solutionPath);
-                }
+                return new AspNetCoreBuilder(_environment,
+                       perDeploymentSettings,
+                       _propertyProvider,
+                       repositoryRoot,
+                       targetPath,
+                       solutionPath);
+            }
+            else if (VsHelper.IsExecutableProject(targetPath))
+            {
+                // This is a console app
+                return new DotNetConsoleBuilder(_environment,
+                                      perDeploymentSettings,
+                                      _propertyProvider,
+                                      repositoryRoot,
+                                      targetPath,
+                                      solutionPath);
             }
 
             throw new InvalidOperationException(String.Format(CultureInfo.CurrentCulture,
-                                                                  Resources.Error_ProjectDoesNotExist,
-                                                                  targetPath));
+                                                             Resources.Error_ProjectNotDeployable,
+                                                             targetPath));
         }
 
         private static void ThrowAmbiguousSolutionsError(IList<VsSolution> solutions)

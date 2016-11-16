@@ -23,11 +23,13 @@ namespace Kudu.Core.Deployment.Generator
 
                 if (string.IsNullOrEmpty(_solutionPath))
                 {
-                    return $"--aspNetCore \"{Path.GetDirectoryName(_projectPath)}\"";
+                    return $"--aspNetCore \"{_projectPath}\""; 
+                    // projectfile is either project.json for preview2, ***.csproj for preview3
                 }
                 else
                 {
-                    return $"--aspNetCore \"{Path.GetDirectoryName(_projectPath)}\" --solutionFile {_solutionPath}";
+                    return $"--aspNetCore \"{_projectPath}\" --solutionFile \"{_solutionPath}\"";
+                    // if we have a solution file, projectfile is either ***.xproj for preview2, ***.csproj for preview3
                 }
             }
         }
