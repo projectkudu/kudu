@@ -5,6 +5,17 @@
 @using Kudu.Services
 
 @{
+    // If Kudu home page gets requested with the api-version, we are likely dealing with a call
+    // on the 'ARM bridge' to list 'extensions'. e.g.
+    // /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Web/sites/{site}/extensions?api-version=2015-08-01
+    // Since we can't actually return a list of extensions, return [], which is enough to avoid ARM faliures
+    if (Request.QueryString["api-version"] != null)
+    {
+        Response.Write("[]");
+        Response.ContentType = "application/json";
+        Response.End();
+    }
+
     Layout = "~/_Layout.cshtml";
     Page.Title = "Kudu Services";
 
