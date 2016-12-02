@@ -399,6 +399,50 @@ namespace Kudu.FunctionalTests
         }
     }
 
+    [KuduXunitTestClass]
+    public class AspNetCorePreview2MultipleProjectsTests : GitDeploymentTests
+    {
+        [Fact]
+        [KuduXunitTest(PrivateOnly = true)]
+        public void PushAndDeployAspNetCorePreview2MultipleProjects()
+        {
+            PushAndDeployApps("AspNetCorePreview2MultipleProjects", "master", "WebApplication1!", HttpStatusCode.OK, "Deployment successful");
+        }
+    }
+
+    [KuduXunitTestClass]
+    public class AspNetCorePreview3MultipleProjectsTests : GitDeploymentTests
+    {
+        [Fact]
+        [KuduXunitTest(PrivateOnly = true)]
+        public void PushAndDeployAspNetCorePreview3MultipleProjects()
+        {
+            PushAndDeployApps("AspNetCorePreview3MultipleProjects", "master", "Preview3WebApplication2!", HttpStatusCode.OK, "Deployment successful");
+        }
+    }
+
+    [KuduXunitTestClass]
+    public class AspNetCorePreview3VSslnTests : GitDeploymentTests
+    {
+        [Fact]
+        [KuduXunitTest(PrivateOnly = true)]
+        public void PushAndDeployAspNetCorePreview3VSsln()
+        {
+            PushAndDeployApps("AspNetCorePreview3VSsln", "master", "Preview3VSsln!", HttpStatusCode.OK, "Deployment successful");
+        }
+    }
+
+    [KuduXunitTestClass]
+    public class AspNetCorePreview3CliTests : GitDeploymentTests
+    {
+        [Fact]
+        [KuduXunitTest(PrivateOnly = true)]
+        public void PushAndDeployAspNetCorePreview3Cli()
+        {
+            PushAndDeployApps("AspNetCorePreview3Cli", "master", "MvcApp", HttpStatusCode.OK, "Deployment successful");
+        }
+    }
+
     public abstract class GitDeploymentTests
     {
         //Common code
