@@ -290,9 +290,16 @@ var Process = (function () {
             if (!this._json.total_cpu_time) {
                 return "  ?";
             }
+            // ts format is [-][d.]hh:mm:ss[.fffffff]
             var total = 0;
             var parts = this._json.total_cpu_time.split(":");
-            total += parseInt(parts[0]) * 60;
+            var hrs = parts[0].split(".");
+            if (hrs.length > 1) {
+                total += parseInt(hrs[0]) * 24 * 60 * 60;
+                total += parseInt(hrs[1]) * 60 * 60;
+            } else {
+                total += parseInt(hrs[0]) * 60 * 60;
+            }
             total += parseInt(parts[1]) * 60;
             total += parseInt(parts[2]);
             if (total !== 0) {
