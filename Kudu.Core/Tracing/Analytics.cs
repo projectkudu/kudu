@@ -164,11 +164,5 @@ namespace Kudu.Core.Tracing
 
             return strb.ToString();
         }
-
-        public static void UnexpectedException(Exception ex, ITraceFactory traceFactory)
-        {
-            var analytic = new Analytics(null, new ServerConfiguration(), traceFactory);
-            analytic.UnexpectedException(ex, trace: true);
-        }
     }
 }
