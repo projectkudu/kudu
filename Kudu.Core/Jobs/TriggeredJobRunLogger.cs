@@ -84,14 +84,14 @@ namespace Kudu.Core.Jobs
 
         public void ReportEndRun()
         {
-            var triggeredJobStatus = ReadJobStatusFromFile<TriggeredJobStatus>(TraceFactory, GetStatusFilePath()) ?? new TriggeredJobStatus();
+            var triggeredJobStatus = ReadJobStatusFromFile<TriggeredJobStatus>(Analytics, GetStatusFilePath()) ?? new TriggeredJobStatus();
             triggeredJobStatus.EndTime = DateTime.UtcNow;
             ReportStatus(triggeredJobStatus, logStatus: false);
         }
 
         public void ReportStatus(string status)
         {
-            var triggeredJobStatus = ReadJobStatusFromFile<TriggeredJobStatus>(TraceFactory, GetStatusFilePath()) ?? new TriggeredJobStatus();
+            var triggeredJobStatus = ReadJobStatusFromFile<TriggeredJobStatus>(Analytics, GetStatusFilePath()) ?? new TriggeredJobStatus();
             triggeredJobStatus.Status = status;
             ReportStatus(triggeredJobStatus);
         }
@@ -116,7 +116,7 @@ namespace Kudu.Core.Jobs
 
         public override void LogError(string error)
         {
-            var triggeredJobStatus = ReadJobStatusFromFile<TriggeredJobStatus>(TraceFactory, GetStatusFilePath()) ?? new TriggeredJobStatus();
+            var triggeredJobStatus = ReadJobStatusFromFile<TriggeredJobStatus>(Analytics, GetStatusFilePath()) ?? new TriggeredJobStatus();
             triggeredJobStatus.Status = JobStatus.Failed;
             ReportStatus(triggeredJobStatus);
             Log(Level.Err, error, isSystem: true);
