@@ -23,6 +23,8 @@ namespace Kudu.Core.Jobs
 
         protected ITraceFactory TraceFactory { get; private set; }
 
+        protected IAnalytics Analytics { get; private set; }
+
         protected string InstanceId { get; private set; }
 
         private string _statusFilePath;
@@ -34,6 +36,7 @@ namespace Kudu.Core.Jobs
             _statusFileName = statusFileName;
             TraceFactory = traceFactory;
             Environment = environment;
+            Analytics = new Analytics(null, new ServerConfiguration(), traceFactory);
 
             InstanceId = InstanceIdUtility.GetShortInstanceId();
         }
@@ -64,7 +67,7 @@ namespace Kudu.Core.Jobs
 
         public TJobStatus GetStatus<TJobStatus>() where TJobStatus : class, IJobStatus
         {
-            return ReadJobStatusFromFile<TJobStatus>(TraceFactory, GetStatusFilePath());
+            return ReadJobStatusFromFile<TJobStatus>(Analytics, GetStatusFilePath());
         }
 
         public void ReportStatus<TJobStatus>(TJobStatus status) where TJobStatus : class, IJobStatus
@@ -89,11 +92,11 @@ namespace Kudu.Core.Jobs
             }
             catch (Exception ex)
             {
-                TraceFactory.GetTracer().TraceError(ex);
+                Analytics.UnexpectedException(ex);
             }
         }
 
-        public static TJobStatus ReadJobStatusFromFile<TJobStatus>(ITraceFactory traceFactory, string statusFilePath) where TJobStatus : class, IJobStatus
+        public static TJobStatus ReadJobStatusFromFile<TJobStatus>(IAnalytics analytics, string statusFilePath) where TJobStatus : class, IJobStatus
         {
             try
             {
@@ -102,15 +105,16 @@ namespace Kudu.Core.Jobs
                     return null;
                 }
 
+                // since we don't have proper lock on file, we are more forgiving in retry (10 times 250 ms interval).
                 return OperationManager.Attempt(() =>
                 {
                     string content = FileSystemHelpers.ReadAllTextFromFile(statusFilePath).Trim();
                     return JsonConvert.DeserializeObject<TJobStatus>(content, JsonSerializerSettings);
-                });
+                }, retries: 10);
             }
             catch (Exception ex)
             {
-                Analytics.UnexpectedException(ex, traceFactory);
+                analytics.UnexpectedException(ex);
                 return null;
             }
         }
@@ -119,18 +123,19 @@ namespace Kudu.Core.Jobs
         {
             try
             {
+                // since we don't have proper lock on file, we are more forgiving in retry (10 times 250 ms interval).
                 if (isAppend)
                 {
-                    OperationManager.Attempt(() => FileSystemHelpers.AppendAllTextToFile(path, content));
+                    OperationManager.Attempt(() => FileSystemHelpers.AppendAllTextToFile(path, content), retries: 10);
                 }
                 else
                 {
-                    OperationManager.Attempt(() => FileSystemHelpers.WriteAllTextToFile(path, content));
+                    OperationManager.Attempt(() => FileSystemHelpers.WriteAllTextToFile(path, content), retries: 10);
                 }
             }
             catch (Exception ex)
             {
-                TraceFactory.GetTracer().TraceError(ex);
+                Analytics.UnexpectedException(ex);
             }
         }
 

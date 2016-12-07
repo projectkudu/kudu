@@ -438,7 +438,7 @@ namespace Kudu.Core.Jobs
 
         protected TJobStatus GetStatus<TJobStatus>(string statusFilePath) where TJobStatus : class, IJobStatus, new()
         {
-            return JobLogger.ReadJobStatusFromFile<TJobStatus>(TraceFactory, statusFilePath);
+            return JobLogger.ReadJobStatusFromFile<TJobStatus>(Analytics, statusFilePath);
         }
 
         protected Uri BuildJobsUrl(string relativeUrl)
