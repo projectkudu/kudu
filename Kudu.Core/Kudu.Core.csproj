@@ -211,6 +211,8 @@
     <Compile Include="Deployment\Generator\PythonSiteEnabler.cs" />
     <Compile Include="Deployment\Generator\PythonSiteBuilder.cs" />
     <Compile Include="Deployment\Generator\AspNetCoreBuilder.cs" />
+    <Compile Include="Deployment\Generator\RubySiteBuilder.cs" />
+    <Compile Include="Deployment\Generator\RubySiteEnabler.cs" />
     <Compile Include="Deployment\IAutoSwapHandler.cs" />
     <Compile Include="Deployment\ProgressLogger.cs" />
     <Compile Include="Deployment\Generator\BasicBuilder.cs" />

@@ -133,6 +133,21 @@ namespace Kudu.FunctionalTests
     }
 
     [KuduXunitTestClass]
+    public class RubyAppExpressTests : GitDeploymentTests
+    {
+        // Ruby apps
+
+        [Fact]
+        public void PushAndDeployNodeAppExpress()
+        {
+            // Ensure node is installed.
+            Assert.Contains("nodejs", System.Environment.GetEnvironmentVariable("Path"), StringComparison.OrdinalIgnoreCase);
+
+            PushAndDeployApps("Express-Template", "master", "Modify this template to jump-start your Node.JS Express Web Pages application", HttpStatusCode.OK, "");
+        }
+    }
+
+    [KuduXunitTestClass]
     public class Html5WithAppJsTests : GitDeploymentTests
     {
         [Fact]

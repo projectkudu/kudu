@@ -151,13 +151,13 @@ namespace Kudu.Core.Deployment.Generator
             {
                 return new GoSiteBuilder(_environment, perDeploymentSettings, _propertyProvider, repositoryRoot, projectPath);
             }
-            else if (IsRubySite(sourceProjectPath))
-            {
-                return new RubySiteBuilder(_environment, perDeploymentSettings, _propertyProvider, repositoryRoot, projectPath);
-            }
             else if (IsFunctionApp(sourceProjectPath))
             {
                 return new FunctionAppBuilder(_environment, perDeploymentSettings, _propertyProvider, repositoryRoot, projectPath);
+            }
+            else if (IsRubySite(sourceProjectPath))
+            {
+                return new RubySiteBuilder(_environment, perDeploymentSettings, _propertyProvider, repositoryRoot, projectPath);
             }
 
             return new BasicBuilder(_environment, perDeploymentSettings, _propertyProvider, repositoryRoot, projectPath);
