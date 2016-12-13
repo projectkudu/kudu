@@ -151,6 +151,10 @@ namespace Kudu.Core.Deployment.Generator
             {
                 return new GoSiteBuilder(_environment, perDeploymentSettings, _propertyProvider, repositoryRoot, projectPath);
             }
+            else if (IsRubySite(sourceProjectPath))
+            {
+                return new RubySiteBuilder(_environment, perDeploymentSettings, _propertyProvider, repositoryRoot, projectPath);
+            }
             else if (IsFunctionApp(sourceProjectPath))
             {
                 return new FunctionAppBuilder(_environment, perDeploymentSettings, _propertyProvider, repositoryRoot, projectPath);
@@ -172,6 +176,11 @@ namespace Kudu.Core.Deployment.Generator
         private static bool IsPythonSite(string projectPath)
         {
             return PythonSiteEnabler.LooksLikePython(projectPath);
+        }
+
+        private static bool IsRubySite(string projectPath)
+        {
+            return RubySiteEnabler.LooksLikeRuby(projectPath);
         }
 
         private static bool IsFunctionApp(string projectPath)
