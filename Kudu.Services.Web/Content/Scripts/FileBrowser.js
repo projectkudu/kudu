@@ -253,7 +253,7 @@ $.connection.hub.start().done(function () {
         }
     };
 
-    var MAX_VIEW_ITEMS = 200;
+    var MAX_VIEW_ITEMS = 300;
 
     var node = function (data, parent) {
         this.parent = parent;
