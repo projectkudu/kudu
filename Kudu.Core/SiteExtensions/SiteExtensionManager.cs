@@ -83,7 +83,7 @@ namespace Kudu.Core.SiteExtensions
 
             using (tracer.Step("Search site extensions by filter: {0}", filter))
             {
-                packages = (await remoteRepo.Search(string.IsNullOrWhiteSpace(filter) ? string.Empty : filter, filterOptions: filterOptions))
+                packages = (await remoteRepo.Search(filter, filterOptions: filterOptions))
                             .OrderByDescending(p => p.DownloadCount);
             }
 
