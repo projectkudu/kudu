@@ -591,9 +591,9 @@ $.connection.hub.start().done(function () {
 
                 var modalHeaderText = '';
                 if (perc < 100) {
-                    modalHeaderText = 'Transfered Files (<b>' + perc + '%</b>).';
+                    modalHeaderText = 'Transferred Files (<b>' + perc + '%</b>).';
                 } else {
-                    modalHeaderText = '<b style =\' color:green\'> Transfered Files (' + perc + '%).</b>';
+                    modalHeaderText = '<b style =\' color:green\'> Transferred Files (' + perc + '%).</b>';
                 }
                     modalHeaderText += ' ' +((_temp = copyObjectsManager.getInfoMessage()) ? _temp : "");
                 $('#files-transfered-modal .modal-header').html(modalHeaderText);
