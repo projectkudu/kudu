@@ -1,8 +1,8 @@
 > For deployment issues, please provide us with the following information:
 > ---------------------------------------------------------------
 
-### Repo steps.
-> your project built succefully on your dev machine but failed on Azure?
+### Repro steps.
+> your project built successfully on your dev machine but failed on Azure?
 > please write down your build tools and their versions (ie `Msbuild 15.1.0.0`)
 
 ### Project structures.
