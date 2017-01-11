@@ -184,7 +184,7 @@ namespace Kudu.Core.Jobs
         {
             try
             {
-                FileSystemHelpers.DeleteFileSafe(statusFile);
+                FileSystemHelpers.DeleteFile(statusFile);
                 return true;
             }
             catch
