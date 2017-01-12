@@ -224,7 +224,8 @@ function LoadConsoleV2() {
 
         controller.promptText("");
 
-        if (endsWith(prompt, "\r")) {
+        // Only clear the prompt when ending in \r if the next output isn't \n || \r\n.
+        if (endsWith(prompt, "\r") && lastLinestr !== "\n" && lastLinestr !== "\r\n") {
             return;
         }
 
