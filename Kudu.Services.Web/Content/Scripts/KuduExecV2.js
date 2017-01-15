@@ -193,7 +193,11 @@ function LoadConsoleV2() {
         var prompt = getJSONValue(data);
         var lastLinestr = getJSONValue(lastLine);
         //this means the last command should be cleared and the next one will be written over it.
-        if (endsWith(prompt, "\r") && !endsWith(lastLinestr, "\n")) {
+        // case 1. lastLine = "progress 10%", prompt = "\r" ==> lastLine is not written into HTML (curl)
+        // case 2. lastLine = "progress 10%\r", prompt = "progress 20%\r" ==> lastLine is not written into HTML (youtube-dl)
+        //         lastLine = "version 123\r", prompt = "\r\n" ==> lastLine IS WRITTEN into HTML (dotnet tsc)
+        if ((endsWith(prompt, "\r") && !endsWith(lastLinestr, "\n")) ||
+            (endsWith(lastLinestr, "\r") && prompt !== "\r\n" && prompt !== "\n")) {
             lastLinestr = "";
             lastLine = null;
         }
@@ -214,7 +218,7 @@ function LoadConsoleV2() {
             return;
         }
 
-
+        // display output, but not updating the HTML
         $(".jquery-console-inner").append($(".jquery-console-prompt-box").last().css("display", "inline"));
         if (data.Error) {
             $(".jquery-console-prompt-label").last().text(prompt).css("color", "red");
@@ -223,12 +227,6 @@ function LoadConsoleV2() {
         }
 
         controller.promptText("");
-
-        // Only clear the prompt when ending in \r if the next output isn't \n || \r\n.
-        if (endsWith(prompt, "\r") && lastLinestr !== "\n" && lastLinestr !== "\r\n") {
-            return;
-        }
-
 
         //Now create the div for the new line that will be printed the next time with the correct class
         if (data.Error) {
