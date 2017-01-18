@@ -37,7 +37,7 @@ namespace Kudu.Core.Jobs
 
             _disableFilePath = Path.Combine(continuousJob.JobBinariesRootPath, "disable.job");
 
-            _singletonLock = new LockFile(Path.Combine(JobDataPath, "singleton.job.lock"), TraceFactory);
+            _singletonLock = new LockFile(Path.Combine(JobDataPath, "singleton.job.lock"), TraceFactory, ensureLock: true);
         }
 
         private void UpdateStatusIfChanged(ContinuousJobStatus continuousJobStatus)
