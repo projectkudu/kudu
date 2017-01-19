@@ -393,7 +393,14 @@ namespace Kudu.FunctionalTests
                 IEnumerable<HttpResponseMessage> concurrentResponses = concurrentUpdates.Select(update => update.Result);
                 foreach (HttpResponseMessage concurrentResponse in concurrentResponses)
                 {
-                    Assert.Equal(HttpStatusCode.NoContent, concurrentResponse.StatusCode);
+                    // NoContent is the expected success case.
+                    // PreConditionFailed can happen due to race condition between LibGit2Sharp cleanup and lock acquisition and release.
+                    // In PreConditionFailed case, nothing is written and the repo isn't updated or corrupted. 
+                    // This is an edge case for a legacy feature
+                    Assert.True(
+                       concurrentResponse.StatusCode == HttpStatusCode.NoContent ||
+                       concurrentResponse.StatusCode == HttpStatusCode.PreconditionFailed,
+                       $"Status code expected to be either {HttpStatusCode.NoContent} or {HttpStatusCode.PreconditionFailed} but got {concurrentResponse.StatusCode}");
                 }
 
                 TestTracer.Trace("==== Check that 'nodeploy' doesn't deploy and that the old content remains.");
