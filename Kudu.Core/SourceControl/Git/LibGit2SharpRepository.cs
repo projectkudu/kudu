@@ -351,7 +351,7 @@ echo $i > pushinfo
 
             using (var repo = new LibGit2Sharp.Repository(RepositoryPath))
             {
-                var files = repo.Diff.Compare<TreeChanges>(null, DiffTargets.Index, lookupList, new ExplicitPathsOptions { ShouldFailOnUnmatchedPath = false }, compareOptions: new CompareOptions() { IncludeUnmodified = true, Similarity = SimilarityOptions.None })
+                var files = repo.Diff.Compare<TreeChanges>(null, DiffTargets.Index, lookupList)
                                       .Select(d => Path.Combine(repo.Info.WorkingDirectory, d.Path))
                                       .Where(p => p.StartsWith(path, StringComparison.OrdinalIgnoreCase));
 
