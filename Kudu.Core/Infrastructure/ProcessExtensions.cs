@@ -549,37 +549,17 @@ namespace Kudu.Core.Infrastructure
                 }
             }
 
-            char[] environmentCharArray = Encoding.Unicode.GetChars(env, 0, len);
-
-            for (int i = 0; i < environmentCharArray.Length; i++)
+            // envs are key=value pair separated by '\0'
+            var envs = Encoding.Unicode.GetString(env, 0, len).Split('\0');
+            var separators = new[] { '=' };
+            for (int i = 0; i < envs.Length; i++)
             {
-                int startIndex = i;
-                while ((environmentCharArray[i] != '=') && (environmentCharArray[i] != '\0'))
+                var pair = envs[i].Split(separators, 2);
+                if (pair.Length != 2)
                 {
-                    i++;
+                    continue;
                 }
-                if (environmentCharArray[i] != '\0')
-                {
-                    if ((i - startIndex) == 0)
-                    {
-                        while (environmentCharArray[i] != '\0')
-                        {
-                            i++;
-                        }
-                    }
-                    else
-                    {
-                        string str = new string(environmentCharArray, startIndex, i - startIndex);
-                        i++;
-                        int num3 = i;
-                        while (environmentCharArray[i] != '\0')
-                        {
-                            i++;
-                        }
-                        string str2 = new string(environmentCharArray, num3, i - num3);
-                        result[str] = str2;
-                    }
-                }
+                result[pair[0]] = pair[1];
             }
 
             return result;
