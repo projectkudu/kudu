@@ -41,10 +41,17 @@ namespace Kudu.Core.SiteExtensions
         /// <summary>
         /// Query source repository for latest package base given package id
         /// </summary>
-        public static async Task<UIPackageMetadata> GetLatestPackageById(this SourceRepository srcRepo, string packageId, bool includePrerelease = true, bool includeUnlisted = false)
+        internal static async Task<UIPackageMetadata> GetLatestPackageByIdFromSrcRepo(this SourceRepository srcRepo, string packageId)
+        {
+            // 7 references none of which uses bool includePrerelease = true, bool includeUnlisted = false
+            var metadataResource = await srcRepo.GetResourceAndValidateAsync<UIMetadataResource>();
+            return await metadataResource.GetLatestPackageByIdFromMetaRes(packageId);
+        }
+        
+        // can be called concurrently if metaDataResource is provided
+        internal static async Task<UIPackageMetadata> GetLatestPackageByIdFromMetaRes(this UIMetadataResource metadataResource, string packageId, bool includePrerelease = true, bool includeUnlisted = false)
         {
             UIPackageMetadata latestPackage = null;
-            var metadataResource = await srcRepo.GetResourceAndValidateAsync<UIMetadataResource>();
             IEnumerable<UIPackageMetadata> packages = await metadataResource.GetMetadata(packageId, includePrerelease, includeUnlisted, token: CancellationToken.None);
             foreach (var p in packages)
             {
@@ -126,7 +133,7 @@ namespace Kudu.Core.SiteExtensions
             using (Stream newPackageStream = await srcRepo.GetPackageStream(identity))
             {
                 // update file
-                var localPackage = await localRepo.GetLatestPackageById(identity.Id);
+                var localPackage = await localRepo.GetLatestPackageByIdFromSrcRepo(identity.Id);
                 if (localPackage == null)
                 {
                     throw new FileNotFoundException(string.Format(CultureInfo.InvariantCulture, "Package {0} not found from local repo.", identity.Id));
@@ -245,7 +252,7 @@ namespace Kudu.Core.SiteExtensions
             }
         }
 
-        private static async Task<T> GetResourceAndValidateAsync<T>(this SourceRepository srcRepo) where T : class, INuGetResource
+        internal static async Task<T> GetResourceAndValidateAsync<T>(this SourceRepository srcRepo) where T : class, INuGetResource
         {
             var resource = await srcRepo.GetResourceAsync<T>();
             if (resource == null)
