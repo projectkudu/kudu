@@ -57,6 +57,23 @@ namespace Kudu.Core.SiteExtensions
 
             return latestPackage;
         }
+        
+        // TODO refactor last function, after kudu private test all passes
+        public static async Task<UIPackageMetadata> GetLatestPackageById(this UIMetadataResource metadataResource, string packageId, bool includePrerelease = true, bool includeUnlisted = false)
+        {
+            UIPackageMetadata latestPackage = null;
+            IEnumerable<UIPackageMetadata> packages = await metadataResource.GetMetadata(packageId, includePrerelease, includeUnlisted, token: CancellationToken.None);
+            foreach (var p in packages)
+            {
+                if (latestPackage == null ||
+                    latestPackage.Identity.Version < p.Identity.Version)
+                {
+                    latestPackage = p;
+                }
+            }
+
+            return latestPackage;
+        }
 
         /// <summary>
         /// <para>Query source repository for a package base on given package id and version</para>
@@ -245,7 +262,7 @@ namespace Kudu.Core.SiteExtensions
             }
         }
 
-        private static async Task<T> GetResourceAndValidateAsync<T>(this SourceRepository srcRepo) where T : class, INuGetResource
+        public static async Task<T> GetResourceAndValidateAsync<T>(this SourceRepository srcRepo) where T : class, INuGetResource
         {
             var resource = await srcRepo.GetResourceAsync<T>();
             if (resource == null)

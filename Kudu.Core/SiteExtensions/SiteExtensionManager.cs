@@ -87,13 +87,16 @@ namespace Kudu.Core.SiteExtensions
                             .OrderByDescending(p => p.DownloadCount);
             }
 
-            using (tracer.Step("Convert search result to SiteExtensionInfos"))
+            using (tracer.Step("Convert search result to SiteExtensionInfos with max concurrent requests: {0}", System.Environment.ProcessorCount))
             {
+                // GetResourceAsync is not thread safe
+                var metadataResource = await _localRepository.GetResourceAndValidateAsync<UIMetadataResource>();
                 var convertedResult = await ConvertNuGetPackagesToSiteExtensionInfos(
                     packages,
                     async (uiPackage) =>
                     {
-                        return await ConvertRemotePackageToSiteExtensionInfo(uiPackage, feedUrl);
+                        // this function is called in multiple threads simoutaneously
+                        return await ConvertRemotePackageToSiteExtensionInfo(uiPackage, feedUrl, metadataResource);
                     });
 
                 extensions.AddRange(convertedResult);
@@ -130,7 +133,8 @@ namespace Kudu.Core.SiteExtensions
                 return null;
             }
 
-            return await ConvertRemotePackageToSiteExtensionInfo(package, feedUrl);
+            var metadataResource = await _localRepository.GetResourceAndValidateAsync<UIMetadataResource>();
+            return await ConvertRemotePackageToSiteExtensionInfo(package, feedUrl, metadataResource);
         }
 
         public async Task<IEnumerable<SiteExtensionInfo>> GetLocalExtensions(string filter, bool checkLatest)
@@ -746,15 +750,18 @@ namespace Kudu.Core.SiteExtensions
             _triggeredJobManager.CleanupExternalJobs(siteExtensionName);
         }
 
-        private async Task<SiteExtensionInfo> ConvertRemotePackageToSiteExtensionInfo(UIPackageMetadata package, string feedUrl)
+        private async Task<SiteExtensionInfo> ConvertRemotePackageToSiteExtensionInfo(UIPackageMetadata package, string feedUrl, UIMetadataResource metadataResource)
         {
-            return await CheckRemotePackageLatestVersion(new SiteExtensionInfo(package), feedUrl);
+            // convert uipackagemetadata structure to siteextensioninfo structure
+            var siteExtensionInfo = new SiteExtensionInfo(package);
+            siteExtensionInfo.FeedUrl = feedUrl;
+            // check existing local site extension version and update the field "LocalIsLatestVersion" in siteextensioninfo
+            return await CheckRemotePackageLatestVersion(siteExtensionInfo, metadataResource);
         }
 
-        private async Task<SiteExtensionInfo> CheckRemotePackageLatestVersion(SiteExtensionInfo info, string feedUrl)
+        private async Task<SiteExtensionInfo> CheckRemotePackageLatestVersion(SiteExtensionInfo info, UIMetadataResource metadataResource)
         {
-            info.FeedUrl = feedUrl;
-            UIPackageMetadata localPackage = await _localRepository.GetLatestPackageById(info.Id);
+            UIPackageMetadata localPackage = await metadataResource.GetLatestPackageById(info.Id);
 
             if (localPackage != null)
             {
