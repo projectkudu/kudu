@@ -43,6 +43,13 @@ namespace Kudu.Core.Functions
 
                 var functions = await ListFunctionsConfigAsync();
                 var triggers = GetTriggers(functions, tracer);
+
+                // This is to allow scale decisions to be made for the app if routing is enabled for a dynamic function app, 
+                if (IsRoutingSiteExtensionEnabled)
+                {
+                    triggers.Add(JToken.Parse("{\"type\":\"routingTrigger\"}"));
+                }
+
                 if (Environment.IsAzureEnvironment())
                 {
                     var client = new OperationClient(tracer);
@@ -58,6 +65,16 @@ namespace Kudu.Core.Functions
                 var functionVersion = System.Environment.GetEnvironmentVariable(Constants.FunctionRunTimeVersion);
                 return !String.IsNullOrEmpty(functionVersion) &&
                        !String.Equals("disabled", functionVersion, StringComparison.OrdinalIgnoreCase);
+            }
+        }
+
+        private static bool IsRoutingSiteExtensionEnabled
+        {
+            get
+            {
+                var routingVersion = System.Environment.GetEnvironmentVariable(Constants.RoutingRunTimeVersion);
+                return !String.IsNullOrEmpty(routingVersion) &&
+                       !String.Equals("disabled", routingVersion, StringComparison.OrdinalIgnoreCase);
             }
         }
 
