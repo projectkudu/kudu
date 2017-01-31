@@ -140,21 +140,15 @@ namespace Kudu.Services
                 {
                     using (_tracer.Step("Start deployment in the background"))
                     {
-                        ChangeSet tempChangeSet = null;
-                        IDisposable tempDeployment = null;
-                        if (isAsync)
-                        {
-                            // create temporary deployment before the actual deployment item started
-                            // this allows portal ui to readily display on-going deployment (not having to wait for fetch to complete).
-                            // in addition, it captures any failure that may occur before the actual deployment item started
-                            tempDeployment = _deploymentManager.CreateTemporaryDeployment(
-                                                            Resources.ReceivingChanges,
-                                                            out tempChangeSet,
-                                                            deployInfo.TargetChangeset,
-                                                            deployInfo.Deployer);
-                        }
-
-                        PerformBackgroundDeployment(deployInfo, _environment, _settings, _tracer.TraceLevel, context.Request.Url, tempDeployment, _autoSwapHandler, tempChangeSet);
+                        var waitForTempDeploymentCreation = isAsync;
+                        await PerformBackgroundDeployment(
+                            deployInfo,
+                            _environment,
+                            _settings,
+                            _tracer.TraceLevel,
+                            context.Request.Url,
+                            waitForTempDeploymentCreation,
+                            _autoSwapHandler);
                     }
 
                     // to avoid regression, only set location header if isAsync
@@ -411,7 +405,14 @@ namespace Kudu.Services
         }
 
         // key goal is to create background tracer that is independent of request.
-        public static void PerformBackgroundDeployment(DeploymentInfo deployInfo, IEnvironment environment, IDeploymentSettingsManager settings, TraceLevel traceLevel, Uri uri, IDisposable tempDeployment, IAutoSwapHandler autoSwapHandler, ChangeSet tempChangeSet)
+        public static async Task PerformBackgroundDeployment(
+            DeploymentInfo deployInfo,
+            IEnvironment environment,
+            IDeploymentSettingsManager settings,
+            TraceLevel traceLevel,
+            Uri uri,
+            bool waitForTempDeploymentCreation,
+            IAutoSwapHandler autoSwapHandler)
         {
             var tracer = traceLevel <= TraceLevel.Off ? NullTracer.Instance : new XmlTracer(environment.TracePath, traceLevel);
             var traceFactory = new TracerFactory(() => tracer);
@@ -422,7 +423,11 @@ namespace Kudu.Services
                 {"method", "POST"}
             });
 
-            Task.Run(() =>
+            // For monitoring creation of temp deployment
+            var tcs = new TaskCompletionSource<object>();
+
+            // This task will be let out of scope intentionally
+            var deploymentTask = Task.Run(() =>
             {
                 try
                 {
@@ -444,11 +449,28 @@ namespace Kudu.Services
                     var deploymentManager = new DeploymentManager(siteBuilderFactory, environment, traceFactory, analytics, settings, deploymentStatusManager, deploymentLock, NullLogger.Instance, webHooksManager, functionManager);
                     var fetchHandler = new FetchHandler(tracer, deploymentManager, settings, deploymentStatusManager, deploymentLock, environment, null, repositoryFactory, autoSwapHandler);
 
+                    IDisposable tempDeployment = null;
+
                     try
                     {
                         // Perform deployment
                         deploymentLock.LockOperation(() =>
                         {
+                            ChangeSet tempChangeSet = null;
+                            if (waitForTempDeploymentCreation)
+                            {
+                                // create temporary deployment before the actual deployment item started
+                                // this allows portal ui to readily display on-going deployment (not having to wait for fetch to complete).
+                                // in addition, it captures any failure that may occur before the actual deployment item started
+                                tempDeployment = deploymentManager.CreateTemporaryDeployment(
+                                                                Resources.ReceivingChanges,
+                                                                out tempChangeSet,
+                                                                deployInfo.TargetChangeset,
+                                                                deployInfo.Deployer);
+
+                                tcs.TrySetResult(null);
+                            }
+
                             fetchHandler.PerformDeployment(deployInfo, tempDeployment, tempChangeSet).Wait();
                         }, "Performing continuous deployment", TimeSpan.Zero);
                     }
@@ -476,6 +498,16 @@ namespace Kudu.Services
                     backgroundTrace.Dispose();
                 }
             });
+
+            // When the frontend/ARM calls /deploy with isAsync=true, it starts polling
+            // the deployment status immediately, so it's important that the temp deployment
+            // is created before we return.
+            if (waitForTempDeploymentCreation)
+            {
+                // If deploymentTask blows up before it creates the temp deployment,
+                // go ahead and return.
+                await Task.WhenAny(tcs.Task, deploymentTask);
+            }
         }
     }
 }
