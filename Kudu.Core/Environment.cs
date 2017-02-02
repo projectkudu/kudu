@@ -1,13 +1,13 @@
-﻿using System;
+﻿using Kudu.Contracts.Settings;
+using Kudu.Core.Helpers;
+using Kudu.Core.Infrastructure;
+using System;
 using System.ComponentModel;
 using System.Globalization;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Security;
-using System.Text.RegularExpressions;
 using System.Web;
-using Kudu.Core.Helpers;
-using Kudu.Core.Infrastructure;
 
 namespace Kudu.Core
 {
@@ -117,6 +117,13 @@ namespace Kudu.Core
             _dataPath = Path.Combine(rootPath, Constants.DataPath);
             _jobsDataPath = Path.Combine(_dataPath, Constants.JobsPath);
             _jobsBinariesPath = Path.Combine(_webRootPath, Constants.AppDataPath, Constants.JobsPath);
+            // if userDefinedWebJobRoot is relative path, append it to site/wwwroot/ else use it as an absolute path
+            string userDefinedWebJobRoot = System.Environment.GetEnvironmentVariable(SettingsKeys.WebJobPath);
+            if (!String.IsNullOrEmpty(userDefinedWebJobRoot))
+            {
+                userDefinedWebJobRoot = System.Environment.ExpandEnvironmentVariables(userDefinedWebJobRoot).Trim('\\', '/');
+                _jobsBinariesPath = Path.Combine(_webRootPath, userDefinedWebJobRoot);
+            }
         }
 
         public string RepositoryPath
