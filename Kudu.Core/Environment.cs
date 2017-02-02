@@ -4,8 +4,8 @@ using System.Globalization;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Security;
-using System.Text.RegularExpressions;
 using System.Web;
+using Kudu.Contracts.Settings;
 using Kudu.Core.Helpers;
 using Kudu.Core.Infrastructure;
 
@@ -117,6 +117,16 @@ namespace Kudu.Core
             _dataPath = Path.Combine(rootPath, Constants.DataPath);
             _jobsDataPath = Path.Combine(_dataPath, Constants.JobsPath);
             _jobsBinariesPath = Path.Combine(_webRootPath, Constants.AppDataPath, Constants.JobsPath);
+            string userDefinedWebJobRoot = System.Environment.GetEnvironmentVariable(SettingsKeys.WebJobPath);
+            if (!String.IsNullOrEmpty(userDefinedWebJobRoot))
+            {
+                userDefinedWebJobRoot = System.Environment.ExpandEnvironmentVariables(userDefinedWebJobRoot).Trim('\\', '/');
+                // Path.Combine(p1,p2) returns p2 if p2 is an absolute path
+                // default _jobsBinariesPath = "D:/home/site/wwwroot/App_Data/jobs"
+                // if userDefinedWebJobRoot = "myfunctions", _jobsBinariesPath = "D:/home/site/wwwroot/myfunctions"
+                // if userDefinedWebJobRoot = "D:/home/functionfolder", _jobsBinariesPath = "D:/home/functionfolder"
+                _jobsBinariesPath = Path.Combine(_webRootPath, userDefinedWebJobRoot);
+            }
         }
 
         public string RepositoryPath
