@@ -79,8 +79,8 @@ namespace Kudu.Core.Infrastructure
         public static bool IsSubfolder(string parent, string child)
         {
             // normalize
-            string parentPath = Path.GetFullPath(parent).TrimEnd('\\') + '\\';
-            string childPath = Path.GetFullPath(child).TrimEnd('\\') + '\\';
+            string parentPath = Path.GetFullPath(parent).TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
+            string childPath = Path.GetFullPath(child).TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
             return childPath.StartsWith(parentPath, StringComparison.OrdinalIgnoreCase);
         }
 
