@@ -443,6 +443,17 @@ namespace Kudu.FunctionalTests
         }
     }
 
+    [KuduXunitTestClass]
+    public class AspNetCoreRC3CliWithLibTests : GitDeploymentTests
+    {
+        [Fact]
+        [KuduXunitTest(PrivateOnly = true)]
+        public void PushAndDeployAspNetCoreRC3CliWithLib()
+        {
+            PushAndDeployApps("AspNetCoreRC3CliWithLib", "master", "MvcApp", HttpStatusCode.OK, "Deployment successful");
+        }
+    }
+
     public abstract class GitDeploymentTests
     {
         //Common code
