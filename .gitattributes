@@ -47,3 +47,4 @@
 *.fsproj text=auto
 *.dbproj text=auto
 *.sln text=auto eol=crlf
+kudusync text eol=lf
