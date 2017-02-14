@@ -22,12 +22,12 @@
 
 using System;
 using System.Net;
-using System.Threading.Tasks;
 using System.Web;
 using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.SourceControl;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Deployment;
+using Kudu.Core.Helpers;
 using Kudu.Core.SourceControl;
 using Kudu.Core.SourceControl.Git;
 using Kudu.Core.Tracing;
@@ -38,18 +38,15 @@ namespace Kudu.Services.GitServer
     public class ReceivePackHandler : GitServerHttpHandler
     {
         private readonly IRepositoryFactory _repositoryFactory;
-        private readonly IAutoSwapHandler _autoSwapHandler;
 
         public ReceivePackHandler(ITracer tracer,
                                   IGitServer gitServer,
                                   IOperationLock deploymentLock,
                                   IDeploymentManager deploymentManager,
-                                  IRepositoryFactory repositoryFactory,
-                                  IAutoSwapHandler autoSwapHandler)
+                                  IRepositoryFactory repositoryFactory)
             : base(tracer, gitServer, deploymentLock, deploymentManager)
         {
             _repositoryFactory = repositoryFactory;
-            _autoSwapHandler = autoSwapHandler;
         }
 
         public override void ProcessRequestBase(HttpContextBase context)
@@ -74,7 +71,7 @@ namespace Kudu.Services.GitServer
                     {
                         context.Response.ContentType = "application/x-git-receive-pack-result";
 
-                        if (_autoSwapHandler.IsAutoSwapOngoing())
+                        if (PostDeploymentHelper.IsAutoSwapOngoing())
                         {
                             context.Response.StatusCode = (int)HttpStatusCode.Conflict;
                             context.Response.Write(Resources.Error_AutoSwapDeploymentOngoing);

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.Diagnostics;
 using System.IO;
+using System.Net;
 using Kudu.Console.Services;
 using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Settings;
@@ -105,7 +106,10 @@ namespace Kudu.Console
             System.Environment.SetEnvironmentVariable("GIT_DIR", null, System.EnvironmentVariableTarget.Process);
 
             // Skip SSL Certificate Validate
-            OperationClient.SkipSslValidationIfNeeded();
+            if (System.Environment.GetEnvironmentVariable(SettingsKeys.SkipSslValidation) == "1")
+            {
+                ServicePointManager.ServerCertificateValidationCallback = delegate { return true; };
+            }
 
             // Adjust repo path
             env.RepositoryPath = Path.Combine(env.SiteRootPath, settingsManager.GetRepositoryPath());
@@ -135,8 +139,6 @@ namespace Kudu.Console
 
             IWebHooksManager hooksManager = new WebHooksManager(tracer, env, hooksLock);
             IDeploymentStatusManager deploymentStatusManager = new DeploymentStatusManager(env, analytics, statusLock);
-            IAutoSwapHandler autoSwapHander = new AutoSwapHandler(env, settingsManager, traceFactory);
-            var functionManager = new FunctionManager(env, traceFactory);
             IDeploymentManager deploymentManager = new DeploymentManager(builderFactory,
                                                           env,
                                                           traceFactory,
@@ -145,8 +147,7 @@ namespace Kudu.Console
                                                           deploymentStatusManager,
                                                           deploymentLock,
                                                           GetLogger(env, level, logger),
-                                                          hooksManager,
-                                                          functionManager);
+                                                          hooksManager);
 
             var step = tracer.Step(XmlTracer.ExecutingExternalProcessTrace, new Dictionary<string, string>
             {
@@ -162,14 +163,14 @@ namespace Kudu.Console
                     deploymentManager.DeployAsync(gitRepository, changeSet: null, deployer: deployer, clean: false)
                         .Wait();
 
-                    if (autoSwapHander.IsAutoSwapEnabled())
+                    if (PostDeploymentHelper.IsAutoSwapEnabled())
                     {
                         string branch = settingsManager.GetBranch();
                         ChangeSet changeSet = gitRepository.GetChangeSet(branch);
                         IDeploymentStatusFile statusFile = deploymentStatusManager.Open(changeSet.Id);
                         if (statusFile != null && statusFile.Status == DeployStatus.Success)
                         {
-                            autoSwapHander.HandleAutoSwap(changeSet.Id, deploymentManager.GetLogger(changeSet.Id), tracer).Wait();
+                            PostDeploymentHelper.PerformAutoSwap(new PostDeploymentTraceListener(tracer, deploymentManager.GetLogger(changeSet.Id))).Wait();
                         }
                     }
                 }

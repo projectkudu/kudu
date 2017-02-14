@@ -181,6 +181,7 @@
       <HintPath>..\packages\System.Text.Encodings.Web.4.0.0\lib\netstandard1.0\System.Text.Encodings.Web.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="System.Web.Extensions" />
     <Reference Include="System.Web.Http" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Web" />
@@ -197,7 +198,6 @@
     </Compile>
     <Compile Include="Commands\CommandExecutor.cs" />
     <Compile Include="Deployment\CascadeLogger.cs" />
-    <Compile Include="Deployment\AutoSwapHandler.cs" />
     <Compile Include="Deployment\BuildPropertyProvider.cs" />
     <Compile Include="Deployment\DeploymentStatusFileExtensions.cs" />
     <Compile Include="Deployment\DeploymentStatusManager.cs" />
@@ -213,7 +213,6 @@
     <Compile Include="Deployment\Generator\AspNetCoreBuilder.cs" />
     <Compile Include="Deployment\Generator\RubySiteBuilder.cs" />
     <Compile Include="Deployment\Generator\RubySiteEnabler.cs" />
-    <Compile Include="Deployment\IAutoSwapHandler.cs" />
     <Compile Include="Deployment\ProgressLogger.cs" />
     <Compile Include="Deployment\Generator\BasicBuilder.cs" />
     <Compile Include="Deployment\Generator\BaseBasicBuilder.cs" />
@@ -230,6 +229,8 @@
     <Compile Include="Helpers\EnvironmentHelper.cs" />
     <Compile Include="Helpers\OSDetector.cs" />
     <Compile Include="Helpers\PermissionHelper.cs" />
+    <Compile Include="Helpers\PostDeploymentHelper.cs" />
+    <Compile Include="Helpers\PostDeploymentTraceListener.cs" />
     <Compile Include="Helpers\ProjectGuidParser.cs" />
     <Compile Include="Hooks\WebHooksManager.cs" />
     <Compile Include="Infrastructure\AspNetCoreHelper.cs" />
@@ -312,7 +313,6 @@
     <Compile Include="Infrastructure\LockFile.cs" />
     <Compile Include="Infrastructure\DeploymentLockFile.cs" />
     <Compile Include="Infrastructure\OperationManager.cs" />
-    <Compile Include="Infrastructure\OperationClient.cs" />
     <Compile Include="Infrastructure\VsHelper.cs" />
     <Compile Include="Infrastructure\XmlUtility.cs" />
     <Compile Include="Settings\EnvironmentSettingsProvider.cs" />

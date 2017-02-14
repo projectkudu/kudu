@@ -14,6 +14,7 @@ using Kudu.Contracts.SourceControl;
 using Kudu.Contracts.Tracing;
 using Kudu.Core;
 using Kudu.Core.Deployment;
+using Kudu.Core.Helpers;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Settings;
 using Kudu.Core.SourceControl;
@@ -36,7 +37,6 @@ namespace Kudu.Services.Deployment
         private readonly ITracer _tracer;
         private readonly IOperationLock _deploymentLock;
         private readonly IRepositoryFactory _repositoryFactory;
-        private readonly IAutoSwapHandler _autoSwapHandler;
 
         public DeploymentController(ITracer tracer,
                                     IEnvironment environment,
@@ -45,8 +45,7 @@ namespace Kudu.Services.Deployment
                                     IDeploymentStatusManager status,
                                     IDeploymentSettingsManager settings,
                                     IOperationLock deploymentLock,
-                                    IRepositoryFactory repositoryFactory,
-                                    IAutoSwapHandler autoSwapHandler)
+                                    IRepositoryFactory repositoryFactory)
         {
             _tracer = tracer;
             _environment = environment;
@@ -56,7 +55,6 @@ namespace Kudu.Services.Deployment
             _settings = settings;
             _deploymentLock = deploymentLock;
             _repositoryFactory = repositoryFactory;
-            _autoSwapHandler = autoSwapHandler;
         }
 
         /// <summary>
@@ -103,7 +101,7 @@ namespace Kudu.Services.Deployment
                 {
                     try
                     {
-                        if (_autoSwapHandler.IsAutoSwapOngoing())
+                        if (PostDeploymentHelper.IsAutoSwapOngoing())
                         {
                             throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.Conflict, Resources.Error_AutoSwapDeploymentOngoing));
                         }
@@ -159,7 +157,7 @@ namespace Kudu.Services.Deployment
                         await _deploymentManager.DeployAsync(repository, changeSet, username, clean, needFileUpdate);
 
                         // auto-swap
-                        if (_autoSwapHandler.IsAutoSwapEnabled())
+                        if (PostDeploymentHelper.IsAutoSwapEnabled())
                         {
                             if (changeSet == null)
                             {
@@ -170,7 +168,7 @@ namespace Kudu.Services.Deployment
                             IDeploymentStatusFile statusFile = _status.Open(changeSet.Id);
                             if (statusFile != null && statusFile.Status == DeployStatus.Success)
                             {
-                                await _autoSwapHandler.HandleAutoSwap(changeSet.Id, _deploymentManager.GetLogger(changeSet.Id), _tracer);
+                                await PostDeploymentHelper.PerformAutoSwap(new PostDeploymentTraceListener(_tracer, _deploymentManager.GetLogger(changeSet.Id)));
                             }
                         }
                     }

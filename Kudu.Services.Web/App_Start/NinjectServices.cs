@@ -4,6 +4,7 @@ using System.Configuration;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
+using System.Net;
 using System.Net.Http.Formatting;
 using System.Web;
 using System.Web.Hosting;
@@ -264,8 +265,6 @@ namespace Kudu.Services.Web.App_Start
 
             kernel.Bind<IDeploymentManager>().To<DeploymentManager>()
                                              .InRequestScope();
-            kernel.Bind<IAutoSwapHandler>().To<AutoSwapHandler>()
-                                             .InRequestScope();
             kernel.Bind<ISSHKeyManager>().To<SSHKeyManager>()
                                              .InRequestScope();
 
@@ -321,7 +320,10 @@ namespace Kudu.Services.Web.App_Start
             EnsureUserProfileDirectory();
 
             // Skip SSL Certificate Validate
-            OperationClient.SkipSslValidationIfNeeded();
+            if (System.Environment.GetEnvironmentVariable(SettingsKeys.SkipSslValidation) == "1")
+            {
+                ServicePointManager.ServerCertificateValidationCallback = delegate { return true; };
+            }
 
             // Make sure webpages:Enabled is true. Even though we set it in web.config, it could be overwritten by
             // an Azure AppSetting that's supposed to be for the site only but incidently affects Kudu as well.

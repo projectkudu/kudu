@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Web.Http;
 using Kudu.Contracts.Tracing;
@@ -12,9 +13,10 @@ using Kudu.Core.Functions;
 using Kudu.Core.Tracing;
 using Kudu.Services.Arm;
 using Kudu.Services.Filters;
+using Kudu.Core.Helpers;
 using Newtonsoft.Json.Linq;
+
 using Environment = System.Environment;
-using System.Text.RegularExpressions;
 
 namespace Kudu.Services.Functions
 {
@@ -156,7 +158,7 @@ namespace Kudu.Services.Functions
             var tracer = _traceFactory.GetTracer();
             using (tracer.Step("FunctionController.SyncTriggers"))
             {
-                await _manager.SyncTriggersAsync();
+                await PostDeploymentHelper.SyncFunctionsTriggers(new PostDeploymentTraceListener(tracer));
 
                 // Return a dummy body to make it valid in ARM template action evaluation
                 return Request.CreateResponse(HttpStatusCode.OK, new { status = "success" });
@@ -215,7 +217,7 @@ namespace Kudu.Services.Functions
                 {
                     try
                     {
-                        await _manager.SyncTriggersAsync(bgTracer);
+                        await PostDeploymentHelper.SyncFunctionsTriggers(new PostDeploymentTraceListener(bgTracer));
                     }
                     catch (Exception ex)
                     {

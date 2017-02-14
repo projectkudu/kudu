@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -6,19 +8,17 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Web.Http;
 using Kudu.Contracts.Infrastructure;
+using Kudu.Contracts.Settings;
 using Kudu.Contracts.SourceControl;
 using Kudu.Contracts.Tracing;
+using Kudu.Core;
 using Kudu.Core.Deployment;
 using Kudu.Core.SourceControl;
+using Kudu.Core.Tracing;
 using Kudu.Services.Deployment;
 using Moq;
-using Xunit;
-using System.Linq;
-using Kudu.Core;
-using Kudu.Core.Tracing;
-using System.Collections.Generic;
 using Newtonsoft.Json.Linq;
-using Kudu.Contracts.Settings;
+using Xunit;
 
 namespace Kudu.Services.Test
 {
@@ -33,7 +33,7 @@ namespace Kudu.Services.Test
             var opLock = new Mock<IOperationLock>();
             opLock.Setup(f => f.Lock(It.IsAny<string>())).Returns(true);
             var controller = new DeploymentController(Mock.Of<ITracer>(), Mock.Of<IEnvironment>(), Mock.Of<IAnalytics>(), Mock.Of<IDeploymentManager>(), Mock.Of<IDeploymentStatusManager>(),
-                                                      Mock.Of<IDeploymentSettingsManager>(), opLock.Object, repoFactory.Object, Mock.Of<IAutoSwapHandler>());
+                                                      Mock.Of<IDeploymentSettingsManager>(), opLock.Object, repoFactory.Object);
             controller.Request = GetRequest();
 
             // Act
@@ -56,7 +56,7 @@ namespace Kudu.Services.Test
             var opLock = new Mock<IOperationLock>();
             opLock.Setup(f => f.Lock(It.IsAny<string>())).Returns(true);
             var controller = new DeploymentController(Mock.Of<ITracer>(), Mock.Of<IEnvironment>(), Mock.Of<IAnalytics>(), Mock.Of<IDeploymentManager>(), Mock.Of<IDeploymentStatusManager>(),
-                                                      Mock.Of<IDeploymentSettingsManager>(), opLock.Object, repoFactory.Object, Mock.Of<IAutoSwapHandler>());
+                                                      Mock.Of<IDeploymentSettingsManager>(), opLock.Object, repoFactory.Object);
             controller.Request = GetRequest();
 
             // Act
@@ -76,7 +76,7 @@ namespace Kudu.Services.Test
                 .Setup(d => d.GetLogEntryDetails(It.IsAny<string>(), It.IsAny<string>()))
                 .Returns(Enumerable.Empty<LogEntry>());
             var controller = new DeploymentController(Mock.Of<ITracer>(), Mock.Of<IEnvironment>(), Mock.Of<IAnalytics>(), deploymentManager.Object, Mock.Of<IDeploymentStatusManager>(),
-                                                      Mock.Of<IDeploymentSettingsManager>(), Mock.Of<IOperationLock>(), Mock.Of<IRepositoryFactory>(), Mock.Of<IAutoSwapHandler>());
+                                                      Mock.Of<IDeploymentSettingsManager>(), Mock.Of<IOperationLock>(), Mock.Of<IRepositoryFactory>());
             controller.Request = GetRequest();
 
             // Act
@@ -103,7 +103,7 @@ namespace Kudu.Services.Test
         {
             // Arrange
             var controller = new DeploymentController(Mock.Of<ITracer>(), Mock.Of<IEnvironment>(), Mock.Of<IAnalytics>(), Mock.Of<IDeploymentManager>(), Mock.Of<IDeploymentStatusManager>(),
-                                                      Mock.Of<IDeploymentSettingsManager>(), Mock.Of<IOperationLock>(), Mock.Of<IRepositoryFactory>(), Mock.Of<IAutoSwapHandler>());
+                                                      Mock.Of<IDeploymentSettingsManager>(), Mock.Of<IOperationLock>(), Mock.Of<IRepositoryFactory>());
 
             // Act
             DeployResult result;

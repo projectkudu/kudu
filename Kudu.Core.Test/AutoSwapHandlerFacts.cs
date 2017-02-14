@@ -1,16 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
-using System.IO.Abstractions;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
-using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Deployment;
-using Kudu.Core.Infrastructure;
-using Kudu.Core.Tracing;
+using Kudu.Core.Helpers;
 using Kudu.Services.Test;
 using Kudu.TestHarness;
 using Moq;
@@ -23,124 +20,96 @@ namespace Kudu.Core.Test
         [Fact]
         public void IsAutoSwapOngoingOrEnabledTests()
         {
-            var deploymentSettingsMock = new Mock<IDeploymentSettingsManager>();
-            var enviromentMock = new Mock<IEnvironment>();
-            var traceFactoryMock = new Mock<ITraceFactory>();
-            traceFactoryMock.Setup(s => s.GetTracer()).Returns(Mock.Of<ITracer>());
+            var homePath = System.Environment.GetEnvironmentVariable("HOME");
+            var tempPath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+            try
+            {
+                System.Environment.SetEnvironmentVariable("HOME", tempPath);
+                System.Environment.SetEnvironmentVariable(Constants.WebSiteSwapSlotName, null);
 
-            enviromentMock.Setup(e => e.LocksPath).Returns(@"x:\foo");
-            var handler = new AutoSwapHandler(
-                enviromentMock.Object,
-                deploymentSettingsMock.Object,
-                traceFactoryMock.Object);
+                var autoSwapLockFile = Path.Combine(tempPath, @"site\locks", PostDeploymentHelper.AutoSwapLockFile);
+                Directory.CreateDirectory(Path.GetDirectoryName(autoSwapLockFile));
 
-            Assert.False(handler.IsAutoSwapEnabled(), "Autoswap should NOT be enabled");
-            Assert.False(handler.IsAutoSwapOngoing(), "Should not be any autoswap, since it is not enabled");
+                Assert.False(PostDeploymentHelper.IsAutoSwapEnabled(), "Autoswap should NOT be enabled");
+                Assert.False(PostDeploymentHelper.IsAutoSwapOngoing(), "Should not be any autoswap, since it is not enabled");
 
-            deploymentSettingsMock.Setup(
-                s => s.GetValue(It.Is<string>(v => "WEBSITE_SWAP_SLOTNAME".StartsWith(v)), It.IsAny<bool>())
-            ).Returns("someslot");
+                System.Environment.SetEnvironmentVariable(Constants.WebSiteSwapSlotName, "someslot");
+                Assert.True(PostDeploymentHelper.IsAutoSwapEnabled(), "Autoswap should be enabled");
+                Assert.False(PostDeploymentHelper.IsAutoSwapOngoing(), "Should not be any autoswap, since autoswap lock is not acquired by process.");
 
-            handler = new AutoSwapHandler(
-                enviromentMock.Object,
-                deploymentSettingsMock.Object,
-                traceFactoryMock.Object);
+                File.WriteAllText(autoSwapLockFile, string.Empty);
+                File.SetLastWriteTimeUtc(autoSwapLockFile, DateTime.UtcNow.AddMinutes(-3));
+                Assert.False(PostDeploymentHelper.IsAutoSwapOngoing(), "Should not be any autoswap, since autoswap lock is acquired over 2 mintues ago.");
 
-            Assert.True(handler.IsAutoSwapEnabled(), "Autoswap should be enabled");
-
-            var fileSystemMock = new Mock<IFileSystem>();
-            var fileInfoMock = new Mock<IFileInfoFactory>();
-            var fileInfoBaseMock = new Mock<FileInfoBase>();
-            fileSystemMock.Setup(f => f.FileInfo).Returns(fileInfoMock.Object);
-            fileInfoMock.Setup(f => f.FromFileName(It.IsAny<string>())).Returns(fileInfoBaseMock.Object);
-            fileInfoBaseMock.Setup(f => f.Exists).Returns(false);
-            fileInfoBaseMock.Setup(f => f.LastWriteTimeUtc).Returns(DateTime.UtcNow);
-            FileSystemHelpers.Instance = fileSystemMock.Object;
-
-            Assert.False(handler.IsAutoSwapOngoing(), "Should not be any autoswap, since autoswap lock is not acquired by process.");
-
-            fileInfoBaseMock.Setup(f => f.Exists).Returns(true);
-            fileInfoBaseMock.Setup(f => f.LastWriteTimeUtc).Returns(DateTime.UtcNow.AddMinutes(-3));
-
-            Assert.False(handler.IsAutoSwapOngoing(), "Should not be any autoswap, since autoswap lock is acquired over 2 mintues ago.");
-
-            fileInfoBaseMock.Setup(f => f.Exists).Returns(true);
-            fileInfoBaseMock.Setup(f => f.LastWriteTimeUtc).Returns(DateTime.UtcNow);
-
-            Assert.True(handler.IsAutoSwapOngoing(), "Autoswap is ongoing, since autoswap lock is acquired within 2 mintues");
+                File.WriteAllText(autoSwapLockFile, string.Empty);
+                Assert.True(PostDeploymentHelper.IsAutoSwapOngoing(), "Autoswap is ongoing, since autoswap lock is acquired within 2 mintues");
+            }
+            finally
+            {
+                System.Environment.SetEnvironmentVariable("HOME", homePath);
+                System.Environment.SetEnvironmentVariable(Constants.WebSiteSwapSlotName, null);
+                if (Directory.Exists(tempPath))
+                {
+                    Directory.Delete(tempPath, recursive: true);
+                }
+            }
         }
 
         [Fact]
         public async Task HandleAutoSwapTests()
         {
-            string deploymentId = Guid.Empty.ToString();
-
-            var deploymentSettingsMock = new Mock<IDeploymentSettingsManager>();
-            var enviromentMock = new Mock<IEnvironment>();
-            var deploymentStatusManagerMock = new Mock<IDeploymentStatusManager>();
-            var tracerMock = new Mock<ITracer>();
-            var deploymentContextMock = new DeploymentContext()
-            {
-                Logger = Mock.Of<ILogger>(),
-                Tracer = tracerMock.Object
-            };
-
-            enviromentMock.Setup(e => e.LocksPath).Returns(@"x:\foo");
-            deploymentStatusManagerMock.Setup(d => d.ActiveDeploymentId).Returns(deploymentId);
-
-            var handler = new AutoSwapHandler(
-                enviromentMock.Object,
-                deploymentSettingsMock.Object,
-                Mock.Of<ITraceFactory>());
-
-            TestTracer.Trace("Autoswap will not happen, since it is not enabled.");
-            await handler.HandleAutoSwap(deploymentId, deploymentContextMock.Logger, deploymentContextMock.Tracer);
-
-            TestTracer.Trace("Autoswap will not happen, since there is no JWT token.");
-            System.Environment.SetEnvironmentVariable(Constants.SiteRestrictedJWT, null);
-            deploymentSettingsMock.Setup(
-                s => s.GetValue(It.Is<string>(v => "WEBSITE_SWAP_SLOTNAME".StartsWith(v)), It.IsAny<bool>())
-            ).Returns("someslot");
-
-            handler = new AutoSwapHandler(
-                enviromentMock.Object,
-                deploymentSettingsMock.Object,
-                Mock.Of<ITraceFactory>());
-
-            var fileSystemMock = new Mock<IFileSystem>();
-            var fileInfoMock = new Mock<IFileInfoFactory>();
-            var fileInfoBaseMock = new Mock<FileInfoBase>();
-            FileSystemHelpers.Instance = fileSystemMock.Object;
-
-            fileSystemMock.Setup(f => f.FileInfo).Returns(fileInfoMock.Object);
-            fileInfoMock.Setup(f => f.FromFileName(It.IsAny<string>())).Returns(fileInfoBaseMock.Object);
-            fileInfoBaseMock.Setup(f => f.Exists).Returns(true);
-            fileInfoBaseMock.Setup(f => f.LastWriteTimeUtc).Returns(DateTime.UtcNow);
-            await handler.HandleAutoSwap(deploymentId, deploymentContextMock.Logger, deploymentContextMock.Tracer);
-
+            var homePath = System.Environment.GetEnvironmentVariable("HOME");
+            var tempPath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
             try
             {
-                string jwtToken = Guid.NewGuid().ToString();
-                string hostName = "foo.scm.bar";
-                System.Environment.SetEnvironmentVariable(Constants.SiteRestrictedJWT, jwtToken);
-                System.Environment.SetEnvironmentVariable(Constants.HttpHost, hostName);
+                System.Environment.SetEnvironmentVariable(Constants.SiteRestrictedJWT, null);
+                System.Environment.SetEnvironmentVariable(Constants.HttpHost, null);
+                System.Environment.SetEnvironmentVariable("HOME", tempPath);
+                System.Environment.SetEnvironmentVariable(Constants.WebSiteSwapSlotName, null);
+
+                var autoSwapLockFile = Path.Combine(tempPath, @"site\locks", PostDeploymentHelper.AutoSwapLockFile);
+
+                string deploymentId = Guid.Empty.ToString();
+
+                var tracerMock = new Mock<ITracer>();
+
+                var traceListener = new PostDeploymentTraceListener(tracerMock.Object, Mock.Of<ILogger>());
                 
+                TestTracer.Trace("Autoswap will not happen, since it is not enabled.");
+                await PostDeploymentHelper.PerformAutoSwap(traceListener);
                 tracerMock.Verify(l => l.Trace("AutoSwap is not enabled", It.IsAny<IDictionary<string, string>>()), Times.Once);
-                tracerMock.Verify(l => l.Trace("AutoSwap is not enabled", It.IsAny<IDictionary<string, string>>()), Times.Once);
+
+                TestTracer.Trace("Autoswap will not happen, since there is no JWT token.");
+                System.Environment.SetEnvironmentVariable(Constants.WebSiteSwapSlotName, "someslot");
+                var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => PostDeploymentHelper.PerformAutoSwap(traceListener));
+                Assert.Equal("Missing X-MS-SITE-RESTRICTED-JWT env!", exception.Message);
+
+                string jwtToken = Guid.NewGuid().ToString();
+                System.Environment.SetEnvironmentVariable(Constants.SiteRestrictedJWT, jwtToken);
+                exception = await Assert.ThrowsAsync<InvalidOperationException>(() => PostDeploymentHelper.PerformAutoSwap(traceListener));
+                Assert.Equal("Missing HTTP_HOST env!", exception.Message);
+
+                string hostName = "foo.scm.bar";
+                System.Environment.SetEnvironmentVariable(Constants.HttpHost, hostName);
 
                 TestTracer.Trace("Autoswap will be triggered");
                 string newDeploymentId = Guid.NewGuid().ToString();
 
                 string autoSwapRequestUrl = null;
                 string bearerToken = null;
-                OperationClient.ClientHandler = new TestMessageHandler((HttpRequestMessage requestMessage) =>
+                PostDeploymentHelper.HttpClientFactory = () => new HttpClient(new TestMessageHandler((HttpRequestMessage requestMessage) =>
                 {
                     autoSwapRequestUrl = requestMessage.RequestUri.AbsoluteUri;
                     bearerToken = requestMessage.Headers.GetValues("Authorization").First();
                     return new HttpResponseMessage(HttpStatusCode.OK);
-                });
+                }));
 
-                await handler.HandleAutoSwap(newDeploymentId, deploymentContextMock.Logger, deploymentContextMock.Tracer);
+                Assert.True(!File.Exists(autoSwapLockFile), string.Format("File {0} should not exist.", autoSwapLockFile));
+
+                await PostDeploymentHelper.PerformAutoSwap(traceListener);
+
+                Assert.True(File.Exists(autoSwapLockFile), string.Format("File {0} should exist.", autoSwapLockFile));
+
                 Assert.NotNull(autoSwapRequestUrl);
                 Assert.True(autoSwapRequestUrl.StartsWith("https://foo.scm.bar/operations/autoswap?slot=someslot&operationId=AUTOSWAP"));
 
@@ -151,7 +120,13 @@ namespace Kudu.Core.Test
             {
                 System.Environment.SetEnvironmentVariable(Constants.SiteRestrictedJWT, null);
                 System.Environment.SetEnvironmentVariable(Constants.HttpHost, null);
-                OperationClient.ClientHandler = null;
+                System.Environment.SetEnvironmentVariable("HOME", homePath);
+                System.Environment.SetEnvironmentVariable(Constants.WebSiteSwapSlotName, null);
+                PostDeploymentHelper.HttpClientFactory = null;
+                if (Directory.Exists(tempPath))
+                {
+                    Directory.Delete(tempPath, recursive: true);
+                }
             }
         }
     }
