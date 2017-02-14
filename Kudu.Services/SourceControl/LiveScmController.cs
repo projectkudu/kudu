@@ -4,14 +4,15 @@ using System.Net;
 using System.Net.Http;
 using System.Web.Http;
 using Kudu.Contracts.Infrastructure;
+using Kudu.Contracts.SourceControl;
 using Kudu.Contracts.Tracing;
 using Kudu.Core;
 using Kudu.Core.Deployment;
+using Kudu.Core.Helpers;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.SourceControl;
 using Kudu.Core.Tracing;
 using Kudu.Services.Infrastructure;
-using Kudu.Contracts.SourceControl;
 
 namespace Kudu.Services.SourceControl
 {
@@ -85,7 +86,7 @@ namespace Kudu.Services.SourceControl
 
                     using (_tracer.Step("Delete auto swap lock file"))
                     {
-                        FileSystemHelpers.DeleteFileSafe(Path.Combine(_environment.LocksPath, AutoSwapHandler.AutoSwapLockFile));
+                        FileSystemHelpers.DeleteFileSafe(Path.Combine(_environment.LocksPath, PostDeploymentHelper.AutoSwapLockFile));
                     }
 
                     using (_tracer.Step("Deleting ssh key"))

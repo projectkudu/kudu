@@ -42,15 +42,13 @@ namespace Kudu.Services.Test
         private ReceivePackHandler CreateHandler(IGitServer gitServer = null, 
                                                 IDeploymentManager deploymentManager = null, 
                                                 IDeploymentSettingsManager settings = null, 
-                                                IRepositoryFactory repositoryFactory = null,
-                                                IAutoSwapHandler autoSwapHandler = null)
+                                                IRepositoryFactory repositoryFactory = null)
         {
             return new ReceivePackHandler(Mock.Of<ITracer>(),
                                           gitServer ?? Mock.Of<IGitServer>(),
                                           Mock.Of<IOperationLock>(),
                                           deploymentManager ?? Mock.Of<IDeploymentManager>(),
-                                          repositoryFactory ?? Mock.Of<IRepositoryFactory>(),
-                                          autoSwapHandler ?? Mock.Of<IAutoSwapHandler>());
+                                          repositoryFactory ?? Mock.Of<IRepositoryFactory>());
         }
     }
 }

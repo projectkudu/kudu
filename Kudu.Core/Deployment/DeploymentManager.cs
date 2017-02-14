@@ -9,7 +9,6 @@ using System.Threading.Tasks;
 using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
-using Kudu.Core.Functions;
 using Kudu.Core.Helpers;
 using Kudu.Core.Hooks;
 using Kudu.Core.Infrastructure;
@@ -34,7 +33,6 @@ namespace Kudu.Core.Deployment
         private readonly IDeploymentSettingsManager _settings;
         private readonly IDeploymentStatusManager _status;
         private readonly IWebHooksManager _hooksManager;
-        private readonly IFunctionManager _functionManager;
 
         private const string XmlLogFile = "log.xml";
         public const string TextLogFile = "log.log";
@@ -49,8 +47,7 @@ namespace Kudu.Core.Deployment
                                  IDeploymentStatusManager status,
                                  IOperationLock deploymentLock,
                                  ILogger globalLogger,
-                                 IWebHooksManager hooksManager,
-                                 IFunctionManager functionManager)
+                                 IWebHooksManager hooksManager)
         {
             _builderFactory = builderFactory;
             _environment = environment;
@@ -61,7 +58,6 @@ namespace Kudu.Core.Deployment
             _settings = settings;
             _status = status;
             _hooksManager = hooksManager;
-            _functionManager = functionManager;
         }
 
         private bool IsDeploying
@@ -633,7 +629,8 @@ namespace Kudu.Core.Deployment
                     {
                         await builder.Build(context);
                         builder.PostBuild(context);
-                        await _functionManager.SyncTriggersAsync();
+
+                        await PostDeploymentHelper.SyncFunctionsTriggers(new PostDeploymentTraceListener(tracer, logger));
 
                         if (_settings.TouchWebConfigAfterDeployment())
                         {

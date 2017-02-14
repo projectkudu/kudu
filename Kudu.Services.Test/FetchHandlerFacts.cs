@@ -95,8 +95,7 @@ namespace Kudu.Services.Test
                                                 IEnvironment environment = null,
                                                 IServiceHookHandler serviceHookHandler = null,
                                                 IRepositoryFactory repositoryFactory = null,
-                                                IFileSystem fileSystem = null,
-                                                IAutoSwapHandler autoSwapHandler = null)
+                                                IFileSystem fileSystem = null)
         {
             FileSystemHelpers.Instance = fileSystem ?? Mock.Of<IFileSystem>();
             return new FetchHandler(tracer ?? Mock.Of<ITracer>(),
@@ -106,8 +105,7 @@ namespace Kudu.Services.Test
                                     deploymentLock ?? Mock.Of<IOperationLock>(),
                                     environment ?? Mock.Of<IEnvironment>(),
                                     new[] { serviceHookHandler ?? Mock.Of<IServiceHookHandler>() },
-                                    repositoryFactory ?? Mock.Of<IRepositoryFactory>(),
-                                    autoSwapHandler ?? Mock.Of<IAutoSwapHandler>());
+                                    repositoryFactory ?? Mock.Of<IRepositoryFactory>());
         }
 
         private Mock<IFileSystem> GetFileSystem(string siteRoot, params DateTime[] writeTimeUtcs)

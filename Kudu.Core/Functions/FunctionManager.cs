@@ -1,13 +1,14 @@
-﻿using Kudu.Contracts.Tracing;
-using Kudu.Core.Infrastructure;
-using Kudu.Core.Tracing;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Kudu.Contracts.Tracing;
+using Kudu.Core.Helpers;
+using Kudu.Core.Infrastructure;
+using Kudu.Core.Tracing;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Kudu.Core.Functions
 {
@@ -27,54 +28,7 @@ namespace Kudu.Core.Functions
             tracer = tracer ?? _traceFactory.GetTracer();
             using (tracer.Step("FunctionManager.SyncTriggers"))
             {
-                if (!IsFunctionsSiteExtensionEnabled)
-                {
-                    tracer.Trace("Functions are not enabled for this site.");
-                    return;
-                }
-
-                var jwt = System.Environment.GetEnvironmentVariable(Constants.SiteRestrictedJWT);
-                if (String.IsNullOrEmpty(jwt))
-                {
-                    // If there is no token, do nothing. This can happen on non-dynamic stamps
-                    tracer.Trace("Ignoring operation as we don't have a token");
-                    return;
-                }
-
-                var functions = await ListFunctionsConfigAsync();
-                var triggers = GetTriggers(functions, tracer);
-
-                // This is to allow scale decisions to be made for the app if routing is enabled for a dynamic function app, 
-                if (IsRoutingSiteExtensionEnabled)
-                {
-                    triggers.Add(JToken.Parse("{\"type\":\"routingTrigger\"}"));
-                }
-
-                if (Environment.IsAzureEnvironment())
-                {
-                    var client = new OperationClient(tracer);
-                    await client.PostAsync("/operations/settriggers", triggers);
-                }
-            }
-        }
-
-        private static bool IsFunctionsSiteExtensionEnabled
-        {
-            get
-            {
-                var functionVersion = System.Environment.GetEnvironmentVariable(Constants.FunctionRunTimeVersion);
-                return !String.IsNullOrEmpty(functionVersion) &&
-                       !String.Equals("disabled", functionVersion, StringComparison.OrdinalIgnoreCase);
-            }
-        }
-
-        private static bool IsRoutingSiteExtensionEnabled
-        {
-            get
-            {
-                var routingVersion = System.Environment.GetEnvironmentVariable(Constants.RoutingRunTimeVersion);
-                return !String.IsNullOrEmpty(routingVersion) &&
-                       !String.Equals("disabled", routingVersion, StringComparison.OrdinalIgnoreCase);
+                await PostDeploymentHelper.SyncFunctionsTriggers(new PostDeploymentTraceListener(tracer));
             }
         }
 
@@ -84,56 +38,6 @@ namespace Kudu.Core.Functions
             {
                 return System.Environment.GetEnvironmentVariable(Constants.FunctionRunTimeVersion);
             }
-        }
-
-        internal static bool FunctionIsDisabled(JObject functionConfig)
-        {
-            // Inspect the per function config values that are used to disable a function
-            JToken value;
-            if ((functionConfig.TryGetValue("disabled", out value) ||
-                 functionConfig.TryGetValue("excluded", out value)) && (bool)value)
-            {
-                return true;
-            }
-
-            return false;
-        }
-
-        internal static JArray GetTriggers(IEnumerable<FunctionEnvelope> functions, ITracer tracer)
-        {
-            JArray triggers = new JArray();
-            foreach (var function in functions)
-            {
-                try
-                {
-                    if (FunctionIsDisabled(function.Config))
-                    {
-                        tracer.Trace(String.Format("{0} is disabled", function));
-                        continue;
-                    }
-
-                    foreach (JObject binding in function.Config.Value<JArray>("bindings"))
-                    {
-                        var type = binding.Value<string>("type");
-                        if (type.EndsWith("Trigger", StringComparison.OrdinalIgnoreCase))
-                        {
-                            binding.Add("functionName", function.Name);
-                            tracer.Trace(String.Format("Syncing {0} of {1}", type, function.Name));
-                            triggers.Add(binding);
-                        }
-                        else
-                        {
-                            tracer.Trace(String.Format("Skipping {0} of {1}", type, function.Name));
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    tracer.Trace(String.Format("{0} is invalid. {1}", function.Name, ex.Message));
-                }
-            }
-
-            return triggers;
         }
 
         public async Task<FunctionEnvelope> CreateOrUpdateAsync(string name, FunctionEnvelope functionEnvelope, Action setConfigChanged)

@@ -19,9 +19,13 @@ namespace Kudu.Core.Test.Jobs
         private ContinuousJobRunner _runner;
         private TestEnvironment _environment;
         private string _logFilePath;
+        private string _jobsDataPath;
 
         public ContinuousJobRunnerFacts()
         {
+            _jobsDataPath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+            Directory.CreateDirectory(_jobsDataPath);
+
             _job = new ContinuousJob
             {
                 Name = "testjob",
@@ -31,7 +35,7 @@ namespace Kudu.Core.Test.Jobs
             {
                 TempPath = @"c:\temp",
                 JobsBinariesPath = @"c:\test\data\continuous\testjob",
-                JobsDataPath = Path.GetTempPath(),
+                JobsDataPath = _jobsDataPath,
                 DataPath = @"c:\test\data"
             };
 
@@ -139,6 +143,11 @@ namespace Kudu.Core.Test.Jobs
             if (_runner != null)
             {
                 _runner.Dispose();
+            }
+
+            if (Directory.Exists(_jobsDataPath))
+            {
+                Directory.Delete(_jobsDataPath, recursive: true);
             }
         }
     }

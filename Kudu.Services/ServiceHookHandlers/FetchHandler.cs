@@ -12,7 +12,7 @@ using Kudu.Contracts.Tracing;
 using Kudu.Core;
 using Kudu.Core.Deployment;
 using Kudu.Core.Deployment.Generator;
-using Kudu.Core.Functions;
+using Kudu.Core.Helpers;
 using Kudu.Core.Hooks;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.SourceControl;
@@ -33,7 +33,6 @@ namespace Kudu.Services
         private readonly IEnvironment _environment;
         private readonly ITracer _tracer;
         private readonly IRepositoryFactory _repositoryFactory;
-        private readonly IAutoSwapHandler _autoSwapHandler;
         private readonly string _markerFilePath;
 
         public FetchHandler(ITracer tracer,
@@ -43,8 +42,7 @@ namespace Kudu.Services
                             IOperationLock deploymentLock,
                             IEnvironment environment,
                             IEnumerable<IServiceHookHandler> serviceHookHandlers,
-                            IRepositoryFactory repositoryFactory,
-                            IAutoSwapHandler autoSwapHandler)
+                            IRepositoryFactory repositoryFactory)
         {
             _tracer = tracer;
             _deploymentLock = deploymentLock;
@@ -54,7 +52,6 @@ namespace Kudu.Services
             _status = status;
             _serviceHookHandlers = serviceHookHandlers;
             _repositoryFactory = repositoryFactory;
-            _autoSwapHandler = autoSwapHandler;
             _markerFilePath = Path.Combine(environment.DeploymentsPath, "pending");
 
             // Prefer marker creation in ctor to delay create when needed.
@@ -147,8 +144,7 @@ namespace Kudu.Services
                             _settings,
                             _tracer.TraceLevel,
                             context.Request.Url,
-                            waitForTempDeploymentCreation,
-                            _autoSwapHandler);
+                            waitForTempDeploymentCreation);
                     }
 
                     // to avoid regression, only set location header if isAsync
@@ -168,7 +164,7 @@ namespace Kudu.Services
                 {
                     await _deploymentLock.LockOperationAsync(async () =>
                     {
-                        if (_autoSwapHandler.IsAutoSwapOngoing())
+                        if (PostDeploymentHelper.IsAutoSwapOngoing())
                         {
                             context.Response.StatusCode = (int)HttpStatusCode.Conflict;
                             context.Response.Write(Resources.Error_AutoSwapDeploymentOngoing);
@@ -296,14 +292,14 @@ namespace Kudu.Services
                 nextMarkerFileUTC = FileSystemHelpers.GetLastWriteTimeUtc(_markerFilePath);
             } while (deploymentInfo.IsReusable && currentMarkerFileUTC != nextMarkerFileUTC);
 
-            if (lastChange != null && _autoSwapHandler.IsAutoSwapEnabled())
+            if (lastChange != null && PostDeploymentHelper.IsAutoSwapEnabled())
             {
                 IDeploymentStatusFile statusFile = _status.Open(lastChange.Id);
                 if (statusFile.Status == DeployStatus.Success)
                 {
                     // if last change is not null and finish successfully, mean there was at least one deployoment happened
                     // since deployment is now done, trigger swap if enabled
-                    await _autoSwapHandler.HandleAutoSwap(lastChange.Id, _deploymentManager.GetLogger(lastChange.Id), _tracer);
+                    await PostDeploymentHelper.PerformAutoSwap(new PostDeploymentTraceListener(_tracer, _deploymentManager.GetLogger(lastChange.Id)));
                 }
             }
         }
@@ -411,8 +407,7 @@ namespace Kudu.Services
             IDeploymentSettingsManager settings,
             TraceLevel traceLevel,
             Uri uri,
-            bool waitForTempDeploymentCreation,
-            IAutoSwapHandler autoSwapHandler)
+            bool waitForTempDeploymentCreation)
         {
             var tracer = traceLevel <= TraceLevel.Off ? NullTracer.Instance : new XmlTracer(environment.TracePath, traceLevel);
             var traceFactory = new TracerFactory(() => tracer);
@@ -445,9 +440,8 @@ namespace Kudu.Services
                     var repositoryFactory = new RepositoryFactory(environment, settings, traceFactory);
                     var siteBuilderFactory = new SiteBuilderFactory(new BuildPropertyProvider(), environment);
                     var webHooksManager = new WebHooksManager(tracer, environment, hooksLock);
-                    var functionManager = new FunctionManager(environment, traceFactory);
-                    var deploymentManager = new DeploymentManager(siteBuilderFactory, environment, traceFactory, analytics, settings, deploymentStatusManager, deploymentLock, NullLogger.Instance, webHooksManager, functionManager);
-                    var fetchHandler = new FetchHandler(tracer, deploymentManager, settings, deploymentStatusManager, deploymentLock, environment, null, repositoryFactory, autoSwapHandler);
+                    var deploymentManager = new DeploymentManager(siteBuilderFactory, environment, traceFactory, analytics, settings, deploymentStatusManager, deploymentLock, NullLogger.Instance, webHooksManager);
+                    var fetchHandler = new FetchHandler(tracer, deploymentManager, settings, deploymentStatusManager, deploymentLock, environment, null, repositoryFactory);
 
                     IDisposable tempDeployment = null;
 

@@ -95,6 +95,7 @@ namespace Kudu
         // Enviroment variable for site retricted jwt token
         public const string SiteRestrictedJWT = "X-MS-SITE-RESTRICTED-JWT";
         public const string HttpHost = "HTTP_HOST";
+        public const string WebSiteSwapSlotName = "WEBSITE_SWAP_SLOTNAME";
 
         public const string Function = "function";
         public const string Functions = "functions";
