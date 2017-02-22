@@ -11,14 +11,5 @@
     /// </summary>
     public class SafeOnePerRequestNinjectModule : GlobalKernelRegistrationModule<SafeOnePerRequestHttpModule>
     {
-        public override void Load()
-        {
-            base.Load();
-        }
-
-        public override void Unload()
-        {
-            base.Unload();
-        }
     }
 }
