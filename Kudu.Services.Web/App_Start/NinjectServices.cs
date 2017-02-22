@@ -72,7 +72,7 @@ namespace Kudu.Services.Web.App_Start
         /// </summary>
         public static void Start()
         {
-            HttpApplication.RegisterModule(typeof(OnePerRequestHttpModule));
+            HttpApplication.RegisterModule(typeof(SafeOnePerRequestHttpModule));
             HttpApplication.RegisterModule(typeof(NinjectHttpModule));
             HttpApplication.RegisterModule(typeof(TraceModule));
             _bootstrapper.Initialize(CreateKernel);
@@ -103,7 +103,7 @@ namespace Kudu.Services.Web.App_Start
         /// <returns>The created kernel.</returns>
         private static IKernel CreateKernel()
         {
-            var kernel = new StandardKernel();
+            var kernel = new StandardKernel(new SafeOnePerRequestNinjectModule());
             kernel.Bind<Func<IKernel>>().ToMethod(ctx => () => new Bootstrapper().Kernel);
             kernel.Bind<IHttpModule>().To<HttpApplicationInitializationHttpModule>();
             kernel.Components.Add<INinjectHttpApplicationPlugin, NinjectHttpApplicationPlugin>();
