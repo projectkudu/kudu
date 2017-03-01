@@ -207,6 +207,41 @@ var Utilities = (function () {
         }
         return button;
     };
+
+
+    Utilities.getCheckbox = function (id, textContent, isProfileRunning, iisIisProfileRunning) {
+        var span = document.createElement("span");
+        $(span).css("width", "138px");
+        $(span).css("white-space", "nowrap");
+        $(span).css("margin-right", "10px");
+
+        var checkbox = document.createElement("input");
+        checkbox.id = id;
+        checkbox.type = "checkbox"
+        $(checkbox).css("margin-right", "10px");
+        $(checkbox).css("margin-left", "10px");
+
+        checkbox.disabled = "";
+        checkbox.checked = false;
+
+        if (isProfileRunning)
+        {
+            checkbox.disabled = "disabled";
+        }
+        if (iisIisProfileRunning)
+        {
+            checkbox.checked = true;
+        }
+       
+        span.appendChild(checkbox);
+
+        var label = document.createElement("span");
+        label.textContent = textContent;
+        span.appendChild(label);
+
+        return span;
+    };
+
     return Utilities;
 })();
 
@@ -366,9 +401,11 @@ var Process = (function () {
         }, false)));
         
         var profilingButton = Utilities.getButton("btn btn-info", this._json.id + "-Profiling", this._json.is_profile_running ? "Stop Profiling" : "Start Profiling", function (e) {
-            handleProfilingEvents(e, _this._json.id);
+            handleProfilingEvents(e, _this._json.id, _this._json.iis_profile_timeout_in_seconds);
         }, false);
         $(profilingButton).css("width", "138px");
+
+        var iisProfilingCheckbox = Utilities.getCheckbox(this._json.id + "-iisProfilingCheck", "Collect IIS Events", this._json.is_profile_running, this._json.is_iis_profile_running)
 
         if (this._json.is_profile_running) { // highlight button if the profiler has started
             $(profilingButton).addClass("btn-danger");
@@ -379,8 +416,16 @@ var Process = (function () {
             $(profilingButton).off("click");
             $(profilingButton).attr("title", "Profiling is not supported for Free/Shared sites.");
             $(profilingButton).tooltip().show();
+
+            var iisProfilingCheckboxControl = iisProfilingCheckbox.childNodes.item(this._json.id + "-iisProfilingCheck");           
+            if (iisProfilingCheckboxControl != null) {
+                iisProfilingCheckboxControl.disabled = 'disabled';
+            }
         }
+
+        tr.appendChild(Utilities.ToTd(iisProfilingCheckbox));
         tr.appendChild(Utilities.ToTd(profilingButton));
+        
         return $(tr);
     };
 
@@ -915,22 +960,78 @@ function searchForHandle() {
     }
 }
 
-function handleProfilingEvents(e, processId) {
+function handleProfilingEvents(e, processId, iisProfilingTimeoutInSeconds) {
     if (!e || !e.target || typeof e.target.textContent === "undefined") {
         return;
     }
 
+    var iisProfiling = false;
+
+    var iisProfilingCheckbox = document.getElementById(processId + "-iisProfilingCheck");
+
+    if (iisProfilingCheckbox != null) {
+        iisProfiling = iisProfilingCheckbox.checked;
+    }
+
     if (e.target.textContent.indexOf("Stop") === 0) {
         stopProfiling(e, processId);
+        if (iisProfilingCheckbox != null) {
+            iisProfilingCheckbox.disabled = "";
+        }
     }
-    else if(e.target.textContent.indexOf("Starting") !== 0) {
-        e.target.textContent = "Starting Profiler...";
-        startProfiling(e, processId);
+    else if (e.target.textContent.indexOf("Starting") !== 0) {
+        if (iisProfiling) {
+            var divConfirm = document.getElementById('dialog-confirm')
+            if (divConfirm == null) {
+                divConfirm = Utilities.createDiv('dialog-confirm');
+                divConfirm.title = "Collect IIS Events?";
+
+            }
+            divConfirm.innerHTML = "IIS profiling enables IIS and threadTime ETW events. The generated trace file can be analyzed using Perfview which is available at <a style='outline: none' href='https://www.microsoft.com/en-us/download/details.aspx?id=28567'>https://www.microsoft.com/en-us/download/details.aspx?id=28567</a>. <br/><br/>The profiling session will automatically timeout after <b>" + iisProfilingTimeoutInSeconds.toString() + "</b> seconds if not stopped manually.<br/><br/>Enabling IIS Profiling is a relatively <b>expensive option</b> to turn on as it increases the CPU usage and disk I/O on your instance. Are you sure you want to continue?"
+            $(divConfirm).dialog({
+                resizable: false,
+                height: 330,
+                width: 450,
+                modal: true,
+                buttons: [{
+                    text: "Yes",
+                    click: function () {
+                        if (iisProfilingCheckbox != null) {
+                            iisProfilingCheckbox.disabled = "disabled";
+                        }
+                        e.target.textContent = "Starting Profiler...";
+                        startProfiling(e, processId, iisProfiling);
+                        $(this).dialog("close");
+                    }
+                }, {
+                    text: "No",
+                    click: function () {
+                        $(this).dialog("close");
+                    }
+                }]
+            });
+        }
+        else {
+
+            // so this is when someone wants to collect profiler traces
+            // without the IIS profiling events. We still want to
+            // disable the profiling check box here
+
+            if (iisProfilingCheckbox != null) {
+                iisProfilingCheckbox.disabled = "disabled";
+            }
+            e.target.textContent = "Starting Profiler...";
+            startProfiling(e, processId, iisProfiling);
+        }
     }
 }
 
-function postProfileRequest(action, processId) {
+function postProfileRequest(action, processId, iisProfiling) {
     var uri = "/api/processes/" + processId + "/profile/" + action;
+
+    if (iisProfiling)
+        uri = uri + "?iisProfiling=true";
+
     var request = {
             method: "POST",
             contentType: "application/json",
@@ -938,8 +1039,8 @@ function postProfileRequest(action, processId) {
     return $.ajax(uri, request);
 }
 
-function startProfiling(e, processId) {
-    var request = postProfileRequest("start", processId);
+function startProfiling(e, processId, iisProfiling) {
+    var request = postProfileRequest("start", processId, iisProfiling);
     request.done(function (resp) {
         e.target.title = "";
         e.target.textContent = "Stop Profiling";
@@ -986,7 +1087,14 @@ function stopProfiling(e, processId) {
     Utilities.downloadURL(uri, true);
     e.target.textContent = "Start Profiling";
     e.target.title = "It may take a few seconds for the download profile dialog to appear";
+    
     $(e.currentTarget).removeClass("btn-danger");  // remove highlight button if the profiler has stopped
+
+    var iisProfilingCheckbox = document.getElementById(processId + "-iisProfilingCheck");
+    if (iisProfilingCheckbox != null) {
+        iisProfilingCheckbox.disabled = "";
+        iisProfilingCheckbox.checked = false; 
+    }
 }
 
 window.onload = function () {
