@@ -8,10 +8,12 @@ using System.Runtime.InteropServices;
 using System.Security;
 using System.Security.Principal;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Deployment;
+using Kudu.Core.Helpers;
 using Kudu.Core.Tracing;
 using Microsoft.Win32.SafeHandles;
 
@@ -109,6 +111,11 @@ namespace Kudu.Core.Infrastructure
         /// </summary>
         public static Process GetParentProcess(this Process process, ITracer tracer)
         {
+            if (!OSDetector.IsOnWindows())
+            {
+                return process.GetParentProcessLinux(tracer);
+            }
+
             IntPtr processHandle;
             if (!process.TryGetProcessHandle(out processHandle))
             {
@@ -129,12 +136,41 @@ namespace Kudu.Core.Infrastructure
             }
             catch (Exception ex)
             {
-                if (!process.ProcessName.Equals("w3wp", StringComparison.OrdinalIgnoreCase))
+                var processName = process.SafeGetProcessName() ?? "(null)";
+                if (!processName.Equals("w3wp", StringComparison.OrdinalIgnoreCase))
                 {
-                    tracer.TraceError(ex, "GetParentProcess of {0}({1}) failed.", process.ProcessName, process.Id);
+                    tracer.TraceError(ex, "GetParentProcess of {0}({1}) failed.", processName, process.Id);
                 }
                 return null;
             }
+        }
+
+        // http://stackoverflow.com/questions/2509406/c-mono-get-list-of-child-processes-on-windows-and-linux
+        public static Process GetParentProcessLinux(this Process process, ITracer tracer)
+        {
+            try
+            {
+                var procPath = "/proc/" + process.Id + "/stat";
+
+                var lines = File.ReadLines("/proc/" + process.Id + "/stat");
+                var match = Regex.Match(lines.First(), @"\d+\s+\((.*?)\)\s+\w+\s+(\d+)\s");
+
+                if (match.Success)
+                {
+                    var ppid = Int32.Parse(match.Groups[2].Value);
+                    return ppid < 1 ? null : Process.GetProcessById(ppid);
+                }
+                tracer.TraceError("GetParentProcessLinux: Invalid proc stat format: " + procPath);
+            }
+            catch(FileNotFoundException)
+            {
+                tracer.TraceError("Could not find process with PID=" + process.Id);
+            }
+            catch(Exception ex)
+            {
+                tracer.TraceError(ex, "GetParentProcessLinux ({0}) failed.", process.Id);
+            }
+            return null;
         }
 
         /// <summary>
@@ -293,6 +329,19 @@ namespace Kudu.Core.Infrastructure
             }
 
             return processHandle != IntPtr.Zero;
+        }
+
+        private static string SafeGetProcessName(this Process process)
+        {
+            try
+            {
+                return process.ProcessName;
+            }
+            catch(InvalidOperationException)
+            {
+                // The process has already exited
+                return null;
+            }
         }
 
         private static async Task CopyStreamAsync(Stream from, Stream to, IdleManager idleManager, CancellationToken cancellationToken, bool closeAfterCopy = false)
