@@ -225,14 +225,14 @@ namespace Kudu.Services.Performance
         }
 
         [HttpPost]
-        public async Task<HttpResponseMessage> StartProfileAsync(int id)
+        public async Task<HttpResponseMessage> StartProfileAsync(int id, bool iisProfiling = false)
         {
             using (_tracer.Step("ProcessController.StartProfileAsync"))
             {
                 // check if the process Ids exists in the sandbox. If it doesn't, this method returns a 404 and we are done.
                 var process = GetProcessById(id);
 
-                var result = await ProfileManager.StartProfileAsync(process.Id, _tracer);
+                var result = await ProfileManager.StartProfileAsync(process.Id, _tracer, iisProfiling);
 
                 if(result.StatusCode != HttpStatusCode.OK)
                 {
@@ -253,7 +253,9 @@ namespace Kudu.Services.Performance
                 // check if the process Ids exists in the sandbox. If it doesn't, this method returns a 404 and we are done.
                 var process = GetProcessById(id);
 
-                var result = await ProfileManager.StopProfileAsync(process.Id, _tracer);
+                bool iisProfiling = ProfileManager.IsIISProfileRunning(process.Id);
+
+                var result = await ProfileManager.StopProfileAsync(process.Id, _tracer, iisProfiling);
 
                 if (result.StatusCode != HttpStatusCode.OK)
                 {
@@ -261,7 +263,8 @@ namespace Kudu.Services.Performance
                 }
                 else
                 {
-                    string profileFileFullPath = ProfileManager.GetProfilePath(process.Id);
+                    string profileFileFullPath = ProfileManager.GetProfilePath(process.Id, iisProfiling);
+
                     string profileFileName = Path.GetFileName(profileFileFullPath);
 
                     HttpResponseMessage response = Request.CreateResponse();
