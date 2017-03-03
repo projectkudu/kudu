@@ -119,6 +119,7 @@
     <Compile Include="Functions\FunctionSecrets.cs" />
     <Compile Include="Functions\FunctionEnvelope.cs" />
     <Compile Include="Functions\FunctionSecretsJsonOps.cs" />
+    <Compile Include="Functions\FunctionTestData.cs" />
     <Compile Include="Functions\IFunctionManager.cs" />
     <Compile Include="Functions\IKeyJsonOps.cs" />
     <Compile Include="Functions\MasterKey.cs" />

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Kudu.Contracts.Functions;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Helpers;
 using Kudu.Core.Infrastructure;
@@ -96,23 +97,23 @@ namespace Kudu.Core.Functions
                 await FileSystemHelpers.WriteAllTextToFileAsync(dataFilePath, functionEnvelope.TestData);
             }
 
-            return await GetFunctionConfigAsync(name);
+            return await GetFunctionConfigAsync(name); // test_data took from incoming request, it will not exceed the limit
         }
 
-        public async Task<IEnumerable<FunctionEnvelope>> ListFunctionsConfigAsync()
+        public async Task<IEnumerable<FunctionEnvelope>> ListFunctionsConfigAsync(FunctionTestData packageLimit = null) // null means no limit
         {
             var configList = await Task.WhenAll(
                     FileSystemHelpers
                     .GetDirectories(_environment.FunctionsPath)
                     .Select(d => Path.Combine(d, Constants.FunctionsConfigFile))
                     .Where(FileSystemHelpers.FileExists)
-                    .Select(f => TryGetFunctionConfigAsync(Path.GetFileName(Path.GetDirectoryName(f)))));
+                    .Select(f => TryGetFunctionConfigAsync(Path.GetFileName(Path.GetDirectoryName(f)), packageLimit)));
             return configList.Where(c => c != null);
         }
 
-        public async Task<FunctionEnvelope> GetFunctionConfigAsync(string name)
+        public async Task<FunctionEnvelope> GetFunctionConfigAsync(string name, FunctionTestData packageLimit = null) // null means no limit
         {
-            var config = await TryGetFunctionConfigAsync(name);
+            var config = await TryGetFunctionConfigAsync(name, packageLimit);
             if (config == null)
             {
                 throw new FileNotFoundException($"Function ({name}) config does not exist or is invalid");
@@ -157,7 +158,7 @@ namespace Kudu.Core.Functions
 
             string jsonStr = null;
             int timeOut = 5;
-            while(true)
+            while (true)
             {
                 try
                 {
@@ -166,7 +167,7 @@ namespace Kudu.Core.Functions
                 }
                 catch (Exception)
                 {
-                    if(timeOut == 0)
+                    if (timeOut == 0)
                     {
                         throw new TimeoutException($"Fail to read {keyPath}, the file is being held by another process");
                     }
@@ -241,14 +242,14 @@ namespace Kudu.Core.Functions
             FileSystemHelpers.DeleteFileSafe(GetFunctionLogPath(name));
         }
 
-        private async Task<FunctionEnvelope> TryGetFunctionConfigAsync(string name)
+        private async Task<FunctionEnvelope> TryGetFunctionConfigAsync(string name, FunctionTestData packageLimit)
         {
             try
             {
                 var path = GetFunctionConfigPath(name);
                 if (FileSystemHelpers.FileExists(path))
                 {
-                    return CreateFunctionConfig(await FileSystemHelpers.ReadAllTextFromFileAsync(path), name);
+                    return await CreateFunctionConfig(await FileSystemHelpers.ReadAllTextFromFileAsync(path), name, packageLimit);
                 }
             }
             catch
@@ -258,7 +259,7 @@ namespace Kudu.Core.Functions
             return null;
         }
 
-        private FunctionEnvelope CreateFunctionConfig(string configContent, string functionName)
+        private async Task<FunctionEnvelope> CreateFunctionConfig(string configContent, string functionName, FunctionTestData packageLimit)
         {
             var functionConfig = JObject.Parse(configContent);
 
@@ -271,7 +272,7 @@ namespace Kudu.Core.Functions
                 SecretsFileHref = FilePathToVfsUri(GetFunctionSecretsFilePath(functionName)),
                 Href = GetFunctionHref(functionName),
                 Config = functionConfig,
-                TestData = GetFunctionTestData(functionName)
+                TestData = await GetFunctionTestData(functionName, packageLimit)
             };
         }
 
@@ -358,7 +359,7 @@ namespace Kudu.Core.Functions
             return Path.Combine(_environment.ApplicationLogFilesPath, Constants.Functions, Constants.Function, name);
         }
 
-        private string GetFunctionTestData(string functionName)
+        private async Task<string> GetFunctionTestData(string functionName, FunctionTestData packageLimit)
         {
             string testDataFilePath = GetFunctionTestDataFilePath(functionName);
 
@@ -368,7 +369,17 @@ namespace Kudu.Core.Functions
                 FileSystemHelpers.WriteAllText(testDataFilePath, String.Empty);
             }
 
-            return FileSystemHelpers.ReadAllText(testDataFilePath);
+            if (packageLimit != null)
+            {
+                var fileSize = FileSystemHelpers.FileInfoFromFileName(testDataFilePath).Length;
+                if (!packageLimit.DeductFromBytesLeftInPackage(fileSize))
+                {
+                    return $"Test_Data is of size {fileSize} bytes, but there's only {packageLimit.BytesLeftInPackage} bytes left in ARM response";
+                }
+            }
+
+            return await FileSystemHelpers.ReadAllTextFromFileAsync(testDataFilePath);
+
         }
 
         private string GetFunctionTestDataFilePath(string functionName)
