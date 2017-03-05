@@ -249,7 +249,7 @@ namespace Kudu.Core.Functions
                 var path = GetFunctionConfigPath(name);
                 if (FileSystemHelpers.FileExists(path))
                 {
-                    return CreateFunctionConfig(await FileSystemHelpers.ReadAllTextFromFileAsync(path), name, packageLimit);
+                    return await CreateFunctionConfig(await FileSystemHelpers.ReadAllTextFromFileAsync(path), name, packageLimit);
                 }
             }
             catch
@@ -259,7 +259,7 @@ namespace Kudu.Core.Functions
             return null;
         }
 
-        private FunctionEnvelope CreateFunctionConfig(string configContent, string functionName, FunctionTestData packageLimit)
+        private async Task<FunctionEnvelope> CreateFunctionConfig(string configContent, string functionName, FunctionTestData packageLimit)
         {
             var functionConfig = JObject.Parse(configContent);
 
@@ -272,7 +272,7 @@ namespace Kudu.Core.Functions
                 SecretsFileHref = FilePathToVfsUri(GetFunctionSecretsFilePath(functionName)),
                 Href = GetFunctionHref(functionName),
                 Config = functionConfig,
-                TestData = GetFunctionTestData(functionName, packageLimit)
+                TestData = await GetFunctionTestData(functionName, packageLimit)
             };
         }
 
@@ -359,7 +359,7 @@ namespace Kudu.Core.Functions
             return Path.Combine(_environment.ApplicationLogFilesPath, Constants.Functions, Constants.Function, name);
         }
 
-        private string GetFunctionTestData(string functionName, FunctionTestData packageLimit)
+        private async Task<string> GetFunctionTestData(string functionName, FunctionTestData packageLimit)
         {
             string testDataFilePath = GetFunctionTestDataFilePath(functionName);
 
@@ -378,7 +378,7 @@ namespace Kudu.Core.Functions
                 }
             }
 
-            return FileSystemHelpers.ReadAllText(testDataFilePath); //why isn't this function async?
+            return await FileSystemHelpers.ReadAllTextFromFileAsync(testDataFilePath);
 
         }
 
