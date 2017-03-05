@@ -118,7 +118,7 @@ namespace Kudu.Core.Infrastructure
         }
 
         /// <summary>
-        /// Async version of ReadAllTestFromFile,
+        /// Async version of ReadAllTextFromFile,
         /// </summary>
         public static async Task<string> ReadAllTextFromFileAsync(string path)
         {
