@@ -48,8 +48,8 @@ namespace Kudu.Core.Infrastructure
                 // for dotnet core preview 3 and after
                 // if its .csproj, look for <PackageReference Include="Microsoft.AspNetCore" Version="..." />
                 return !projectTypeGuids.Any() &&
-                (VsHelper.DoesIncludeReferencePackage(projectPath, "Microsoft.AspNetCore")
-                || IsWebAppFromFolderStruct(projectPath));
+                       (VsHelper.IncludesReferencePackage(projectPath, "Microsoft.AspNetCore") 
+                            || IsWebAppFromFolderStruct(projectPath));
             }
             else if (projectPath.EndsWith(".xproj", StringComparison.OrdinalIgnoreCase))
             {

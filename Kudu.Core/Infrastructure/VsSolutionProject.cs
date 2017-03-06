@@ -150,14 +150,13 @@ namespace Kudu.Core.Infrastructure
             }
 
             _absolutePath = Path.Combine(Path.GetDirectoryName(_solutionPath), relativePath);
-            if (File.Exists(_absolutePath))
+            if (FileSystemHelpers.FileExists(_absolutePath))
             {
-                _projectTypeGuids = VsHelper.GetProjectTypeGuids(_absolutePath);
                 // used to determine project type
+                _projectTypeGuids = VsHelper.GetProjectTypeGuids(_absolutePath);
                 if (AspNetCoreHelper.IsDotnetCoreFromProjectFile(_absolutePath, _projectTypeGuids))
                 {
                     _isAspNetCore = true;
-                    // _absolutePath = projectPath; _absolutePath is now xproj
                 }
                 else if (projectType == SolutionProjectType.KnownToBeMSBuildFormat)
                 {
