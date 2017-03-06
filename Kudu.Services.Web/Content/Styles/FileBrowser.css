@@ -86,7 +86,7 @@ div.upload-unzip-show {
 }
 
 div.zip-upload-text {
-    font-family: Consolas, 'Lucida Console', 'Courier New', monospace;
+    font-family: Consolas, Monaco, 'Lucida Console', 'Courier New', monospace;
     font-size: large;
     position: relative;
     text-align: center;
@@ -94,7 +94,7 @@ div.zip-upload-text {
 }
 
 div.console {
-    font-family: Consolas, 'Lucida Console', 'Courier New', monospace;
+    font-family: Consolas, Monaco, 'Lucida Console', 'Courier New', monospace;
     height: 100%;
     margin: auto;
     white-space: pre-wrap;
