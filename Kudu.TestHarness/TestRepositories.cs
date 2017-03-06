@@ -20,6 +20,8 @@ namespace Kudu.TestHarness
             new TestRepositoryInfo("https://github.com/KuduApps/AspNetCoreRC2YeomanProject.git",    "dc4d12b"),
             new TestRepositoryInfo("https://github.com/KuduApps/AspNetCoreRC2VisualStudioSln.git",  "d2b621d"),
             new TestRepositoryInfo("https://github.com/KuduApps/AspNetCoreRC3CliWithLib.git",       "d8a1286"),
+            new TestRepositoryInfo("https://github.com/KuduApps/AspNetCoreRC4WebApiCli.git",        "96168e9"),
+            new TestRepositoryInfo("https://github.com/KuduApps/AspNetCoreRC4WebApiVsSln.git",      "a581538"),   
             new TestRepositoryInfo("https://github.com/KuduApps/Bakery.git",                        "2f29dc6"),
             new TestRepositoryInfo("https://github.com/KuduApps/BasicConsoleWorker.git",            "ce1ec74"),
             new TestRepositoryInfo("https://github.com/KuduApps/ConditionalCompilation.git",        "946159e"),

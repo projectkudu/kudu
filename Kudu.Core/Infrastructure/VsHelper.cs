@@ -82,6 +82,17 @@ namespace Kudu.Core.Infrastructure
                         select new Guid(guid.Trim('{', '}'));
             return guids;
         }
+
+        public static bool IncludesReferencePackage(string path, string packageName)
+        {
+            var packages = from packageReferences in XDocument.Load(path).Descendants("PackageReference")
+                           let packageReferenceName = packageReferences.Attribute("Include")
+                           where packageReferenceName != null && String.Equals(packageReferenceName.Value, packageName, StringComparison.OrdinalIgnoreCase)
+                           select packageReferenceName.Value;
+
+            return packages.Any();
+        }
+
         public static bool IsExecutableProject(string projectPath)
         {
             var document = XDocument.Parse(File.ReadAllText(projectPath));

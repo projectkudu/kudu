@@ -454,6 +454,28 @@ namespace Kudu.FunctionalTests
         }
     }
 
+    [KuduXunitTestClass]
+    public class AspNetCoreRC4WebApiVsSlnTests : GitDeploymentTests
+    {
+        [Fact]
+        [KuduXunitTest(PrivateOnly = true)]
+        public void PushAndDeployAspNetCoreRC4WebApiVsSln()
+        { 
+            PushAndDeployApps("AspNetCoreRC4WebApiVsSln", "master", "[\"value1\",\"value2\"]", HttpStatusCode.OK, "Deployment successful", resourcePath:"/api/values");
+        }
+    }
+
+    [KuduXunitTestClass]
+    public class AspNetCoreRC4WebApiCliTests : GitDeploymentTests
+    {
+        [Fact]
+        [KuduXunitTest(PrivateOnly = true)]
+        public void PushAndDeployAspNetCoreRC4WebApiCli()
+        {
+            PushAndDeployApps("AspNetCoreRC4WebApiCli", "master", "[\"value1\",\"value2\"]", HttpStatusCode.OK, "Deployment successful", resourcePath: "/api/values");
+        }
+    }
+
     public abstract class GitDeploymentTests
     {
         //Common code
