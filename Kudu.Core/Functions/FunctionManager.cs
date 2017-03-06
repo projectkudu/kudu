@@ -106,7 +106,7 @@ namespace Kudu.Core.Functions
                     FileSystemHelpers
                     .GetDirectories(_environment.FunctionsPath)
                     .Select(d => TryGetFunctionConfigAsync(Path.GetFileName(d))));
-                    // TryGetFunctionConfigAsync checks the existence of function.config
+                    // TryGetFunctionConfigAsync checks the existence of function.json
             return configList.Where(c => c != null);
         }
 
@@ -261,12 +261,13 @@ namespace Kudu.Core.Functions
         private FunctionEnvelope CreateFunctionConfig(string configContent, string functionName)
         {
             var functionConfig = JObject.Parse(configContent);
+            var functionPath = GetFunctionPath(functionName);
 
             return new FunctionEnvelope
             {
                 Name = functionName,
-                ScriptRootPathHref = FilePathToVfsUri(GetFunctionPath(functionName), isDirectory: true),
-                ScriptHref = FilePathToVfsUri(DeterminePrimaryScriptFile(functionConfig, GetFunctionPath(functionName))),
+                ScriptRootPathHref = FilePathToVfsUri(functionPath, isDirectory: true),
+                ScriptHref = FilePathToVfsUri(DeterminePrimaryScriptFile(functionConfig, functionPath)),
                 ConfigHref = FilePathToVfsUri(GetFunctionConfigPath(functionName)),
                 SecretsFileHref = FilePathToVfsUri(GetFunctionSecretsFilePath(functionName)),
                 Href = GetFunctionHref(functionName),
@@ -303,7 +304,7 @@ namespace Kudu.Core.Functions
             else
             {
                 string[] functionFiles = FileSystemHelpers.GetFiles(scriptDirectory,"*.*", SearchOption.TopDirectoryOnly)
-                    .Where(p => Path.GetFileName(p).ToLowerInvariant() != "function.json")
+                    .Where(p => ! String.Equals(Path.GetFileName(p),"function.json", StringComparison.OrdinalIgnoreCase))
                     .ToArray();
 
                 if (functionFiles.Length == 0)
@@ -321,8 +322,8 @@ namespace Kudu.Core.Functions
                     // if there is a "run" file, that file is primary,
                     // for Node, any index.js file is primary
                     functionPrimary = functionFiles.FirstOrDefault(p =>
-                        Path.GetFileNameWithoutExtension(p).ToLowerInvariant() == "run" ||
-                        Path.GetFileName(p).ToLowerInvariant() == "index.js");
+                        String.Equals(Path.GetFileNameWithoutExtension(p),"run",StringComparison.OrdinalIgnoreCase) ||
+                        String.Equals(Path.GetFileName(p),"index.js",StringComparison.OrdinalIgnoreCase));
                 }
             }
 
