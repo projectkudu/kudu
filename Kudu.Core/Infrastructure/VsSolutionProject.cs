@@ -150,30 +150,23 @@ namespace Kudu.Core.Infrastructure
             }
 
             _absolutePath = Path.Combine(Path.GetDirectoryName(_solutionPath), relativePath);
-            // KnownToBeMSBuildFormat: C#, VB, and VJ# projects
-            // check project extension since Common Project System is not in KnowToBeMSBuildFormat yet
-            if (((projectType == SolutionProjectType.KnownToBeMSBuildFormat) || projectExtension.Equals(".csproj", StringComparison.OrdinalIgnoreCase)) && File.Exists(_absolutePath))
+            if (File.Exists(_absolutePath))
             {
-                // If the project is a msbuild project then extract the project type guids
                 _projectTypeGuids = VsHelper.GetProjectTypeGuids(_absolutePath);
-
-                // Check if it's a wap
-                _isWap = VsHelper.IsWap(_projectTypeGuids);
-
-                // FIXME, checking for projectExtension two times
-                _isAspNetCore = AspNetCoreHelper.IsDotnetCorePreview3(_absolutePath, _projectTypeGuids);
-
-                _isExecutable = VsHelper.IsExecutableProject(_absolutePath);
-            }
-            else if (projectExtension.Equals(".xproj", StringComparison.OrdinalIgnoreCase) && File.Exists(_absolutePath))
-            {
-                var projectPath = Path.Combine(Path.GetDirectoryName(_absolutePath), "project.json");
-                if (AspNetCoreHelper.IsWebApplicationProjectFile(projectPath))
+                // used to determine project type
+                if (AspNetCoreHelper.IsDotnetCoreFromProjectFile(_absolutePath, _projectTypeGuids))
                 {
                     _isAspNetCore = true;
                     // _absolutePath = projectPath; _absolutePath is now xproj
                 }
-                _projectTypeGuids = Enumerable.Empty<Guid>();
+                else if (projectType == SolutionProjectType.KnownToBeMSBuildFormat)
+                {
+                    // KnownToBeMSBuildFormat: C#, VB, and VJ# projects
+                    // Check if it's a wap
+                    _isWap = VsHelper.IsWap(_projectTypeGuids);
+
+                    _isExecutable = VsHelper.IsExecutableProject(_absolutePath);
+                }
             }
             else
             {

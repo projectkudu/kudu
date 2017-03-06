@@ -13,8 +13,9 @@ namespace Kudu.Core.Infrastructure
         private const string ProjectJson = "project.json";
         public static readonly string[] ProjectJsonLookupList = new string[] { $"*{ProjectJson}" };
 
-        public static bool IsWebApplicationProjectFile(string projectFilePath)
+        public static bool IsWebAppFromFolderStruct(string projectFilePath)
         {
+            // projectFilePath can be project.json, XXX.xproj or XXX.csproj
             var projectDirectory = Path.GetDirectoryName(projectFilePath);
             var webConfig = Path.Combine(projectDirectory, "web.config");
             var wwwrootDirectory = Path.Combine(projectDirectory, "wwwroot");
@@ -28,7 +29,7 @@ namespace Kudu.Core.Infrastructure
             projectJsonPath = null;
             var projectJsonFiles = fileFinder.ListFiles(rootPath, SearchOption.AllDirectories, ProjectJsonLookupList)
                 .Where(path => Path.GetFileName(path).Equals(ProjectJson, StringComparison.OrdinalIgnoreCase))
-                .Where(IsWebApplicationProjectFile)
+                .Where(IsWebAppFromFolderStruct)
                 .ToList();
 
             if (projectJsonFiles.Any())
@@ -40,10 +41,22 @@ namespace Kudu.Core.Infrastructure
             return false;
         }
 
-        public static bool IsDotnetCorePreview3(string projectPath, IEnumerable<Guid> projectTypeGuids)
+        public static bool IsDotnetCoreFromProjectFile(string projectPath, IEnumerable<Guid> projectTypeGuids)
         {
-            // we need to verify suffix is csproj, xproj will not have projectTypeGuids either
-            return projectPath.EndsWith(".csproj", StringComparison.OrdinalIgnoreCase) && !projectTypeGuids.Any() && IsWebApplicationProjectFile(projectPath);
+            if (projectPath.EndsWith(".csproj", StringComparison.OrdinalIgnoreCase))
+            {
+                // for dotnet core preview 3 and after
+                // if its .csproj, look for <PackageReference Include="Microsoft.AspNetCore" Version="..." />
+                return !projectTypeGuids.Any() &&
+                (VsHelper.DoesIncludeReferencePackage(projectPath, "Microsoft.AspNetCore")
+                || IsWebAppFromFolderStruct(projectPath));
+            }
+            else if (projectPath.EndsWith(".xproj", StringComparison.OrdinalIgnoreCase))
+            {
+                // for dotnet core preview 2 and before 
+                return IsWebAppFromFolderStruct(projectPath);
+            }
+            return false;
         }
     }
 }

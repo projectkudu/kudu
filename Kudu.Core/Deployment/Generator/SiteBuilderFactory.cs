@@ -222,6 +222,7 @@ namespace Kudu.Core.Deployment.Generator
             }
 
             // Check for ASP.NET Core project without VS solution or project
+            // for ASP.NET Core project which only has project.json, but not xproj ie: AspNetCoreRC2YeomanProject
             string projectJson;
             if (AspNetCoreHelper.TryAspNetCoreWebProject(targetPath, fileFinder, out projectJson))
             {
@@ -282,7 +283,7 @@ namespace Kudu.Core.Deployment.Generator
                                       targetPath,
                                       solutionPath);
             }
-            else if (AspNetCoreHelper.IsDotnetCorePreview3(targetPath, projectTypeGuids) || targetPath.EndsWith(".xproj", StringComparison.OrdinalIgnoreCase))
+            else if (AspNetCoreHelper.IsDotnetCoreFromProjectFile(targetPath, projectTypeGuids))
             {
                 return new AspNetCoreBuilder(_environment,
                        perDeploymentSettings,
