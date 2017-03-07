@@ -21,7 +21,7 @@
         public const string Project = "PROJECT";
         public const string WorkerCommand = "WORKER_COMMAND";
         public const string TargetPath = "SCM_TARGET_PATH";
-        public const string WebJobPath = "WEBJOB_PATH";
+        public const string WebJobsRootPath = "WEBJOBS_ROOT_PATH";
         public const string RepositoryPath = "SCM_REPOSITORY_PATH";
         public const string NoRepository = "SCM_NO_REPOSITORY";
         public const string UseLibGit2SharpRepository = "SCM_USE_LIBGIT2SHARP_REPOSITORY";

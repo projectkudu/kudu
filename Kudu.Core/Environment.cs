@@ -117,7 +117,7 @@ namespace Kudu.Core
             _dataPath = Path.Combine(rootPath, Constants.DataPath);
             _jobsDataPath = Path.Combine(_dataPath, Constants.JobsPath);
             _jobsBinariesPath = Path.Combine(_webRootPath, Constants.AppDataPath, Constants.JobsPath);
-            string userDefinedWebJobRoot = System.Environment.GetEnvironmentVariable(SettingsKeys.WebJobPath);
+            string userDefinedWebJobRoot = System.Environment.GetEnvironmentVariable(SettingsKeys.WebJobsRootPath);
             if (!String.IsNullOrEmpty(userDefinedWebJobRoot))
             {
                 userDefinedWebJobRoot = System.Environment.ExpandEnvironmentVariables(userDefinedWebJobRoot).Trim('\\', '/');
