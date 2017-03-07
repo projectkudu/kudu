@@ -81,7 +81,7 @@ namespace Kudu.Services.Functions
             var tracer = _traceFactory.GetTracer();
             using (tracer.Step("FunctionsController.list()"))
             {
-                var functions = (await _manager.ListFunctionsConfigAsync(ArmUtils.IsArmRequest(Request)?new FunctionTestData():null)).Select(f => AddFunctionAppIdToEnvelope(f));
+                var functions = (await _manager.ListFunctionsConfigAsync(ArmUtils.IsArmRequest(Request) ? new FunctionTestData() : null)).Select(f => AddFunctionAppIdToEnvelope(f));
                 return Request.CreateResponse(HttpStatusCode.OK, ArmUtils.AddEnvelopeOnArmRequest(functions, Request));
             }
         }
@@ -94,7 +94,7 @@ namespace Kudu.Services.Functions
             {
                 return Request.CreateResponse(HttpStatusCode.OK,
                     ArmUtils.AddEnvelopeOnArmRequest(
-                        AddFunctionAppIdToEnvelope(await _manager.GetFunctionConfigAsync(name, ArmUtils.IsArmRequest(Request)?new FunctionTestData():null)), Request));
+                        AddFunctionAppIdToEnvelope(await _manager.GetFunctionConfigAsync(name, ArmUtils.IsArmRequest(Request) ? new FunctionTestData() : null)), Request));
             }
         }
 

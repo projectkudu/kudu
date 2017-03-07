@@ -372,9 +372,9 @@ namespace Kudu.Core.Functions
             if (packageLimit != null)
             {
                 var fileSize = FileSystemHelpers.FileInfoFromFileName(testDataFilePath).Length;
-                if (!packageLimit.canWrite(fileSize))
+                if (!packageLimit.DeductFromBytesLeftInPackage(fileSize))
                 {
-                    return $"Test_Data is of size {fileSize}bytes, but there's only {packageLimit.spaceLeftinPackage}bytes left in ARM response";
+                    return $"Test_Data is of size {fileSize} bytes, but there's only {packageLimit.BytesLeftInPackage} bytes left in ARM response";
                 }
             }
 
