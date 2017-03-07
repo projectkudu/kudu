@@ -393,6 +393,9 @@ var Process = (function () {
         }, false);
         $(profilingButton).css("width", "138px");
 
+        if (this._json.is_profile_running) { // highlight button if the profiler has started
+            $(profilingButton).addClass("btn-danger");
+        }
 
         var iisProfilingCheckbox = Utilities.getCheckbox(this._json.id + "-iisProfilingCheck", "Collect IIS Events")
        

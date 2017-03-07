@@ -18,10 +18,10 @@ namespace Kudu.Services.Performance
     {
         private const int ProcessExitTimeoutInSeconds = 180;
 
-        private const string SERVICE_PROFILER_AGENT_GUID = "F5091AA9-80DC-49FF-A7CF-BD1103FE149D";
-        private const string SERVICE_PROFILER_PROVIDER_GUID = "1C92BA2A-A990-480F-A02F-40068871CAAC";
-        private const string IIS_WWWSERVER_GUID = "3A2A4E84-4C21-4981-AE10-3FDA0D9B0F83";
-        private const string DIAGNOSTICS_HUB_AGENT_GUID = "4EA90761-2248-496C-B854-3C0399A591A4";
+        private const string ServiceProfilerAgentGuid = "F5091AA9-80DC-49FF-A7CF-BD1103FE149D";
+        private const string ServiceProfilerProviderGuid = "1C92BA2A-A990-480F-A02F-40068871CAAC";
+        private const string IISWWWServerGuid = "3A2A4E84-4C21-4981-AE10-3FDA0D9B0F83";
+        private const string DiagnosticsHubAgentGuid = "4EA90761-2248-496C-B854-3C0399A591A4";
 
         private static ConcurrentDictionary<int, ProfileInfo> _profilingList = new ConcurrentDictionary<int, ProfileInfo>();
         private static object _lockObject = new object();
@@ -59,7 +59,7 @@ namespace Kudu.Services.Performance
                 }
                 else
                 {
-                    string arguments = System.Environment.ExpandEnvironmentVariables(string.Format("start {0} /attach:{1} /loadAgent:{2};DiagnosticsHub.CpuAgent.dll  /scratchLocation:%LOCAL_EXPANDED%\\Temp", profilingSessionId, processId, DIAGNOSTICS_HUB_AGENT_GUID));
+                    string arguments = System.Environment.ExpandEnvironmentVariables(string.Format("start {0} /attach:{1} /loadAgent:{2};DiagnosticsHub.CpuAgent.dll  /scratchLocation:%LOCAL_EXPANDED%\\Temp", profilingSessionId, processId, DiagnosticsHubAgentGuid));
 
                     var profileProcessResponse = await ExecuteProfilingCommandAsync(arguments, tracer);
 
@@ -71,7 +71,7 @@ namespace Kudu.Services.Performance
 
                 // This may fail if we got 2 requests at the same time to start a profiling session
                 // in that case, only 1 will be added and the other one will be stopped.
-                if (!_profilingList.TryAdd(processId, new ProfileInfo(profilingSessionId,iisProfiling)))
+                if (!_profilingList.TryAdd(processId, new ProfileInfo(profilingSessionId, iisProfiling)))
                 {
                     tracer.TraceWarning("A profiling session was already running for process {0}, stopping profiling session {1}", processId, profilingSessionId);
                     await StopProfileInternalAsync(processId, profilingSessionId, true, tracer, iisProfiling);
@@ -88,49 +88,22 @@ namespace Kudu.Services.Performance
 
         private static async Task<ProfileResultInfo> StartIISSessionAsync(int processId, int profilingSessionId, ITracer tracer = null)
         {
-            string arguments = System.Environment.ExpandEnvironmentVariables(string.Format("start {0} /scratchLocation:\"%LOCAL_EXPANDED%\\Temp\" /loadAgent:{1};ServiceProfilerAgent.dll /monitor", profilingSessionId, SERVICE_PROFILER_AGENT_GUID));
-            var command = Task.Run(async () =>
-            {
-                await ExecuteProfilingCommandAsync(arguments, tracer);
-            });
-
-            // implementing a retry logic because it can so happen
-            // that the intial profiler command may take some time to start
-            // so max we will wait till 9 seconds before giving up
-            int retryCount = 0;
-
-            ProfileResultInfo profileProcessResponse = new ProfileResultInfo(HttpStatusCode.InternalServerError, "Trying to initialize profiler");
-
-            while (retryCount < 2 && profileProcessResponse.StatusCode != HttpStatusCode.OK)
-            {
-                await Task.Delay(3000);
-
-                arguments = System.Environment.ExpandEnvironmentVariables(string.Format("update {0} /loadAgent:{1};ServiceProfilerAgent.dll", profilingSessionId, SERVICE_PROFILER_PROVIDER_GUID));
-
-                profileProcessResponse = await ExecuteProfilingCommandAsync(arguments, tracer);
-
-                if (profileProcessResponse.StatusCode != HttpStatusCode.OK)
-                {
-                    retryCount++;
-                }
-            }
-
+            string arguments = System.Environment.ExpandEnvironmentVariables(string.Format("start {0} /attach:{1} /scratchLocation:\"%LOCAL_EXPANDED%\\Temp\" /loadAgent:{2};ServiceProfilerAgent.dll", profilingSessionId, processId, ServiceProfilerAgentGuid));
+            var profileProcessResponse = await ExecuteProfilingCommandAsync(arguments, tracer);
             if (profileProcessResponse.StatusCode != HttpStatusCode.OK)
             {
                 return profileProcessResponse;
             }
 
-            arguments = System.Environment.ExpandEnvironmentVariables(string.Format("update {0} /attach:{1}", profilingSessionId , processId));
 
+            arguments = System.Environment.ExpandEnvironmentVariables(string.Format("update {0} /loadAgent:{1};ServiceProfilerAgent.dll", profilingSessionId, ServiceProfilerProviderGuid));
             profileProcessResponse = await ExecuteProfilingCommandAsync(arguments, tracer);
-
             if (profileProcessResponse.StatusCode != HttpStatusCode.OK)
             {
                 return profileProcessResponse;
             }
 
-            arguments = System.Environment.ExpandEnvironmentVariables(string.Format("postString {0} \"AddProvider:{1}:0xFFFFFFFE:5\" /agent:{2}", profilingSessionId, IIS_WWWSERVER_GUID, SERVICE_PROFILER_AGENT_GUID));
-
+            arguments = System.Environment.ExpandEnvironmentVariables(string.Format("postString {0} \"AddProvider:{1}:0xFFFFFFFE:5\" /agent:{2}", profilingSessionId, IISWWWServerGuid, ServiceProfilerAgentGuid));
             profileProcessResponse = await ExecuteProfilingCommandAsync(arguments, tracer);
 
             return profileProcessResponse;
