@@ -404,7 +404,6 @@ var Process = (function () {
             $(profilingButton).off("click");
             $(profilingButton).attr("title", "Profiling is not supported for Free/Shared sites.");
             $(profilingButton).tooltip().show();
-
         }
 
         tr.appendChild(Utilities.ToTd(iisProfilingCheckbox));
@@ -951,7 +950,7 @@ function handleProfilingEvents(e, processId) {
 
     var iisProfiling = false;
 
-    if (document.getElementById(processId + "-iisProfilingCheck") !=null) {
+    if (document.getElementById(processId + "-iisProfilingCheck") != null) {
         iisProfiling = document.getElementById(processId + "-iisProfilingCheck").checked;
     }
 
@@ -1024,7 +1023,6 @@ function stopProfiling(e, processId) {
 
     Utilities.downloadURL(uri, true);
     e.target.textContent = "Start Profiling";
-
     e.target.title = "It may take a few seconds for the download profile dialog to appear";
     $(e.currentTarget).removeClass("btn-danger");  // remove highlight button if the profiler has stopped
 }

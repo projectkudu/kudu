@@ -20,7 +20,7 @@ namespace Kudu.Services.Performance
 
         private const string UserModeCustomProviderAgentGuid = "F5091AA9-80DC-49FF-A7CF-BD1103FE149D";
         private const string DetailedTracingAgentGuid = "1C92BA2A-A990-480F-A02F-40068871CAAC";
-        private const string IISWWWServerProviderGuid = "3A2A4E84-4C21-4981-AE10-3FDA0D9B0F83";
+        private const string IisWebServerProviderGuid = "3A2A4E84-4C21-4981-AE10-3FDA0D9B0F83";
         private const string DiagnosticsHubAgentGuid = "4EA90761-2248-496C-B854-3C0399A591A4";
 
         private static ConcurrentDictionary<int, ProfileInfo> _profilingList = new ConcurrentDictionary<int, ProfileInfo>();
@@ -29,7 +29,7 @@ namespace Kudu.Services.Performance
         // The profiling session timeout, this is temp fix before VS2015 Update 1.
         private static readonly TimeSpan _profilingTimeout = TimeSpan.FromMinutes(15);
 
-        private static readonly TimeSpan _profilingIISTimeout = TimeSpan.FromMinutes(3);
+        private static readonly TimeSpan _profilingIisTimeout = TimeSpan.FromMinutes(3);
 
         private static Timer _profilingIdleTimer;
 
@@ -47,26 +47,19 @@ namespace Kudu.Services.Performance
                 }
 
                 int profilingSessionId = GetNextProfilingSessionId();
-
+                ProfileResultInfo profileProcessResponse = null;
                 if (iisProfiling)
                 {
-                    var profileResponseStatus = await StartIISSessionAsync(processId, profilingSessionId, tracer);
-
-                    if (profileResponseStatus.StatusCode != HttpStatusCode.OK)
-                    {
-                        return profileResponseStatus;
-                    }
+                    profileProcessResponse = await StartIisSessionAsync(processId, profilingSessionId, tracer);                    
                 }
                 else
                 {
                     string arguments = System.Environment.ExpandEnvironmentVariables(string.Format("start {0} /attach:{1} /loadAgent:{2};DiagnosticsHub.CpuAgent.dll  /scratchLocation:%LOCAL_EXPANDED%\\Temp", profilingSessionId, processId, DiagnosticsHubAgentGuid));
-
-                    var profileProcessResponse = await ExecuteProfilingCommandAsync(arguments, tracer);
-
-                    if (profileProcessResponse.StatusCode != HttpStatusCode.OK)
-                    {
-                        return profileProcessResponse;
-                    }
+                    profileProcessResponse = await ExecuteProfilingCommandAsync(arguments, tracer);
+                }
+                if (profileProcessResponse.StatusCode != HttpStatusCode.OK)
+                {
+                    return profileProcessResponse;
                 }
 
                 // This may fail if we got 2 requests at the same time to start a profiling session
@@ -86,7 +79,7 @@ namespace Kudu.Services.Performance
             }
         }
 
-        private static async Task<ProfileResultInfo> StartIISSessionAsync(int processId, int profilingSessionId, ITracer tracer = null)
+        private static async Task<ProfileResultInfo> StartIisSessionAsync(int processId, int profilingSessionId, ITracer tracer = null)
         {
             // Starting a new profiler session with the Custom ETW Provider agent
             string arguments = System.Environment.ExpandEnvironmentVariables(string.Format("start {0} /attach:{1} /scratchLocation:\"%LOCAL_EXPANDED%\\Temp\" /loadAgent:{2};ServiceProfilerAgent.dll", profilingSessionId, processId, UserModeCustomProviderAgentGuid));
@@ -105,7 +98,7 @@ namespace Kudu.Services.Performance
             }
 
             // Adding the IIS WWW Server Provider Events to the profiling session
-            arguments = System.Environment.ExpandEnvironmentVariables(string.Format("postString {0} \"AddProvider:{1}:0xFFFFFFFE:5\" /agent:{2}", profilingSessionId, IISWWWServerProviderGuid, UserModeCustomProviderAgentGuid));
+            arguments = System.Environment.ExpandEnvironmentVariables(string.Format("postString {0} \"AddProvider:{1}:0xFFFFFFFE:5\" /agent:{2}", profilingSessionId, IisWebServerProviderGuid, UserModeCustomProviderAgentGuid));
             profileProcessResponse = await ExecuteProfilingCommandAsync(arguments, tracer);
 
             return profileProcessResponse;
@@ -153,27 +146,22 @@ namespace Kudu.Services.Performance
         {
             return _profilingList.ContainsKey(processId);
         }
-        internal static bool IsIISProfileRunning(int processId)
+        internal static bool IsIisProfileRunning(int processId)
         {
             bool iisProfiling = false;
             if (_profilingList != null)
             {
                 ProfileInfo profilingId;
                 _profilingList.TryGetValue(processId, out profilingId);
-
                 if (profilingId != null)
-                    iisProfiling = profilingId.IsIISProfiling;
-
+                {
+                    iisProfiling = profilingId.IsIisProfiling;
+                }
             }
-
             return iisProfiling;
         }
 
-        
-
-         
-
-    private static async Task<ProfileResultInfo> StopProfileInternalAsync(int processId, int profilingSessionId, bool ignoreProfileFile, ITracer tracer = null, bool iisProfiling = false)
+        private static async Task<ProfileResultInfo> StopProfileInternalAsync(int processId, int profilingSessionId, bool ignoreProfileFile, ITracer tracer = null, bool iisProfiling = false)
         {
             tracer = tracer ?? NullTracer.Instance;
 
@@ -302,7 +290,7 @@ namespace Kudu.Services.Performance
                 {
                     if (iisProfiling)
                     {
-                        _profilingIdleTimer = new Timer(_ => SafeInvoke(() => OnIdleTimer(iisProfiling)), null, _profilingIISTimeout, _profilingIISTimeout);
+                        _profilingIdleTimer = new Timer(_ => SafeInvoke(() => OnIdleTimer(iisProfiling)), null, _profilingIisTimeout, _profilingIisTimeout);
                     }
                     else
                     {
@@ -327,7 +315,7 @@ namespace Kudu.Services.Performance
                     {
                         if (iisProfiling)
                         {
-                            if (DateTime.UtcNow - item.Value.StartTime > _profilingIISTimeout)
+                            if (DateTime.UtcNow - item.Value.StartTime > _profilingIisTimeout)
                             {
                                 tasks.Add(Task.Run(() => StopProfileInternalAsync(item.Key, item.Value.SessionId, true, null, iisProfiling)));
                             }
@@ -390,15 +378,14 @@ namespace Kudu.Services.Performance
             {
                 this.SessionId = sessionId;
                 this.StartTime = DateTime.UtcNow;
-
-                this.IsIISProfiling = iisProfiling;
+                this.IsIisProfiling = iisProfiling;
             }
 
             public int SessionId { get; set; }
            
             public DateTime StartTime { get; set; }
 
-            public bool IsIISProfiling { get; set; }
+            public bool IsIisProfiling { get; set; }
         }
     }
 }

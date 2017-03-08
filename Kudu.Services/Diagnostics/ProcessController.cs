@@ -253,7 +253,7 @@ namespace Kudu.Services.Performance
                 // check if the process Ids exists in the sandbox. If it doesn't, this method returns a 404 and we are done.
                 var process = GetProcessById(id);
 
-                bool iisProfiling = ProfileManager.IsIISProfileRunning(process.Id);
+                bool iisProfiling = ProfileManager.IsIisProfileRunning(process.Id);
 
                 var result = await ProfileManager.StopProfileAsync(process.Id, _tracer, iisProfiling);
 
