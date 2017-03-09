@@ -17,7 +17,6 @@ namespace Kudu.Core.Infrastructure
         private static readonly PropertyInfo _projectNameProperty;
         private static readonly PropertyInfo _relativePathProperty;
         private static readonly PropertyInfo _projectTypeProperty;
-        private static readonly PropertyInfo _projectExtensionProperty;
         private static readonly PropertyInfo _aspNetConfigurationsProperty;
 
         static VsSolutionProject()
@@ -29,7 +28,6 @@ namespace Kudu.Core.Infrastructure
                 _projectNameProperty = ReflectionUtility.GetInternalProperty(_projectInSolutionType, "ProjectName");
                 _relativePathProperty = ReflectionUtility.GetInternalProperty(_projectInSolutionType, "RelativePath");
                 _projectTypeProperty = ReflectionUtility.GetInternalProperty(_projectInSolutionType, "ProjectType");
-                _projectExtensionProperty = ReflectionUtility.GetInternalProperty(_projectInSolutionType, "Extension");
                 _aspNetConfigurationsProperty = ReflectionUtility.GetInternalProperty(_projectInSolutionType, "AspNetConfigurations");
             }
         }
@@ -125,7 +123,6 @@ namespace Kudu.Core.Infrastructure
 
             _projectName = _projectNameProperty.GetValue<string>(_projectInstance);
             var projectType = _projectTypeProperty.GetValue<SolutionProjectType>(_projectInstance);
-            var projectExtension = _projectExtensionProperty.GetValue<string>(_projectInstance);
             var relativePath = _relativePathProperty.GetValue<string>(_projectInstance);
             _isWebSite = projectType == SolutionProjectType.WebProject;
 
