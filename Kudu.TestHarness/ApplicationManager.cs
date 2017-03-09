@@ -274,6 +274,14 @@ namespace Kudu.TestHarness
             {
                 KuduUtils.DownloadDump(appManager.ServiceUrl, dumpPath);
 
+                // if not stop on failure, kill w3wp before reusing this site
+                if (!KuduUtils.StopAfterFirstTestFailure)
+                {
+                    TestTracer.Trace("Killing kudu site - {0}", appManager.SiteUrl);
+
+                    KuduUtils.KillKuduProcess(appManager.ServiceUrl);
+                }
+
                 TestTracer.Trace("Run failed with exception\n{0}", ex);
 
                 succcess = false;

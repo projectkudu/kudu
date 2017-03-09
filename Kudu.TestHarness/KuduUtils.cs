@@ -37,6 +37,20 @@ namespace Kudu.TestHarness
             }
         }
 
+        public static void KillKuduProcess(string serviceUrl, NetworkCredential credentials = null)
+        {
+            try
+            {
+                var clientHandler = HttpClientHelper.CreateClientHandler(serviceUrl, credentials);
+                var client = new HttpClient(clientHandler);
+                client.DeleteAsync(serviceUrl + "api/processes/0").Wait();
+            }
+            catch (Exception)
+            {
+                // no-op
+            }
+        }
+
         public static XDocument GetServerProfile(string serviceUrl, string logsTempPath, string appName, NetworkCredential credentials = null)
         {
             var zippedLogsPath = Path.Combine(logsTempPath, appName + ".zip");
