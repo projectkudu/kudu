@@ -35,6 +35,16 @@ namespace Kudu.Services.Performance
 
         private static string _processName = System.Environment.ExpandEnvironmentVariables("%SystemDrive%\\msvsmon\\profiler\\VSStandardCollector.Dev14.exe");
 
+        static ProfileManager()
+        {
+            int iisProfilingTimeout = GetIisProfilingTimeout();
+
+            if (iisProfilingTimeout > 0)
+            {
+                _profilingIisTimeout = TimeSpan.FromSeconds(iisProfilingTimeout);
+            }
+        }
+
         internal static async Task<ProfileResultInfo> StartProfileAsync(int processId, ITracer tracer = null, bool iisProfiling = false)
         {
             tracer = tracer ?? NullTracer.Instance;
@@ -81,6 +91,8 @@ namespace Kudu.Services.Performance
 
         private static async Task<ProfileResultInfo> StartIisSessionAsync(int processId, int profilingSessionId, ITracer tracer = null)
         {
+            tracer.Trace("IIS Profiling timeout = {0}s", _profilingIisTimeout.TotalSeconds);
+            
             // Starting a new profiler session with the Custom ETW Provider agent
             string arguments = System.Environment.ExpandEnvironmentVariables(string.Format("start {0} /attach:{1} /scratchLocation:\"%LOCAL_EXPANDED%\\Temp\" /loadAgent:{2};ServiceProfilerAgent.dll", profilingSessionId, processId, UserModeCustomProviderAgentGuid));
             var profileProcessResponse = await ExecuteProfilingCommandAsync(arguments, tracer);
@@ -102,6 +114,26 @@ namespace Kudu.Services.Performance
             profileProcessResponse = await ExecuteProfilingCommandAsync(arguments, tracer);
 
             return profileProcessResponse;
+        }
+
+        internal static int GetIisProfilingTimeout()
+        {
+            int timeout = -1;
+
+            string iisProfilingTimeoutInSeconds = System.Environment.GetEnvironmentVariable("APPSETTING_IIS_PROFILING_TIMEOUT_IN_SECONDS");
+
+            if (!string.IsNullOrEmpty(iisProfilingTimeoutInSeconds))
+            {
+                if (Int32.TryParse(iisProfilingTimeoutInSeconds, out timeout))
+                {
+                    if (timeout>(60*15)) // making sure that no configures it more than 15 minutes
+                    {
+                        timeout = -1;
+                    }
+                }
+            }
+
+            return timeout;
         }
 
         internal static async Task<ProfileResultInfo> StopProfileAsync(int processId, ITracer tracer = null, bool iisProfiling = false)
@@ -159,6 +191,13 @@ namespace Kudu.Services.Performance
                 }
             }
             return iisProfiling;
+        }
+        internal static double IisProfileTimeoutInSeconds
+        {
+            get
+            {
+                return _profilingIisTimeout.TotalSeconds;
+            }
         }
 
         private static async Task<ProfileResultInfo> StopProfileInternalAsync(int processId, int profilingSessionId, bool ignoreProfileFile, ITracer tracer = null, bool iisProfiling = false)

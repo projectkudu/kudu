@@ -30,6 +30,12 @@ namespace Kudu.Core.Diagnostics
         [JsonProperty(PropertyName = "is_profile_running", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public bool IsProfileRunning { get; set; }
 
+        [JsonProperty(PropertyName = "is_iis_profile_running", DefaultValueHandling = DefaultValueHandling.Ignore)]
+        public bool IsIisProfileRunning { get; set; }
+
+        [JsonProperty(PropertyName = "iis_profile_timeout_seconds", DefaultValueHandling = DefaultValueHandling.Ignore)]
+        public double IisProfileTimeoutInSeconds { get; set; }
+
         [JsonProperty(PropertyName = "parent", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public Uri Parent { get; set; }
 

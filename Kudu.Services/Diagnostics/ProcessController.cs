@@ -451,6 +451,8 @@ namespace Kudu.Services.Performance
                 info.EnvironmentVariables = SafeGetValue(process.GetEnvironmentVariables, null);
                 info.CommandLine = SafeGetValue(process.GetCommandLine, null);
                 info.IsProfileRunning = ProfileManager.IsProfileRunning(process.Id);
+                info.IsIisProfileRunning = ProfileManager.IsIisProfileRunning(process.Id);
+                info.IisProfileTimeoutInSeconds = ProfileManager.IisProfileTimeoutInSeconds;
                 SetEnvironmentInfo(info);
             }
 
