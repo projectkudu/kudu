@@ -401,7 +401,7 @@ var Process = (function () {
         }, false)));
         
         var profilingButton = Utilities.getButton("btn btn-info", this._json.id + "-Profiling", this._json.is_profile_running ? "Stop Profiling" : "Start Profiling", function (e) {
-            handleProfilingEvents(e, _this._json.id, _this._json.iis_profile_timeout_seconds);
+            handleProfilingEvents(e, _this._json.id, _this._json.iis_profile_timeout_in_seconds);
         }, false);
         $(profilingButton).css("width", "138px");
 
@@ -980,18 +980,14 @@ function handleProfilingEvents(e, processId, iisProfilingTimeoutInSeconds) {
         }
     }
     else if (e.target.textContent.indexOf("Starting") !== 0) {
-
         if (iisProfiling) {
-
             var divConfirm = document.getElementById('dialog-confirm')
             if (divConfirm == null) {
                 divConfirm = Utilities.createDiv('dialog-confirm');
                 divConfirm.title = "Collect IIS Events?";
 
             }
-
-            divConfirm.innerHTML = "IIS profiling enables IIS and threadtime ETW events. The generated trace file can be analyzed using Perview which is available at <a style='outline: none' href='https://www.microsoft.com/en-us/download/details.aspx?id=28567'>https://www.microsoft.com/en-us/download/details.aspx?id=28567</a>. <br/><br/>The profiling session will automatically timeout after <b>" + iisProfilingTimeoutInSeconds.toString() + "</b> seconds if not stopped manually.<br/><br/>Enabling IIS Profiling is a relatively <b>expensive option</b> to turn on as it increases the CPU usage and disk I/O on your instance. Are you sure you want to continue ?"
-
+            divConfirm.innerHTML = "IIS profiling enables IIS and threadTime ETW events. The generated trace file can be analyzed using Perfview which is available at <a style='outline: none' href='https://www.microsoft.com/en-us/download/details.aspx?id=28567'>https://www.microsoft.com/en-us/download/details.aspx?id=28567</a>. <br/><br/>The profiling session will automatically timeout after <b>" + iisProfilingTimeoutInSeconds.toString() + "</b> seconds if not stopped manually.<br/><br/>Enabling IIS Profiling is a relatively <b>expensive option</b> to turn on as it increases the CPU usage and disk I/O on your instance. Are you sure you want to continue?"
             $(divConfirm).dialog({
                 resizable: false,
                 height: 330,
