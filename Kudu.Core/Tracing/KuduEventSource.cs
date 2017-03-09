@@ -60,5 +60,23 @@ namespace Kudu.Core.Tracing
                 WriteEvent(65513, siteName, jobName, Message, jobType, error);
             }
         }
+
+        [Event(65514, Level = EventLevel.Warning, Message = "Generic event for site {0}", Channel = EventChannel.Operational)]
+        public void GenericEvent(string siteName, string Message, string requestId, string scmType, string siteMode, string buildVersion)
+        {
+            if (IsEnabled())
+            {
+                WriteEvent(65514, siteName, Message, requestId, scmType, siteMode, buildVersion);
+            }
+        }
+
+        [Event(65515, Level = EventLevel.Warning, Message = "Api event for site {0}", Channel = EventChannel.Operational)]
+        public void ApiEvent(string siteName, string details, string address, string verb, string requestId, int statusCode, long latencyInMilliseconds, string userAgent)
+        {
+            if (IsEnabled())
+            {
+                WriteEvent(65515, siteName, details, address, verb, requestId, statusCode, latencyInMilliseconds, userAgent);
+            }
+        }
     }
 }

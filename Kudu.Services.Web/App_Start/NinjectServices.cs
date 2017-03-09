@@ -658,6 +658,17 @@ namespace Kudu.Services.Web.App_Start
             attribs.Add("lastrequesttime", TraceModule.LastRequestTime.ToString());
 
             tracer.Trace(XmlTracer.ProcessShutdownTrace, attribs);
+
+            OperationManager.SafeExecute(() =>
+            {
+                KuduEventSource.Log.GenericEvent(
+                    ServerConfiguration.GetApplicationName(),
+                    string.Format("Shutdown pid:{0}, domain:{1}", Process.GetCurrentProcess().Id, AppDomain.CurrentDomain.Id),
+                    string.Empty,
+                    string.Empty,
+                    string.Empty,
+                    string.Empty);
+            });
         }
 
         private static ILogger GetLogger(IEnvironment environment, IKernel kernel)

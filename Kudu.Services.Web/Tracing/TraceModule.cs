@@ -5,10 +5,13 @@ using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Web;
+using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
+using Kudu.Core.Infrastructure;
 using Kudu.Core.Tracing;
 
 namespace Kudu.Services.Web.Tracing
@@ -53,6 +56,8 @@ namespace Kudu.Services.Web.Tracing
 
             var httpContext = ((HttpApplication)sender).Context;
             var httpRequest = new HttpRequestWrapper(httpContext.Request);
+
+            LogBeginRequest(httpContext);
 
             // HACK: This is abusing the trace module
             // Disallow GET requests from CSM extensions bridge
@@ -116,9 +121,16 @@ namespace Kudu.Services.Web.Tracing
             foreach (string key in httpContext.Request.Headers)
             {
                 if (!key.Equals("Authorization", StringComparison.OrdinalIgnoreCase) &&
-                    !key.Equals("X-MS-CLIENT-PRINCIPAL-NAME", StringComparison.OrdinalIgnoreCase))
+                    !key.Equals("X-MS-CLIENT-PRINCIPAL-NAME", StringComparison.OrdinalIgnoreCase) &&
+                    !key.Equals(Constants.SiteRestrictedJWT, StringComparison.OrdinalIgnoreCase))
                 {
                     attribs[key] = httpContext.Request.Headers[key];
+                }
+                else
+                {
+                    // for sensitive header, we only trace first 3 characters following by "..."
+                    var value = httpContext.Request.Headers[key];
+                    attribs[key] = string.IsNullOrEmpty(value) ? value : (value.Substring(0, Math.Min(3, value.Length)) + "...");
                 }
             }
 
@@ -134,6 +146,8 @@ namespace Kudu.Services.Web.Tracing
         {
             var httpContext = ((HttpApplication)sender).Context;
             var tracer = TraceServices.GetRequestTracer(httpContext);
+
+            LogEndRequest(httpContext);
 
             if (tracer == null || tracer.TraceLevel <= TraceLevel.Off)
             {
@@ -182,18 +196,83 @@ namespace Kudu.Services.Web.Tracing
                 HttpApplication app = (HttpApplication)sender;
                 var httpContext = app.Context;
                 var tracer = TraceServices.GetRequestTracer(httpContext);
+                var error = app.Server.GetLastError();
+
+                LogErrorRequest(httpContext, error);
 
                 if (tracer == null || tracer.TraceLevel <= TraceLevel.Off)
                 {
                     return;
                 }
 
-                tracer.TraceError(app.Server.GetLastError());
+                tracer.TraceError(error);
             }
             catch (Exception ex)
             {
                 Debug.WriteLine(ex.Message);
             }
+        }
+
+        private static void LogBeginRequest(HttpContext httpContext)
+        {
+            OperationManager.SafeExecute(() =>
+            {
+                var request = httpContext.Request;
+                var requestId = request.Headers[Constants.RequestIdHeader] ?? Guid.NewGuid().ToString();
+                httpContext.Items[Constants.RequestIdHeader] = requestId;
+                httpContext.Items[Constants.RequestDateTimeUtc] = DateTime.UtcNow;
+                KuduEventSource.Log.ApiEvent(
+                    ServerConfiguration.GetApplicationName(),
+                    "OnBeginRequest",
+                    request.RawUrl,
+                    request.HttpMethod,
+                    requestId,
+                    0,
+                    0,
+                    request.UserAgent);
+            });
+        }
+
+        private static void LogEndRequest(HttpContext httpContext)
+        {
+            OperationManager.SafeExecute(() =>
+            {
+                var request = httpContext.Request;
+                var response = httpContext.Response;
+                var requestId = (string)httpContext.Items[Constants.RequestIdHeader];
+                var requestTime = (DateTime)httpContext.Items[Constants.RequestDateTimeUtc];
+                var latencyInMilliseconds = (long)(DateTime.UtcNow - requestTime).TotalMilliseconds;
+                KuduEventSource.Log.ApiEvent(
+                    ServerConfiguration.GetApplicationName(),
+                    "OnEndRequest",
+                    request.RawUrl,
+                    request.HttpMethod,
+                    requestId,
+                    response.StatusCode,
+                    latencyInMilliseconds,
+                    request.UserAgent);
+            });
+        }
+
+        private static void LogErrorRequest(HttpContext httpContext, Exception ex)
+        {
+            OperationManager.SafeExecute(() =>
+            {
+                var request = httpContext.Request;
+                var response = httpContext.Response;
+                var requestId = (string)httpContext.Items[Constants.RequestIdHeader];
+                var requestTime = (DateTime)httpContext.Items[Constants.RequestDateTimeUtc];
+                var latencyInMilliseconds = (long)(DateTime.UtcNow - requestTime).TotalMilliseconds;
+                KuduEventSource.Log.ApiEvent(
+                    ServerConfiguration.GetApplicationName(),
+                    $"OnErrorRequest {ex}",
+                    request.RawUrl,
+                    request.HttpMethod,
+                    requestId,
+                    response.StatusCode,
+                    latencyInMilliseconds,
+                    request.UserAgent);
+            });
         }
 
         private static void AddTraceLevel(HttpContext httpContext, Dictionary<string, string> attribs)
@@ -233,6 +312,21 @@ namespace Kudu.Services.Web.Tracing
 
                     tracer.Trace(XmlTracer.StartupRequestTrace, attribs);
                 }
+
+                OperationManager.SafeExecute(() =>
+                {
+                    var request = httpContext.Request;
+                    var requestId = request.Headers[Constants.RequestIdHeader] ?? Guid.NewGuid().ToString();
+                    var assembly = Assembly.GetExecutingAssembly();
+                    var fvi = FileVersionInfo.GetVersionInfo(assembly.Location);
+                    KuduEventSource.Log.GenericEvent(
+                        ServerConfiguration.GetApplicationName(),
+                        string.Format("StartupRequest pid:{0}, domain:{1}", Process.GetCurrentProcess().Id, AppDomain.CurrentDomain.Id),
+                        requestId,
+                        Environment.GetEnvironmentVariable(SettingsKeys.ScmType),
+                        Environment.GetEnvironmentVariable(SettingsKeys.WebSiteSku),
+                        fvi.FileVersion);
+                });
             }
 
             return tracer;
