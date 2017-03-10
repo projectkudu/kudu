@@ -29,16 +29,11 @@ namespace Kudu.Services.Performance
         // The profiling session timeout, this is temp fix before VS2015 Update 1.
         private static readonly TimeSpan _profilingTimeout = TimeSpan.FromMinutes(15);
 
-        private static readonly TimeSpan _profilingIisTimeout = TimeSpan.MinValue;
+        private static readonly TimeSpan _profilingIisTimeout = GetIisProfilingTimeout();
 
         private static Timer _profilingIdleTimer;
 
         private static string _processName = System.Environment.ExpandEnvironmentVariables("%SystemDrive%\\msvsmon\\profiler\\VSStandardCollector.Dev14.exe");
-
-        static ProfileManager()
-        {
-            _profilingIisTimeout = GetIisProfilingTimeout();            
-        }
 
         internal static async Task<ProfileResultInfo> StartProfileAsync(int processId, ITracer tracer = null, bool iisProfiling = false)
         {
