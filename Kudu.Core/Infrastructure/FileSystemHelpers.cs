@@ -17,7 +17,7 @@ namespace Kudu.Core.Infrastructure
         private static IFileSystem _instance;
 
         public static IFileSystem Instance
-        { 
+        {
             get { return _instance ?? _default; }
             set { _instance = value; }
         }

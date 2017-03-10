@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -105,9 +106,8 @@ namespace Kudu.Core.Functions
             var configList = await Task.WhenAll(
                     FileSystemHelpers
                     .GetDirectories(_environment.FunctionsPath)
-                    .Select(d => Path.Combine(d, Constants.FunctionsConfigFile))
-                    .Where(FileSystemHelpers.FileExists)
-                    .Select(f => TryGetFunctionConfigAsync(Path.GetFileName(Path.GetDirectoryName(f)), packageLimit)));
+                    .Select(d => TryGetFunctionConfigAsync(Path.GetFileName(d), packageLimit)));
+            // TryGetFunctionConfigAsync checks the existence of function.json
             return configList.Where(c => c != null);
         }
 
@@ -262,12 +262,13 @@ namespace Kudu.Core.Functions
         private async Task<FunctionEnvelope> CreateFunctionConfig(string configContent, string functionName, FunctionTestData packageLimit)
         {
             var functionConfig = JObject.Parse(configContent);
+            var functionPath = GetFunctionPath(functionName);
 
             return new FunctionEnvelope
             {
                 Name = functionName,
-                ScriptRootPathHref = FilePathToVfsUri(GetFunctionPath(functionName), isDirectory: true),
-                ScriptHref = FilePathToVfsUri(GetFunctionScriptPath(functionName, functionConfig)),
+                ScriptRootPathHref = FilePathToVfsUri(functionPath, isDirectory: true),
+                ScriptHref = FilePathToVfsUri(DeterminePrimaryScriptFile(functionConfig, functionPath)),
                 ConfigHref = FilePathToVfsUri(GetFunctionConfigPath(functionName)),
                 SecretsFileHref = FilePathToVfsUri(GetFunctionSecretsFilePath(functionName)),
                 Href = GetFunctionHref(functionName),
@@ -276,47 +277,71 @@ namespace Kudu.Core.Functions
             };
         }
 
-        private string GetFunctionScriptPath(string functionName, JObject functionConfig)
+        private void TraceAndThrowError(Exception e)
         {
-            var functionPath = GetFunctionPath(functionName);
-            var functionFiles = FileSystemHelpers.GetFiles(functionPath, "*.*", SearchOption.TopDirectoryOnly)
-                .Where(p => Path.GetFileName(p).ToLowerInvariant() != "function.json").ToArray();
-
-            return DeterminePrimaryScriptFile(functionConfig, functionFiles);
+            var tracer = _traceFactory.GetTracer();
+            tracer.TraceError(e);
+            throw e;
         }
 
         // Logic for this function is copied from here:
         // https://github.com/Azure/azure-webjobs-sdk-script/blob/dev/src/WebJobs.Script/Host/ScriptHost.cs
         // These two implementations must stay in sync!
-        internal static string DeterminePrimaryScriptFile(JObject functionConfig, string[] functionFiles)
+
+        /// <summary>
+        /// Determines which script should be considered the "primary" entry point script.
+        /// </summary>
+        /// <exception cref="ConfigurationErrorsException">Thrown if the function metadata points to an invalid script file, or no script files are present.</exception>
+        internal string DeterminePrimaryScriptFile(JObject functionConfig, string scriptDirectory)
         {
-            if (functionFiles.Length == 1)
+            // First see if there is an explicit primary file indicated
+            // in config. If so use that.
+            string functionPrimary = null;
+            string scriptFile = (string)functionConfig["scriptFile"];
+
+            if (!string.IsNullOrEmpty(scriptFile))
             {
-                // if there is only a single file, that file is primary
-                return functionFiles[0];
+                string scriptPath = Path.Combine(scriptDirectory, scriptFile);
+                if (!FileSystemHelpers.FileExists(scriptPath))
+                {
+                    TraceAndThrowError(new ConfigurationErrorsException("Invalid script file name configuration. The 'scriptFile' property is set to a file that does not exist."));
+                }
+
+                functionPrimary = scriptPath;
             }
             else
             {
-                // First see if there is an explicit primary file indicated
-                // in config. If so use that.
-                string functionPrimary = null;
-                string scriptFileName = (string)functionConfig["scriptFile"];
-                if (!string.IsNullOrEmpty(scriptFileName))
+                string[] functionFiles = FileSystemHelpers.GetFiles(scriptDirectory, "*.*", SearchOption.TopDirectoryOnly)
+                    .Where(p => !String.Equals(Path.GetFileName(p), "function.json", StringComparison.OrdinalIgnoreCase))
+                    .ToArray();
+
+                if (functionFiles.Length == 0)
                 {
-                    functionPrimary = functionFiles.FirstOrDefault(p =>
-                        string.Compare(Path.GetFileName(p), scriptFileName, StringComparison.OrdinalIgnoreCase) == 0);
+                    TraceAndThrowError(new ConfigurationErrorsException("No function script files present."));
+                }
+
+                if (functionFiles.Length == 1)
+                {
+                    // if there is only a single file, that file is primary
+                    functionPrimary = functionFiles[0];
                 }
                 else
                 {
                     // if there is a "run" file, that file is primary,
                     // for Node, any index.js file is primary
                     functionPrimary = functionFiles.FirstOrDefault(p =>
-                        Path.GetFileNameWithoutExtension(p).ToLowerInvariant() == "run" ||
-                        Path.GetFileName(p).ToLowerInvariant() == "index.js");
+                        String.Equals(Path.GetFileNameWithoutExtension(p), "run", StringComparison.OrdinalIgnoreCase) ||
+                        String.Equals(Path.GetFileName(p), "index.js", StringComparison.OrdinalIgnoreCase));
                 }
-
-                return functionPrimary;
             }
+
+            if (string.IsNullOrEmpty(functionPrimary))
+            {
+                TraceAndThrowError(new ConfigurationErrorsException("Unable to determine the primary function script. Try renaming your entry point script to 'run' (or 'index' in the case of Node), " +
+                    "or alternatively you can specify the name of the entry point script explicitly by adding a 'scriptFile' property to your function metadata."));
+            }
+
+            return Path.GetFullPath(functionPrimary);
         }
 
         private Uri FilePathToVfsUri(string filePath, bool isDirectory = false)
