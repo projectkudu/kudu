@@ -439,13 +439,13 @@ fi" + "\n";
                     IEnumerable<string> lines = output.Split(new char[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
 
                     lines = lines
-                        .Select(line => Path.Combine(RepositoryPath, line.Trim().Trim('"').Replace('/', '\\')))
+                        .Select(line => Path.Combine(RepositoryPath, line.Trim().Trim('"').Replace('/', Path.DirectorySeparatorChar)))
                         .Where(p => p.StartsWith(path, StringComparison.OrdinalIgnoreCase));
 
                     switch (searchOption)
                     {
                         case SearchOption.TopDirectoryOnly:
-                            lines = lines.Where(line => !line.Substring(path.Length).TrimStart('\\').Contains('\\'));
+                            lines = lines.Where(line => !line.Substring(path.Length).TrimStart(Path.DirectorySeparatorChar).Contains(Path.DirectorySeparatorChar));
                             break;
 
                         case SearchOption.AllDirectories:
