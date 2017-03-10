@@ -75,6 +75,18 @@ namespace Kudu.Core.Helpers
             get { return System.Environment.GetEnvironmentVariable(Constants.RoutingRunTimeVersion); }
         }
 
+        // LOGICAPP_URL = [url to PUT logicapp.json to]
+        private static string LogicAppUrl
+        {
+            get { return System.Environment.GetEnvironmentVariable(Constants.LogicAppUrlKey); }
+        }
+
+        // %HOME%\site\wwwroot\logicapp.json
+        private static string LogicAppJsonFilePath
+        {
+            get { return System.Environment.ExpandEnvironmentVariables(@"%HOME%\site\wwwroot\" + Constants.LogicAppJson); }
+        }
+
         /// <summary>
         /// This common codes is to invoke post deployment operations.
         /// It is written to require least dependencies but framework assemblies.
@@ -131,6 +143,72 @@ namespace Kudu.Core.Helpers
                 Trace(TraceEventType.Information,
                       "Syncing {0} function triggers with payload size {1} bytes {2}",
                       triggers.Count,
+                      content.Length,
+                      exception == null ? "successful." : "failed with " + exception.Message);
+            }
+
+            // this couples with sync function triggers
+            await SyncLogicAppJson(tracer);
+        }
+
+        public static async Task SyncLogicAppJson(TraceListener tracer)
+        {
+            _tracer = tracer;
+
+            var logicAppUrl = LogicAppUrl;
+            if (string.IsNullOrEmpty(logicAppUrl))
+            {
+                return;
+            }
+
+            var fileInfo = new FileInfo(LogicAppJsonFilePath);
+            if (!fileInfo.Exists)
+            {
+                Trace(TraceEventType.Verbose, "File {0} does not exists", fileInfo.FullName);
+                return;
+            }
+
+            var displayUrl = logicAppUrl;
+            var queryIndex = logicAppUrl.IndexOf('?');
+            if (queryIndex > 0)
+            {
+                // for display/logging, strip out querystring secret
+                displayUrl = logicAppUrl.Substring(0, queryIndex);
+            }
+
+            var content = File.ReadAllText(fileInfo.FullName);
+            var statusCode = default(HttpStatusCode);
+            Exception exception = null;
+            try
+            {
+                var requestId = RequestIdHeader ?? Guid.NewGuid().ToString();
+                Trace(TraceEventType.Verbose, "Begin HttpPut {0}, x-ms-client-request-id: {1}", displayUrl, requestId);
+
+                using (var client = HttpClientFactory())
+                {
+                    client.DefaultRequestHeaders.UserAgent.Add(_userAgent.Value);
+                    client.DefaultRequestHeaders.Add(Constants.ClientRequestIdHeader, requestId);
+
+                    var payload = new StringContent(content ?? string.Empty, Encoding.UTF8, "application/json");
+                    using (var response = await client.PutAsync(logicAppUrl, payload))
+                    {
+                        statusCode = response.StatusCode;
+                        response.EnsureSuccessStatusCode();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                exception = ex;
+                throw;
+            }
+            finally
+            {
+                Trace(TraceEventType.Verbose, "End HttpPut, status: {0}", statusCode);
+
+                Trace(TraceEventType.Information,
+                      "Syncing logicapp {0} with payload size {1} bytes {2}",
+                      displayUrl,
                       content.Length,
                       exception == null ? "successful." : "failed with " + exception.Message);
             }
