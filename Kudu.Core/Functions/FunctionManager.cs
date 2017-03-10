@@ -291,7 +291,7 @@ namespace Kudu.Core.Functions
         /// Determines which script should be considered the "primary" entry point script.
         /// </summary>
         /// <exception cref="ConfigurationErrorsException">Thrown if the function metadata points to an invalid script file, or no script files are present.</exception>
-        private string DeterminePrimaryScriptFile(JObject functionConfig, string scriptDirectory)
+        internal string DeterminePrimaryScriptFile(JObject functionConfig, string scriptDirectory)
         {
             // First see if there is an explicit primary file indicated
             // in config. If so use that.
