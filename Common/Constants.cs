@@ -71,10 +71,14 @@ namespace Kudu
         public const string ApplicationHostXdtFileName = "applicationHost.xdt";
 
         public const string RequestIdHeader = "x-ms-request-id";
+        public const string ClientRequestIdHeader = "x-ms-client-request-id";
         public const string RequestDateTimeUtc = "RequestDateTimeUtc";
 
         public const string SiteOperationHeaderKey = "X-MS-SITE-OPERATION";
         public const string SiteOperationRestart = "restart";
+
+        public const string LogicAppJson = "logicapp.json";
+        public const string LogicAppUrlKey = "LOGICAPP_URL";
 
         public const string SiteExtensionProvisioningStateCreated = "Created";
         public const string SiteExtensionProvisioningStateAccepted = "Accepted";

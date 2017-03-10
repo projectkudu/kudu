@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Deployment;
+using Kudu.Core.Infrastructure;
 using Kudu.Core.Tracing;
 
 namespace Kudu.Core.Helpers
@@ -22,6 +23,14 @@ namespace Kudu.Core.Helpers
             if (_logger != null && eventType <= TraceEventType.Information)
             {
                 _logger.Log(format, args);
+
+                KuduEventSource.Log.GenericEvent(
+                    ServerConfiguration.GetApplicationName(),
+                    string.Format(format, args),
+                    System.Environment.GetEnvironmentVariable("x-ms-request-id") ?? string.Empty,
+                    string.Empty,
+                    string.Empty,
+                    string.Empty);
             }
 
             _tracer.Trace(format, args);
