@@ -32,17 +32,19 @@ namespace Kudu.Core.Test.Functions
             fileBaseMock.Setup(f => f.Exists(It.IsNotIn<String>(fullPaths))).Returns(false);
             directoryBaseMock.Setup(d => d.GetFiles(directory, "*.*", SearchOption.TopDirectoryOnly))
                         .Returns(fullPaths); // technically this returns with flag SearchOption.AllDirectory
+
             return fileSystemMock.Object;
         }
 
-        private void runDeterminePrimaryScriptFile(string expect, string jObjectStr, string dir)
+        private void RunDeterminePrimaryScriptFileFunc(string expect, string jObjectStr, string dir)
         {
             JObject functionConfig = JObject.Parse(jObjectStr);
+
             var traceFactoryMock = new Mock<ITraceFactory>();
             traceFactoryMock.Setup(tf => tf.GetTracer()).Returns(NullTracer.Instance);
 
             var functionManager = new FunctionManager(new Mock<IEnvironment>().Object, traceFactoryMock.Object);
-            if (string.IsNullOrEmpty(expect))
+            if (expect == null)
             {
                 Assert.Throws<ConfigurationErrorsException>(() => functionManager.DeterminePrimaryScriptFile(functionConfig, dir));
             }
@@ -54,33 +56,32 @@ namespace Kudu.Core.Test.Functions
 
         [Theory]
         // missing script files
-        [InlineData("", new[] { "function.json" })]
+        [InlineData(null, new[] { "function.json" })]
         // unable to determine primary
-        [InlineData("", new[] { "function.json", "randomFileA.txt", "randomFileB.txt" })]
+        [InlineData(null, new[] { "function.json", "randomFileA.txt", "randomFileB.txt" })]
         // only one file left in function directory
         [InlineData(@"c:\functions\functionScript.py", new[] { "function.json", "functionScript.py" })]
         // with datafiles in function directory
         [InlineData(@"c:\functions\index.js", new[] { "function.json", "index.js", "test1.dat", "test2.dat" })]
         [InlineData(@"c:\functions\run.csx", new[] { "function.json", "run.csx", "test.dat" })]
-        public void DeterminePrimaryScriptFileTests(string expect, string[] files)
+        public void DeterminePrimaryScriptFileNotSpecifiedTests(string expect, string[] files)
         {
             var dir = @"c:\functions";
             var functionConfigStr = "{}";
             FileSystemHelpers.Instance = MockFileSystem(dir, files);
-            runDeterminePrimaryScriptFile(expect, functionConfigStr, dir);
-
+            RunDeterminePrimaryScriptFileFunc(expect, functionConfigStr, dir);
         }
 
         [Theory]
         // https://github.com/projectkudu/kudu/issues/2334
         [InlineData("{\"scriptFile\": \"subDirectory\\\\compiled.dll\"}", @"c:\functions\subDirectory\compiled.dll")]
         // cannot find script file specified
-        [InlineData("{\"scriptFile\": \"random.text\"}", "")]
-        public void DeterminePrimaryScriptFileWithConfigTests(string functionConfigStr, string expect)
+        [InlineData("{\"scriptFile\": \"random.text\"}", null)]
+        public void DeterminePrimaryScriptFileSpecifiedTests(string functionConfigStr, string expect)
         {
             var dir = @"c:\functions";
             FileSystemHelpers.Instance = MockFileSystem(@"c:\functions", new string[] { "function.json", @"subDirectory\compiled.dll" });
-            runDeterminePrimaryScriptFile(expect, functionConfigStr, dir);
+            RunDeterminePrimaryScriptFileFunc(expect, functionConfigStr, dir);
         }
     }
 }
