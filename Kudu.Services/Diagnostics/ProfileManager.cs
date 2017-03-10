@@ -22,14 +22,14 @@ namespace Kudu.Services.Performance
         private const string DetailedTracingAgentGuid = "1C92BA2A-A990-480F-A02F-40068871CAAC";
         private const string IisWebServerProviderGuid = "3A2A4E84-4C21-4981-AE10-3FDA0D9B0F83";
         private const string DiagnosticsHubAgentGuid = "4EA90761-2248-496C-B854-3C0399A591A4";
-
+        
         private static ConcurrentDictionary<int, ProfileInfo> _profilingList = new ConcurrentDictionary<int, ProfileInfo>();
         private static object _lockObject = new object();
 
         // The profiling session timeout, this is temp fix before VS2015 Update 1.
         private static readonly TimeSpan _profilingTimeout = TimeSpan.FromMinutes(15);
 
-        private static readonly TimeSpan _profilingIisTimeout = TimeSpan.FromMinutes(3);
+        private static readonly TimeSpan _profilingIisTimeout = TimeSpan.MinValue;
 
         private static Timer _profilingIdleTimer;
 
@@ -37,12 +37,7 @@ namespace Kudu.Services.Performance
 
         static ProfileManager()
         {
-            int iisProfilingTimeout = GetIisProfilingTimeout();
-
-            if (iisProfilingTimeout > 0)
-            {
-                _profilingIisTimeout = TimeSpan.FromSeconds(iisProfilingTimeout);
-            }
+            _profilingIisTimeout = GetIisProfilingTimeout();            
         }
 
         internal static async Task<ProfileResultInfo> StartProfileAsync(int processId, ITracer tracer = null, bool iisProfiling = false)
@@ -116,24 +111,23 @@ namespace Kudu.Services.Performance
             return profileProcessResponse;
         }
 
-        internal static int GetIisProfilingTimeout()
+        internal static TimeSpan GetIisProfilingTimeout()
         {
-            int timeout = -1;
+            TimeSpan iisProfilingTimeout = TimeSpan.FromMinutes(3);
 
+            int timeout = 0;
             string iisProfilingTimeoutInSeconds = System.Environment.GetEnvironmentVariable("APPSETTING_IIS_PROFILING_TIMEOUT_IN_SECONDS");
-
             if (!string.IsNullOrEmpty(iisProfilingTimeoutInSeconds))
             {
                 if (Int32.TryParse(iisProfilingTimeoutInSeconds, out timeout))
                 {
-                    if (timeout>(60*15)) // making sure that no configures it more than 15 minutes
+                    if (timeout < _profilingTimeout.TotalSeconds)
                     {
-                        timeout = -1;
+                        iisProfilingTimeout = TimeSpan.FromSeconds(timeout);
                     }
                 }
             }
-
-            return timeout;
+            return iisProfilingTimeout;
         }
 
         internal static async Task<ProfileResultInfo> StopProfileAsync(int processId, ITracer tracer = null, bool iisProfiling = false)
