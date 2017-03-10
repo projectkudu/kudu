@@ -276,6 +276,13 @@ namespace Kudu.Core.Functions
             };
         }
 
+        private void TraceAndThrowError(Exception e)
+        {
+            var tracer = _traceFactory.GetTracer();
+            tracer.TraceError(e);
+            throw e;
+        }
+
         // Logic for this function is copied from here:
         // https://github.com/Azure/azure-webjobs-sdk-script/blob/dev/src/WebJobs.Script/Host/ScriptHost.cs
         // These two implementations must stay in sync!
@@ -284,7 +291,7 @@ namespace Kudu.Core.Functions
         /// Determines which script should be considered the "primary" entry point script.
         /// </summary>
         /// <exception cref="ConfigurationErrorsException">Thrown if the function metadata points to an invalid script file, or no script files are present.</exception>
-        internal static string DeterminePrimaryScriptFile(JObject functionConfig, string scriptDirectory)
+        private string DeterminePrimaryScriptFile(JObject functionConfig, string scriptDirectory)
         {
             // First see if there is an explicit primary file indicated
             // in config. If so use that.
@@ -296,7 +303,7 @@ namespace Kudu.Core.Functions
                 string scriptPath = Path.Combine(scriptDirectory, scriptFile);
                 if (!FileSystemHelpers.FileExists(scriptPath))
                 {
-                    throw new ConfigurationErrorsException("Invalid script file name configuration. The 'scriptFile' property is set to a file that does not exist.");
+                    TraceAndThrowError(new ConfigurationErrorsException("Invalid script file name configuration. The 'scriptFile' property is set to a file that does not exist."));
                 }
 
                 functionPrimary = scriptPath;
@@ -309,7 +316,7 @@ namespace Kudu.Core.Functions
 
                 if (functionFiles.Length == 0)
                 {
-                    throw new ConfigurationErrorsException("No function script files present.");
+                    TraceAndThrowError(new ConfigurationErrorsException("No function script files present."));
                 }
 
                 if (functionFiles.Length == 1)
@@ -329,8 +336,8 @@ namespace Kudu.Core.Functions
 
             if (string.IsNullOrEmpty(functionPrimary))
             {
-                throw new ConfigurationErrorsException("Unable to determine the primary function script. Try renaming your entry point script to 'run' (or 'index' in the case of Node), " +
-                    "or alternatively you can specify the name of the entry point script explicitly by adding a 'scriptFile' property to your function metadata.");
+                TraceAndThrowError(new ConfigurationErrorsException("Unable to determine the primary function script. Try renaming your entry point script to 'run' (or 'index' in the case of Node), " +
+                    "or alternatively you can specify the name of the entry point script explicitly by adding a 'scriptFile' property to your function metadata."));
             }
 
             return Path.GetFullPath(functionPrimary);
