@@ -60,7 +60,7 @@ namespace Kudu.Core.Helpers
         // x-ms-request-id = guid
         private static string RequestIdHeader
         {
-            get { return System.Environment.GetEnvironmentVariable(Constants.RequestIdHeader); }
+            get { return System.Environment.GetEnvironmentVariable(Constants.RequestIdHeader) ?? Guid.NewGuid().ToString(); }
         }
 
         // FUNCTIONS_EXTENSION_VERSION = ~1.0
@@ -181,7 +181,7 @@ namespace Kudu.Core.Helpers
             Exception exception = null;
             try
             {
-                var requestId = RequestIdHeader ?? Guid.NewGuid().ToString();
+                var requestId = RequestIdHeader;
                 Trace(TraceEventType.Verbose, "Begin HttpPut {0}, x-ms-client-request-id: {1}", displayUrl, requestId);
 
                 using (var client = HttpClientFactory())
@@ -346,7 +346,7 @@ namespace Kudu.Core.Helpers
         private static async Task PostAsync(string path, string content = null)
         {
             var host = HttpHost;
-            var requestId = RequestIdHeader ?? Guid.NewGuid().ToString();
+            var requestId = RequestIdHeader;
             var jwt = SiteRestrictedJWT;
 
             var statusCode = default(HttpStatusCode);
