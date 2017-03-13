@@ -26,8 +26,12 @@ namespace Kudu.Services.Filters
             {
                 statusCode = HttpStatusCode.BadRequest;
             }
+            else if (context.Exception is FormatException)
+            {
+                statusCode = HttpStatusCode.BadRequest;
+            }
 
-            context.Response =  ArmUtils.CreateErrorResponse(context.Request, statusCode, context.Exception);
+            context.Response = ArmUtils.CreateErrorResponse(context.Request, statusCode, context.Exception);
         }
     }
 }
