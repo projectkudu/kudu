@@ -19,7 +19,7 @@ namespace Kudu.TestHarness
 
                 var clientHandler = HttpClientHelper.CreateClientHandler(serviceUrl, credentials);
                 var client = new HttpClient(clientHandler);
-                var result = client.GetAsync(serviceUrl + "dump").Result;
+                var result = client.GetAsync(serviceUrl + "api/dump").Result;
                 if (result.IsSuccessStatusCode)
                 {
                     using (Stream stream = result.Content.ReadAsStreamAsync().Result)
