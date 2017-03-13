@@ -194,6 +194,8 @@ namespace Kudu.Core.Functions
 
         public async Task<FunctionSecrets> GetFunctionSecretsAsync(string functionName)
         {
+            // check to see if the function folder exists
+            GetFuncPathAndCheckExistence(functionName);
             return await GetKeyObjectFromFile<FunctionSecrets>(functionName, new FunctionSecretsJsonOps());
         }
 
@@ -231,7 +233,7 @@ namespace Kudu.Core.Functions
 
         public void DeleteFunction(string name, bool ignoreErrors)
         {
-            FileSystemHelpers.DeleteDirectorySafe(GetFunctionPath(name), ignoreErrors);
+            FileSystemHelpers.DeleteDirectorySafe(GetFuncPathAndCheckExistence(name), ignoreErrors);
             DeleteFunctionArtifacts(name);
         }
 
@@ -262,7 +264,7 @@ namespace Kudu.Core.Functions
         private async Task<FunctionEnvelope> CreateFunctionConfig(string configContent, string functionName, FunctionTestData packageLimit)
         {
             var functionConfig = JObject.Parse(configContent);
-            var functionPath = GetFunctionPath(functionName);
+            var functionPath = GetFuncPathAndCheckExistence(functionName);
 
             return new FunctionEnvelope
             {
@@ -363,7 +365,7 @@ namespace Kudu.Core.Functions
             }
         }
 
-        private string GetFunctionPath(string name)
+        private string GetFuncPathAndCheckExistence(string name)
         {
             var path = Path.Combine(_environment.FunctionsPath, name);
             if (FileSystemHelpers.DirectoryExists(path))
@@ -376,7 +378,7 @@ namespace Kudu.Core.Functions
 
         private string GetFunctionConfigPath(string name)
         {
-            return Path.Combine(GetFunctionPath(name), Constants.FunctionsConfigFile);
+            return Path.Combine(GetFuncPathAndCheckExistence(name), Constants.FunctionsConfigFile);
         }
 
         private string GetFunctionLogPath(string name)
