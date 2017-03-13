@@ -194,6 +194,8 @@ namespace Kudu.Core.Functions
 
         public async Task<FunctionSecrets> GetFunctionSecretsAsync(string functionName)
         {
+            // check to see if the function folder exists
+            GetFunctionPath(functionName);
             return await GetKeyObjectFromFile<FunctionSecrets>(functionName, new FunctionSecretsJsonOps());
         }
 
