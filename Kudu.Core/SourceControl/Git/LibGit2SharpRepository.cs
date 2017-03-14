@@ -216,11 +216,29 @@ echo $i > pushinfo
                     var trackedBranchName = string.Format("{0}/{1}", _remoteAlias, branchName);
                     var refSpec = string.Format("+refs/heads/{0}:refs/remotes/{1}", branchName, trackedBranchName);
 
-                    // Remove it if it already exists (does not throw if it doesn't)
-                    repo.Network.Remotes.Remove(_remoteAlias);
+                    LibGit2Sharp.Remote remote = null;
+                    using (tracer.Step("LibGit2SharpRepository Add Remote"))
+                    {
+                        // only add if matching remote does not exist
+                        // to address strange LibGit2SharpRepository remove and add remote issue (remote already exists!)
+                        remote = repo.Network.Remotes[_remoteAlias];
+                        if (remote != null &&
+                            string.Equals(remote.Url, remoteUrl, StringComparison.OrdinalIgnoreCase) &&
+                            remote.FetchRefSpecs.Any(rf => string.Equals(rf.Specification, refSpec, StringComparison.OrdinalIgnoreCase)))
+                        {
+                            tracer.Trace("Git remote exists");
+                        }
+                        else
+                        {
+                            // Remove it if it already exists (does not throw if it doesn't)
+                            repo.Network.Remotes.Remove(_remoteAlias);
 
-                    // Configure the remote
-                    var remote = repo.Network.Remotes.Add(_remoteAlias, remoteUrl, refSpec);
+                            // Configure the remote
+                            remote = repo.Network.Remotes.Add(_remoteAlias, remoteUrl, refSpec);
+
+                            tracer.Trace("Git remote added");
+                        }
+                    }
 
                     using (tracer.Step("LibGit2SharpRepository Fetch"))
                     {
