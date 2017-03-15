@@ -168,7 +168,7 @@ namespace Kudu.Services.Deployment
                             IDeploymentStatusFile statusFile = _status.Open(changeSet.Id);
                             if (statusFile != null && statusFile.Status == DeployStatus.Success)
                             {
-                                await PostDeploymentHelper.PerformAutoSwap(new PostDeploymentTraceListener(_tracer, _deploymentManager.GetLogger(changeSet.Id)));
+                                await PostDeploymentHelper.PerformAutoSwap(_environment.RequestId, _environment.SiteRestrictedJwt, new PostDeploymentTraceListener(_tracer, _deploymentManager.GetLogger(changeSet.Id)));
                             }
                         }
                     }

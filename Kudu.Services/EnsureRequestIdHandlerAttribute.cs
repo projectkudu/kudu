@@ -11,7 +11,8 @@ namespace Kudu.Services
         public override void OnActionExecuted(HttpActionExecutedContext actionExecutedContext)
         {
             IEnumerable<string> requestIds;
-            if (actionExecutedContext.Request.Headers.TryGetValues(Constants.RequestIdHeader, out requestIds))
+            if (actionExecutedContext.Request.Headers.TryGetValues(Constants.ArrLogIdHeader, out requestIds) ||
+                actionExecutedContext.Request.Headers.TryGetValues(Constants.RequestIdHeader, out requestIds))
             {
                 foreach (var rid in requestIds)
                 {

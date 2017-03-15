@@ -134,7 +134,7 @@ namespace Kudu.Services.Web.App_Start
             PrependFoldersToPath(environment);
 
             // Per request environment
-            kernel.Bind<IEnvironment>().ToMethod(context => GetEnvironment(context.Kernel.Get<IDeploymentSettingsManager>()))
+            kernel.Bind<IEnvironment>().ToMethod(context => GetEnvironment(context.Kernel.Get<IDeploymentSettingsManager>(), HttpContext.Current))
                                              .InRequestScope();
 
             // General
@@ -740,13 +740,15 @@ namespace Kudu.Services.Web.App_Start
             SetEnvironmentVariableIfNotYetSet("SITE_BITNESS", System.Environment.Is64BitProcess ? Constants.X64Bit : Constants.X86Bit);
         }
 
-        private static IEnvironment GetEnvironment(IDeploymentSettingsManager settings = null)
+        private static IEnvironment GetEnvironment(IDeploymentSettingsManager settings = null, HttpContext httpContext = null)
         {
             string root = PathResolver.ResolveRootPath();
             string siteRoot = Path.Combine(root, Constants.SiteFolder);
             string repositoryPath = Path.Combine(siteRoot, settings == null ? Constants.RepositoryPath : settings.GetRepositoryPath());
             string binPath = HttpRuntime.BinDirectory;
-            return new Core.Environment(root, EnvironmentHelper.NormalizeBinPath(binPath), repositoryPath);
+            string requestId = httpContext?.Request.GetRequestId();
+            string siteRetrictedJwt = httpContext?.Request.GetSiteRetrictedJwt();
+            return new Core.Environment(root, EnvironmentHelper.NormalizeBinPath(binPath), repositoryPath, requestId, siteRetrictedJwt);
         }
 
         private static void EnsureDotNetCoreEnvironmentVariable(IEnvironment environment)
