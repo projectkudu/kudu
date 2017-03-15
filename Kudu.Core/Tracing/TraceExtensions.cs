@@ -21,11 +21,9 @@ namespace Kudu.Core.Tracing
             TraceLevelKey,
             "Max-Forwards",
             "X-LiveUpgrade",
-            "X-ARR-LOG-ID",
             "DISGUISED-HOST",
             "X-Original-URL",
             "X-Forwarded-For",
-            Constants.SiteRestrictedJWT,
             "X-ARR-SSL"
         },
         StringComparer.OrdinalIgnoreCase);

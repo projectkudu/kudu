@@ -45,22 +45,10 @@ namespace Kudu.Core.Helpers
             get { return System.Environment.GetEnvironmentVariable(Constants.HttpHost); }
         }
 
-        // X-MS-SITE-RESTRICTED-JWT = this is jwt literal
-        private static string SiteRestrictedJWT
-        {
-            get { return System.Environment.GetEnvironmentVariable(Constants.SiteRestrictedJWT); }
-        }
-
         // WEBSITE_SWAP_SLOTNAME = Production
         private static string WebSiteSwapSlotName
         {
             get { return System.Environment.GetEnvironmentVariable(Constants.WebSiteSwapSlotName); }
-        }
-
-        // x-ms-request-id = guid
-        private static string RequestIdHeader
-        {
-            get { return System.Environment.GetEnvironmentVariable(Constants.RequestIdHeader) ?? Guid.NewGuid().ToString(); }
         }
 
         // FUNCTIONS_EXTENSION_VERSION = ~1.0
@@ -92,14 +80,14 @@ namespace Kudu.Core.Helpers
         /// It is written to require least dependencies but framework assemblies.
         /// Caller is responsible for synchronization.
         /// </summary>
-        public static async Task Run(TraceListener tracer)
+        public static async Task Run(string requestId, string siteRestrictedJwt, TraceListener tracer)
         {
-            await SyncFunctionsTriggers(tracer);
+            await SyncFunctionsTriggers(requestId, siteRestrictedJwt, tracer);
 
-            await PerformAutoSwap(tracer);
+            await PerformAutoSwap(requestId, siteRestrictedJwt, tracer);
         }
 
-        public static async Task SyncFunctionsTriggers(TraceListener tracer)
+        public static async Task SyncFunctionsTriggers(string requestId, string siteRestrictedJwt, TraceListener tracer)
         {
             _tracer = tracer;
 
@@ -131,7 +119,7 @@ namespace Kudu.Core.Helpers
             Exception exception = null;
             try
             {
-                await PostAsync("/operations/settriggers", content);
+                await PostAsync("/operations/settriggers", requestId, siteRestrictedJwt, content);
             }
             catch (Exception ex)
             {
@@ -148,10 +136,10 @@ namespace Kudu.Core.Helpers
             }
 
             // this couples with sync function triggers
-            await SyncLogicAppJson(tracer);
+            await SyncLogicAppJson(requestId, tracer);
         }
 
-        public static async Task SyncLogicAppJson(TraceListener tracer)
+        public static async Task SyncLogicAppJson(string requestId, TraceListener tracer)
         {
             _tracer = tracer;
 
@@ -181,7 +169,6 @@ namespace Kudu.Core.Helpers
             Exception exception = null;
             try
             {
-                var requestId = RequestIdHeader;
                 Trace(TraceEventType.Verbose, "Begin HttpPut {0}, x-ms-client-request-id: {1}", displayUrl, requestId);
 
                 using (var client = HttpClientFactory())
@@ -231,7 +218,7 @@ namespace Kudu.Core.Helpers
             return !string.IsNullOrEmpty(WebSiteSwapSlotName);
         }
 
-        public static async Task PerformAutoSwap(TraceListener tracer)
+        public static async Task PerformAutoSwap(string requestId, string siteRestrictedJwt, TraceListener tracer)
         {
             _tracer = tracer;
 
@@ -248,7 +235,7 @@ namespace Kudu.Core.Helpers
             Exception exception = null;
             try
             {
-                await PostAsync(string.Format("/operations/autoswap?slot={0}&operationId={1}", slotSwapName, operationId));
+                await PostAsync(string.Format("/operations/autoswap?slot={0}&operationId={1}", slotSwapName, operationId), requestId, siteRestrictedJwt);
 
                 WriteAutoSwapOngoing();
             }
@@ -269,11 +256,6 @@ namespace Kudu.Core.Helpers
 
         private static void VerifyEnvironments()
         {
-            if (string.IsNullOrEmpty(SiteRestrictedJWT))
-            {
-                throw new InvalidOperationException(String.Format("Missing {0} env!", Constants.SiteRestrictedJWT));
-            }
-
             if (string.IsNullOrEmpty(HttpHost))
             {
                 throw new InvalidOperationException(String.Format("Missing {0} env!", Constants.HttpHost));
@@ -343,12 +325,9 @@ namespace Kudu.Core.Helpers
             }
         }
 
-        private static async Task PostAsync(string path, string content = null)
+        private static async Task PostAsync(string path, string requestId, string siteRestrictedJwt, string content = null)
         {
             var host = HttpHost;
-            var requestId = RequestIdHeader;
-            var jwt = SiteRestrictedJWT;
-
             var statusCode = default(HttpStatusCode);
             Trace(TraceEventType.Verbose, "Begin HttpPost https://{0}{1}, x-ms-request-id: {2}", host, path, requestId);
             try
@@ -357,7 +336,7 @@ namespace Kudu.Core.Helpers
                 {
                     client.BaseAddress = new Uri(string.Format("https://{0}", host));
                     client.DefaultRequestHeaders.UserAgent.Add(_userAgent.Value);
-                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwt);
+                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", siteRestrictedJwt);
                     client.DefaultRequestHeaders.Add(Constants.RequestIdHeader, requestId);
 
                     var payload = new StringContent(content ?? string.Empty, Encoding.UTF8, "application/json");

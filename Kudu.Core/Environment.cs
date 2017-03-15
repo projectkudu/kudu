@@ -47,7 +47,9 @@ namespace Kudu.Core
                 string scriptPath,
                 string nodeModulesPath,
                 string dataPath,
-                string siteExtensionSettingsPath)
+                string siteExtensionSettingsPath,
+                string requestId,
+                string siteRestrictedJwt)
         {
             if (repositoryPath == null)
             {
@@ -78,12 +80,17 @@ namespace Kudu.Core
             _tracePath = Path.Combine(rootPath, Constants.TracePath);
             _analyticsPath = Path.Combine(tempPath ?? _logFilesPath, Constants.SiteExtensionLogsDirectory);
             _deploymentTracePath = Path.Combine(rootPath, Constants.DeploymentTracePath);
+
+            RequestId = !string.IsNullOrEmpty(requestId) ? requestId : Guid.Empty.ToString();
+            SiteRestrictedJwt = siteRestrictedJwt;
         }
 
         public Environment(
                 string rootPath,
                 string binPath,
-                string repositoryPath)
+                string repositoryPath,
+                string requestId,
+                string siteRetrictedJwt)
         {
             RootPath = rootPath;
 
@@ -127,6 +134,9 @@ namespace Kudu.Core
                 // if userDefinedWebJobRoot = "D:/home/functionfolder", _jobsBinariesPath = "D:/home/functionfolder"
                 _jobsBinariesPath = Path.Combine(_webRootPath, userDefinedWebJobRoot);
             }
+
+            RequestId = !string.IsNullOrEmpty(requestId) ? requestId : Guid.Empty.ToString();
+            SiteRestrictedJwt = siteRetrictedJwt;
         }
 
         public string RepositoryPath
@@ -319,6 +329,18 @@ namespace Kudu.Core
                 }
                 return url;
             }
+        }
+
+        public string RequestId
+        {
+            get;
+            private set;
+        }
+
+        public string SiteRestrictedJwt
+        {
+            get;
+            private set;
         }
 
         public static bool IsAzureEnvironment()
