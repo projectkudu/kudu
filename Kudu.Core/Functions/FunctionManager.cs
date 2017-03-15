@@ -125,21 +125,22 @@ namespace Kudu.Core.Functions
         {
             string keyPath = GetFunctionSecretsFilePath(name);
             string key = null;
-            if (!FileSystemHelpers.FileExists(keyPath))
+            if (!FileSystemHelpers.FileExists(keyPath) || FileSystemHelpers.FileInfoFromFileName(keyPath).Length == 0)
             {
                 FileSystemHelpers.EnsureDirectory(Path.GetDirectoryName(keyPath));
                 try
                 {
-                    using (var fileStream = FileSystemHelpers.OpenFile(keyPath, FileMode.CreateNew, FileAccess.Write, FileShare.None))
-                    // will fail if file exists, prevent reading prematurely
-                    // getting the lock early so no redundant work is being done
+                    using (var fileStream = FileSystemHelpers.OpenFile(keyPath, FileMode.Create, FileAccess.Write, FileShare.None))
+                    // getting the lock early (instead of acquire the lock at "new StreamWriter(fileStream)")
+                    // so no redundant work is being done (generate secrets)
                     {
                         string jsonContent = keyOp.GenerateKeyJson(SecurityUtility.GenerateSecretStringsKeyPair(keyOp.NumberOfKeysInDefaultFormat), FunctionSiteExtensionVersion, out key);
                         using (var sw = new StringWriter())
                         using (var sr = new System.IO.StringReader(jsonContent))
                         {
+                            // write json to memory
+                            // since JsonConvert has no method to format a json string
                             new JsonTextWriter(sw) { Formatting = Formatting.Indented }.WriteToken(new JsonTextReader(sr));
-                            // if lock acquire lock return false, I wait until write finishes and read keyPath
                             using (var streamWriter = new StreamWriter(fileStream))
                             {
                                 await streamWriter.WriteAsync(sw.ToString());
@@ -151,7 +152,7 @@ namespace Kudu.Core.Functions
                 }
                 catch (IOException)
                 {
-                    // don't throw exception if the file already existed
+                    // failed to open file => function runtime has the handler
                     // fallback to read key files
                 }
             }
