@@ -71,11 +71,11 @@ namespace Kudu.Core.Tracing
         }
 
         [Event(65515, Level = EventLevel.Warning, Message = "Api event for site {0}", Channel = EventChannel.Operational)]
-        public void ApiEvent(string siteName, string details, string address, string verb, string requestId, int statusCode, long latencyInMilliseconds, string userAgent)
+        public void ApiEvent(string siteName, string Message, string address, string verb, string requestId, int statusCode, long latencyInMilliseconds, string userAgent)
         {
             if (IsEnabled())
             {
-                WriteEvent(65515, siteName, details, address, verb, requestId, statusCode, latencyInMilliseconds, userAgent);
+                WriteEvent(65515, siteName, Message, address, verb, requestId, statusCode, latencyInMilliseconds, userAgent);
             }
         }
     }

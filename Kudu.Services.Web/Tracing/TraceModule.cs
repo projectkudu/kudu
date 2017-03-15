@@ -13,6 +13,7 @@ using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Tracing;
+using Kudu.Services.Infrastructure;
 
 namespace Kudu.Services.Web.Tracing
 {
@@ -218,7 +219,7 @@ namespace Kudu.Services.Web.Tracing
             OperationManager.SafeExecute(() =>
             {
                 var request = httpContext.Request;
-                var requestId = request.Headers[Constants.RequestIdHeader] ?? Guid.NewGuid().ToString();
+                var requestId = request.GetRequestId() ?? Guid.NewGuid().ToString();
                 httpContext.Items[Constants.RequestIdHeader] = requestId;
                 httpContext.Items[Constants.RequestDateTimeUtc] = DateTime.UtcNow;
                 KuduEventSource.Log.ApiEvent(
@@ -229,7 +230,7 @@ namespace Kudu.Services.Web.Tracing
                     requestId,
                     0,
                     0,
-                    request.UserAgent);
+                    request.GetUserAgent());
             });
         }
 
@@ -250,7 +251,7 @@ namespace Kudu.Services.Web.Tracing
                     requestId,
                     response.StatusCode,
                     latencyInMilliseconds,
-                    request.UserAgent);
+                    request.GetUserAgent());
             });
         }
 
@@ -271,7 +272,7 @@ namespace Kudu.Services.Web.Tracing
                     requestId,
                     response.StatusCode,
                     latencyInMilliseconds,
-                    request.UserAgent);
+                    request.GetUserAgent());
             });
         }
 
@@ -315,8 +316,7 @@ namespace Kudu.Services.Web.Tracing
 
                 OperationManager.SafeExecute(() =>
                 {
-                    var request = httpContext.Request;
-                    var requestId = request.Headers[Constants.RequestIdHeader] ?? Guid.NewGuid().ToString();
+                    var requestId = (string)httpContext.Items[Constants.RequestIdHeader];
                     var assembly = Assembly.GetExecutingAssembly();
                     var fvi = FileVersionInfo.GetVersionInfo(assembly.Location);
                     KuduEventSource.Log.GenericEvent(
@@ -352,12 +352,6 @@ namespace Kudu.Services.Web.Tracing
 
         private static void TryConvertSpecialHeadersToEnvironmentVariable(HttpRequestWrapper request)
         {
-            string siteRestrictedJwt = request.Headers.Get(Constants.SiteRestrictedJWT);
-            if (!string.IsNullOrWhiteSpace(siteRestrictedJwt))
-            {
-                System.Environment.SetEnvironmentVariable(Constants.SiteRestrictedJWT, siteRestrictedJwt);
-            }
-
             try
             {
                 // RDBug 6738223 : AlwaysOn request again SCM has wrong Host Name to main site

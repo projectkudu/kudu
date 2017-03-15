@@ -630,7 +630,7 @@ namespace Kudu.Core.Deployment
                         await builder.Build(context);
                         builder.PostBuild(context);
 
-                        await PostDeploymentHelper.SyncFunctionsTriggers(new PostDeploymentTraceListener(tracer, logger));
+                        await PostDeploymentHelper.SyncFunctionsTriggers(_environment.RequestId, _environment.SiteRestrictedJwt, new PostDeploymentTraceListener(tracer, logger));
 
                         if (_settings.TouchWebConfigAfterDeployment())
                         {

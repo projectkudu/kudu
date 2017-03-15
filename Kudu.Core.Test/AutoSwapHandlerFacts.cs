@@ -62,7 +62,6 @@ namespace Kudu.Core.Test
             var tempPath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
             try
             {
-                System.Environment.SetEnvironmentVariable(Constants.SiteRestrictedJWT, null);
                 System.Environment.SetEnvironmentVariable(Constants.HttpHost, null);
                 System.Environment.SetEnvironmentVariable("HOME", tempPath);
                 System.Environment.SetEnvironmentVariable(Constants.WebSiteSwapSlotName, null);
@@ -76,17 +75,13 @@ namespace Kudu.Core.Test
                 var traceListener = new PostDeploymentTraceListener(tracerMock.Object, Mock.Of<ILogger>());
                 
                 TestTracer.Trace("Autoswap will not happen, since it is not enabled.");
-                await PostDeploymentHelper.PerformAutoSwap(traceListener);
+                await PostDeploymentHelper.PerformAutoSwap(string.Empty, string.Empty, traceListener);
                 tracerMock.Verify(l => l.Trace("AutoSwap is not enabled", It.IsAny<IDictionary<string, string>>()), Times.Once);
 
-                TestTracer.Trace("Autoswap will not happen, since there is no JWT token.");
+                TestTracer.Trace("Autoswap will not happen, since there is no HTTP_HOST env.");
                 System.Environment.SetEnvironmentVariable(Constants.WebSiteSwapSlotName, "someslot");
-                var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => PostDeploymentHelper.PerformAutoSwap(traceListener));
-                Assert.Equal("Missing X-MS-SITE-RESTRICTED-JWT env!", exception.Message);
-
                 string jwtToken = Guid.NewGuid().ToString();
-                System.Environment.SetEnvironmentVariable(Constants.SiteRestrictedJWT, jwtToken);
-                exception = await Assert.ThrowsAsync<InvalidOperationException>(() => PostDeploymentHelper.PerformAutoSwap(traceListener));
+                var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => PostDeploymentHelper.PerformAutoSwap(string.Empty, jwtToken, traceListener));
                 Assert.Equal("Missing HTTP_HOST env!", exception.Message);
 
                 string hostName = "foo.scm.bar";
@@ -106,7 +101,7 @@ namespace Kudu.Core.Test
 
                 Assert.True(!File.Exists(autoSwapLockFile), string.Format("File {0} should not exist.", autoSwapLockFile));
 
-                await PostDeploymentHelper.PerformAutoSwap(traceListener);
+                await PostDeploymentHelper.PerformAutoSwap(string.Empty, jwtToken, traceListener);
 
                 Assert.True(File.Exists(autoSwapLockFile), string.Format("File {0} should exist.", autoSwapLockFile));
 
@@ -118,7 +113,6 @@ namespace Kudu.Core.Test
             }
             finally
             {
-                System.Environment.SetEnvironmentVariable(Constants.SiteRestrictedJWT, null);
                 System.Environment.SetEnvironmentVariable(Constants.HttpHost, null);
                 System.Environment.SetEnvironmentVariable("HOME", homePath);
                 System.Environment.SetEnvironmentVariable(Constants.WebSiteSwapSlotName, null);

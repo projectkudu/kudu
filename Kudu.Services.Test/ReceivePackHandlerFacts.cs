@@ -3,6 +3,7 @@ using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.SourceControl;
 using Kudu.Contracts.Tracing;
+using Kudu.Core;
 using Kudu.Core.Deployment;
 using Kudu.Core.SourceControl;
 using Kudu.Core.SourceControl.Git;
@@ -48,7 +49,8 @@ namespace Kudu.Services.Test
                                           gitServer ?? Mock.Of<IGitServer>(),
                                           Mock.Of<IOperationLock>(),
                                           deploymentManager ?? Mock.Of<IDeploymentManager>(),
-                                          repositoryFactory ?? Mock.Of<IRepositoryFactory>());
+                                          repositoryFactory ?? Mock.Of<IRepositoryFactory>(),
+                                          Mock.Of<IEnvironment>());
         }
     }
 }

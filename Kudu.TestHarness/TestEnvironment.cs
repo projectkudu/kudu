@@ -142,5 +142,17 @@ namespace Kudu.TestHarness
             get;
             set;
         }
+
+        public string RequestId
+        {
+            get;
+            set;
+        }
+
+        public string SiteRestrictedJwt
+        {
+            get;
+            set;
+        }
     }
 }
