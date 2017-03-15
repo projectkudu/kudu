@@ -111,6 +111,9 @@ namespace Kudu.Services.Functions
         [HttpPost]
         public async Task<HttpResponseMessage> GetSecrets(string name)
         {
+            // "name".json will be created as function keys, (runtime will always have lowercase "name")
+            // kudu REST api does not care, "name" can be camelcase (ex: function portal)
+            // windows file system is case insensitive, but this might not work in linux
             var tracer = _traceFactory.GetTracer();
             using (tracer.Step($"FunctionsController.GetSecrets({name})"))
             {
