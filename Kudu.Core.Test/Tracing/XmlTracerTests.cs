@@ -220,7 +220,7 @@ namespace Kudu.Core.Test.Tracing
         [InlineData(true, TraceExtensions.AlwaysTrace)]
         [InlineData(true, TraceExtensions.TraceLevelKey)]
         [InlineData(true, "Max-Forwards")]
-        [InlineData(true, "X-ARR-LOG-ID")]
+        [InlineData(false, "X-ARR-LOG-ID")]
         [InlineData(false, "url")]
         [InlineData(false, "method")]
         [InlineData(false, "type")]
