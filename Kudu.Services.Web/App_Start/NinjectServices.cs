@@ -620,7 +620,7 @@ namespace Kudu.Services.Web.App_Start
             if (level > TraceLevel.Off && TraceServices.CurrentRequestTraceFile != null)
             {
                 string textPath = Path.Combine(environment.TracePath, TraceServices.CurrentRequestTraceFile);
-                return new CascadeTracer(new XmlTracer(environment.TracePath, level), new TextTracer(textPath, level));
+                return new CascadeTracer(new XmlTracer(environment.TracePath, level), new TextTracer(textPath, level), new ETWTracer());
             }
 
             return NullTracer.Instance;
