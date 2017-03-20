@@ -14,6 +14,7 @@ namespace Kudu.Core.Tracing
     {
         private string requestId = string.Empty;
         private bool doTrace = true;
+        private bool lookForRequestBegin = true;
 
         // TODO traceLevel does not apply to ETWTracer
         public TraceLevel TraceLevel
@@ -36,34 +37,37 @@ namespace Kudu.Core.Tracing
 
         public void Trace(string message, IDictionary<string, string> attributes)
         {
-            // filtering
-            // ignore request start, already logged with ApiEvent
-            if (message == XmlTracer.IncomingRequestTrace)
+            if (lookForRequestBegin && message == XmlTracer.IncomingRequestTrace)
             {
-                // set the metaData for tracer
+                lookForRequestBegin = false;
+
                 var requestMethod = attributes["method"];
                 if (requestMethod == "GET")
                 {
                     doTrace = false; // do not log GET
                     return;
                 }
-                attributes.TryGetValue(Constants.RequestIdHeader, out requestId);
+                // attributes.TryGetValue(Constants.RequestIdHeader, out requestId); // out could be null
+                requestId = attributes["requestId"]; // set in logBeginRequest, could be x-arr-log-id, x-ms-request-id or new GUI()
+                // requestId = System.Environment.GetEnvironmentVariable(Constants.RequestIdHeader); // empty
+                // ignore request start, already logged with ApiEvent
                 return;
             }
-            // ignore request end, already logged with ApiEvent
+
             if (message == XmlTracer.OutgoingResponseTrace)
             {
-                // clear the metaData for tracer
                 doTrace = true;
+                lookForRequestBegin = true;
                 requestId = string.Empty;
-                return;
+                // ignore request end, already logged with ApiEvent
+                return; // do not log request end
             }
 
             if (doTrace)
             {
                 KuduEventSource.Log.GenericEvent(ServerConfiguration.GetApplicationName(),
                                          message,
-                                         requestId ?? string.Empty,
+                                         requestId,
                                          string.Empty,
                                          string.Empty,
                                          string.Empty);

@@ -338,14 +338,15 @@ namespace Kudu.Services.Web.Tracing
                 {
                     { "url", httpContext.Request.RawUrl },
                     { "method", httpContext.Request.HttpMethod },
+                    { "requestId", (string)httpContext.Items[Constants.RequestIdHeader]},
                     { "type", "request" }
                 };
 
             // Add an attribute containing the process, AppDomain and Thread ids to help debugging
             attribs.Add("pid", String.Join(",",
-                Process.GetCurrentProcess().Id,
-                AppDomain.CurrentDomain.Id.ToString(),
-                System.Threading.Thread.CurrentThread.ManagedThreadId));
+                        Process.GetCurrentProcess().Id,
+                        AppDomain.CurrentDomain.Id.ToString(),
+                        System.Threading.Thread.CurrentThread.ManagedThreadId));
 
             return attribs;
         }
