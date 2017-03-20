@@ -1,10 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Web;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
 
@@ -16,7 +12,7 @@ namespace Kudu.Core.Tracing
         private bool doTrace = true;
         private bool lookForRequestBegin = true;
 
-        // TODO traceLevel does not apply to ETWTracer
+        // TODO traceLevel does NOT YET apply to ETWTracer
         public TraceLevel TraceLevel
         {
             get
@@ -44,7 +40,7 @@ namespace Kudu.Core.Tracing
                 var requestMethod = attributes["method"];
                 if (requestMethod == "GET")
                 {
-                    doTrace = false; // do not log GET
+                    doTrace = false; // under no circumstances, we log GET (even if lvl==verbose)
                     return;
                 }
                 // attributes.TryGetValue(Constants.RequestIdHeader, out requestId); // out could be null
@@ -60,7 +56,7 @@ namespace Kudu.Core.Tracing
                 lookForRequestBegin = true;
                 requestId = string.Empty;
                 // ignore request end, already logged with ApiEvent
-                return; // do not log request end
+                return;
             }
 
             if (doTrace)
