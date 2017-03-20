@@ -44,6 +44,20 @@ namespace Kudu.Services.Web.Tracing
             }
         }
 
+        internal static string HttpMethod
+        {
+            get
+            {
+                var httpContext = HttpContext.Current;
+                if (httpContext == null)
+                {
+                    return null;
+                }
+
+                return httpContext.Request.HttpMethod;
+            }
+        }
+
         internal static TraceLevel TraceLevel
         {
             get; set;

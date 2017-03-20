@@ -8,37 +8,47 @@ namespace Kudu.Core.Tracing
 {
     public class CascadeTracer : ITracer
     {
-        private readonly ITracer _primary;
-        private readonly ITracer _secondary;
+        private readonly ITracer[] tracers;
 
-        public CascadeTracer(ITracer primary, ITracer secondary)
+        public CascadeTracer(params ITracer[] tracers)
         {
-            _primary = primary;
-            _secondary = secondary;
+            if (tracers.Length == 0)
+            {
+                throw new ArgumentException("Requires at least one tracer.");
+            }
+
+            this.tracers = tracers;
         }
 
         public TraceLevel TraceLevel
         {
-            // both should have the same tracelevel
-            get { return _primary.TraceLevel; }
+            // all should have the same tracelevel
+            get { return tracers[0].TraceLevel; }
         }
 
         public IDisposable Step(string message, IDictionary<string, string> attributes)
         {
-            IDisposable primary = _primary.Step(message, attributes);
-            IDisposable secondary = _secondary.Step(message, attributes);
+            IDisposable[] finishSteps = new IDisposable[tracers.Length];
+            for (int i = 0; i < tracers.Length; i++)
+            {
+                finishSteps[i] = tracers[i].Step(message, attributes);
+            }
 
             return new DisposableAction(() =>
             {
-                primary.Dispose();
-                secondary.Dispose();
+                foreach (IDisposable finishStep in finishSteps)
+                {
+                    finishStep.Dispose();
+                }
             });
         }
 
         public void Trace(string message, IDictionary<string, string> attributes)
         {
-            _primary.Trace(message, attributes);
-            _secondary.Trace(message, attributes);
+            foreach (ITracer tracer in tracers)
+            {
+                tracer.Trace(message, attributes);
+            }
         }
     }
 }

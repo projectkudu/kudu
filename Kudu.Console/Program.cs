@@ -4,6 +4,7 @@ using System.Configuration;
 using System.Diagnostics;
 using System.IO;
 using System.Net;
+using System.Net.Http;
 using Kudu.Console.Services;
 using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Settings;
@@ -205,7 +206,8 @@ namespace Kudu.Console
                 {
                     // Kudu.exe is executed as part of git.exe (post-receive), giving its initial depth of 4 indentations
                     string logPath = Path.Combine(env.TracePath, logFile);
-                    return new CascadeTracer(tracer, new TextTracer(logPath, level, 4));
+                    // since git push is "POST", which then run kudu.exe
+                    return new CascadeTracer(tracer, new TextTracer(logPath, level, 4), new ETWTracer(env.RequestId, requestMethod: HttpMethod.Post.Method));
                 }
 
                 return tracer;

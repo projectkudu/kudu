@@ -297,6 +297,7 @@
     <Compile Include="SiteExtensions\SiteExtensionManager.cs" />
     <Compile Include="SourceControl\Git\IGitRepository.cs" />
     <Compile Include="SourceControl\Git\LibGit2SharpRepository.cs" />
+    <Compile Include="Tracing\ETWTracer.cs" />
     <Compile Include="Tracing\KuduEventSource.cs" />
     <Compile Include="Tracing\KuduSiteExtensionLogEvent.cs" />
     <Compile Include="Tracing\NullTracer.cs" />
