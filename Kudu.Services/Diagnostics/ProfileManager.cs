@@ -19,7 +19,7 @@ namespace Kudu.Services.Performance
         private const int ProcessExitTimeoutInSeconds = 180;
 
         private const string UserModeCustomProviderAgentGuid = "F5091AA9-80DC-49FF-A7CF-BD1103FE149D";
-        private const string DetailedTracingAgentGuid = "1C92BA2A-A990-480F-A02F-40068871CAAC";
+        private const string DetailedTracingAgentGuid = "31003EE3-A8E1-427A-931E-97057D4D2B7D";
         private const string IisWebServerProviderGuid = "3A2A4E84-4C21-4981-AE10-3FDA0D9B0F83";
         private const string DiagnosticsHubAgentGuid = "4EA90761-2248-496C-B854-3C0399A591A4";
         
