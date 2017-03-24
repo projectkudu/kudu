@@ -64,7 +64,7 @@ function LoadConsole() {
             // always append these commands so the working directory after the command is returned.
             var remoteCommand = command + " & echo. & cd";
             if ($.serverOS === "linux") {
-                remoteCommand = "-c '" + command + " && echo '' && pwd'";
+                remoteCommand = "bash -c '" + command + " && echo '' && pwd'";
             }
             var request = RemoteExecuteCommandRequest(remoteCommand, curWorkingDir());
             request.done(function (resp) {
