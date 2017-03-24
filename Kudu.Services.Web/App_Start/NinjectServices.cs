@@ -142,7 +142,7 @@ namespace Kudu.Services.Web.App_Start
 
             kernel.Bind<IBuildPropertyProvider>().ToConstant(new BuildPropertyProvider());
 
-            System.Func<ITracer> createTracerThunk = () => GetTracer(environment, kernel);
+            System.Func<ITracer> createTracerThunk = () => GetTracer(kernel);
             System.Func<ILogger> createLoggerThunk = () => GetLogger(environment, kernel);
 
             // First try to use the current request profiler if any, otherwise create a new one
@@ -614,13 +614,14 @@ namespace Kudu.Services.Web.App_Start
             });
         }
 
-        private static ITracer GetTracer(IEnvironment environment, IKernel kernel)
+        private static ITracer GetTracer(IKernel kernel)
         {
+            IEnvironment environment = kernel.Get<IEnvironment>();
             TraceLevel level = kernel.Get<IDeploymentSettingsManager>().GetTraceLevel();
             if (level > TraceLevel.Off && TraceServices.CurrentRequestTraceFile != null)
             {
                 string textPath = Path.Combine(environment.TracePath, TraceServices.CurrentRequestTraceFile);
-                return new CascadeTracer(new XmlTracer(environment.TracePath, level), new TextTracer(textPath, level), new ETWTracer());
+                return new CascadeTracer(new XmlTracer(environment.TracePath, level), new TextTracer(textPath, level), new ETWTracer(environment.RequestId));
             }
 
             return NullTracer.Instance;

@@ -338,7 +338,6 @@ namespace Kudu.Services.Web.Tracing
                 {
                     { "url", httpContext.Request.RawUrl },
                     { "method", httpContext.Request.HttpMethod },
-                    { "requestId", (string)httpContext.Items[Constants.RequestIdHeader]},
                     { "type", "request" }
                 };
 

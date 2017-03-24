@@ -12,12 +12,18 @@ namespace Kudu.Core.Tracing
         private bool doTrace = true;
         private bool lookForRequestBegin = true;
 
+        public ETWTracer(string requestId)
+        {
+            // a new ETWTracer per request
+            this.requestId = requestId;
+        }
+
         // TODO traceLevel does NOT YET apply to ETWTracer
         public TraceLevel TraceLevel
         {
             get
             {
-                throw new NotImplementedException();
+                return TraceLevel.Verbose;
             }
         }
 
@@ -38,14 +44,11 @@ namespace Kudu.Core.Tracing
                 lookForRequestBegin = false;
 
                 var requestMethod = attributes["method"];
-                if (requestMethod == "GET")
+                if (requestMethod == "GET") //TODO still trace if there's error
                 {
                     doTrace = false; // under no circumstances, we log GET (even if lvl==verbose)
                     return;
                 }
-                // attributes.TryGetValue(Constants.RequestIdHeader, out requestId); // out could be null
-                requestId = attributes["requestId"]; // set in logBeginRequest, could be x-arr-log-id, x-ms-request-id or new GUI()
-                // requestId = System.Environment.GetEnvironmentVariable(Constants.RequestIdHeader); // empty
                 // ignore request start, already logged with ApiEvent
                 return;
             }
