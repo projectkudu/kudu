@@ -82,17 +82,17 @@ namespace Kudu.Services.Performance
         private static async Task<ProfileResultInfo> StartIisSessionAsync(int processId, int profilingSessionId, ITracer tracer = null)
         {
             tracer.Trace("IIS Profiling timeout = {0}s", _profilingIisTimeout.TotalSeconds);
-            
-            // Starting a new profiler session with the Custom ETW Provider agent
-            string arguments = System.Environment.ExpandEnvironmentVariables(string.Format("start {0} /attach:{1} /scratchLocation:\"%LOCAL_EXPANDED%\\Temp\" /loadAgent:{2};ServiceProfilerAgent.dll", profilingSessionId, processId, UserModeCustomProviderAgentGuid));
+
+            // Starting a new profiler session with the Detailed Tracing Agent
+            string arguments = System.Environment.ExpandEnvironmentVariables($"start {profilingSessionId} /scratchLocation:\"%LOCAL_EXPANDED%\\Temp\" /loadAgent:{DetailedTracingAgentGuid};ServiceProfilerAgent.dll");
             var profileProcessResponse = await ExecuteProfilingCommandAsync(arguments, tracer);
             if (profileProcessResponse.StatusCode != HttpStatusCode.OK)
             {
                 return profileProcessResponse;
             }
 
-            // Enabling the Detailed Tracing Agent for this session
-            arguments = System.Environment.ExpandEnvironmentVariables(string.Format("update {0} /loadAgent:{1};ServiceProfilerAgent.dll", profilingSessionId, DetailedTracingAgentGuid));
+            // Attach to the process and enable the Custom ETW Provider agent
+            arguments = $"update {profilingSessionId} /attach:{processId} /loadAgent:{UserModeCustomProviderAgentGuid};ServiceProfilerAgent.dll";
             profileProcessResponse = await ExecuteProfilingCommandAsync(arguments, tracer);
             if (profileProcessResponse.StatusCode != HttpStatusCode.OK)
             {
@@ -100,7 +100,7 @@ namespace Kudu.Services.Performance
             }
 
             // Adding the IIS WWW Server Provider Events to the profiling session
-            arguments = System.Environment.ExpandEnvironmentVariables(string.Format("postString {0} \"AddProvider:{1}:0xFFFFFFFE:5\" /agent:{2}", profilingSessionId, IisWebServerProviderGuid, UserModeCustomProviderAgentGuid));
+            arguments = $"postString {profilingSessionId} \"AddProvider:{IisWebServerProviderGuid}:0xFFFFFFFE:5\" /agent:{UserModeCustomProviderAgentGuid}";
             profileProcessResponse = await ExecuteProfilingCommandAsync(arguments, tracer);
 
             return profileProcessResponse;
