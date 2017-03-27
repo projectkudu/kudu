@@ -16,7 +16,7 @@ namespace Kudu.Core.Functions
         Task<FunctionSecrets> GetFunctionSecretsAsync(string name);
         Task<MasterKey> GetMasterKeyAsync();
         Task<JObject> GetHostConfigAsync();
-        string GetToken();
+        string GetAdminToken();
         Task<JObject> PutHostConfigAsync(JObject content);
         void DeleteFunction(string name, bool ignoreErrors);
     }
