@@ -99,6 +99,16 @@ namespace Kudu.Services.Functions
         }
 
         [HttpGet]
+        public HttpResponseMessage GetAdminToken()
+        {
+            var tracer = _traceFactory.GetTracer();
+            using (tracer.Step("FunctionsController.GetAdminToken()"))
+            {
+                return Request.CreateResponse(HttpStatusCode.OK, _manager.GetAdminToken());
+            }
+        }
+
+        [HttpGet]
         public async Task<HttpResponseMessage> GetMasterKey()
         {
             var tracer = _traceFactory.GetTracer();
