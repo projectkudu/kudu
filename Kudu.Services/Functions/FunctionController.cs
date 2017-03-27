@@ -97,6 +97,15 @@ namespace Kudu.Services.Functions
                         AddFunctionAppIdToEnvelope(await _manager.GetFunctionConfigAsync(name, ArmUtils.IsArmRequest(Request) ? new FunctionTestData() : null)), Request));
             }
         }
+        [HttpGet]
+        public HttpResponseMessage GetToken()
+        {
+            var tracer = _traceFactory.GetTracer();
+            using (tracer.Step("FunctionsController.GetToken()"))
+            {
+                return Request.CreateResponse(HttpStatusCode.OK, _manager.GetToken());
+            }
+        }
 
         [HttpGet]
         public async Task<HttpResponseMessage> GetMasterKey()
