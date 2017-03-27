@@ -187,6 +187,7 @@ namespace Kudu.Core.Functions
 
         }
 
+        public string GetAdminToken() => SecurityUtility.GenerateFunctionToken();
 
         public async Task<MasterKey> GetMasterKeyAsync()
         {
