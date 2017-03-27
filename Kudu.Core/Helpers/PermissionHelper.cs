@@ -3,6 +3,7 @@ using Kudu.Contracts.Settings;
 using Kudu.Core.Deployment;
 using Kudu.Core.Deployment.Generator;
 using Kudu.Core.Infrastructure;
+using System;
 
 namespace Kudu.Core.Helpers
 {
@@ -13,7 +14,7 @@ namespace Kudu.Core.Helpers
             var folder = Path.GetDirectoryName(filePath);
             var exeFactory = new ExternalCommandFactory(environment, deploymentSettingManager, null);
             Executable exe = exeFactory.BuildCommandExecutable("/bin/chmod", folder, deploymentSettingManager.GetCommandIdleTimeout(), logger);
-            exe.Execute("{0} {1}", permission, filePath);
+            exe.Execute("{0} \"{1}\"", permission, filePath);
         }
     }
 }

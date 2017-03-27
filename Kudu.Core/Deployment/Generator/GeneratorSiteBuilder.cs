@@ -80,6 +80,13 @@ namespace Kudu.Core.Deployment.Generator
 
                         scriptGenerator.ExecuteWithProgressWriter(buildLogger, context.Tracer, scriptGeneratorCommand);
 
+                        if (!OSDetector.IsOnWindows())
+                        {
+                            // Kuduscript output is typically not given execute permission, so add it
+                            var deploymentScriptPath = DeploymentManager.GetCachedDeploymentScriptPath(Environment);
+                            PermissionHelper.Chmod("ugo+x", deploymentScriptPath, Environment, DeploymentSettings, buildLogger);
+                        }
+
                         CacheDeploymentScript(scriptGeneratorCommandArguments, context);
                     }
                     else
