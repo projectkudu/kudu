@@ -152,40 +152,48 @@ namespace Kudu.Core.Hooks
 
         private async Task PublishToHookAsync(WebHook webHook, string jsonString)
         {
-            using (HttpClient httpClient = CreateHttpClient(webHook))
+            if (webHook.HookAddress != "")
             {
-                using (var content = new StringContent(jsonString, System.Text.Encoding.UTF8, "application/json"))
+                using (HttpClient httpClient = CreateHttpClient(webHook))
                 {
-                    try
+                    using (var content = new StringContent(jsonString, System.Text.Encoding.UTF8, "application/json"))
                     {
-                        _tracer.Trace("Publish {0}#{1} to address - {2}, json - {3}, insecure - {4}", webHook.HookEventType, webHook.Id, webHook.HookAddress, jsonString, webHook.InsecureSsl);
-
-                        webHook.LastPublishDate = DateTime.UtcNow;
-                        webHook.LastContext = jsonString;
-
-                        using (HttpResponseMessage response = await httpClient.PostAsync(webHook.HookAddress, content))
+                        try
                         {
-                            _tracer.Trace("Publish {0}#{1} to address - {2}, response - {3}", webHook.HookEventType, webHook.Id, webHook.HookAddress, response.StatusCode);
+                            _tracer.Trace("Publish {0}#{1} to address - {2}, json - {3}, insecure - {4}", webHook.HookEventType, webHook.Id, webHook.HookAddress, jsonString, webHook.InsecureSsl);
 
-                            // Handle 410 responses by removing the web hook
-                            if (response.StatusCode == HttpStatusCode.Gone)
+                            webHook.LastPublishDate = DateTime.UtcNow;
+                            webHook.LastContext = jsonString;
+
+                            using (HttpResponseMessage response = await httpClient.PostAsync(webHook.HookAddress, content))
                             {
-                                RemoveWebHookNotUnderLock(webHook.Id);
+                                _tracer.Trace("Publish {0}#{1} to address - {2}, response - {3}", webHook.HookEventType, webHook.Id, webHook.HookAddress, response.StatusCode);
+
+                                // Handle 410 responses by removing the web hook
+                                if (response.StatusCode == HttpStatusCode.Gone)
+                                {
+                                    RemoveWebHookNotUnderLock(webHook.Id);
+                                }
+
+                                webHook.LastPublishStatus = response.StatusCode.ToString();
+                                webHook.LastPublishReason = response.ReasonPhrase;
                             }
-
-                            webHook.LastPublishStatus = response.StatusCode.ToString();
-                            webHook.LastPublishReason = response.ReasonPhrase;
                         }
-                    }
-                    catch (Exception ex)
-                    {
-                        _tracer.Trace("Error while publishing hook - {0}#{1}, to address - {1}", webHook.HookEventType, webHook.Id, webHook.HookAddress);
-                        _tracer.TraceError(ex);
+                        catch (Exception ex)
+                        {
+                            _tracer.Trace("Error while publishing hook - {0}#{1}, to address - {1}", webHook.HookEventType, webHook.Id, webHook.HookAddress);
+                            _tracer.TraceError(ex);
 
-                        webHook.LastPublishStatus = "Failure";
-                        webHook.LastPublishReason = ex.Message;
-                    }
+                            webHook.LastPublishStatus = "Failure";
+                            webHook.LastPublishReason = ex.Message;
+                        }
+                    } 
                 }
+            }
+            else
+            {
+                _tracer.Trace("Error while publishing hook - {0} is not a valid URL", webHook.HookAddress);
+                webHook.LastPublishReason = "The URL for the WebHook is not valid";
             }
         }
 
