@@ -32,6 +32,7 @@ namespace Kudu.Services.Docker
                 string timestampPath = Path.Combine(TimestampDirectory, "dockerTimestamp.txt");
                 try
                 {
+                    Directory.CreateDirectory(Path.GetDirectoryName((timestampPath)));
                     File.WriteAllText(timestampPath, DateTime.UtcNow.ToString());
                 }
                 catch (Exception e)
