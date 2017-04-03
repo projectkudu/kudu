@@ -532,7 +532,10 @@ namespace Kudu.Services.Web.App_Start
             routes.MapHttpRoute("delete-function", "api/functions/{name}", new { controller = "Function", action = "Delete" }, new { verb = new HttpMethodConstraint("DELETE") });
 
             // Docker Hook Endpoint
-            routes.MapHttpRoute("docker", "docker/hook", new { controller = "Docker", action = "ReceiveHook" }, new { verb = new HttpMethodConstraint("POST") });
+            if (!OSDetector.IsOnWindows())
+            {
+                routes.MapHttpRoute("docker", "docker/hook", new { controller = "Docker", action = "ReceiveHook" }, new { verb = new HttpMethodConstraint("POST") });
+            }
 
             // catch all unregistered url to properly handle not found
             // this is to work arounf the issue in TraceModule where we see double OnBeginRequest call
