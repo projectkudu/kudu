@@ -665,7 +665,9 @@ namespace Kudu.Core.Deployment
 
         private void PreDeployment(ITracer tracer)
         {
-            if (Environment.IsAzureEnvironment() && FileSystemHelpers.DirectoryExists(_environment.SSHKeyPath))
+            if (Environment.IsAzureEnvironment() 
+                && FileSystemHelpers.DirectoryExists(_environment.SSHKeyPath)
+                && OSDetector.IsOnWindows())
             {
                 string src = Path.GetFullPath(_environment.SSHKeyPath);
                 string dst = Path.GetFullPath(Path.Combine(System.Environment.GetEnvironmentVariable("USERPROFILE"), Constants.SSHKeyPath));
