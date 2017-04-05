@@ -855,7 +855,9 @@ project = myproject");
                 ApplicationManager.Run(appName, appManager =>
                 {
                     // Replace the express dependency with something that doesn't exist
-                    repo.Replace("package.json", "express", "MadeUpKuduPackage");
+                    // using Guid so that even if cache is used, lookup will still fail
+                    var madeUpPackageName = $"kudu{Guid.NewGuid()}";
+                    repo.Replace("package.json", "express", madeUpPackageName);
                     Git.Commit(repo.PhysicalPath, "Added fake package to package.json");
                     // Act
                     appManager.GitDeploy(repo.PhysicalPath);
@@ -864,7 +866,7 @@ project = myproject");
                     // Assert
                     Assert.Equal(1, results.Count);
                     Assert.Equal(DeployStatus.Failed, results[0].Status);
-                    KuduAssert.VerifyLogOutput(appManager, results[0].Id, "One or more of the selected node/npm paths do not exist.");
+                    KuduAssert.VerifyLogOutput(appManager, results[0].Id, $"'{madeUpPackageName}' is not in the npm registry.");
                 });
             }
         }
