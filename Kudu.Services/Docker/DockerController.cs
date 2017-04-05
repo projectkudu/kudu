@@ -10,7 +10,7 @@ namespace Kudu.Services.Docker
 {
     public class DockerController : ApiController
     {
-        const string TimestampDirectory = "/home/config";
+        const string TimestampDirectory = "/home/site/config";
         ITraceFactory _traceFactory;
 
         public DockerController(ITraceFactory traceFactory)
