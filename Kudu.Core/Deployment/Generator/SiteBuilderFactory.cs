@@ -193,6 +193,7 @@ namespace Kudu.Core.Deployment.Generator
             return ResolveProject(repositoryRoot, repositoryRoot, perDeploymentSettings, fileFinder, tryWebSiteProject, searchOption, specificConfiguration: false);
         }
 
+        // unless user specifies which project to deploy, targetPath == repositoryRoot
         private ISiteBuilder ResolveProject(string repositoryRoot, string targetPath, IDeploymentSettingsManager perDeploymentSettings, IFileFinder fileFinder, bool tryWebSiteProject, SearchOption searchOption = SearchOption.AllDirectories, bool specificConfiguration = true)
         {
             if (DeploymentHelper.IsProject(targetPath))
@@ -222,7 +223,7 @@ namespace Kudu.Core.Deployment.Generator
             }
 
             // Check for ASP.NET Core project without VS solution or project
-            // for ASP.NET Core project which only has project.json, but not xproj ie: AspNetCoreRC2YeomanProject
+            // for ASP.NET Core project which only has project.json, but not xproj ie: dotnet preview2 cli project
             string projectJson;
             if (AspNetCoreHelper.TryAspNetCoreWebProject(targetPath, fileFinder, out projectJson))
             {
