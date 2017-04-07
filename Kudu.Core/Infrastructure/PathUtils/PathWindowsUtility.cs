@@ -249,28 +249,13 @@ namespace Kudu.Core.Infrastructure
             return String.Equals(CleanPath(path1), CleanPath(path2), StringComparison.OrdinalIgnoreCase);
         }
 
-        internal override string ResolveBowerPath()
-        {
-            return ResolveNpmToolsPath("bower");
-        }
-
-        internal override string ResolveGulpPath()
-        {
-            return ResolveNpmToolsPath("gulp");
-        }
-
-        internal override string ResolveGruntPath()
-        {
-            return ResolveNpmToolsPath("grunt");
-        }
-
         internal override string ResolveFSharpCPath()
         {
             string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);
             return Path.Combine(programFiles, @"Microsoft SDKs", "F#", "3.1", "Framework", "v4.0", "Fsc.exe");
         }
 
-        private static string ResolveNpmToolsPath(string toolName)
+        internal override string ResolveNpmToolsPath(string toolName)
         {
             // If there is a TOOLNAME_PATH specified, then use that.
             // Otherwise use the pre-installed one

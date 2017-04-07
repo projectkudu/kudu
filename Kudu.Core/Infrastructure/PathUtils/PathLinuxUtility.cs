@@ -51,19 +51,9 @@ namespace Kudu.Core.Infrastructure
             return String.Equals(CleanPath(path1), CleanPath(path2), StringComparison.Ordinal);
         }
 
-        internal override string ResolveBowerPath()
+        internal override string ResolveNpmToolsPath(string toolName)
         {
-            return "/usr/local/bin/bower";
-        }
-
-        internal override string ResolveGulpPath()
-        {
-            return "/usr/local/bin/gulp";
-        }
-
-        internal override string ResolveGruntPath()
-        {
-            return "/usr/local/bin/grunt";
+            return $"/usr/local/bin/{toolName}";
         }
 
         private static string ResolveRelativePathToUsrBin(string relativePath, string errorMessage)
