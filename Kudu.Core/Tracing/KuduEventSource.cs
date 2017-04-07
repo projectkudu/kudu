@@ -61,7 +61,7 @@ namespace Kudu.Core.Tracing
             }
         }
 
-        [Event(65514, Level = EventLevel.Warning, Message = "Generic event for site {0}", Channel = EventChannel.Operational)]
+        [Event(65514, Level = EventLevel.Informational, Message = "Generic event for site {0}", Channel = EventChannel.Operational)]
         public void GenericEvent(string siteName, string Message, string requestId, string scmType, string siteMode, string buildVersion)
         {
             if (IsEnabled())
@@ -70,7 +70,7 @@ namespace Kudu.Core.Tracing
             }
         }
 
-        [Event(65515, Level = EventLevel.Warning, Message = "Api event for site {0}", Channel = EventChannel.Operational)]
+        [Event(65515, Level = EventLevel.Informational, Message = "Api event for site {0}", Channel = EventChannel.Operational)]
         public void ApiEvent(string siteName, string Message, string address, string verb, string requestId, int statusCode, long latencyInMilliseconds, string userAgent)
         {
             if (IsEnabled())
