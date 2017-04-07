@@ -250,10 +250,11 @@ namespace Kudu.Core.Functions
         {
             try
             {
-                var path = GetFunctionConfigPath(name);
-                if (FileSystemHelpers.FileExists(path))
+                var functionPath = GetFuncPathAndCheckExistence(name);
+                var functionConfigPath = GetFunctionConfigPath(functionPath);
+                if (FileSystemHelpers.FileExists(functionConfigPath))
                 {
-                    return await CreateFunctionConfig(await FileSystemHelpers.ReadAllTextFromFileAsync(path), name, packageLimit);
+                    return await CreateFunctionConfig(await FileSystemHelpers.ReadAllTextFromFileAsync(functionConfigPath), name, functionPath, functionConfigPath, packageLimit);
                 }
             }
             catch
@@ -263,17 +264,16 @@ namespace Kudu.Core.Functions
             return null;
         }
 
-        private async Task<FunctionEnvelope> CreateFunctionConfig(string configContent, string functionName, FunctionTestData packageLimit)
+        private async Task<FunctionEnvelope> CreateFunctionConfig(string configContent, string functionName, string functionPath, string functionConfigPath, FunctionTestData packageLimit)
         {
             var functionConfig = JObject.Parse(configContent);
-            var functionPath = GetFuncPathAndCheckExistence(functionName);
 
             return new FunctionEnvelope
             {
                 Name = functionName,
                 ScriptRootPathHref = FilePathToVfsUri(functionPath, isDirectory: true),
                 ScriptHref = FilePathToVfsUri(DeterminePrimaryScriptFile(functionConfig, functionPath)),
-                ConfigHref = FilePathToVfsUri(GetFunctionConfigPath(functionName)),
+                ConfigHref = FilePathToVfsUri(functionConfigPath),
                 SecretsFileHref = FilePathToVfsUri(GetFunctionSecretsFilePath(functionName)),
                 Href = GetFunctionHref(functionName),
                 Config = functionConfig,
@@ -378,9 +378,9 @@ namespace Kudu.Core.Functions
             throw new FileNotFoundException($"Function ({name}) does not exist");
         }
 
-        private string GetFunctionConfigPath(string name)
+        private static string GetFunctionConfigPath(string functionFolder)
         {
-            return Path.Combine(GetFuncPathAndCheckExistence(name), Constants.FunctionsConfigFile);
+            return Path.Combine(functionFolder, Constants.FunctionsConfigFile);
         }
 
         private string GetFunctionLogPath(string name)
