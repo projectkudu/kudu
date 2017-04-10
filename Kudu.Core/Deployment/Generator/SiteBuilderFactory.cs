@@ -159,6 +159,10 @@ namespace Kudu.Core.Deployment.Generator
             {
                 return new RubySiteBuilder(_environment, perDeploymentSettings, _propertyProvider, repositoryRoot, projectPath);
             }
+            else if (IsPHPSite(sourceProjectPath))
+            {
+                return new PHPSiteBuilder(_environment, perDeploymentSettings, _propertyProvider, repositoryRoot, projectPath);
+            }
 
             return new BasicBuilder(_environment, perDeploymentSettings, _propertyProvider, repositoryRoot, projectPath);
         }
@@ -181,6 +185,11 @@ namespace Kudu.Core.Deployment.Generator
         private static bool IsRubySite(string projectPath)
         {
             return RubySiteEnabler.LooksLikeRuby(projectPath);
+        }
+
+        private static bool IsPHPSite(string projectPath)
+        {
+            return PHPSiteEnabler.LooksLikePHP(projectPath);
         }
 
         private static bool IsFunctionApp(string projectPath)

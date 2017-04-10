@@ -220,6 +220,8 @@
     <Compile Include="Deployment\Generator\ExternalCommandFactory.cs" />
     <Compile Include="Deployment\Generator\GoSiteBuilder.cs" />
     <Compile Include="Deployment\Generator\GoSiteEnabler.cs" />
+    <Compile Include="Deployment\Generator\PHPSiteBuilder.cs" />
+    <Compile Include="Deployment\Generator\PHPSiteEnabler.cs" />
     <Compile Include="Deployment\Generator\PythonSiteEnabler.cs" />
     <Compile Include="Deployment\Generator\PythonSiteBuilder.cs" />
     <Compile Include="Deployment\Generator\AspNetCoreBuilder.cs" />
