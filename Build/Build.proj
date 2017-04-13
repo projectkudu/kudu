@@ -54,7 +54,7 @@
         <ItemGroup>
             <ServiceSiteFilesToCopy Include="$(ProjectRoot)\Kudu.Services.Web\bin*\node_modules*\**\*.*" />
             <ServiceSiteFilesToCopy Include="$(ProjectRoot)\Kudu.Services.Web\commit.txt" />
-            <ServiceSiteFilesToCopy Include="$(ProjectRoot)\Kudu.Services.Web\applicationHost.xdt" />
+            <ServiceSiteFilesToCopy Include="$(ProjectRoot)\Kudu.Services.Web\scmApplicationHost.xdt" />
             <ServiceSiteFilesToCopy Include="$(ProjectRoot)\Kudu.Services.Web\bin*\Kudu.exe" />
             <ServiceSiteFilesToCopy Include="$(ProjectRoot)\Kudu.Services.Web\bin*\Kudu.exe.config" />
             <ServiceSiteFilesToCopy Include="$(ProjectRoot)\Kudu.Services.Web\bin*\Scripts\*" />
