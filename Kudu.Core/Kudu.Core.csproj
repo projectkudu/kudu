@@ -394,7 +394,7 @@
     <Content Include="Scripts\starter.cmd">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <EmbeddedResource Include="SiteExtensions\applicationHost.xdt.xml" />
+    <EmbeddedResource Include="SiteExtensions\scmApplicationHost.xdt.xml" />
     <None Include="app.config" />
     <None Include="packages.config" />
     <Content Include="Scripts\kudusync.cmd">

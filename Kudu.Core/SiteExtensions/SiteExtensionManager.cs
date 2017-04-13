@@ -427,18 +427,33 @@ namespace Kudu.Core.SiteExtensions
 
                     if (SiteExtensionInfo.SiteExtensionType.WebRoot == type)
                     {
-                        // if install to WebRoot, check if there is any xdt file come with package
-                        // if there is one, move it to site extension folder
+                        // if install to WebRoot, check if there is any xdt or scmXdt file come with package
+                        // if there is, move it to site extension folder
                         string xdtFile = Path.Combine(extractPath, Constants.ApplicationHostXdtFileName);
-                        if (File.Exists(xdtFile))
+                        string scmXdtFile = Path.Combine(extractPath, Constants.ScmApplicationHostXdtFileName);
+                        bool findXdts = false;
+
+                        if (FileSystemHelpers.FileExists(xdtFile))
                         {
                             tracer.Trace("Use xdt file from package.");
                             string newXdtFile = Path.Combine(installationDirectory, Constants.ApplicationHostXdtFileName);
 
                             tracer.Trace("Moving {0} to {1}", xdtFile, newXdtFile);
                             FileSystemHelpers.MoveFile(xdtFile, newXdtFile);
+                            findXdts = true;
                         }
-                        else
+                        // if the siteextension applies to both main site and the scm site
+                        if (FileSystemHelpers.FileExists(scmXdtFile))
+                        {
+                            tracer.Trace("Use scmXdt file from package.");
+                            string newScmXdtFile = Path.Combine(installationDirectory, Constants.ScmApplicationHostXdtFileName);
+
+                            tracer.Trace("Moving {0} to {1}", scmXdtFile, newScmXdtFile);
+                            FileSystemHelpers.MoveFile(scmXdtFile, newScmXdtFile);
+                            findXdts = true;
+                        }
+
+                        if (!findXdts)
                         {
                             tracer.Trace("No xdt file come with package.");
                         }
@@ -448,10 +463,9 @@ namespace Kudu.Core.SiteExtensions
                 // ignore below action if we install packge to wwwroot
                 if (SiteExtensionInfo.SiteExtensionType.WebRoot != type)
                 {
-                    // If there is no xdt file, generate default.
-                    using (tracer.Step("Check if applicationhost.xdt file existed."))
+                    using (tracer.Step("Check if applicationHost.xdt or scmApplicationHost.xdt file existed."))
                     {
-                        GenerateApplicationHostXdt(installationDirectory, '/' + package.Identity.Id, tracer: tracer);
+                        GenerateDefaultScmApplicationHostXdt(installationDirectory, '/' + package.Identity.Id, tracer: tracer);
                     }
 
                     using (tracer.Step("Trigger site extension job"))
@@ -570,20 +584,22 @@ namespace Kudu.Core.SiteExtensions
             return isInstalled;
         }
 
-        private static void GenerateApplicationHostXdt(string installationDirectory, string relativeUrl, ITracer tracer = null)
+        private static void GenerateDefaultScmApplicationHostXdt(string installationDirectory, string relativeUrl, ITracer tracer = null)
         {
-            // If there is no xdt file, generate default.
+            // If there is no xdt and scmXdt file, generate default scmXdt file.
             FileSystemHelpers.CreateDirectory(installationDirectory);
             string xdtPath = Path.Combine(installationDirectory, Constants.ApplicationHostXdtFileName);
-            if (!FileSystemHelpers.FileExists(xdtPath))
+            string scmXdtPath = Path.Combine(installationDirectory, Constants.ScmApplicationHostXdtFileName);
+
+            if (!FileSystemHelpers.FileExists(xdtPath) && !FileSystemHelpers.FileExists(scmXdtPath))
             {
                 if (tracer != null)
                 {
                     tracer.Trace("Missing xdt file, creating one.");
                 }
 
-                string xdtContent = CreateDefaultXdtFile(relativeUrl, "%XDT_EXTENSIONPATH%");
-                OperationManager.Attempt(() => FileSystemHelpers.WriteAllText(xdtPath, xdtContent));
+                string xdtContent = CreateDefaultScmXdtFile(relativeUrl, "%XDT_EXTENSIONPATH%");
+                OperationManager.Attempt(() => FileSystemHelpers.WriteAllText(scmXdtPath, xdtContent));
             }
         }
 
@@ -670,11 +686,11 @@ namespace Kudu.Core.SiteExtensions
             return Path.Combine(GetInstallationDirectory(id), String.Format(CultureInfo.InvariantCulture, "{0}.{1}.nupkg", id, version));
         }
 
-        private static string CreateDefaultXdtFile(string relativeUrl, string physicalPath)
+        private static string CreateDefaultScmXdtFile(string relativeUrl, string physicalPath)
         {
             string template = null;
-
-            Stream stream = typeof(SiteExtensionManager).Assembly.GetManifestResourceStream("Kudu.Core.SiteExtensions." + Constants.ApplicationHostXdtFileName + ".xml");
+            // the template has "%XDT_SCMSITENAME%" by default
+            Stream stream = typeof(SiteExtensionManager).Assembly.GetManifestResourceStream("Kudu.Core.SiteExtensions." + Constants.ScmApplicationHostXdtFileName + ".xml");
             using (StreamReader reader = new StreamReader(stream))
             {
                 template = reader.ReadToEnd();
@@ -694,8 +710,7 @@ namespace Kudu.Core.SiteExtensions
 
             if (ExtensionRequiresApplicationHost(info))
             {
-                info.ExtensionUrl = FileSystemHelpers.FileExists(Path.Combine(localPath, Constants.ApplicationHostXdtFileName))
-                    ? GetFullUrl(GetUrlFromApplicationHost(info)) : null;
+                info.ExtensionUrl = GetFullUrl(GetUrlFromApplicationHost(localPath));
             }
             else
             {
@@ -719,22 +734,33 @@ namespace Kudu.Core.SiteExtensions
             }
         }
 
-        private static string GetUrlFromApplicationHost(SiteExtensionInfo info)
+        private static string GetUrlFromApplicationHost(string localPath)
         {
-            try
+            string xdtFilePath = FileSystemHelpers.FileExists(Path.Combine(localPath, Constants.ScmApplicationHostXdtFileName)) ?
+                                        Path.Combine(localPath, Constants.ScmApplicationHostXdtFileName) :
+                                        FileSystemHelpers.FileExists(Path.Combine(localPath, Constants.ApplicationHostXdtFileName)) ?
+                                            Path.Combine(localPath, Constants.ScmApplicationHostXdtFileName) : null;
+            if (xdtFilePath != null)
             {
-                var appHostDoc = new XmlDocument();
-                appHostDoc.Load(Path.Combine(info.LocalPath, Constants.ApplicationHostXdtFileName));
+                try
+                {
+                    var appHostDoc = new XmlDocument();
 
-                // Get the 'path' property of the first 'application' element, which is the relative url.
-                XmlNode pathPropertyNode = appHostDoc.SelectSingleNode("//application[@path]/@path");
+                    appHostDoc.Load(xdtFilePath);
+                    // yet there's no siteextension with both applicationHost.xdt
+                    // Get the 'path' property of the first 'application' element, which is the relative url.
+                    XmlNode pathPropertyNode = appHostDoc.SelectSingleNode("//application[@path]/@path");
 
-                return pathPropertyNode.Value;
+                    return pathPropertyNode.Value;
+
+                }
+                catch (SystemException)
+                {
+                    // return null
+                }
             }
-            catch (SystemException)
-            {
-                return null;
-            }
+            return null;
+
         }
 
         private void DeploySiteExtensionJobs(string siteExtensionName)
