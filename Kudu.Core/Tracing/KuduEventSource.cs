@@ -1,4 +1,5 @@
-﻿using Microsoft.Diagnostics.Tracing;
+﻿using System.Diagnostics.CodeAnalysis;
+using Microsoft.Diagnostics.Tracing;
 
 namespace Kudu.Core.Tracing
 {
@@ -61,6 +62,7 @@ namespace Kudu.Core.Tracing
             }
         }
 
+        [SuppressMessage("Microsoft.Performance", "CA1801:ReviewUnusedParameters")]
         [Event(65514, Level = EventLevel.Informational, Message = "Generic event for site {0}", Channel = EventChannel.Operational)]
         public void GenericEvent(string siteName, string Message, string requestId, string scmType, string siteMode, string buildVersion)
         {
@@ -71,6 +73,7 @@ namespace Kudu.Core.Tracing
             }
         }
 
+        [SuppressMessage("Microsoft.Performance", "CA1801:ReviewUnusedParameters")]
         [Event(65515, Level = EventLevel.Informational, Message = "Api event for site {0}", Channel = EventChannel.Operational)]
         public void ApiEvent(string siteName, string Message, string address, string verb, string requestId, int statusCode, long latencyInMilliseconds, string userAgent)
         {
