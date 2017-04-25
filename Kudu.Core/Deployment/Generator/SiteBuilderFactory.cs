@@ -139,7 +139,12 @@ namespace Kudu.Core.Deployment.Generator
         private ISiteBuilder ResolveNonAspProject(string repositoryRoot, string projectPath, IDeploymentSettingsManager perDeploymentSettings)
         {
             string sourceProjectPath = projectPath ?? repositoryRoot;
-            if (IsNodeSite(sourceProjectPath))
+            // "FUNCTIONS_EXTENSION_VERSION" environment variable implies a functionApp
+            if (IsFunctionApp())
+            {
+                return new FunctionAppBuilder(_environment, perDeploymentSettings, _propertyProvider, repositoryRoot, projectPath);
+            }
+            else if (IsNodeSite(sourceProjectPath))
             {
                 return new NodeSiteBuilder(_environment, perDeploymentSettings, _propertyProvider, repositoryRoot, projectPath);
             }
@@ -150,10 +155,6 @@ namespace Kudu.Core.Deployment.Generator
             else if (IsGoSite(sourceProjectPath))
             {
                 return new GoSiteBuilder(_environment, perDeploymentSettings, _propertyProvider, repositoryRoot, projectPath);
-            }
-            else if (IsFunctionApp(sourceProjectPath))
-            {
-                return new FunctionAppBuilder(_environment, perDeploymentSettings, _propertyProvider, repositoryRoot, projectPath);
             }
             else if (IsRubySite(sourceProjectPath))
             {
@@ -192,9 +193,9 @@ namespace Kudu.Core.Deployment.Generator
             return PHPSiteEnabler.LooksLikePHP(projectPath);
         }
 
-        private static bool IsFunctionApp(string projectPath)
+        private static bool IsFunctionApp()
         {
-            return FunctionAppEnabler.LooksLikeFunctionApp(projectPath);
+            return FunctionAppEnabler.LooksLikeFunctionApp();
         }
 
         private ISiteBuilder ResolveProject(string repositoryRoot, IDeploymentSettingsManager perDeploymentSettings, IFileFinder fileFinder, bool tryWebSiteProject = false, SearchOption searchOption = SearchOption.AllDirectories)
