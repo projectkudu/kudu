@@ -139,7 +139,12 @@ namespace Kudu.Core.Deployment.Generator
         private ISiteBuilder ResolveNonAspProject(string repositoryRoot, string projectPath, IDeploymentSettingsManager perDeploymentSettings)
         {
             string sourceProjectPath = projectPath ?? repositoryRoot;
-            if (IsNodeSite(sourceProjectPath))
+            if (IsFunctionApp(sourceProjectPath))
+            {
+                return new FunctionAppBuilder(_environment, perDeploymentSettings, _propertyProvider, repositoryRoot, projectPath);
+            }
+            // "packge.json" does not 100% imply a nodesite, functionApp can also have one under its root folder
+            else if (IsNodeSite(sourceProjectPath))
             {
                 return new NodeSiteBuilder(_environment, perDeploymentSettings, _propertyProvider, repositoryRoot, projectPath);
             }
@@ -150,10 +155,6 @@ namespace Kudu.Core.Deployment.Generator
             else if (IsGoSite(sourceProjectPath))
             {
                 return new GoSiteBuilder(_environment, perDeploymentSettings, _propertyProvider, repositoryRoot, projectPath);
-            }
-            else if (IsFunctionApp(sourceProjectPath))
-            {
-                return new FunctionAppBuilder(_environment, perDeploymentSettings, _propertyProvider, repositoryRoot, projectPath);
             }
             else if (IsRubySite(sourceProjectPath))
             {
