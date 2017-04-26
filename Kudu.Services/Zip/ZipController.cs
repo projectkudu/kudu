@@ -2,6 +2,7 @@
 using System.IO;
 using System.IO.Abstractions;
 using System.IO.Compression;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -24,7 +25,11 @@ namespace Kudu.Services.Zip
         protected override Task<HttpResponseMessage> CreateDirectoryGetResponse(DirectoryInfoBase info, string localFilePath)
         {
             HttpResponseMessage response = Request.CreateResponse();
-            response.Content = ZipStreamContent.Create(Path.GetFileName(Path.GetDirectoryName(localFilePath)) + ".zip", Tracer, zip =>
+            // GetQueryNameValuePairs returns an IEnumerable<KeyValuePair<string, string>>
+            // KeyValuePair is a value type.
+            var fileName = Request.GetQueryNameValuePairs().FirstOrDefault(p => p.Key.Equals("fileName", StringComparison.OrdinalIgnoreCase)).Value;
+            fileName = fileName ?? Path.GetFileName(Path.GetDirectoryName(localFilePath)) + ".zip";
+            response.Content = ZipStreamContent.Create(fileName, Tracer, zip =>
             {
                 foreach (FileSystemInfoBase fileSysInfo in info.GetFileSystemInfos())
                 {
