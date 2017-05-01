@@ -23,7 +23,6 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
-using System.IO.Abstractions;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -34,6 +33,7 @@ using Kudu.Contracts.SourceControl;
 using Kudu.Contracts.Tracing;
 using Kudu.Core;
 using Kudu.Core.Deployment;
+using Kudu.Core.Helpers;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.SourceControl;
 using Kudu.Core.SourceControl.Git;
@@ -193,10 +193,11 @@ namespace Kudu.Services.GitServer
                 if (!string.IsNullOrEmpty(System.Environment.GetEnvironmentVariable(Constants.FunctionRunTimeVersion)))
                 {
                     // since git clone doesn't happen very often, create this dynamically instead of static
-                    var ignoreDir = new HashSet<string>();
-                    ignoreDir.Add("node_modules");
+                    // windows directory names are case insensitive
+                    var ignoreDirs = new HashSet<string>(OSDetector.IsOnWindows() ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal);
+                    ignoreDirs.Add("node_modules");
 
-                    FileSystemHelpers.CopyDirectoryRecursive(env.RepositoryPath, previous, ignoreDir: ignoreDir);
+                    FileSystemHelpers.CopyDirectoryRecursive(env.RepositoryPath, previous, ignoreDirs: ignoreDirs);
                     env.RepositoryPath = previous;
 
                     // do initial commit

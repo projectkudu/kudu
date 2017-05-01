@@ -202,7 +202,7 @@ namespace Kudu.Core.Infrastructure
 
         // From MSDN: http://msdn.microsoft.com/en-us/library/bb762914.aspx
         // <param name="ignoreDir">string of directory/subdirectory names to be excluded from the copy</param>
-        public static void CopyDirectoryRecursive(string sourceDirPath, string destinationDirPath, bool overwrite = true, HashSet<string> ignoreDir = null)
+        public static void CopyDirectoryRecursive(string sourceDirPath, string destinationDirPath, bool overwrite = true, HashSet<string> ignoreDirs = null)
         {
             // Get the subdirectories for the specified directory.
             var sourceDir = new DirectoryInfo(sourceDirPath);
@@ -232,11 +232,11 @@ namespace Kudu.Core.Infrastructure
                 else
                 {
                     var sourceSubDir = sourceFileSystemInfo as DirectoryInfo;
-                    if (sourceSubDir != null && (ignoreDir == null || !ignoreDir.Contains(sourceSubDir.Name)))
+                    if (sourceSubDir != null && (ignoreDirs == null || !ignoreDirs.Contains(sourceSubDir.Name)))
                     {
                         // Copy sub-directories and their contents to new location.
                         string destinationSubDirPath = Path.Combine(destinationDirPath, sourceSubDir.Name);
-                        CopyDirectoryRecursive(sourceSubDir.FullName, destinationSubDirPath, overwrite, ignoreDir);
+                        CopyDirectoryRecursive(sourceSubDir.FullName, destinationSubDirPath, overwrite, ignoreDirs);
                     }
                 }
             }
