@@ -20,6 +20,7 @@
 
 #endregion
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.IO.Abstractions;
@@ -33,13 +34,14 @@ using Kudu.Contracts.SourceControl;
 using Kudu.Contracts.Tracing;
 using Kudu.Core;
 using Kudu.Core.Deployment;
+using Kudu.Core.Infrastructure;
 using Kudu.Core.SourceControl;
 using Kudu.Core.SourceControl.Git;
 using Kudu.Core.Tracing;
 using Kudu.Services.Infrastructure;
 
 namespace Kudu.Services.GitServer
-{    
+{
     public class InfoRefsController : ApiController
     {
         private readonly ITracer _tracer;
@@ -185,11 +187,29 @@ namespace Kudu.Services.GitServer
                     return;
                 }
 
-                // do initial commit
-                repository = _repositoryFactory.EnsureRepository(RepositoryType.Git);
+                // if it is a functionApp
+                // git clone will copy repo from wwwroot/ to repository/
+                // then treate it like its not in place deployment
+                if (!string.IsNullOrEmpty(System.Environment.GetEnvironmentVariable(Constants.FunctionRunTimeVersion)))
+                {
+                    // since git clone doesn't happen very often, create this dynamically instead of static
+                    var ignoreDir = new HashSet<string>();
+                    ignoreDir.Add("node_modules");
 
-                // Once repo is init, persist the new repo path
-                settings.SetValue(SettingsKeys.RepositoryPath, Constants.WebRoot);
+                    FileSystemHelpers.CopyDirectoryRecursive(env.RepositoryPath, previous, ignoreDir: ignoreDir);
+                    env.RepositoryPath = previous;
+
+                    // do initial commit
+                    repository = _repositoryFactory.EnsureRepository(RepositoryType.Git);
+                }
+                else
+                {
+                    // do initial commit
+                    repository = _repositoryFactory.EnsureRepository(RepositoryType.Git);
+
+                    // Once repo is init, persist the new repo path
+                    settings.SetValue(SettingsKeys.RepositoryPath, Constants.WebRoot);
+                }
 
                 repository.Commit("Initial Commit", authorName: null, emailAddress: null);
 
