@@ -199,6 +199,34 @@ namespace Kudu.Services.Test
             Assert.Equal(Path.Combine(siteRoot, Constants.RepositoryPath), environment.RepositoryPath);
         }
 
+        [Fact]
+        public void InfoRefsControllerInitialCommitFunctionApp()
+        {
+            // Arrange
+            var siteRoot = @"x:\vdir\site";
+            var environment = GetEnvironment(siteRoot);
+            var repositoryFactory = GetRepositoryFactory();
+            var settings = GetDeploymentSettings();
+            var fileSystem = GetFileSystem(siteRoot);
+            var controller = CreateController(settings: settings,
+                                              repositoryFactory: repositoryFactory,
+                                              environment: environment,
+                                              fileSystem: fileSystem,
+                                              initLock: GetOperationLock());
+
+            // Setup
+            System.Environment.SetEnvironmentVariable(Constants.FunctionRunTimeVersion, "~1");
+
+            // Test
+            controller.InitialCommitIfNecessary();
+
+            // Assert
+            // in place deployment is disabled for functionApp, create a repository under site\repository
+            Assert.NotNull(repositoryFactory.GetRepository());
+            Assert.Null(settings.GetValue(SettingsKeys.RepositoryPath));
+            Assert.Equal(Path.Combine(siteRoot, Constants.RepositoryPath), environment.RepositoryPath);
+        }
+
         [Theory]
         [MemberData("WebRootContents")]
         public void InfoRefsControllerIsDefaultWebRootContentTests(IWebRootContent scenario)
@@ -316,6 +344,14 @@ namespace Kudu.Services.Test
             var fileSystem = new Mock<IFileSystem>();
             var fileBase = new Mock<FileBase>();
             var directoryBase = new Mock<DirectoryBase>();
+
+            var copyFromDirInfoBase = new Mock<DirectoryInfoBase>();
+            var dirInfoFactory = new Mock<IDirectoryInfoFactory>();
+
+            fileSystem.SetupGet(fs => fs.DirectoryInfo).Returns(dirInfoFactory.Object);
+            dirInfoFactory.Setup(d => d.FromDirectoryName(It.IsAny<string>())).Returns(copyFromDirInfoBase.Object);
+            copyFromDirInfoBase.SetupGet(d => d.Exists).Returns(true);
+
             fileSystem.SetupGet(fs => fs.File)
                       .Returns(fileBase.Object);
             fileSystem.SetupGet(fs => fs.Directory)

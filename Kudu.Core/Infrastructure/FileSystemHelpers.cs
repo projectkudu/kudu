@@ -205,7 +205,7 @@ namespace Kudu.Core.Infrastructure
         public static void CopyDirectoryRecursive(string sourceDirPath, string destinationDirPath, bool overwrite = true, HashSet<string> ignoreDirs = null)
         {
             // Get the subdirectories for the specified directory.
-            var sourceDir = new DirectoryInfo(sourceDirPath);
+            var sourceDir = DirectoryInfoFromDirectoryName(sourceDirPath);
 
             if (!sourceDir.Exists)
             {
@@ -221,9 +221,9 @@ namespace Kudu.Core.Infrastructure
             }
 
             // Get the files in the directory and copy them to the new location.
-            foreach (FileSystemInfo sourceFileSystemInfo in sourceDir.EnumerateFileSystemInfos())
+            foreach (FileSystemInfoBase sourceFileSystemInfo in sourceDir.GetFileSystemInfos())
             {
-                var sourceFile = sourceFileSystemInfo as FileInfo;
+                var sourceFile = sourceFileSystemInfo as FileInfoBase;
                 if (sourceFile != null)
                 {
                     string destinationFilePath = Path.Combine(destinationDirPath, sourceFile.Name);
@@ -231,7 +231,7 @@ namespace Kudu.Core.Infrastructure
                 }
                 else
                 {
-                    var sourceSubDir = sourceFileSystemInfo as DirectoryInfo;
+                    var sourceSubDir = sourceFileSystemInfo as DirectoryInfoBase;
                     if (sourceSubDir != null && (ignoreDirs == null || !ignoreDirs.Contains(sourceSubDir.Name)))
                     {
                         // Copy sub-directories and their contents to new location.
