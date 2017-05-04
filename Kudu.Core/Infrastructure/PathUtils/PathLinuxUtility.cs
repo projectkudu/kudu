@@ -28,7 +28,12 @@ namespace Kudu.Core.Infrastructure
 
         internal override string ResolveNpmJsPath()
         {
-            return ResolveRelativePathToUsrBin("npm", "npm");
+            // This is passed as the NPM_JS_PATH envvar, which is used during node deployment
+            // scripts as the default if a more appropriate version isn't found.
+            // It needs to point to an appropriate default version of npm-cli.js, not npm itself,
+            // as it will be run as a parameter to node (interpreted javascript) and not as a raw executable.
+            // For that reason, it also needs to be the full path, as $PATH resolution will not happen on it.
+            return ResolveRelativePathToUsrBin("npm-cli.js", "npm-cli.js");
         }
 
         internal override string ResolveMSBuildPath()
