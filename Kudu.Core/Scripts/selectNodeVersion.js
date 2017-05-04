@@ -102,6 +102,46 @@ function getNodeDefaultStartFile(sitePath) {
     return null;
 }
 
+// Determine the set of node.js versions available on the platform
+function getInstalledNodeVersions(nodeJsDir) {
+    var versions = [];
+    fs.readdirSync(nodejsDir).forEach(function (dir) {
+        if (process.platform === "linux") {
+            if (dir.match(/^\d+\.\d+\.\d+$/) && existsSync(path.resolve(nodejsDir, dir, "bin", "node"))) {
+                versions.push(dir);
+            }
+        } else {
+            if (dir.match(/^\d+\.\d+\.\d+$/) && existsSync(path.resolve(nodejsDir, dir, 'node.exe'))) {
+                versions.push(dir);
+            }
+        }
+    });
+
+    console.log('Node.js versions available on the platform are: ' + versions.sort(semver.compare).join(', ') + '.');
+
+    return versions;
+}
+
+// Determine the set of NPM versions available on the platform
+function getInstalledNpmVersions(npmDir) {
+    var versions = [];
+    fs.readdirSync(npmDir).forEach(function (dir) {
+        if (process.platform === "linux") {
+            if (dir.match(/^\d+\.\d+\.\d+$/) && existsSync(path.resolve(npmDir, dir, 'node_modules/npm/bin/npm-cli.js'))) {
+                versions.push(dir);
+            }
+        } else {
+            if (dir.match(/^\d+\.\d+\.\d+$/) && existsSync(path.resolve(npmDir, dir, 'npm.cmd'))) {
+                versions.push(dir);
+            }
+        }
+    });
+
+    console.log('NPM versions available on the platform are: ' + versions.sort(semver.compare).join(', ') + '.');
+
+    return versions;
+}
+
 // Determine the installation location of node.js and iisnode
 var programFilesDir, nodejsDir, npmRootPath;
 
@@ -138,50 +178,117 @@ if (!existsSync(wwwroot) || !existsSync(repo) || (tempDir && !existsSync(tempDir
 var packageJson = path.resolve(repo, 'package.json'),
     json = existsSync(packageJson) && JSON.parse(fs.readFileSync(packageJson, 'utf8'));
 
-// If the web.config file does not exist in the repo, use a default one that is specific for node on IIS in Azure, 
-// and generate it in 'wwwroot'
-// Obtain the start script from package.json or seach for app.js/server.js at the root of the repository.
-var nodeStartFilePath = (function createIisNodeWebConfigIfNeeded() {
-    var webConfigRepoPath = path.join(repo, 'web.config'),
-        webConfigWwwRootPath = path.join(wwwroot, 'web.config'),
-        nodeStartFilePath = null;
+if (process.platform === "linux") {
+    try {
+        // Select Node version
+        console.log('Detecting node version spec...');
+        var nodeVersionSpec;
+        if (typeof json == 'object' && typeof json.engines == 'object' && typeof json.engines.node == 'string') {
+            nodeVersionSpec = json.engines.node;
+            console.log('Using package.json engines.node value: ' + nodeVersionSpec);
+        }
+        else if (process.env.WEBSITE_NODE_DEFAULT_VERSION) {
+            nodeVersionSpec = process.env.WEBSITE_NODE_DEFAULT_VERSION;
+            console.log('Using appsetting WEBSITE_NODE_DEFAULT_VERSION value: ' + nodeVersionSpec);
+        }
+        else {
+            nodeVersionSpec = process.versions.node;
+            console.log('Using default version: ' + nodeVersionSpec)
+        }
 
-    if (!existsSync(webConfigRepoPath)) {
-        // Check for {"scripts": {"start": < startupCommand > } } exists
-        if (typeof json === 'object' && typeof json.scripts === 'object' && typeof json.scripts.start === 'string') {
-            var startupCommand = json.scripts.start;
-            var defaultNode = "node ";
-            if (startupCommand.length > defaultNode.length && startupCommand.slice(0, defaultNode.length) === defaultNode) {
-                var startFile = path.resolve(repo, startupCommand.slice(defaultNode.length));
-                var startFileJs = path.resolve(repo, startupCommand.slice(defaultNode.length) + ".js");
-                if (existsSync(startFile)) {
-                    nodeStartFilePath = path.relative(repo, startFile);
-                } else if (existsSync(startFileJs)) {
-                    nodeStartFilePath = path.relative(repo, startFileJs);
-                }
-                if (nodeStartFilePath) {
-                    // iisnode requires forward-slash in paths
-                    nodeStartFilePath = nodeStartFilePath.replace(/\\/g, '/');
-                    console.log('Using start-up script ' + nodeStartFilePath + ' from package.json.');
+        var installedNodeVersions = getInstalledNodeVersions(nodejsDir);
+        var nodeResolvedVersion = semver.maxSatisfying(installedNodeVersions, nodeVersionSpec);
+        
+        if (nodeResolvedVersion) {
+            console.log('Resolved to version ' + nodeResolvedVersion);
+        }
+        else {
+            console.log('Could not resolve node version. Deployment will proceed with default versions of node and npm.');
+            return;
+        }
+
+        var nodePath = path.resolve(nodejsDir, nodeResolvedVersion, "bin/node");      
+
+        // Select NPM version
+        var npmVersionSpec;
+        var npmVersionSpecFileForResolvedNodeVersion = path.resolve(nodePath, '../../npm.txt');
+        console.log('Detecting npm version spec...');
+        if (typeof json == 'object' && typeof json.engines == 'object' && typeof json.engines.npm == 'string') {
+            npmVersionSpec = json.engines.npm;
+            console.log('Using package.json engines.npm value: ' + npmVersionSpec);
+        }
+        else if (process.env.WEBSITE_NPM_DEFAULT_VERSION) {
+            npmVersionSpec = process.env.WEBSITE_NPM_DEFAULT_VERSION;
+            console.log('Using appsetting WEBSITE_NPM_DEFAULT_VERSION value: ' + npmVersionSpec);
+        }
+        else {
+            npmVersionSpec = fs.readFileSync(npmVersionSpecFileForResolvedNodeVersion, 'utf8').trim();
+            console.log('Using default for node ' + nodeResolvedVersion + ': ' + npmVersionSpec);
+        }
+
+        var installedNpmVersions = getInstalledNpmVersions(npmRootPath);
+        var npmResolvedVersion = semver.maxSatisfying(installedNpmVersions, npmVersionSpec);
+        if (npmResolvedVersion) {
+            console.log('Resolved to version ' + npmResolvedVersion);
+        }
+        else
+        {
+            console.log('Could not resolve npm version. Deployment will proceed with default versions of node and npm.');
+            return;
+        }
+
+        var npmPath = path.resolve(npmRootPath, npmResolvedVersion, 'node_modules/npm/bin/npm-cli.js');
+
+        saveNodePaths(tempDir, nodePath, npmPath);
+    } catch (ex) {
+        console.error(ex.message);
+        flushAndExit(-1);
+    }
+}
+else {
+    // If the web.config file does not exist in the repo, use a default one that is specific for node on IIS in Azure, 
+    // and generate it in 'wwwroot'
+    // Obtain the start script from package.json or seach for app.js/server.js at the root of the repository.
+    var nodeStartFilePath = (function createIisNodeWebConfigIfNeeded() {
+        var webConfigRepoPath = path.join(repo, 'web.config'),
+            webConfigWwwRootPath = path.join(wwwroot, 'web.config'),
+            nodeStartFilePath = null;
+
+        if (!existsSync(webConfigRepoPath)) {
+            // Check for {"scripts": {"start": < startupCommand > } } exists
+            if (typeof json === 'object' && typeof json.scripts === 'object' && typeof json.scripts.start === 'string') {
+                var startupCommand = json.scripts.start;
+                var defaultNode = "node ";
+                if (startupCommand.length > defaultNode.length && startupCommand.slice(0, defaultNode.length) === defaultNode) {
+                    var startFile = path.resolve(repo, startupCommand.slice(defaultNode.length));
+                    var startFileJs = path.resolve(repo, startupCommand.slice(defaultNode.length) + ".js");
+                    if (existsSync(startFile)) {
+                        nodeStartFilePath = path.relative(repo, startFile);
+                    } else if (existsSync(startFileJs)) {
+                        nodeStartFilePath = path.relative(repo, startFileJs);
+                    }
+                    if (nodeStartFilePath) {
+                        // iisnode requires forward-slash in paths
+                        nodeStartFilePath = nodeStartFilePath.replace(/\\/g, '/');
+                        console.log('Using start-up script ' + nodeStartFilePath + ' from package.json.');
+                    } else {
+                        console.log('Start script "' + startupCommand.slice(defaultNode.length) + '" from package.json is not found.');
+                    }
                 } else {
-                    console.log('Start script "' + startupCommand.slice(defaultNode.length) + '" from package.json is not found.');
+                    console.error('Invalid start-up command "' + startupCommand + '" in package.json. Please use the format "node <script relative path>".');
                 }
-            } else {
-                console.error('Invalid start-up command "' + startupCommand + '" in package.json. Please use the format "node <script relative path>".');
             }
-        }
 
-        if (!nodeStartFilePath) {
-            console.log('Looking for app.js/server.js under site root.');
-            nodeStartFilePath = getNodeDefaultStartFile(repo);
             if (!nodeStartFilePath) {
-                console.error('Missing server.js/app.js files, web.config is not generated');
-                return nodeStartFilePath;
+                console.log('Looking for app.js/server.js under site root.');
+                nodeStartFilePath = getNodeDefaultStartFile(repo);
+                if (!nodeStartFilePath) {
+                    console.error('Missing server.js/app.js files, web.config is not generated');
+                    return nodeStartFilePath;
+                }
+                console.log('Using start-up script ' + nodeStartFilePath);
             }
-            console.log('Using start-up script ' + nodeStartFilePath);
-        }
 
-        if (process.platform !== "linux") {
             var iisNodeConfigTemplatePath = path.join(__dirname, 'iisnode.config.template');
             var webConfigContent = fs.readFileSync(iisNodeConfigTemplatePath, 'utf8');
             webConfigContent = webConfigContent.replace(/\{NodeStartFile\}/g, nodeStartFilePath);
@@ -190,119 +297,100 @@ var nodeStartFilePath = (function createIisNodeWebConfigIfNeeded() {
 
             console.log('Generated web.config.');
         }
-    }
 
-    return nodeStartFilePath;
-})();
+        return nodeStartFilePath;
+    })();
 
-// The directory of the start up script.
-var nodeStartDirectory = (function () {
-    if (!nodeStartFilePath) {
-        return "";
-    }
+    // The directory of the start up script.
+    var nodeStartDirectory = (function () {
+        if (!nodeStartFilePath) {
+            return "";
+        }
 
-    var index = nodeStartFilePath.lastIndexOf("/");
-    if (index === -1) {
-        return "";
-    } else {
-        return nodeStartFilePath.slice(0, index);
-    }
-})();
-
-// If the iinode.yml file does not exist in the repo but exists in wwwroot, remove it from wwwroot 
-// to prevent side-effects of previous deployments
-var repoIisnodeYml = path.resolve(repo, nodeStartDirectory, 'iisnode.yml');
-var siteIisnodeYml = path.resolve(wwwroot, nodeStartDirectory, 'iisnode.yml');
-if (!existsSync(repoIisnodeYml) && existsSync(siteIisnodeYml)) {
-    fs.unlinkSync(siteIisnodeYml);
-}
-
-try {
-    var nodeVersion = process.env.WEBSITE_NODE_DEFAULT_VERSION || process.versions.node,
-        npmVersion = null,
-        yml = existsSync(repoIisnodeYml) ? fs.readFileSync(repoIisnodeYml, 'utf8') : '',
-        shouldUpdateIisNodeYml = false;
-
-    if (yml.match(/^ *nodeProcessCommandLine *:/m)) {
-        // If the iisnode.yml included with the application explicitly specifies the
-        // nodeProcessCommandLine, exit this script. The presence of nodeProcessCommandLine
-        // deactivates automatic version selection.
-        console.log('The iisnode.yml file explicitly sets nodeProcessCommandLine. ' +
-                    'Automatic node.js version selection is turned off.');
-    } else {
-        // If the package.json file is not included with the application 
-        // or if it does not specify node.js version constraints, use WEBSITE_NODE_DEFAULT_VERSION. 
-        if (typeof json !== 'object' || typeof json.engines !== 'object' || typeof json.engines.node !== 'string') {
-            // Attempt to read the pinned node version or fallback to the version of the executing node.exe.
-            console.log('The package.json file does not specify node.js engine version constraints.');
-            console.log('The node.js application will run with the default node.js version '
-                + nodeVersion + '.');
+        var index = nodeStartFilePath.lastIndexOf("/");
+        if (index === -1) {
+            return "";
         } else {
-            // Determine the set of node.js versions available on the platform
-            var versions = [];
-            fs.readdirSync(nodejsDir).forEach(function (dir) {
-                if (process.platform === "linux") {
-                    if (dir.match(/^\d+\.\d+\.\d+$/) && existsSync(path.resolve(nodejsDir, dir, "bin", "node"))) {
-                        versions.push(dir);
-                    }
-                } else {
-                    if (dir.match(/^\d+\.\d+\.\d+$/) && existsSync(path.resolve(nodejsDir, dir, 'node.exe'))) {
-                        versions.push(dir);
-                    }
+            return nodeStartFilePath.slice(0, index);
+        }
+    })();
+
+    // If the iinode.yml file does not exist in the repo but exists in wwwroot, remove it from wwwroot 
+    // to prevent side-effects of previous deployments
+    var repoIisnodeYml = path.resolve(repo, nodeStartDirectory, 'iisnode.yml');
+    var siteIisnodeYml = path.resolve(wwwroot, nodeStartDirectory, 'iisnode.yml');
+    if (!existsSync(repoIisnodeYml) && existsSync(siteIisnodeYml)) {
+        fs.unlinkSync(siteIisnodeYml);
+    }
+
+    try {
+        var nodeVersion = process.env.WEBSITE_NODE_DEFAULT_VERSION || process.versions.node,
+            npmVersion = null,
+            yml = existsSync(repoIisnodeYml) ? fs.readFileSync(repoIisnodeYml, 'utf8') : '',
+            shouldUpdateIisNodeYml = false;
+
+        if (yml.match(/^ *nodeProcessCommandLine *:/m)) {
+            // If the iisnode.yml included with the application explicitly specifies the
+            // nodeProcessCommandLine, exit this script. The presence of nodeProcessCommandLine
+            // deactivates automatic version selection.
+            console.log('The iisnode.yml file explicitly sets nodeProcessCommandLine. ' +
+                'Automatic node.js version selection is turned off.');
+        } else {
+            // If the package.json file is not included with the application 
+            // or if it does not specify node.js version constraints, use WEBSITE_NODE_DEFAULT_VERSION. 
+            if (typeof json !== 'object' || typeof json.engines !== 'object' || typeof json.engines.node !== 'string') {
+                // Attempt to read the pinned node version or fallback to the version of the executing node.exe.
+                console.log('The package.json file does not specify node.js engine version constraints.');
+                console.log('The node.js application will run with the default node.js version '
+                    + nodeVersion + '.');
+            } else {
+                var versions = getInstalledNodeVersions(nodejsDir);
+
+                // Calculate actual node.js version to use for the application as the maximum available version
+                // that satisfies the version constraints from package.json.
+                nodeVersion = semver.maxSatisfying(versions, json.engines.node);
+                if (!nodeVersion) {
+                    throw new Error('No available node.js version matches application\'s version constraint of \''
+                        + json.engines.node + '\'. Use package.json to choose one of the available versions.');
                 }
-            });
 
-            console.log('Node.js versions available on the platform are: ' + versions.sort(semver.compare).join(', ') + '.');
+                console.log('Selected node.js version ' + nodeVersion + '. Use package.json file to choose a different version.');
+                npmVersion = getNpmVersionFromJson(npmRootPath, json);
+                shouldUpdateIisNodeYml = true;
+            }
+        }
 
-            // Calculate actual node.js version to use for the application as the maximum available version
-            // that satisfies the version constraints from package.json.
-            nodeVersion = semver.maxSatisfying(versions, json.engines.node);
-            if (!nodeVersion) {
-                throw new Error('No available node.js version matches application\'s version constraint of \''
-                    + json.engines.node + '\'. Use package.json to choose one of the available versions.');
+        var nodeVersionPath = path.resolve(nodejsDir, nodeVersion),
+            nodeExePath = path.resolve(nodeVersionPath, 'node.exe'),
+            npmPath;
+
+        npmVersion = npmVersion || getDefaultNpmVersion(nodeVersionPath);
+        npmPath = resolveNpmPath(npmRootPath, npmVersion)
+
+        console.log("Selected npm version " + npmVersion);
+
+        // Save the node version in a temporary path for kudu service usage
+        if (existsSync(nodeExePath) && existsSync(npmPath)) {
+            saveNodePaths(tempDir, nodeExePath, npmPath);
+        } else {
+            console.log("One or more of the selected node/npm paths do not exist.");
+        }
+
+        if (shouldUpdateIisNodeYml) {
+            // Save the version information to iisnode.yml in the start script directory
+
+            if (yml !== '') {
+                yml += '\r\n';
             }
 
-            console.log('Selected node.js version ' + nodeVersion + '. Use package.json file to choose a different version.');
-            npmVersion = getNpmVersionFromJson(npmRootPath, json);
-            shouldUpdateIisNodeYml = true;
+            yml += 'nodeProcessCommandLine: "' + nodeExePath + '"';
+
+            console.log('Updating iisnode.yml at ' + siteIisnodeYml);
+
+            fs.writeFileSync(siteIisnodeYml, yml);
         }
+    } catch (ex) {
+        console.error(ex.message);
+        flushAndExit(-1);
     }
-
-    var nodeVersionPath = path.resolve(nodejsDir, nodeVersion),
-        nodeExePath = path.resolve(nodeVersionPath, 'node.exe'),
-        npmPath;
-
-    if (process.platform === "linux") {
-        nodeExePath = path.resolve(nodeVersionPath, "bin", "node");
-    }
-
-    npmVersion = npmVersion || getDefaultNpmVersion(nodeVersionPath);
-    npmPath = resolveNpmPath(npmRootPath, npmVersion)
-
-    console.log("Selected npm version " + npmVersion);
-
-    // Save the node version in a temporary path for kudu service usage
-    if (existsSync(nodeExePath) && existsSync(npmPath)) {
-        saveNodePaths(tempDir, nodeExePath, npmPath);
-    } else {
-        console.log("One or more of the selected node/npm paths do not exist.");
-    }
-
-    if (shouldUpdateIisNodeYml && process.platform !== "linux") {
-        // Save the version information to iisnode.yml in the start script directory
-
-        if (yml !== '') {
-            yml += '\r\n';
-        }
-
-        yml += 'nodeProcessCommandLine: "' + nodeExePath + '"';
-
-        console.log('Updating iisnode.yml at ' + siteIisnodeYml);
-
-        fs.writeFileSync(siteIisnodeYml, yml);
-    }
-
-} catch (ex) {
-    console.error(ex.message);
-    flushAndExit(-1);
 }
