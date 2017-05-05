@@ -736,10 +736,10 @@ namespace Kudu.Core.SiteExtensions
 
         private static string GetUrlFromApplicationHost(string localPath)
         {
-            string xdtFilePath = FileSystemHelpers.FileExists(Path.Combine(localPath, Constants.ScmApplicationHostXdtFileName)) ?
-                                        Path.Combine(localPath, Constants.ScmApplicationHostXdtFileName) :
-                                        FileSystemHelpers.FileExists(Path.Combine(localPath, Constants.ApplicationHostXdtFileName)) ?
-                                            Path.Combine(localPath, Constants.ScmApplicationHostXdtFileName) : null;
+            string xdtFile = Path.Combine(localPath, Constants.ApplicationHostXdtFileName);
+            string scmXdtFile = Path.Combine(localPath, Constants.ScmApplicationHostXdtFileName);
+            string xdtFilePath = FileSystemHelpers.FileExists(scmXdtFile) ? scmXdtFile : FileSystemHelpers.FileExists(xdtFile) ? xdtFile : null;
+
             if (xdtFilePath != null)
             {
                 try
