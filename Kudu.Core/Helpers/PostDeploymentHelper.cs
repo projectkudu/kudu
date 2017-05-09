@@ -33,7 +33,7 @@ namespace Kudu.Core.Helpers
         // for mocking or override behavior
         public static Func<HttpClient> HttpClientFactory
         {
-            get {  return _httpClientFactory ?? new Func<HttpClient>(() => new HttpClient()); }
+            get { return _httpClientFactory ?? new Func<HttpClient>(() => new HttpClient()); }
             set { _httpClientFactory = value; }
         }
 
@@ -251,9 +251,9 @@ namespace Kudu.Core.Helpers
             }
             finally
             {
-                Trace(TraceEventType.Information, 
-                      "Requesting auto swap to '{0}' slot with '{1}' id {2}", 
-                      slotSwapName, 
+                Trace(TraceEventType.Information,
+                      "Requesting auto swap to '{0}' slot with '{1}' id {2}",
+                      slotSwapName,
                       operationId,
                       exception == null ? "successful." : "failed with " + exception.Message);
             }
@@ -275,11 +275,26 @@ namespace Kudu.Core.Helpers
                 var json = (Dictionary<string, object>)serializer.DeserializeObject(File.ReadAllText(functionJson));
 
                 object value;
-                var disabled = json.TryGetValue("disabled", out value) && (bool)value;
-                if (disabled)
+                // https://github.com/Azure/azure-webjobs-sdk-script/blob/a9bafba78a3a8092bfd61a8c7093200dae867efb/src/WebJobs.Script/Host/ScriptHost.cs#L1476-L1498
+                if (json.TryGetValue("disabled", out value))
                 {
-                    Trace(TraceEventType.Verbose, "Function {0} is disabled", functionName);
-                    return Enumerable.Empty<Dictionary<string, object>>();
+                    string stringValue = value.ToString();
+                    bool disabled;
+                    // if "disabled" is not a boolean, we try to expend it as an environment variable
+                    if (!Boolean.TryParse(stringValue, out disabled))
+                    {
+                        string expandValue = System.Environment.GetEnvironmentVariable(stringValue);
+                        // null/"" -> false, "1"/"true" -> true
+                        disabled = string.IsNullOrEmpty(expandValue) ? false :
+                            string.Equals(expandValue, "1", StringComparison.OrdinalIgnoreCase) ? true :
+                            string.Equals(expandValue, "true", StringComparison.OrdinalIgnoreCase);
+                    }
+
+                    if (disabled)
+                    {
+                        Trace(TraceEventType.Verbose, "Function {0} is disabled", functionName);
+                        return Enumerable.Empty<Dictionary<string, object>>();
+                    }
                 }
 
                 var excluded = json.TryGetValue("excluded", out value) && (bool)value;
