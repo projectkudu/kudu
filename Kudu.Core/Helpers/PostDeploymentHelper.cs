@@ -284,10 +284,9 @@ namespace Kudu.Core.Helpers
                     if (!Boolean.TryParse(stringValue, out disabled))
                     {
                         string expandValue = System.Environment.GetEnvironmentVariable(stringValue);
-                        // null/"" -> false, "1"/"true" -> true
-                        disabled = string.IsNullOrEmpty(expandValue) ? false :
-                            string.Equals(expandValue, "1", StringComparison.OrdinalIgnoreCase) ? true :
-                            string.Equals(expandValue, "true", StringComparison.OrdinalIgnoreCase);
+                        // "1"/"true" -> true, else false
+                        disabled = string.Equals(expandValue, "1", StringComparison.OrdinalIgnoreCase) ||
+                                   string.Equals(expandValue, "true", StringComparison.OrdinalIgnoreCase);
                     }
 
                     if (disabled)
