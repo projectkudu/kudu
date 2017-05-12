@@ -45,11 +45,15 @@ namespace Kudu.Core.Infrastructure
         {
             if (projectPath.EndsWith(".csproj", StringComparison.OrdinalIgnoreCase))
             {
-                // for dotnet core preview 3 and after
-                // if its .csproj, look for <PackageReference Include="Microsoft.AspNetCore" Version="..." />
+                // for csproj, need to 1st make sure its dotnet core ==> !projectTypeGuids.Any()
+                // 2ndly, look for sign of web project
+                // either <PackageReference Include="Microsoft.AspNetCore" Version="..." />
+                // for dotnet core project created with 2.0 toolings look for "Microsoft.AspNetCore.All"
+                // for preview3 its web.config file
                 return !projectTypeGuids.Any() &&
-                       (VsHelper.IncludesReferencePackage(projectPath, "Microsoft.AspNetCore") 
-                            || IsWebAppFromFolderStruct(projectPath));
+                       (VsHelper.IncludesReferencePackage(projectPath, "Microsoft.AspNetCore") ||
+                        VsHelper.IncludesReferencePackage(projectPath, "Microsoft.AspNetCore.All") ||
+                        IsWebAppFromFolderStruct(projectPath));
             }
             else if (projectPath.EndsWith(".xproj", StringComparison.OrdinalIgnoreCase))
             {
