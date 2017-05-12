@@ -207,7 +207,7 @@ namespace Kudu.Core.Tracing
                         {
                             foreach (FileInfoBase child in parent.GetFiles("*.txt", SearchOption.AllDirectories))
                             {
-                                _files.Add(child.FullName, child.LastWriteTimeUtc.AddMinutes(FileStaleMinutes));
+                                _files[child.FullName] = child.LastWriteTimeUtc.AddMinutes(FileStaleMinutes);
                             }
 
                             EnsureTimer();
@@ -222,7 +222,7 @@ namespace Kudu.Core.Tracing
             {
                 lock (_lock)
                 {
-                    _files.Add(path, DateTime.UtcNow.AddMilliseconds(TimerInterval));
+                    _files[path] = DateTime.UtcNow.AddMilliseconds(TimerInterval);
 
                     EnsureTimer();
                 }
