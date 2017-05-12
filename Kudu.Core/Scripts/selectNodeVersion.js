@@ -146,50 +146,48 @@ var nodeStartFilePath = (function createIisNodeWebConfigIfNeeded() {
         webConfigWwwRootPath = path.join(wwwroot, 'web.config'),
         nodeStartFilePath = null;
 
-    if (!existsSync(webConfigRepoPath)) {
-        // Check for {"scripts": {"start": < startupCommand > } } exists
-        if (typeof json === 'object' && typeof json.scripts === 'object' && typeof json.scripts.start === 'string') {
-            var startupCommand = json.scripts.start;
-            var defaultNode = "node ";
-            if (startupCommand.length > defaultNode.length && startupCommand.slice(0, defaultNode.length) === defaultNode) {
-                var startFile = path.resolve(repo, startupCommand.slice(defaultNode.length));
-                var startFileJs = path.resolve(repo, startupCommand.slice(defaultNode.length) + ".js");
-                if (existsSync(startFile)) {
-                    nodeStartFilePath = path.relative(repo, startFile);
-                } else if (existsSync(startFileJs)) {
-                    nodeStartFilePath = path.relative(repo, startFileJs);
-                }
-                if (nodeStartFilePath) {
-                    // iisnode requires forward-slash in paths
-                    nodeStartFilePath = nodeStartFilePath.replace(/\\/g, '/');
-                    console.log('Using start-up script ' + nodeStartFilePath + ' from package.json.');
-                } else {
-                    console.log('Start script "' + startupCommand.slice(defaultNode.length) + '" from package.json is not found.');
-                }
+    // Check for {"scripts": {"start": < startupCommand > } } exists
+    if (typeof json === 'object' && typeof json.scripts === 'object' && typeof json.scripts.start === 'string') {
+        var startupCommand = json.scripts.start;
+        var defaultNode = "node ";
+        if (startupCommand.length > defaultNode.length && startupCommand.slice(0, defaultNode.length) === defaultNode) {
+            var startFile = path.resolve(repo, startupCommand.slice(defaultNode.length));
+            var startFileJs = path.resolve(repo, startupCommand.slice(defaultNode.length) + ".js");
+            if (existsSync(startFile)) {
+                nodeStartFilePath = path.relative(repo, startFile);
+            } else if (existsSync(startFileJs)) {
+                nodeStartFilePath = path.relative(repo, startFileJs);
+            }
+            if (nodeStartFilePath) {
+                // iisnode requires forward-slash in paths
+                nodeStartFilePath = nodeStartFilePath.replace(/\\/g, '/');
+                console.log('Using start-up script ' + nodeStartFilePath + ' from package.json.');
             } else {
-                console.error('Invalid start-up command "' + startupCommand + '" in package.json. Please use the format "node <script relative path>".');
+                console.log('Start script "' + startupCommand.slice(defaultNode.length) + '" from package.json is not found.');
             }
+        } else {
+            console.error('Invalid start-up command "' + startupCommand + '" in package.json. Please use the format "node <script relative path>".');
         }
+    }
 
+    if (!nodeStartFilePath) {
+        console.log('Looking for app.js/server.js under site root.');
+        nodeStartFilePath = getNodeDefaultStartFile(repo);
         if (!nodeStartFilePath) {
-            console.log('Looking for app.js/server.js under site root.');
-            nodeStartFilePath = getNodeDefaultStartFile(repo);
-            if (!nodeStartFilePath) {
-                console.error('Missing server.js/app.js files, web.config is not generated');
-                return nodeStartFilePath;
-            }
-            console.log('Using start-up script ' + nodeStartFilePath);
+            console.error('Missing server.js/app.js files, web.config is not generated');
+            return nodeStartFilePath;
         }
+        console.log('Using start-up script ' + nodeStartFilePath);
+    }
 
-        if (process.platform !== "linux") {
-            var iisNodeConfigTemplatePath = path.join(__dirname, 'iisnode.config.template');
-            var webConfigContent = fs.readFileSync(iisNodeConfigTemplatePath, 'utf8');
-            webConfigContent = webConfigContent.replace(/\{NodeStartFile\}/g, nodeStartFilePath);
+    if (process.platform !== "linux" && !existsSync(webConfigRepoPath)) {
+        var iisNodeConfigTemplatePath = path.join(__dirname, 'iisnode.config.template');
+        var webConfigContent = fs.readFileSync(iisNodeConfigTemplatePath, 'utf8');
+        webConfigContent = webConfigContent.replace(/\{NodeStartFile\}/g, nodeStartFilePath);
 
-            fs.writeFileSync(webConfigWwwRootPath, webConfigContent, 'utf8');
+        fs.writeFileSync(webConfigWwwRootPath, webConfigContent, 'utf8');
 
-            console.log('Generated web.config.');
-        }
+        console.log('Generated web.config.');
     }
 
     return nodeStartFilePath;
