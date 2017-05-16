@@ -180,6 +180,7 @@ namespace Kudu.Services.Web.App_Start
             TraceServices.TraceLevel = noContextDeploymentsSettingsManager.GetTraceLevel();
 
             var noContextTraceFactory = new TracerFactory(() => GetTracerWithoutContext(environment, noContextDeploymentsSettingsManager));
+            var etwTraceFactory = new TracerFactory(() => new ETWTracer(string.Empty, string.Empty));
 
             kernel.Bind<IAnalytics>().ToMethod(context => new Analytics(context.Kernel.Get<IDeploymentSettingsManager>(),
                                                                         context.Kernel.Get<IServerConfiguration>(),
@@ -232,7 +233,7 @@ namespace Kudu.Services.Web.App_Start
                                              .InRequestScope();
 
             ITriggeredJobsManager triggeredJobsManager = new TriggeredJobsManager(
-                noContextTraceFactory,
+                etwTraceFactory,
                 kernel.Get<IEnvironment>(),
                 kernel.Get<IDeploymentSettingsManager>(),
                 kernel.Get<IAnalytics>(),
@@ -242,14 +243,14 @@ namespace Kudu.Services.Web.App_Start
 
             TriggeredJobsScheduler triggeredJobsScheduler = new TriggeredJobsScheduler(
                 triggeredJobsManager,
-                noContextTraceFactory,
+                etwTraceFactory,
                 environment,
                 kernel.Get<IAnalytics>());
             kernel.Bind<TriggeredJobsScheduler>().ToConstant(triggeredJobsScheduler)
                                              .InTransientScope();
 
             IContinuousJobsManager continuousJobManager = new ContinuousJobsManager(
-                noContextTraceFactory,
+                etwTraceFactory,
                 kernel.Get<IEnvironment>(),
                 kernel.Get<IDeploymentSettingsManager>(),
                 kernel.Get<IAnalytics>());
