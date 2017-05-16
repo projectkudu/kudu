@@ -389,6 +389,17 @@ namespace Kudu.FunctionalTests
     }
 
     [KuduXunitTestClass]
+    public class AspNetCore2CliWithLibTests : GitDeploymentTests
+    {
+        [Fact]
+        [KuduXunitTest(PrivateOnly = true)]
+        public void PushAndDeployAspNetCore2CliWithLib()
+        {
+            PushAndDeployApps("AspNetCore2.0CliWithLib", "master", "lib success", HttpStatusCode.OK, "Deployment successful");
+        }
+    }
+
+    [KuduXunitTestClass]
     public class AspNetCoreRC4WebApiVsSlnTests : GitDeploymentTests
     {
         [Fact]
