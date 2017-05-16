@@ -68,8 +68,7 @@ namespace Kudu.Core.Tracing
         {
             if (IsEnabled())
             {
-                // till we figure out whether this causes the crashes
-                // WriteEvent(65514, siteName, Message, requestId, scmType, siteMode, buildVersion);
+                WriteEvent(65514, siteName, Message, requestId, scmType, siteMode, buildVersion);
             }
         }
 
@@ -79,8 +78,7 @@ namespace Kudu.Core.Tracing
         {
             if (IsEnabled())
             {
-                // till we figure out whether this causes the crashes
-                // WriteEvent(65515, siteName, Message, address, verb, requestId, statusCode, latencyInMilliseconds, userAgent);
+                WriteEvent(65515, siteName, Message, address, verb, requestId, statusCode, latencyInMilliseconds, userAgent);
             }
         }
     }
