@@ -21,7 +21,6 @@ namespace Kudu.Core.Deployment.Generator
             }
             else if (_projectPath.EndsWith(".xproj", StringComparison.OrdinalIgnoreCase))
             {
-                _version = "xproj";
                 // if it's xproj, throw invalidOperationException
                 throw new InvalidOperationException(String.Format(CultureInfo.CurrentCulture,
                                                              Resources.Error_ProjectNotDeployable,
