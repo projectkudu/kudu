@@ -367,17 +367,6 @@ namespace Kudu.FunctionalTests
     }
 
     [KuduXunitTestClass]
-    public class AspNetCorePreview2MultipleProjectsTests : GitDeploymentTests
-    {
-        [Fact]
-        [KuduXunitTest(PrivateOnly = true)]
-        public void PushAndDeployAspNetCorePreview2MultipleProjects()
-        {
-            PushAndDeployApps("AspNetCorePreview2MultipleProjects", "master", "WebApplication1!", HttpStatusCode.OK, "Deployment successful");
-        }
-    }
-
-    [KuduXunitTestClass]
     public class AspNetCoreRC3CliWithLibTests : GitDeploymentTests
     {
         [Fact]
