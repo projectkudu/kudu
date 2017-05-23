@@ -62,10 +62,10 @@
                try {
                    OutputFilename = Path.GetFullPath(OutputFilename);
 
-                   Log.LogMessage("Downloading latest version of NuGet.exe...");
                    WebClient webClient = new WebClient();
-                   webClient.DownloadFile("https://dist.nuget.org/win-x86-commandline/v3.5.0/NuGet.exe", OutputFilename);
-
+				   Log.LogMessage("Downloading NuGet.exe version4.3...");
+				   webClient.DownloadFile("https://dist.nuget.org/win-x86-commandline/v4.3.0-preview1/nuget.exe", OutputFilename);
+				   
                    return true;
                }
                catch (Exception ex) {
