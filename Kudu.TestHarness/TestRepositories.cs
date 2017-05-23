@@ -13,7 +13,6 @@ namespace Kudu.TestHarness
             new TestRepositoryInfo("https://github.com/KuduApps/-benr-.git",                        "c553978"),
             new TestRepositoryInfo("https://github.com/KuduApps/AppWithPostBuildEvent.git",         "083b651"),
             new TestRepositoryInfo("https://github.com/KuduApps/AspNetCore2.0CliWithLib.git",       "4bd5890"),
-            new TestRepositoryInfo("https://github.com/KuduApps/AspNetCorePreview2MultipleProjects.git","f08f582"),
             new TestRepositoryInfo("https://github.com/KuduApps/AspNetCoreRC3CliWithLib.git",       "d8a1286"),
             new TestRepositoryInfo("https://github.com/KuduApps/AspNetCoreRC4WebApiCli.git",        "96168e9"),
             new TestRepositoryInfo("https://github.com/KuduApps/AspNetCoreRC4WebApiVsSln.git",      "3907f92"),
