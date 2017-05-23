@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO.Compression;
 using System.Threading.Tasks;
 using Kudu.Contracts.Functions;
 using Kudu.Contracts.Tracing;
@@ -19,5 +20,6 @@ namespace Kudu.Core.Functions
         string GetAdminToken();
         Task<JObject> PutHostConfigAsync(JObject content);
         void DeleteFunction(string name, bool ignoreErrors);
+        void CreateArchive(ZipArchive archive, bool includeAppSettings = false, bool includeCsproj = false, string projectName = null);
     }
 }

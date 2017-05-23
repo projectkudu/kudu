@@ -7,17 +7,19 @@ using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Web.Http;
+using Kudu.Contracts.Functions;
 using Kudu.Contracts.Tracing;
 using Kudu.Core;
 using Kudu.Core.Functions;
+using Kudu.Core.Helpers;
+using Kudu.Core.Infrastructure;
 using Kudu.Core.Tracing;
 using Kudu.Services.Arm;
 using Kudu.Services.Filters;
-using Kudu.Core.Helpers;
+using Kudu.Services.Infrastructure;
 using Newtonsoft.Json.Linq;
 
 using Environment = System.Environment;
-using Kudu.Contracts.Functions;
 
 namespace Kudu.Services.Functions
 {
@@ -176,6 +178,21 @@ namespace Kudu.Services.Functions
 
                 // Return a dummy body to make it valid in ARM template action evaluation
                 return Request.CreateResponse(HttpStatusCode.OK, new { status = "success" });
+            }
+        }
+
+        [HttpGet]
+        public HttpResponseMessage DownloadFunctions(bool includeCsproj = true, bool includeAppSettings = false)
+        {
+            var tracer = _traceFactory.GetTracer();
+            using (tracer.Step($"{nameof(FunctionController)}.{nameof(DownloadFunctions)}({includeCsproj}, {includeAppSettings})"))
+            {
+                var appName = ServerConfiguration.GetApplicationName();
+                var fileName = $"{appName}.zip";
+                return new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = ZipStreamContent.Create(fileName, tracer, zip => _manager.CreateArchive(zip, includeAppSettings, includeCsproj, appName))
+                };
             }
         }
 

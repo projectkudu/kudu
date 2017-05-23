@@ -531,6 +531,7 @@ namespace Kudu.Services.Web.App_Start
             routes.MapHttpRoute("get-masterkey", "api/functions/admin/masterkey", new { controller = "Function", action = "GetMasterKey" }, new { verb = new HttpMethodConstraint("GET") });
             routes.MapHttpRoute("get-admintoken", "api/functions/admin/token", new { controller = "Function", action = "GetAdminToken" }, new { verb = new HttpMethodConstraint("GET") });
             routes.MapHttpRoute("delete-function", "api/functions/{name}", new { controller = "Function", action = "Delete" }, new { verb = new HttpMethodConstraint("DELETE") });
+            routes.MapHttpRoute("download-functions", "api/functions/admin/download", new { controller = "Function", action = "DownloadFunctions" }, new { verb = new HttpMethodConstraint("GET") });
 
             // Docker Hook Endpoint
             if (!OSDetector.IsOnWindows())

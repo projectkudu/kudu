@@ -1,8 +1,11 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Configuration;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using Kudu.Contracts.Functions;
 using Kudu.Contracts.Tracing;
@@ -421,6 +424,111 @@ namespace Kudu.Core.Functions
         private string GetFunctionSecretsFilePath(string functionName)
         {
             return Path.Combine(_environment.DataPath, Constants.Functions, Constants.Secrets, $"{functionName}.json");
+        }
+
+        /// <summary>
+        /// Populates a <see cref="ZipArchive"/> with the content of the function app.
+        /// It can also include local.settings.json and .csproj files for a full Visual Studio project.
+        /// sln file is not included since it changes between VS versions and VS can auto-generate it from the csproj.
+        /// All existing functions are added as content with "Always" copy to output.
+        /// </summary>
+        /// <param name="zip">the <see cref="ZipArchive"/> to be populated with function app content.</param>
+        /// <param name="includeAppSettings">Optional: indicates whether to add local.settings.json or not to the archive. Default is false.</param>
+        /// <param name="includeCsproj">Optional: indicates whether to add a .csproj to the archive. Default is false.</param>
+        /// <param name="projectName">Optional: the name for *.csproj file if <paramref name="includeCsproj"/> is true. Default is appName.</param>
+        public void CreateArchive(ZipArchive zip, bool includeAppSettings = false, bool includeCsproj = false, string projectName = null)
+        {
+            var tracer = _traceFactory.GetTracer();
+            var directoryInfo = FileSystemHelpers.DirectoryInfoFromDirectoryName(_environment.FunctionsPath);
+
+            // First add the entire wwwroot folder at the root of the zip.
+            zip.AddDirectory(directoryInfo, tracer, string.Empty, out IList<ZipArchiveEntry> files);
+
+            if (includeAppSettings)
+            {
+                // include local.settings.json if needed.
+                files.Add(AddAppSettingsFile(zip));
+            }
+
+            if (includeCsproj)
+            {
+                // include .csproj for Visual Studio if needed.
+                projectName = projectName ?? ServerConfiguration.GetApplicationName();
+                AddCsprojFile(zip, files, projectName);
+            }
+        }
+
+        /// <summary>
+        /// Creates a csproj file and adds it to the passed in ZipArchive
+        /// The csproj contain references to the core SDK, Http trigger, and build task
+        /// it also contain 'Always' copy entries for all the files that are in wwwroot.
+        /// </summary>
+        /// <param name="zip"><see cref="ZipArchive"/> to add csproj file to.</param>
+        /// <param name="files"><see cref="IEnumerable{ZipArchiveEntry}"/> of entries in the zip file to include in the csproj.</param>
+        /// <param name="projectName">the {projectName}.csproj</param>
+        private static ZipArchiveEntry AddCsprojFile(ZipArchive zip, IEnumerable<ZipArchiveEntry> files, string projectName)
+        {
+            const string microsoftAzureWebJobsVersion = "2.1.0-beta1";
+            const string microsoftAzureWebJobsExtensionsHttpVersion = "1.0.0-beta1";
+            const string microsoftNETSdkFunctionsVersion = "1.0.0-alpha4";
+
+            var csprojFile = new StringBuilder();
+            csprojFile.AppendLine(
+                $@"<Project Sdk=""Microsoft.NET.Sdk"">
+  <PropertyGroup>
+    <TargetFramework>net461</TargetFramework>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include=""Microsoft.Azure.WebJobs"" Version=""{microsoftAzureWebJobsVersion}"" />
+    <PackageReference Include=""Microsoft.Azure.WebJobs.Extensions.Http"" Version=""{microsoftAzureWebJobsExtensionsHttpVersion}"" />
+    <PackageReference Include=""Microsoft.NET.Sdk.Functions"" Version=""{microsoftNETSdkFunctionsVersion}"" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include=""Microsoft.CSharp"" />
+  </ItemGroup>");
+
+            csprojFile.AppendLine("  <ItemGroup>");
+            foreach (var entry in files)
+            {
+                csprojFile.AppendLine(
+                    $@"    <None Update=""{entry.FullName}"">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>");
+            }
+            csprojFile.AppendLine("  </ItemGroup>");
+            csprojFile.AppendLine("</Project>");
+
+            return zip.AddFile($"{projectName}.csproj", csprojFile.ToString());
+        }
+
+        /// <summary>
+        /// creates a local.settings.json file and populates it with the values in AppSettings
+        /// The AppSettings are read from EnvVars with prefix APPSETTING_.
+        /// local.settings.json looks like:
+        /// {
+        ///   "IsEncrypted": true|false,
+        ///   "Values": {
+        ///     "Name": "Value"
+        ///   }
+        /// }
+        /// This method doesn't include Connection Strings. Unlike AppSettings, connection strings
+        /// have 10 different prefixes depending on the type.
+        /// </summary>
+        /// <param name="zip"><see cref="ZipArchive"/> to add local.settings.json file to.</param>
+        /// <returns></returns>
+        private static ZipArchiveEntry AddAppSettingsFile(ZipArchive zip)
+        {
+            const string appSettingsPrefix = "APPSETTING_";
+            const string localAppSettingsFileName = "local.settings.json";
+
+            var appSettings = System.Environment.GetEnvironmentVariables()
+                .Cast<DictionaryEntry>()
+                .Where(p => p.Key.ToString().StartsWith(appSettingsPrefix, StringComparison.OrdinalIgnoreCase))
+                .ToDictionary(k => k.Key, v => v.Value);
+
+            var localSettings = JsonConvert.SerializeObject(new { IsEncrypted = false, Value = appSettings }, Formatting.Indented);
+
+            return zip.AddFile(localAppSettingsFileName, localSettings);
         }
     }
 }
