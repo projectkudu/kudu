@@ -442,7 +442,8 @@ namespace Kudu.Core.Functions
             var directoryInfo = FileSystemHelpers.DirectoryInfoFromDirectoryName(_environment.FunctionsPath);
 
             // First add the entire wwwroot folder at the root of the zip.
-            zip.AddDirectory(directoryInfo, tracer, string.Empty, out IList<ZipArchiveEntry> files);
+            IList<ZipArchiveEntry> files;
+            zip.AddDirectory(directoryInfo, tracer, string.Empty, out files);
 
             if (includeAppSettings)
             {
