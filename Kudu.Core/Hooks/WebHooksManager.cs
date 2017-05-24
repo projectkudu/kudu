@@ -139,11 +139,6 @@ namespace Kudu.Core.Hooks
             }
         }
 
-        private IEnumerable<WebHook> GetWebHooks(string hookEventType)
-        {
-            return ReadWebHooksFromFile().Where(h => String.Equals(h.HookEventType, hookEventType, StringComparison.OrdinalIgnoreCase));
-        }
-
         private void RemoveWebHookNotUnderLock(string hookId)
         {
             IEnumerable<WebHook> hooks = ReadWebHooksFromFile();
@@ -217,13 +212,13 @@ namespace Kudu.Core.Hooks
 
         private async Task PublishToHooksAsync(string jsonString, string hookType)
         {
-            IEnumerable<WebHook> webHooks = GetWebHooks(hookType);
+            IEnumerable<WebHook> webHooks = ReadWebHooksFromFile();
 
             if (webHooks.Any())
             {
                 var publishTasks = new List<Task>();
 
-                foreach (var webHook in webHooks)
+                foreach (var webHook in webHooks.Where(h => String.Equals(h.HookEventType, hookType, StringComparison.OrdinalIgnoreCase)))
                 {
                     Task publishTask = PublishToHookAsync(webHook, jsonString);
                     publishTasks.Add(publishTask);
