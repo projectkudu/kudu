@@ -245,6 +245,7 @@ namespace Kudu.Services.Web.App_Start
                 triggeredJobsManager,
                 etwTraceFactory,
                 environment,
+                kernel.Get<IDeploymentSettingsManager>(),
                 kernel.Get<IAnalytics>());
             kernel.Bind<TriggeredJobsScheduler>().ToConstant(triggeredJobsScheduler)
                                              .InTransientScope();
