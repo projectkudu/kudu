@@ -61,6 +61,9 @@ namespace Kudu.Services.Editor
             // Check whether we have a range request (taking If-Range condition into account)
             bool isRangeRequest = IsRangeRequest(currentEtag);
 
+            // Check whether we have a range request (taking If-Range condition into account)
+            bool isRangeRequest = IsRangeRequest(currentEtag);
+
             // Check whether we have a conditional If-None-Match request
             // Unless it is a range request (see RFC2616 sec 14.35.2 Range Retrieval Requests)
             if (!isRangeRequest && IsIfNoneMatchRequest(currentEtag))
