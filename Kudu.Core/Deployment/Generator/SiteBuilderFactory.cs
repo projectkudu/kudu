@@ -87,7 +87,7 @@ namespace Kudu.Core.Deployment.Generator
             // figure out with some heuristic, which one to deploy.
 
             // TODO: Pick only 1 and throw if there's more than one
-            VsSolutionProject project = solution.Projects.Where(p => p.IsWap || p.IsWebSite || p.IsAspNetCore).FirstOrDefault();
+            VsSolutionProject project = solution.Projects.Where(p => p.IsWap || p.IsWebSite || p.IsAspNetCore || p.IsFunctionApp).FirstOrDefault();
 
             if (project == null)
             {
@@ -128,21 +128,31 @@ namespace Kudu.Core.Deployment.Generator
                                       solution.Path);
             }
 
-            return new WebSiteBuilder(_environment,
+            if (project.IsWebSite)
+            {
+                return new WebSiteBuilder(_environment,
                                       settings,
                                       _propertyProvider,
                                       repositoryRoot,
                                       project.AbsolutePath,
                                       solution.Path);
+            }
+
+            return new FunctionAppBuilder(_environment,
+                settings,
+                _propertyProvider,
+                repositoryRoot,
+                project.AbsolutePath,
+                solution.Path);
         }
 
         private ISiteBuilder ResolveNonAspProject(string repositoryRoot, string projectPath, IDeploymentSettingsManager perDeploymentSettings)
         {
             string sourceProjectPath = projectPath ?? repositoryRoot;
             // "FUNCTIONS_EXTENSION_VERSION" environment variable implies a functionApp
-            if (IsFunctionApp())
+            if (FunctionAppHelper.LooksLikeFunctionApp())
             {
-                return new FunctionAppBuilder(_environment, perDeploymentSettings, _propertyProvider, repositoryRoot, projectPath);
+                return new FunctionNodeBuilder(_environment, perDeploymentSettings, _propertyProvider, repositoryRoot, projectPath);
             }
             else if (IsNodeSite(sourceProjectPath))
             {
@@ -191,11 +201,6 @@ namespace Kudu.Core.Deployment.Generator
         private static bool IsPHPSite(string projectPath)
         {
             return PHPSiteEnabler.LooksLikePHP(projectPath);
-        }
-
-        private static bool IsFunctionApp()
-        {
-            return FunctionAppEnabler.LooksLikeFunctionApp();
         }
 
         private ISiteBuilder ResolveProject(string repositoryRoot, IDeploymentSettingsManager perDeploymentSettings, IFileFinder fileFinder, bool tryWebSiteProject = false, SearchOption searchOption = SearchOption.AllDirectories)
@@ -280,6 +285,7 @@ namespace Kudu.Core.Deployment.Generator
             return ResolveNonAspProject(repositoryRoot, targetPath, perDeploymentSettings);
         }
 
+        // used when we have a project file
         private ISiteBuilder DetermineProject(string repositoryRoot, string targetPath, IDeploymentSettingsManager perDeploymentSettings, IFileFinder fileFinder)
         {
             var solution = VsHelper.FindContainingSolution(repositoryRoot, targetPath, fileFinder);
@@ -312,6 +318,15 @@ namespace Kudu.Core.Deployment.Generator
                                       repositoryRoot,
                                       targetPath,
                                       solutionPath);
+            }
+            else if (FunctionAppHelper.LooksLikeFunctionApp())
+            {
+                return new FunctionAppBuilder(_environment,
+                    perDeploymentSettings,
+                    _propertyProvider,
+                    repositoryRoot,
+                    targetPath,
+                    solutionPath);
             }
 
             throw new InvalidOperationException(String.Format(CultureInfo.CurrentCulture,

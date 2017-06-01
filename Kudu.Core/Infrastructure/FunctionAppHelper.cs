@@ -1,12 +1,10 @@
-﻿namespace Kudu.Core.Deployment.Generator
+﻿namespace Kudu.Core.Infrastructure
 {
-    public static class FunctionAppEnabler
+    internal static class FunctionAppHelper
     {
-
         public static bool LooksLikeFunctionApp()
         {
             return !string.IsNullOrEmpty(System.Environment.GetEnvironmentVariable(Constants.FunctionRunTimeVersion));
         }
-
     }
 }

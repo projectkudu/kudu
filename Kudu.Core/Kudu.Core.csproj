@@ -214,10 +214,10 @@
     <Compile Include="Deployment\DeploymentStatusFileExtensions.cs" />
     <Compile Include="Deployment\DeploymentStatusManager.cs" />
     <Compile Include="Deployment\Generator\FunctionAppBuilder.cs" />
-    <Compile Include="Deployment\Generator\FunctionAppEnabler.cs" />
     <Compile Include="Deployment\Generator\DotNetConsoleBuilder.cs" />
     <Compile Include="Deployment\Generator\CustomGeneratorCommandSiteBuilder.cs" />
     <Compile Include="Deployment\Generator\ExternalCommandFactory.cs" />
+    <Compile Include="Deployment\Generator\FunctionNodeBuilder.cs" />
     <Compile Include="Deployment\Generator\GoSiteBuilder.cs" />
     <Compile Include="Deployment\Generator\GoSiteEnabler.cs" />
     <Compile Include="Deployment\Generator\PHPSiteBuilder.cs" />
@@ -248,6 +248,7 @@
     <Compile Include="Helpers\ProjectGuidParser.cs" />
     <Compile Include="Hooks\WebHooksManager.cs" />
     <Compile Include="Infrastructure\AspNetCoreHelper.cs" />
+    <Compile Include="Infrastructure\FunctionAppHelper.cs" />
     <Compile Include="Infrastructure\InstanceIdUtility.cs" />
     <Compile Include="Infrastructure\IServerConfiguration.cs" />
     <Compile Include="Infrastructure\SecurityUtility.cs" />
