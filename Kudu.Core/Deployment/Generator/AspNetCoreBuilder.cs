@@ -22,7 +22,8 @@ namespace Kudu.Core.Deployment.Generator
             else if (_projectFilePath.EndsWith(".xproj", StringComparison.OrdinalIgnoreCase))
             {
                 // if it's xproj, throw invalidOperationException
-                throw new InvalidOperationException("Building Asp.Net Core .xproj is no longer supported in Azure, please move to .csproj");
+                throw new InvalidOperationException(@"Building Asp.Net Core .xproj is no longer supported in Azure, please move to .csproj
+                                                      For more information, please see https://go.microsoft.com/fwlink/?linkid=850964");
             }
             else
             {
