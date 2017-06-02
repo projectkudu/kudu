@@ -93,23 +93,23 @@ namespace Kudu.Core.Deployment.Generator
             {
                 // Try executable type project
                 project = solution.Projects.Where(p => p.IsExecutable).FirstOrDefault();
-                if (project != null)
+                if (project == null)
                 {
-                    return new DotNetConsoleBuilder(_environment,
-                                              settings,
-                                              _propertyProvider,
-                                              repositoryRoot,
-                                              project.AbsolutePath,
-                                              solution.Path);
+                    logger.Log(Resources.Log_NoDeployableProjects, solution.Path);
+                    return ResolveNonAspProject(repositoryRoot, null, settings);
                 }
-
-                logger.Log(Resources.Log_NoDeployableProjects, solution.Path);
-
-                return ResolveNonAspProject(repositoryRoot, null, settings);
+                // we know at this point its dotnetconsolebuilder
+                return new DotNetConsoleBuilder(_environment,
+                                          settings,
+                                          _propertyProvider,
+                                          repositoryRoot,
+                                          project.AbsolutePath,
+                                          solution.Path);
             }
 
             if (project.IsWap)
             {
+                // we know at this point its wapbuilder
                 return new WapBuilder(_environment,
                                       settings,
                                       _propertyProvider,
@@ -120,6 +120,7 @@ namespace Kudu.Core.Deployment.Generator
 
             if (project.IsAspNetCore)
             {
+                // we know at this point its 
                 return new AspNetCoreBuilder(_environment,
                                       settings,
                                       _propertyProvider,
@@ -246,7 +247,8 @@ namespace Kudu.Core.Deployment.Generator
                                            perDeploymentSettings,
                                            _propertyProvider,
                                            repositoryRoot,
-                                           projectJson);
+                                           projectJson,
+                                           null);
             }
 
             if (tryWebSiteProject)

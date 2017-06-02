@@ -4,22 +4,18 @@ using System.Globalization;
 
 namespace Kudu.Core.Deployment.Generator
 {
-    class AspNetCoreBuilder : GeneratorSiteBuilder
+    class AspNetCoreBuilder : MicrosoftSiteBuilder
     {
-        private readonly string _projectFilePath;
-        private readonly string _solutionPath;
         private readonly string _version;
 
-        public AspNetCoreBuilder(IEnvironment environment, IDeploymentSettingsManager settings, IBuildPropertyProvider propertyProvider, string sourcePath, string projectFilePath, string solutionPath = null)
-            : base(environment, settings, propertyProvider, sourcePath)
+        public AspNetCoreBuilder(IEnvironment environment, IDeploymentSettingsManager settings, IBuildPropertyProvider propertyProvider, string sourcePath, string projectFilePath, string solutionPath)
+            : base(environment, settings, propertyProvider, sourcePath, projectFilePath, solutionPath, "--aspNetCore")
         {
-            _projectFilePath = projectFilePath; // either xproj, csproj or project.json
-            _solutionPath = solutionPath;
-            if (_projectFilePath.EndsWith(".csproj", StringComparison.OrdinalIgnoreCase))
+            if (projectFilePath.EndsWith(".csproj", StringComparison.OrdinalIgnoreCase))
             {
                 _version = "csproj";
             }
-            else if (_projectFilePath.EndsWith(".xproj", StringComparison.OrdinalIgnoreCase))
+            else if (projectFilePath.EndsWith(".xproj", StringComparison.OrdinalIgnoreCase))
             {
                 // if it's xproj, throw invalidOperationException
                 throw new InvalidOperationException(@"Building Asp.Net Core .xproj is no longer supported in Azure, please move to .csproj
@@ -28,21 +24,6 @@ namespace Kudu.Core.Deployment.Generator
             else
             {
                 _version = "project.json";
-            }
-        }
-
-        protected override string ScriptGeneratorCommandArguments
-        {
-            get
-            {
-                if (string.IsNullOrEmpty(_solutionPath))
-                {
-                    return $"--aspNetCore \"{_projectFilePath}\"";
-                }
-                else
-                {
-                    return $"--aspNetCore \"{_projectFilePath}\" --solutionFile \"{_solutionPath}\"";
-                }
             }
         }
 
