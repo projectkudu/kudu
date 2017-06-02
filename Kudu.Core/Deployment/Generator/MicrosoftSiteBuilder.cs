@@ -7,33 +7,19 @@ namespace Kudu.Core.Deployment.Generator
 
     public abstract class MicrosoftSiteBuilder : GeneratorSiteBuilder
     {
-        private readonly string _projectFilePath;
-        private readonly string _solutionPath;
-        private readonly string _commandArgument;
+        protected string SolutionPath { get; private set; }
 
-        protected string solutionPath
-        {
-            get
-            {
-                return _solutionPath;
-            }
-        }
+        protected string CommandArgument { get; private set; }
 
-        protected string commandArgument
-        {
-            get
-            {
-                return _commandArgument;
-            }
-        }
+        protected string ProjectFilePath { get; private set; }
 
 
         protected MicrosoftSiteBuilder(IEnvironment environment, IDeploymentSettingsManager settings, IBuildPropertyProvider propertyProvider, string sourcePath, string projectFilePath, string solutionPath, string commandArgument)
             : base(environment, settings, propertyProvider, sourcePath)
         {
-            _projectFilePath = CleanPath(projectFilePath);
-            _solutionPath = CleanPath(solutionPath);
-            _commandArgument = commandArgument;
+            ProjectFilePath = CleanPath(projectFilePath);
+            SolutionPath = CleanPath(solutionPath);
+            CommandArgument = commandArgument;
         }
 
         protected override string ScriptGeneratorCommandArguments
@@ -41,11 +27,11 @@ namespace Kudu.Core.Deployment.Generator
             get
             {
                 var commandArguments = new StringBuilder();
-                commandArguments.AppendFormat("{0} \"{1}\"", _commandArgument, _projectFilePath);
+                commandArguments.AppendFormat("{0} \"{1}\"", CommandArgument, ProjectFilePath);
 
-                if (!String.IsNullOrEmpty(_solutionPath))
+                if (!String.IsNullOrEmpty(SolutionPath))
                 {
-                    commandArguments.AppendFormat(" --solutionFile \"{0}\"", _solutionPath);
+                    commandArguments.AppendFormat(" --solutionFile \"{0}\"", SolutionPath);
                 }
                 else
                 {

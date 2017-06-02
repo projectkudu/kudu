@@ -13,23 +13,23 @@ namespace Kudu.Core.Deployment.Generator
         {
             if (projectFilePath.EndsWith(".csproj", StringComparison.OrdinalIgnoreCase))
             {
-                _version = "csproj";
+                _version = "CSPROJ";
             }
             else if (projectFilePath.EndsWith(".xproj", StringComparison.OrdinalIgnoreCase))
             {
                 // if it's xproj, throw invalidOperationException
                 throw new InvalidOperationException(@"Building Asp.Net Core .xproj is no longer supported in Azure, please move to .csproj
-                                                      For more information, please see https://go.microsoft.com/fwlink/?linkid=850964");
+For more information, please visit https://go.microsoft.com/fwlink/?linkid=850964");
             }
             else
             {
-                _version = "project.json";
+                _version = "PROJECT.JSON";
             }
         }
 
         public override string ProjectType
         {
-            get { return $"ASP.NET Core {_version}"; }
+            get { return $"ASP.NET CORE {_version}"; }
         }
     }
 }

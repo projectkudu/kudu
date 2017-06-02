@@ -2,9 +2,9 @@
 
 namespace Kudu.Core.Deployment.Generator
 {
-    class FunctionNodeBuilder : BaseBasicBuilder
+    class NonCompileFunctionBuilder : BaseBasicBuilder
     {
-        public FunctionNodeBuilder(IEnvironment environment, IDeploymentSettingsManager settings, IBuildPropertyProvider propertyProvider, string repositoryPath, string projectPath)
+        public NonCompileFunctionBuilder(IEnvironment environment, IDeploymentSettingsManager settings, IBuildPropertyProvider propertyProvider, string repositoryPath, string projectPath)
             : base(environment, settings, propertyProvider, repositoryPath, projectPath, "--functionApp")
         {
         }
@@ -13,7 +13,7 @@ namespace Kudu.Core.Deployment.Generator
         {
             get
             {
-                return "functionApp Node";
+                return "NONCOMPILE FUNCTIONAPP";
             }
         }
     }

@@ -2,9 +2,9 @@
 
 namespace Kudu.Core.Deployment.Generator
 {
-    class FunctionAppBuilder : MicrosoftSiteBuilder
+    class CompileFunctionBuilder : MicrosoftSiteBuilder
     {
-        public FunctionAppBuilder(IEnvironment environment, IDeploymentSettingsManager settings, IBuildPropertyProvider propertyProvider, string sourcePath, string projectFilePath, string solutionPath)
+        public CompileFunctionBuilder(IEnvironment environment, IDeploymentSettingsManager settings, IBuildPropertyProvider propertyProvider, string sourcePath, string projectFilePath, string solutionPath)
             : base(environment, settings, propertyProvider, sourcePath, projectFilePath, solutionPath, "--functionApp")
         {
         }
@@ -13,7 +13,7 @@ namespace Kudu.Core.Deployment.Generator
         {
             get
             {
-                return "functionApp Msbuild";
+                return "COMPILE FUNCTIONAPP";
             }
         }
     }

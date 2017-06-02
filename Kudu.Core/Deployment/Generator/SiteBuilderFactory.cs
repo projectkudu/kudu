@@ -93,23 +93,23 @@ namespace Kudu.Core.Deployment.Generator
             {
                 // Try executable type project
                 project = solution.Projects.Where(p => p.IsExecutable).FirstOrDefault();
-                if (project == null)
+                if (project != null)
                 {
-                    logger.Log(Resources.Log_NoDeployableProjects, solution.Path);
-                    return ResolveNonAspProject(repositoryRoot, null, settings);
+                    return new DotNetConsoleBuilder(_environment,
+                                              settings,
+                                              _propertyProvider,
+                                              repositoryRoot,
+                                              project.AbsolutePath,
+                                              solution.Path);
                 }
-                // we know at this point its dotnetconsolebuilder
-                return new DotNetConsoleBuilder(_environment,
-                                          settings,
-                                          _propertyProvider,
-                                          repositoryRoot,
-                                          project.AbsolutePath,
-                                          solution.Path);
+
+                logger.Log(Resources.Log_NoDeployableProjects, solution.Path);
+
+                return ResolveNonAspProject(repositoryRoot, null, settings);
             }
 
             if (project.IsWap)
             {
-                // we know at this point its wapbuilder
                 return new WapBuilder(_environment,
                                       settings,
                                       _propertyProvider,
@@ -120,7 +120,6 @@ namespace Kudu.Core.Deployment.Generator
 
             if (project.IsAspNetCore)
             {
-                // we know at this point its 
                 return new AspNetCoreBuilder(_environment,
                                       settings,
                                       _propertyProvider,
@@ -139,12 +138,12 @@ namespace Kudu.Core.Deployment.Generator
                                       solution.Path);
             }
 
-            return new FunctionAppBuilder(_environment,
-                settings,
-                _propertyProvider,
-                repositoryRoot,
-                project.AbsolutePath,
-                solution.Path);
+            return new CompileFunctionBuilder(_environment,
+                                            settings,
+                                            _propertyProvider,
+                                            repositoryRoot,
+                                            project.AbsolutePath,
+                                            solution.Path);
         }
 
         private ISiteBuilder ResolveNonAspProject(string repositoryRoot, string projectPath, IDeploymentSettingsManager perDeploymentSettings)
@@ -153,7 +152,7 @@ namespace Kudu.Core.Deployment.Generator
             // "FUNCTIONS_EXTENSION_VERSION" environment variable implies a functionApp
             if (FunctionAppHelper.LooksLikeFunctionApp())
             {
-                return new FunctionNodeBuilder(_environment, perDeploymentSettings, _propertyProvider, repositoryRoot, projectPath);
+                return new NonCompileFunctionBuilder(_environment, perDeploymentSettings, _propertyProvider, repositoryRoot, projectPath);
             }
             else if (IsNodeSite(sourceProjectPath))
             {
@@ -305,11 +304,11 @@ namespace Kudu.Core.Deployment.Generator
             else if (AspNetCoreHelper.IsDotnetCoreFromProjectFile(targetPath, projectTypeGuids))
             {
                 return new AspNetCoreBuilder(_environment,
-                       perDeploymentSettings,
-                       _propertyProvider,
-                       repositoryRoot,
-                       targetPath,
-                       solutionPath);
+                                            perDeploymentSettings,
+                                            _propertyProvider,
+                                            repositoryRoot,
+                                            targetPath,
+                                            solutionPath);
             }
             else if (VsHelper.IsExecutableProject(targetPath))
             {
@@ -323,12 +322,12 @@ namespace Kudu.Core.Deployment.Generator
             }
             else if (FunctionAppHelper.LooksLikeFunctionApp())
             {
-                return new FunctionAppBuilder(_environment,
-                    perDeploymentSettings,
-                    _propertyProvider,
-                    repositoryRoot,
-                    targetPath,
-                    solutionPath);
+                return new CompileFunctionBuilder(_environment,
+                                                perDeploymentSettings,
+                                                _propertyProvider,
+                                                repositoryRoot,
+                                                targetPath,
+                                                solutionPath);
             }
 
             throw new InvalidOperationException(String.Format(CultureInfo.CurrentCulture,
