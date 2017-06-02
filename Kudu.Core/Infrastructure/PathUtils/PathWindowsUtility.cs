@@ -95,6 +95,12 @@ namespace Kudu.Core.Infrastructure
             return Path.Combine(programFiles, "nodejs", npmCliPath);
         }
 
+        internal override string ResolveMSBuild15Dir()
+        {
+            string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);
+            return Path.Combine(programFiles, "MSBuild-15.3-preview", "MSBuild", "15.0", "Bin");
+        }
+
         internal override string ResolveMSBuildPath()
         {
             string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);

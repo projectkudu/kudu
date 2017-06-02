@@ -4,53 +4,32 @@ using System.Globalization;
 
 namespace Kudu.Core.Deployment.Generator
 {
-    class AspNetCoreBuilder : GeneratorSiteBuilder
+    class AspNetCoreBuilder : MicrosoftSiteBuilder
     {
-        private readonly string _projectPath;
-        private readonly string _solutionPath;
         private readonly string _version;
 
-        public AspNetCoreBuilder(IEnvironment environment, IDeploymentSettingsManager settings, IBuildPropertyProvider propertyProvider, string sourcePath, string projectPath, string solutionPath = null)
-            : base(environment, settings, propertyProvider, sourcePath)
+        public AspNetCoreBuilder(IEnvironment environment, IDeploymentSettingsManager settings, IBuildPropertyProvider propertyProvider, string sourcePath, string projectFilePath, string solutionPath)
+            : base(environment, settings, propertyProvider, sourcePath, projectFilePath, solutionPath, "--aspNetCore")
         {
-            _projectPath = projectPath; // either xproj, csproj or project.json
-            _solutionPath = solutionPath;
-            if (_projectPath.EndsWith(".csproj", StringComparison.OrdinalIgnoreCase))
+            if (projectFilePath.EndsWith(".csproj", StringComparison.OrdinalIgnoreCase))
             {
-                _version = "csproj";
+                _version = "CSPROJ";
             }
-            else if (_projectPath.EndsWith(".xproj", StringComparison.OrdinalIgnoreCase))
+            else if (projectFilePath.EndsWith(".xproj", StringComparison.OrdinalIgnoreCase))
             {
                 // if it's xproj, throw invalidOperationException
-                throw new InvalidOperationException(String.Format(CultureInfo.CurrentCulture,
-                                                             Resources.Error_ProjectNotDeployable,
-                                                             projectPath));
+                throw new InvalidOperationException(@"Building Asp.Net Core .xproj is no longer supported in Azure, please move to .csproj
+For more information, please visit https://go.microsoft.com/fwlink/?linkid=850964");
             }
             else
             {
-                _version = "project.json";
-            }
-        }
-
-        protected override string ScriptGeneratorCommandArguments
-        {
-            get
-            {
-
-                if (string.IsNullOrEmpty(_solutionPath))
-                {
-                    return $"--aspNetCore \"{_projectPath}\"";
-                }
-                else
-                {
-                    return $"--aspNetCore \"{_projectPath}\" --solutionFile \"{_solutionPath}\"";
-                }
+                _version = "PROJECT.JSON";
             }
         }
 
         public override string ProjectType
         {
-            get { return $"ASP.NET Core {_version}"; }
+            get { return $"ASP.NET CORE {_version}"; }
         }
     }
 }
