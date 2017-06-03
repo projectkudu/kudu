@@ -494,7 +494,8 @@ namespace Kudu.Core.Infrastructure
                 throw new Win32Exception("Unable to read environment block.");
             }
 
-            const int maxEnvSize = 32767;
+            // Limit env size to 10 MB to be defensive
+            const int maxEnvSize = 10 * 1000 * 1000;
             if (dataSize > maxEnvSize)
             {
                 dataSize = maxEnvSize;
