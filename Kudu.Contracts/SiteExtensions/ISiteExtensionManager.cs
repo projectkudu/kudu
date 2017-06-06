@@ -17,7 +17,7 @@ namespace Kudu.Contracts.SiteExtensions
         /// <summary>
         /// Install or update a site extension
         /// </summary>
-        Task<SiteExtensionInfo> InstallExtension(string id, string version, string feedUrl, SiteExtensionInfo.SiteExtensionType type, ITracer tracer);
+        Task<SiteExtensionInfo> InstallExtension(string id, string version, string feedUrl, SiteExtensionInfo.SiteExtensionType type, ITracer tracer, string installationArgs);
 
         Task<bool> UninstallExtension(string id);
     }

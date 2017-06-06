@@ -188,7 +188,7 @@ namespace Kudu.Core.SiteExtensions
         }
 
         // <inheritdoc />
-        public async Task<SiteExtensionInfo> InstallExtension(string id, string version, string feedUrl, SiteExtensionInfo.SiteExtensionType type, ITracer tracer)
+        public async Task<SiteExtensionInfo> InstallExtension(string id, string version, string feedUrl, SiteExtensionInfo.SiteExtensionType type, ITracer tracer, string installationArgs = null)
         {
             try
             {
@@ -198,7 +198,7 @@ namespace Kudu.Core.SiteExtensions
                     // hold on to lock till action complete (success or fail)
                     return await installationLock.LockOperationAsync<SiteExtensionInfo>(async () =>
                     {
-                        return await TryInstallExtension(id, version, feedUrl, type, tracer);
+                        return await TryInstallExtension(id, version, feedUrl, type, tracer, installationArgs);
                     }, "Installing SiteExtension", TimeSpan.Zero);
                 }
             }
@@ -228,7 +228,7 @@ namespace Kudu.Core.SiteExtensions
             }
         }
 
-        private async Task<SiteExtensionInfo> TryInstallExtension(string id, string version, string feedUrl, SiteExtensionInfo.SiteExtensionType type, ITracer tracer)
+        private async Task<SiteExtensionInfo> TryInstallExtension(string id, string version, string feedUrl, SiteExtensionInfo.SiteExtensionType type, ITracer tracer, string installationArgs)
         {
             SiteExtensionInfo info = null;
             HttpStatusCode status = HttpStatusCode.OK;  // final status when success
@@ -279,7 +279,7 @@ namespace Kudu.Core.SiteExtensions
                         using (tracer.Step("Install package: {0}.", id))
                         {
                             string installationDirectory = GetInstallationDirectory(id);
-                            localPackage = await InstallExtension(repoPackage, installationDirectory, feedUrl, type, tracer);
+                            localPackage = await InstallExtension(repoPackage, installationDirectory, feedUrl, type, tracer , installationArgs);
                             siteExtensionSettings.SetValues(new KeyValuePair<string, JToken>[] {
                                 new KeyValuePair<string, JToken>(_versionSetting, localPackage.Identity.Version.ToNormalizedString()),
                                 new KeyValuePair<string, JToken>(_feedUrlSetting, feedUrl),
@@ -394,7 +394,7 @@ namespace Kudu.Core.SiteExtensions
         /// <para>3. Deploy site extension job</para>
         /// <para>4. Execute install.cmd if exist</para>
         /// </summary>
-        private async Task<UIPackageMetadata> InstallExtension(UIPackageMetadata package, string installationDirectory, string feedUrl, SiteExtensionInfo.SiteExtensionType type, ITracer tracer)
+        private async Task<UIPackageMetadata> InstallExtension(UIPackageMetadata package, string installationDirectory, string feedUrl, SiteExtensionInfo.SiteExtensionType type, ITracer tracer, string installationArgs)
         {
             try
             {
@@ -484,7 +484,7 @@ namespace Kudu.Core.SiteExtensions
                                 Executable exe = externalCommandFactory.BuildCommandExecutable(installScript,
                                     installationDirectory,
                                     _settings.GetCommandIdleTimeout(), NullLogger.Instance);
-                                exe.ExecuteWithProgressWriter(NullLogger.Instance, _traceFactory.GetTracer(), String.Empty);
+                                exe.ExecuteWithProgressWriter(NullLogger.Instance, _traceFactory.GetTracer(), installationArgs ?? String.Empty);
                             });
                         }
                     }

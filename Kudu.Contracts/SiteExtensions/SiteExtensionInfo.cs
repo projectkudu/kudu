@@ -40,6 +40,7 @@ namespace Kudu.Contracts.SiteExtensions
             LocalIsLatestVersion = info.LocalIsLatestVersion;
             LocalPath = info.LocalPath;
             InstalledDateTime = info.InstalledDateTime;
+            InstallationArgs = info.InstallationArgs;
         }
 
         public SiteExtensionInfo(UIPackageMetadata data)
@@ -200,6 +201,13 @@ namespace Kudu.Contracts.SiteExtensions
 
         [JsonProperty(PropertyName = "comment")]
         public string Comment
+        {
+            get;
+            set;
+        }
+
+        [JsonProperty(PropertyName = "installer_command_line_params")]
+        public string InstallationArgs
         {
             get;
             set;
