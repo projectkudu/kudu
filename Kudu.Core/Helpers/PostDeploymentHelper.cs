@@ -78,6 +78,12 @@ namespace Kudu.Core.Helpers
             get { return System.Environment.ExpandEnvironmentVariables(@"%HOME%\site\wwwroot\" + Constants.LogicAppJson); }
         }
 
+        // WEBSITE_SKU = Dynamic
+        private static string WebSiteSku
+        {
+            get { return System.Environment.GetEnvironmentVariable(Constants.WebSiteSku); }
+        }
+
         /// <summary>
         /// This common codes is to invoke post deployment operations.
         /// It is written to require least dependencies but framework assemblies.
@@ -98,7 +104,13 @@ namespace Kudu.Core.Helpers
 
             if (string.IsNullOrEmpty(FunctionRunTimeVersion))
             {
-                Trace(TraceEventType.Verbose, "Functions are not enabled");
+                Trace(TraceEventType.Verbose, "Skip function trigger and logicapp sync because function is not enabled.");
+                return;
+            }
+
+            if (!string.Equals(Constants.DynamicSku, WebSiteSku, StringComparison.OrdinalIgnoreCase))
+            {
+                Trace(TraceEventType.Verbose, string.Format("Skip function trigger and logicapp sync because sku ({0}) is not dynamic (consumption plan).", WebSiteSku));
                 return;
             }
 
@@ -137,7 +149,7 @@ namespace Kudu.Core.Helpers
                       "Syncing {0} function triggers with payload size {1} bytes {2}",
                       triggers.Count,
                       content.Length,
-                      exception == null ? "successful." : "failed with " + exception.Message);
+                      exception == null ? "successful." : ("failed with " + exception));
             }
 
             // this couples with sync function triggers
@@ -202,7 +214,7 @@ namespace Kudu.Core.Helpers
                       "Syncing logicapp {0} with payload size {1} bytes {2}",
                       displayUrl,
                       content.Length,
-                      exception == null ? "successful." : "failed with " + exception.Message);
+                      exception == null ? "successful." : ("failed with " + exception));
             }
         }
 
@@ -255,7 +267,7 @@ namespace Kudu.Core.Helpers
                       "Requesting auto swap to '{0}' slot with '{1}' id {2}",
                       slotSwapName,
                       operationId,
-                      exception == null ? "successful." : "failed with " + exception.Message);
+                      exception == null ? "successful." : ("failed with " + exception));
             }
         }
 
@@ -323,7 +335,7 @@ namespace Kudu.Core.Helpers
             }
             catch (Exception ex)
             {
-                Trace(TraceEventType.Warning, "{0} is invalid. {1}", functionJson, ex.Message);
+                Trace(TraceEventType.Warning, "{0} is invalid. {1}", functionJson, ex);
             }
 
             return Enumerable.Empty<Dictionary<string, object>>();
