@@ -2,13 +2,12 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Configuration;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Security.AccessControl;
-using System.Threading;
 using System.Threading.Tasks;
+using Kudu.Core.Infrastructure;
 using Kudu.SiteManagement;
 using Kudu.SiteManagement.Certificates;
 using Kudu.SiteManagement.Configuration;
@@ -59,29 +58,28 @@ namespace Kudu.TestHarness
             string operationName = "SitePool.CreateApplicationInternal " + applicationName;
 
             var context = new KuduTestContext();
+            var root = context.Paths.GetApplicationPath(applicationName);
             var siteManager = GetSiteManager(context);
 
             Site site = siteManager.GetSite(applicationName);
             if (site != null)
             {
+                TestTracer.Trace("Stop app pool {0}", applicationName);
+                await siteManager.StopAppPool(applicationName);
+
+                CleanUpContents(root);
+
+                string wwwroot = Path.Combine(root, @"site\wwwroot");
+                FileSystemHelpers.EnsureDirectory(Path.GetDirectoryName(wwwroot));
+
+                TestTracer.Trace("Start app pool {0}", applicationName);
+                await siteManager.StartAppPool(applicationName);
+
                 TestTracer.Trace("{0} Site already exists at {1}. Reusing site", operationName, site.SiteUrl);
                 var appManager = new ApplicationManager(siteManager, site, applicationName)
                 {
                     SitePoolIndex = siteIndex
                 };
-
-                // In site reuse mode, clean out the existing site so we start clean
-                // Enumrate all w3wp processes and make sure to kill any process with an open handle to klr.host.dll
-                foreach (var process in (await appManager.ProcessManager.GetProcessesAsync()).Where(p => p.Name.Equals("w3wp", StringComparison.OrdinalIgnoreCase)))
-                {
-                    var extendedProcess = await appManager.ProcessManager.GetProcessAsync(process.Id);
-                    if (extendedProcess.OpenFileHandles.Any(h => h.IndexOf("dnx.host.dll", StringComparison.OrdinalIgnoreCase) != -1))
-                    {
-                        await appManager.ProcessManager.KillProcessAsync(extendedProcess.Id, throwOnError:false);
-                    }
-                }
-
-                await appManager.RepositoryManager.Delete(deleteWebRoot: true, ignoreErrors: true);
 
                 // Make sure we start with the correct default file as some tests expect it
                 WriteIndexHtml(appManager);
@@ -91,6 +89,9 @@ namespace Kudu.TestHarness
             }
             else
             {
+                // {root}\site\wwwroot creation taken care by siteManager.CreateSiteAsync
+                CleanUpContents(root);
+
                 TestTracer.Trace("{0} Creating new site", operationName);
                 lock (_createSiteLock)
                 {
@@ -124,7 +125,6 @@ namespace Kudu.TestHarness
                 };
             }
         }
-
 
         private static ISiteManager GetSiteManager(IKuduContext context)
         {
@@ -162,6 +162,23 @@ namespace Kudu.TestHarness
                 }
 
                 throw;
+            }
+        }
+
+        private static void CleanUpContents(string path)
+        {
+            TestTracer.Trace("Delete {0} folder contents", path);
+            try
+            {
+                // first cleanup and report errors
+                FileSystemHelpers.DeleteDirectoryContentsSafe(path, ignoreErrors: false);
+            }
+            catch (Exception ex)
+            {
+                TestTracer.Trace(ex.Message);
+
+                // retry ignore errors
+                FileSystemHelpers.DeleteDirectoryContentsSafe(path, ignoreErrors: true);
             }
         }
     }
