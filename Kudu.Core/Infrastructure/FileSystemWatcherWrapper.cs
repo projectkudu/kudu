@@ -3,10 +3,9 @@
     using System;
     using System.IO;
 
-    public class FileSystemWatcherWrapper : IFileSystemWatcher
+    public class FileSystemWatcherWrapper : IFileSystemWatcher, IDisposable
     {
         private readonly FileSystemWatcher inner;
-        private readonly object eventLock = new Object();
 
         public FileSystemWatcherWrapper(string path, bool includeSubdirectories)
         {
@@ -76,5 +75,28 @@
             }
         }
 
+        private bool disposedValue = false;
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                if (disposing)
+                {
+                    if (this.inner != null)
+                    {
+                        this.inner.Dispose();
+                    }
+                }
+
+                disposedValue = true;
+            }
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
     }
 }

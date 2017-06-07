@@ -22,7 +22,7 @@
     // Overall, there is no solution that doesn't involve some kind of polling with the current
     // CIFS limitations.
 
-    public class NaiveFileSystemWatcher : IFileSystemWatcher
+    public class NaiveFileSystemWatcher : IFileSystemWatcher, IDisposable
     {
         private static readonly TimeSpan INTERVAL = TimeSpan.FromSeconds(1.5);
 
@@ -76,6 +76,35 @@
 
                 await Task.Delay(INTERVAL, cts.Token).ContinueWith(t => { });
             }
+        }
+
+        private bool disposedValue = false;
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                if (disposing)
+                {
+                    if (this.cts != null)
+                    {
+                        this.cts.Dispose();
+                    }
+
+                    if (this.pollingTask != null)
+                    {
+                        this.pollingTask.Dispose();
+                    }
+                }
+
+                disposedValue = true;
+            }
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
         }
     }
 }
