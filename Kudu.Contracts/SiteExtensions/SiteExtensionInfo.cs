@@ -145,6 +145,13 @@ namespace Kudu.Contracts.SiteExtensions
             set;
         }
 
+        [JsonProperty(PropertyName = "installer_command_line_params")]
+        public string InstallationArgs
+        {
+            get;
+            set;
+        }
+
         [JsonProperty(PropertyName = "published_date_time")]
         public DateTimeOffset? PublishedDateTime
         {
@@ -201,13 +208,6 @@ namespace Kudu.Contracts.SiteExtensions
 
         [JsonProperty(PropertyName = "comment")]
         public string Comment
-        {
-            get;
-            set;
-        }
-
-        [JsonProperty(PropertyName = "installer_command_line_params")]
-        public string InstallationArgs
         {
             get;
             set;

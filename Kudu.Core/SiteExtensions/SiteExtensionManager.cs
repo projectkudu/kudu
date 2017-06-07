@@ -279,7 +279,7 @@ namespace Kudu.Core.SiteExtensions
                         using (tracer.Step("Install package: {0}.", id))
                         {
                             string installationDirectory = GetInstallationDirectory(id);
-                            localPackage = await InstallExtension(repoPackage, installationDirectory, feedUrl, type, tracer , installationArgs);
+                            localPackage = await InstallExtension(repoPackage, installationDirectory, feedUrl, type, tracer, installationArgs);
                             siteExtensionSettings.SetValues(new KeyValuePair<string, JToken>[] {
                                 new KeyValuePair<string, JToken>(_versionSetting, localPackage.Identity.Version.ToNormalizedString()),
                                 new KeyValuePair<string, JToken>(_feedUrlSetting, feedUrl),
