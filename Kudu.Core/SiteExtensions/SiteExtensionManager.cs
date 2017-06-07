@@ -44,6 +44,7 @@ namespace Kudu.Core.SiteExtensions
         private const string _installUtcTimestampSetting = "install_timestamp_utc";
         private const string _packageType = "package_type";
         private const string _versionSetting = "version";
+        private const string _installationArgs = "installer_command_line_params";
 
         private readonly string _rootPath;
         private readonly string _baseUrl;
@@ -188,7 +189,7 @@ namespace Kudu.Core.SiteExtensions
         }
 
         // <inheritdoc />
-        public async Task<SiteExtensionInfo> InstallExtension(string id, string version, string feedUrl, SiteExtensionInfo.SiteExtensionType type, ITracer tracer)
+        public async Task<SiteExtensionInfo> InstallExtension(string id, string version, string feedUrl, SiteExtensionInfo.SiteExtensionType type, ITracer tracer, string installationArgs = null)
         {
             try
             {
@@ -198,7 +199,7 @@ namespace Kudu.Core.SiteExtensions
                     // hold on to lock till action complete (success or fail)
                     return await installationLock.LockOperationAsync<SiteExtensionInfo>(async () =>
                     {
-                        return await TryInstallExtension(id, version, feedUrl, type, tracer);
+                        return await TryInstallExtension(id, version, feedUrl, type, tracer, installationArgs);
                     }, "Installing SiteExtension", TimeSpan.Zero);
                 }
             }
@@ -228,7 +229,7 @@ namespace Kudu.Core.SiteExtensions
             }
         }
 
-        private async Task<SiteExtensionInfo> TryInstallExtension(string id, string version, string feedUrl, SiteExtensionInfo.SiteExtensionType type, ITracer tracer)
+        private async Task<SiteExtensionInfo> TryInstallExtension(string id, string version, string feedUrl, SiteExtensionInfo.SiteExtensionType type, ITracer tracer, string installationArgs)
         {
             SiteExtensionInfo info = null;
             HttpStatusCode status = HttpStatusCode.OK;  // final status when success
@@ -236,11 +237,11 @@ namespace Kudu.Core.SiteExtensions
 
             try
             {
-                // Check if site extension already installed (id, version, feedUrl), if already install return right away
-                if (await this.IsSiteExtensionInstalled(id, version, feedUrl))
+                // Check if site extension already installed (id, version, feedUrl), if already install with correct installation arguments then return right away
+                if (await this.IsSiteExtensionInstalled(id, version, feedUrl, installationArgs))
                 {
                     // package already installed, return package from local repo.
-                    tracer.Trace("Package {0} with version {1} from {2} already installed.", id, version, feedUrl);
+                    tracer.Trace("Package {0} with version {1} from {2} with installation arguments '{3}' already installed.", id, version, feedUrl, installationArgs);
                     info = await GetLocalExtension(id);
                     alreadyInstalled = true;
                 }
@@ -279,12 +280,13 @@ namespace Kudu.Core.SiteExtensions
                         using (tracer.Step("Install package: {0}.", id))
                         {
                             string installationDirectory = GetInstallationDirectory(id);
-                            localPackage = await InstallExtension(repoPackage, installationDirectory, feedUrl, type, tracer);
+                            localPackage = await InstallExtension(repoPackage, installationDirectory, feedUrl, type, tracer, installationArgs);
                             siteExtensionSettings.SetValues(new KeyValuePair<string, JToken>[] {
                                 new KeyValuePair<string, JToken>(_versionSetting, localPackage.Identity.Version.ToNormalizedString()),
                                 new KeyValuePair<string, JToken>(_feedUrlSetting, feedUrl),
                                 new KeyValuePair<string, JToken>(_installUtcTimestampSetting, DateTime.UtcNow.ToString("u")),
-                                new KeyValuePair<string, JToken>(_packageType, Enum.GetName(typeof(SiteExtensionInfo.SiteExtensionType), type))
+                                new KeyValuePair<string, JToken>(_packageType, Enum.GetName(typeof(SiteExtensionInfo.SiteExtensionType), type)),
+                                new KeyValuePair<string, JToken>(_installationArgs, installationArgs)
                             });
                         }
                     }
@@ -394,7 +396,7 @@ namespace Kudu.Core.SiteExtensions
         /// <para>3. Deploy site extension job</para>
         /// <para>4. Execute install.cmd if exist</para>
         /// </summary>
-        private async Task<UIPackageMetadata> InstallExtension(UIPackageMetadata package, string installationDirectory, string feedUrl, SiteExtensionInfo.SiteExtensionType type, ITracer tracer)
+        private async Task<UIPackageMetadata> InstallExtension(UIPackageMetadata package, string installationDirectory, string feedUrl, SiteExtensionInfo.SiteExtensionType type, ITracer tracer, string installationArgs)
         {
             try
             {
@@ -484,7 +486,7 @@ namespace Kudu.Core.SiteExtensions
                                 Executable exe = externalCommandFactory.BuildCommandExecutable(installScript,
                                     installationDirectory,
                                     _settings.GetCommandIdleTimeout(), NullLogger.Instance);
-                                exe.ExecuteWithProgressWriter(NullLogger.Instance, _traceFactory.GetTracer(), String.Empty);
+                                exe.ExecuteWithProgressWriter(NullLogger.Instance, _traceFactory.GetTracer(), installationArgs ?? String.Empty);
                             });
                         }
                     }
@@ -543,6 +545,7 @@ namespace Kudu.Core.SiteExtensions
         }
 
         /// <summary>
+        /// <para> Return false if the installation arguments are different. Otherwise,</para>
         /// <para> Return true if any of below cases is satisfied:</para>
         /// <para>      1) Package with same version and from same feed already exist in local repo</para>
         /// <para>      2) If given feedUrl is null</para>
@@ -552,12 +555,19 @@ namespace Kudu.Core.SiteExtensions
         /// <para>              Try to use feed from local package, if feed from local package also null, fallback to default feed</para>
         /// <para>              Check if version from query is same as local package</para>
         /// </summary>
-        private async Task<bool> IsSiteExtensionInstalled(string id, string version, string feedUrl)
+        private async Task<bool> IsSiteExtensionInstalled(string id, string version, string feedUrl, string installationArgs)
         {
             JsonSettings siteExtensionSettings = GetSettingManager(id);
             string localPackageVersion = siteExtensionSettings.GetValue(_versionSetting);
             string localPackageFeedUrl = siteExtensionSettings.GetValue(_feedUrlSetting);
+            string localPackageInstallationArgs = siteExtensionSettings.GetValue(_installationArgs);
             bool isInstalled = false;
+
+            // Shortcircuit check: if the installation arguments do not match, then we should return false here to avoid other checks which are now unnecessary.
+            if (!string.Equals(localPackageInstallationArgs, installationArgs))
+            {
+                return false;
+            }
 
             // Try to use given feed
             // If given feed is null, try with feed that from local package
@@ -577,7 +587,7 @@ namespace Kudu.Core.SiteExtensions
                 UIPackageMetadata remotePackage = await remoteRepo.GetLatestPackageByIdFromSrcRepo(id);
                 if (remotePackage != null)
                 {
-                    isInstalled = remotePackage.Identity.Version.ToNormalizedString().Equals(localPackageVersion, StringComparison.OrdinalIgnoreCase);
+                    isInstalled = remotePackage.Identity.Version.ToNormalizedString().Equals(localPackageVersion, StringComparison.OrdinalIgnoreCase) && string.Equals(localPackageInstallationArgs, installationArgs);
                 }
             }
 
@@ -730,6 +740,10 @@ namespace Kudu.Core.SiteExtensions
                     {
                         info.InstalledDateTime = installedDateTime.ToUniversalTime();
                     }
+                }
+                else if (String.Equals(setting.Key, _installationArgs, StringComparison.OrdinalIgnoreCase))
+                {
+                    info.InstallationArgs = setting.Value.Value<string>();
                 }
             }
         }

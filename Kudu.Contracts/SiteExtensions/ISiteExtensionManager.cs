@@ -15,9 +15,15 @@ namespace Kudu.Contracts.SiteExtensions
         Task<SiteExtensionInfo> GetLocalExtension(string id, bool checkLatest);
 
         /// <summary>
-        /// Install or update a site extension
+        /// Install or update a site extension.
         /// </summary>
-        Task<SiteExtensionInfo> InstallExtension(string id, string version, string feedUrl, SiteExtensionInfo.SiteExtensionType type, ITracer tracer);
+        /// <param name="id"></param>
+        /// <param name="version"></param>
+        /// <param name="feedUrl"></param>
+        /// <param name="type"></param>
+        /// <param name="tracer"></param>
+        /// <param name="installationArgs">String argument to pass to the install.cmd script. If the string is "a b" then the batch script will parse as %1 = a, %2 = b</param>
+        Task<SiteExtensionInfo> InstallExtension(string id, string version, string feedUrl, SiteExtensionInfo.SiteExtensionType type, ITracer tracer, string installationArgs);
 
         Task<bool> UninstallExtension(string id);
     }

@@ -115,11 +115,12 @@ namespace Kudu.Client.SiteExtensions
             return (await Client.GetAsync(url.ToString())).EnsureSuccessful();
         }
 
-        public async Task<HttpResponseMessage> InstallExtension(string id, string version = null, string feedUrl = null, SiteExtensionInfo.SiteExtensionType? type = null)
+        public async Task<HttpResponseMessage> InstallExtension(string id, string version = null, string feedUrl = null, SiteExtensionInfo.SiteExtensionType? type = null, string installationArgs = null)
         {
             var json = new JObject();
             json["version"] = version;
             json["feed_url"] = feedUrl;
+            json["installer_command_line_params"] = installationArgs;
             if (type.HasValue)
             {
                 json["type"] = Enum.GetName(typeof(SiteExtensionInfo.SiteExtensionType), type.Value);
