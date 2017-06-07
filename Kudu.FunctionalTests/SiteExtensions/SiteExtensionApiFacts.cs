@@ -30,12 +30,6 @@ namespace Kudu.FunctionalTests.SiteExtensions
             {"AzureMinifier", "Minifier"},
         };
 
-        private static readonly Dictionary<string, string> _preInstalledExtensions = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
-        {
-            {"Monaco", "Visual Studio Online"},
-            {"DaaS", "Site Diagnostics"}
-        };
-
         [Theory]
         [InlineData(null, "sitereplicator")]    // default site extension endpoint (v2)
         [InlineData("https://api.nuget.org/v3/index.json", "bootstrap")]    // v3 endpoint
