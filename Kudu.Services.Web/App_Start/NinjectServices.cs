@@ -322,7 +322,7 @@ namespace Kudu.Services.Web.App_Start
             EnsureUserProfileDirectory();
 
             // Skip SSL Certificate Validate
-            if (System.Environment.GetEnvironmentVariable(SettingsKeys.SkipSslValidation) == "1")
+            if (Kudu.Core.Environment.SkipSslValidation)
             {
                 ServicePointManager.ServerCertificateValidationCallback = delegate { return true; };
             }

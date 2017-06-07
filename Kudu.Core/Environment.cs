@@ -8,6 +8,7 @@ using System.Web;
 using Kudu.Contracts.Settings;
 using Kudu.Core.Helpers;
 using Kudu.Core.Infrastructure;
+using Microsoft.Win32;
 
 namespace Kudu.Core
 {
@@ -346,6 +347,34 @@ namespace Kudu.Core
         public static bool IsAzureEnvironment()
         {
             return !String.IsNullOrEmpty(System.Environment.GetEnvironmentVariable("WEBSITE_INSTANCE_ID"));
+        }
+
+        public static bool SkipSslValidation
+        {
+            get
+            {
+                var skipSslValidation = System.Environment.GetEnvironmentVariable(SettingsKeys.SkipSslValidation);
+                if (skipSslValidation == null)
+                {
+                    if (IsAzureEnvironment())
+                    {
+                        using (var key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\IIS Extensions\DwasMod"))
+                        {
+                            var value = key != null ? key.GetValue("ValidateCertificates") : null;
+                            skipSslValidation = (value is int && (int)value == 0) ? "1" : "0";
+                        }
+                    }
+                    else
+                    {
+                        skipSslValidation = "0";
+                    }
+
+                    // use env as persist setting as well as propagate to child process (ie. kudu.exe).
+                    System.Environment.SetEnvironmentVariable(SettingsKeys.SkipSslValidation, skipSslValidation);
+                }
+
+                return skipSslValidation == "1";
+            }
         }
 
         public static string GetFreeSpaceHtml(string path)
