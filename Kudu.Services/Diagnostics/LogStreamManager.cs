@@ -144,7 +144,7 @@ namespace Kudu.Services.Performance
             if (_watcher == null)
             {
                 IFileSystemWatcher watcher = OSDetector.IsOnWindows() 
-                    ? (IFileSystemWatcher)new FileSystemWatcherWrapper(path, true)
+                    ? (IFileSystemWatcher)new FileSystemWatcherWrapper(path, includeSubdirectories: true)
                     : new NaiveFileSystemWatcher(path, LogFileExtensions);
                 watcher.Changed += new FileSystemEventHandler(DoSafeAction<object, FileSystemEventArgs>(OnChanged, "LogStreamManager.OnChanged"));
                 watcher.Deleted += new FileSystemEventHandler(DoSafeAction<object, FileSystemEventArgs>(OnDeleted, "LogStreamManager.OnDeleted"));

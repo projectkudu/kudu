@@ -26,41 +26,29 @@
 
         public string Path
         {
-            get => this.inner.Path;
+            get { return this.inner.Path; }
         }
 
         public event FileSystemEventHandler Deleted
         {
             add
             {
-                lock (eventLock)
-                {
-                    this.inner.Deleted += value;
-                }
+                this.inner.Deleted += value;
             }
             remove
             {
-                lock (eventLock)
-                {
-                    this.inner.Deleted -= value;
-                }
+                this.inner.Deleted -= value;
             }
         }
         public event FileSystemEventHandler Changed
         {
             add
             {
-                lock (eventLock)
-                {
-                    this.inner.Changed += value;
-                }
+                this.inner.Changed += value;
             }
             remove
             {
-                lock (eventLock)
-                {
-                    this.inner.Changed -= value;
-                }
+                this.inner.Changed -= value;
             }
         }
 
@@ -68,17 +56,11 @@
         {
             add
             {
-                lock (eventLock)
-                {
-                    this.inner.Renamed += value;
-                }
+                this.inner.Renamed += value;
             }
             remove
             {
-                lock (eventLock)
-                {
-                    this.inner.Renamed -= value;
-                }
+                this.inner.Renamed -= value;
             }
         }
 
@@ -86,17 +68,11 @@
         {
             add
             {
-                lock (eventLock)
-                {
-                    this.inner.Error += value;
-                }
+                this.inner.Error += value;
             }
             remove
             {
-                lock (eventLock)
-                {
-                    this.inner.Error -= value;
-                }
+                this.inner.Error -= value;
             }
         }
 

@@ -64,7 +64,7 @@
                 if (handler != null)
                 {
                     var filepaths = Directory.EnumerateFiles(Path, "*.*", SearchOption.AllDirectories)
-                        .Where(p => logFileExtensions.Any(ext => ext == System.IO.Path.GetExtension(p)));
+                        .Where(p => logFileExtensions.Any(ext => ext.Equals(System.IO.Path.GetExtension(p), StringComparison.OrdinalIgnoreCase)));
 
                     foreach (var filepath in filepaths)
                     {
