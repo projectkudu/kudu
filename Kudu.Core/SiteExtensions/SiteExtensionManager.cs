@@ -741,6 +741,10 @@ namespace Kudu.Core.SiteExtensions
                         info.InstalledDateTime = installedDateTime.ToUniversalTime();
                     }
                 }
+                else if (String.Equals(setting.Key, _installationArgs, StringComparison.OrdinalIgnoreCase))
+                {
+                    info.InstallationArgs = setting.Value.Value<string>();
+                }
             }
         }
 
