@@ -4,6 +4,7 @@ using System.IO;
 using System.Web;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Deployment;
+using Kudu.Core.Tracing;
 
 namespace Kudu.Services.Web.Tracing
 {
@@ -79,6 +80,16 @@ namespace Kudu.Services.Web.Tracing
             httpContext.Items.Remove(_traceKey);
             httpContext.Items.Remove(_loggerKey);
             httpContext.Items.Remove(_traceFileKey);
+        }
+
+        internal static ITracer EnsureETWTracer(HttpContext httpContext)
+        {
+            var etwTracer = new ETWTracer((string)httpContext.Items[Constants.RequestIdHeader], httpContext.Request.HttpMethod);
+
+            _traceFactory = new Func<ITracer>(() => etwTracer);
+            httpContext.Items[_traceKey] = etwTracer;
+
+            return etwTracer;
         }
 
         internal static ITracer CreateRequestTracer(HttpContext httpContext)

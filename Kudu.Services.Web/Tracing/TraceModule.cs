@@ -104,7 +104,9 @@ namespace Kudu.Services.Web.Tracing
                 if (TraceServices.TraceLevel != TraceLevel.Verbose)
                 {
                     TraceServices.RemoveRequestTracer(httpContext);
-                    return;
+
+                    // enable just ETW tracer
+                    tracer = TraceServices.EnsureETWTracer(httpContext);
                 }
             }
 
