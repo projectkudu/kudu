@@ -250,8 +250,11 @@
     <Compile Include="Hooks\WebHooksManager.cs" />
     <Compile Include="Infrastructure\AspNetCoreHelper.cs" />
     <Compile Include="Infrastructure\FunctionAppHelper.cs" />
+    <Compile Include="Infrastructure\FileSystemWatcherWrapper.cs" />
+    <Compile Include="Infrastructure\IFileSystemWatcher.cs" />
     <Compile Include="Infrastructure\InstanceIdUtility.cs" />
     <Compile Include="Infrastructure\IServerConfiguration.cs" />
+    <Compile Include="Infrastructure\NaiveFileSystemWatcher.cs" />
     <Compile Include="Infrastructure\SecurityUtility.cs" />
     <Compile Include="Infrastructure\PathUtils\PathLinuxUtility.cs" />
     <Compile Include="Infrastructure\PathUtils\PathUtilityBase.cs" />

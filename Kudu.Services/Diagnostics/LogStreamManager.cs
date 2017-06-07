@@ -19,6 +19,7 @@ using Kudu.Services.Infrastructure;
 using Environment = System.Environment;
 using System.Diagnostics.CodeAnalysis;
 using Kudu.Services.Diagnostics;
+using Kudu.Core.Helpers;
 
 namespace Kudu.Services.Performance
 {
@@ -39,7 +40,7 @@ namespace Kudu.Services.Performance
         private readonly List<ProcessRequestAsyncResult> _results;
 
         private Dictionary<string, long> _logFiles;
-        private FileSystemWatcher _watcher;
+        private IFileSystemWatcher _watcher;
         private Timer _heartbeat;
         private DateTime _lastTraceTime = DateTime.UtcNow;
         private DateTime _startTime = DateTime.UtcNow;
@@ -142,13 +143,14 @@ namespace Kudu.Services.Performance
 
             if (_watcher == null)
             {
-                FileSystemWatcher watcher = new FileSystemWatcher(path);
+                IFileSystemWatcher watcher = OSDetector.IsOnWindows() 
+                    ? (IFileSystemWatcher)new FileSystemWatcherWrapper(path, includeSubdirectories: true)
+                    : new NaiveFileSystemWatcher(path, LogFileExtensions);
                 watcher.Changed += new FileSystemEventHandler(DoSafeAction<object, FileSystemEventArgs>(OnChanged, "LogStreamManager.OnChanged"));
                 watcher.Deleted += new FileSystemEventHandler(DoSafeAction<object, FileSystemEventArgs>(OnDeleted, "LogStreamManager.OnDeleted"));
                 watcher.Renamed += new RenamedEventHandler(DoSafeAction<object, RenamedEventArgs>(OnRenamed, "LogStreamManager.OnRenamed"));
                 watcher.Error += new ErrorEventHandler(DoSafeAction<object, ErrorEventArgs>(OnError, "LogStreamManager.OnError"));
-                watcher.IncludeSubdirectories = true;
-                watcher.EnableRaisingEvents = true;
+                watcher.Start();
                 _watcher = watcher;
             }
 
@@ -162,7 +164,7 @@ namespace Kudu.Services.Performance
         {
             if (_watcher != null)
             {
-                _watcher.EnableRaisingEvents = false;
+                _watcher.Stop();
                 // dispose is blocked till all change request handled, 
                 // this could lead to deadlock as we share the same lock
                 // http://stackoverflow.com/questions/73128/filesystemwatcher-dispose-call-hangs
