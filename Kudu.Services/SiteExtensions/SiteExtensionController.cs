@@ -40,8 +40,9 @@ namespace Kudu.Services.SiteExtensions
         }
 
         [HttpGet]
-        public async Task<HttpResponseMessage> GetRemoteExtensions(string filter = null, bool allowPrereleaseVersions = false, string feedUrl = null)
+        public async Task<HttpResponseMessage> GetRemoteExtensions(string filter = "", bool allowPrereleaseVersions = false, string feedUrl = null)
         {
+            filter = " Tags:\"siteextension\" " + filter; //you can search for title/description/author etc http://blog.nuget.org/20130325/improved-search-syntax.html
             return Request.CreateResponse(
                 HttpStatusCode.OK,
                 ArmUtils.AddEnvelopeOnArmRequest<SiteExtensionInfo>(await _manager.GetRemoteExtensions(filter, allowPrereleaseVersions, feedUrl), Request));
