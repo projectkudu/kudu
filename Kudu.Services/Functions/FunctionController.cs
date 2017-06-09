@@ -25,6 +25,7 @@ namespace Kudu.Services.Functions
 {
     [ArmControllerConfiguration]
     [FunctionExceptionFilter]
+    [RequestThrottleActionFilter(MaxConcurrency = 5)] // Only allow 5 concurrent requests as they can be expensive
     public class FunctionController : ApiController
     {
         private readonly IFunctionManager _manager;
