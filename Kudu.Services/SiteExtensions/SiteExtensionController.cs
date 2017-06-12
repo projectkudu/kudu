@@ -233,14 +233,9 @@ namespace Kudu.Services.SiteExtensions
                 ITracer backgroundTracer = NullTracer.Instance;
                 IDictionary<string, string> traceAttributes = new Dictionary<string, string>();
 
-                if (tracer.TraceLevel == TraceLevel.Off)
-                {
-                    backgroundTracer = NullTracer.Instance;
-                }
-
                 if (tracer.TraceLevel > TraceLevel.Off)
                 {
-                    backgroundTracer = new XmlTracer(_environment.TracePath, tracer.TraceLevel);
+                    backgroundTracer = new CascadeTracer(new XmlTracer(_environment.TracePath, tracer.TraceLevel), new ETWTracer(_environment.RequestId, "PUT"));
                     traceAttributes = new Dictionary<string, string>()
                     {
                         {"url", Request.RequestUri.AbsolutePath},
