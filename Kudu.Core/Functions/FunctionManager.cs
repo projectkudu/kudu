@@ -525,7 +525,7 @@ namespace Kudu.Core.Functions
             var appSettings = System.Environment.GetEnvironmentVariables()
                 .Cast<DictionaryEntry>()
                 .Where(p => p.Key.ToString().StartsWith(appSettingsPrefix, StringComparison.OrdinalIgnoreCase))
-                .ToDictionary(k => k.Key, v => v.Value);
+                .ToDictionary(k => k.Key.ToString().Substring(appSettingsPrefix.Length), v => v.Value);
 
             var localSettings = JsonConvert.SerializeObject(new { IsEncrypted = false, Value = appSettings }, Formatting.Indented);
 
