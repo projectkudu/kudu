@@ -471,7 +471,7 @@ namespace Kudu.Core.Functions
         {
             const string microsoftAzureWebJobsVersion = "2.1.0-beta1";
             const string microsoftAzureWebJobsExtensionsHttpVersion = "1.0.0-beta1";
-            const string microsoftNETSdkFunctionsVersion = "1.0.0-alpha5";
+            const string microsoftNETSdkFunctionsVersion = "1.0.0-alpha6";
 
             var csprojFile = new StringBuilder();
             csprojFile.AppendLine(
