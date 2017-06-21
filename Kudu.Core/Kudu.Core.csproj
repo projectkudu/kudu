@@ -253,6 +253,7 @@
     <Compile Include="Infrastructure\FileSystemWatcherWrapper.cs" />
     <Compile Include="Infrastructure\IFileSystemWatcher.cs" />
     <Compile Include="Infrastructure\InstanceIdUtility.cs" />
+    <Compile Include="Infrastructure\IntegratedServices.cs" />
     <Compile Include="Infrastructure\IServerConfiguration.cs" />
     <Compile Include="Infrastructure\NaiveFileSystemWatcher.cs" />
     <Compile Include="Infrastructure\SecurityUtility.cs" />

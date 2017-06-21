@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Net.Http;
 using System.Text;
 using Kudu.Contracts.Tracing;
@@ -44,6 +45,32 @@ namespace Kudu.Core.Tracing
                 message == XmlTracer.OutgoingResponseTrace)
             {
                 return;
+            }
+
+            try
+            {
+                if (!string.IsNullOrEmpty(_requestId) && _requestId.Contains("11111"))
+                {
+                    var builder = new StringBuilder();
+                    builder.AppendLine(DateTime.UtcNow.ToString("o"));
+                    builder.AppendFormat("  Message: {0}", message);
+                    builder.AppendLine();
+                    if (attributes != null)
+                    {
+                        foreach (var pair in attributes)
+                        {
+                            builder.AppendFormat("  {0}: {1}", pair.Key, pair.Value);
+                            builder.AppendLine();
+                        }
+                    }
+                    builder.AppendLine();
+
+                    File.AppendAllLines(@"d:\local\Temp\centipede.log", new[] { builder.ToString() });
+                }
+            }
+            catch (Exception)
+            {
+                // no-op
             }
 
             if (_requestMethod == HttpMethod.Get.Method)

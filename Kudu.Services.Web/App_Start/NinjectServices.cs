@@ -67,6 +67,8 @@ namespace Kudu.Services.Web.App_Start
 
         private static event Action Shutdown;
 
+        private static IntegratedService _integration;
+
         /// <summary>
         /// Starts the application
         /// </summary>
@@ -127,6 +129,13 @@ namespace Kudu.Services.Web.App_Start
             EnsureSiteBitnessEnvironmentVariable();
 
             IEnvironment environment = GetEnvironment();
+
+            _integration = new IntegratedService(environment);
+
+            if (_integration != null)
+            {
+                System.Console.WriteLine(_integration);
+            }
 
             EnsureDotNetCoreEnvironmentVariable(environment);
 
