@@ -476,6 +476,8 @@ $.connection.hub.start().done(function () {
     ko.applyBindings(viewModel, document.getElementById("#main"));
     setupFileSystemWatcher();
 
+    // shunTODO window.fileExplorer.changeDir() to replace the following observable
+    // since we already have "window.KuduExec.changeDir()"
     window.KuduExec.workingDir.subscribe(function (newValue) {
         if (ignoreWorkingDirChange) {
             ignoreWorkingDirChange = false;
@@ -506,14 +508,14 @@ $.connection.hub.start().done(function () {
 
         // notify command line 
         ignoreWorkingDirChange = true;
-        updateFileSystemWatcher(newValue.path());
         window.KuduExec.changeDir(newValue.path());
     }
 
     // updateSelectedOnly return a promise since it also update its children
     updateSelectedOnly = function (newValue) {
         viewModel.selected(newValue); // update selected
-        // shunTODO in old code, if updateSelectedOnly is called from command line -> no FORCED fetch is required, but why???
+        updateFileSystemWatcher(newValue.path()); // update the filesystem watcher, always accompany selected(newValue)
+        // in old code, children are ONLY FORCE update if navigate using File Explorer, in NEW CODE, we standardize them
         return newValue.fetchChildren(/* force */ true); // update children of selected
     }
 
