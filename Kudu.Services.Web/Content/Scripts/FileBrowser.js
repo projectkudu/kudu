@@ -476,8 +476,6 @@ $.connection.hub.start().done(function () {
     ko.applyBindings(viewModel, document.getElementById("#main"));
     setupFileSystemWatcher();
 
-    // shunTODO window.fileExplorer.changeDir() to replace the following observable
-    // since we already have "window.KuduExec.changeDir()"
     window.KuduExec.workingDir.subscribe(function (newValue) {
         if (ignoreWorkingDirChange) {
             ignoreWorkingDirChange = false;
