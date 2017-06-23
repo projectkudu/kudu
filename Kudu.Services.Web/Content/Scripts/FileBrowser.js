@@ -304,9 +304,9 @@ $.connection.hub.start().done(function () {
                     children.push.apply(children, files);
 
                     that._fetchStatus = 2;
-                }).fail(showError).promise();
+                }).fail(showError);
             } else {
-                return $.Deferred().resolve().promise();
+                return $.Deferred().resolve();
             }
         }
         this.deleteItem = function () {
@@ -316,8 +316,7 @@ $.connection.hub.start().done(function () {
                 Vfs.deleteItems(this).done(function () {
                     that.parent.children.remove(that);
                     if (viewModel.selected() === this) {
-                        viewModel.selected(this.parent);
-                        this.parent.fetchChildren(/* force */ true);
+                        updateSelectedAndNotifyCommandLine(this.parent);
                     }
                     viewModel.processing(false);
                 }).fail(function (error) {
@@ -325,42 +324,33 @@ $.connection.hub.start().done(function () {
                 });
             }
         }
+
         this.selectNode = function () {
-            var that = this;
-            return this.fetchChildren().pipe(function () {
-                stashCurrentSelection(viewModel.selected());
-                viewModel.selected(that);
-
-                return $.Deferred().resolve();
-            });
+            stashCurrentSelection(viewModel.selected());
+            updateSelectedAndNotifyCommandLine(this);
         };
-        this.selectChild = function (descendantPath) {
-            var that = this;
-            return this.fetchChildren().pipe(function () {
-                var childName = descendantPath.split(/\/|\\/)[0].toLowerCase(),
-                    matches = $.grep(that.children(), function (elm) {
-                        return elm.name().toLowerCase() === childName;
-                    }),
-                    deferred;
-                if (matches && matches.length) {
-                    var selectedChild = matches[0];
-                    viewModel.selected(selectedChild);
-                    if (descendantPath.length > childName.length) {
-                        deferred = selectedChild.selectChild(descendantPath.substring(childName.length + 1));
-                    }
-                    selectedChild.fetchChildren();
-                }
 
-                return deferred || $.Deferred().resolve();
-            });
+        this.selectChild = function (descendantPath) {
+            var childName = descendantPath.split(/\/|\\/)[0].toLowerCase(),
+                    matches = $.grep(this.children(), function (elm) {
+                        return elm.name().toLowerCase() === childName;
+                    });
+
+            if (matches && matches.length) {
+                var selectedChild = matches[0];
+                updateSelectedOnly(selectedChild).done(function () {
+                    if (descendantPath.length > childName.length) {
+                        selectedChild.selectChild(descendantPath.substring(childName.length + 1));
+                    }
+                });
+            }
         }
 
         this.selectParent = function () {
             var that = viewModel.selected();
             if (that.parent) {
                 stashCurrentSelection(that);
-                viewModel.selected(that.parent);
-                that.parent.fetchChildren(/* force */ true);
+                updateSelectedAndNotifyCommandLine(that.parent);
             }
         }
 
@@ -419,8 +409,7 @@ $.connection.hub.start().done(function () {
     }
 
     var root = new node({ name: "/", type: "dir", href: appRoot + "api/vfs/" }),
-        ignoreWorkingDirChange = false,
-        workingDirChanging = false,
+        ignoreWorkingDirChange = false, // global variables
         viewModel = {
             root: root,
             copyProgStats: ko.observable(),
@@ -500,31 +489,33 @@ $.connection.hub.start().done(function () {
             }
         }
 
-        workingDirChanging = true;
         var relativeDir = getRelativePath(viewModel.root, newValue) ||
             getRelativePath(viewModel.specialDirsIndex()["LocalSiteRoot"], newValue) ||
-            getRelativePath(viewModel.specialDirsIndex()["SystemDrive"], newValue),
-            deferred;
+            getRelativePath(viewModel.specialDirsIndex()["SystemDrive"], newValue)
 
+        stashCurrentSelection(viewModel.selected());
         if (!relativeDir || !relativeDir.relativePath) {
-            deferred = ((relativeDir && relativeDir.parent) || viewModel.root).selectNode();
+            updateSelectedOnly((relativeDir && relativeDir.parent) || viewModel.root)
         } else {
-            stashCurrentSelection(viewModel.selected());
-            deferred = relativeDir.parent.selectChild(relativeDir.relativePath);
+            relativeDir.parent.selectChild(relativeDir.relativePath);
         }
-        deferred.done(function () {
-            workingDirChanging = false;
-        });
     });
 
-    viewModel.selected.subscribe(function (newValue) {
-        if (!workingDirChanging) {
-            // Mark it so that no-op the subscribe callback.
-            ignoreWorkingDirChange = true;
-            updateFileSystemWatcher(newValue.path());
-            window.KuduExec.changeDir(newValue.path());
-        }
-    });
+    updateSelectedAndNotifyCommandLine = function (newValue) {
+        updateSelectedOnly(newValue);
+
+        // notify command line 
+        ignoreWorkingDirChange = true;
+        updateFileSystemWatcher(newValue.path());
+        window.KuduExec.changeDir(newValue.path());
+    }
+
+    // updateSelectedOnly return a promise since it also update its children
+    updateSelectedOnly = function (newValue) {
+        viewModel.selected(newValue); // update selected
+        // shunTODO in old code, if updateSelectedOnly is called from command line -> no FORCED fetch is required, but why???
+        return newValue.fetchChildren(/* force */ true); // update children of selected
+    }
 
     window.KuduExec.completePath = function (value, dirOnly) {
         var subDirs = value.toLowerCase().split(/\/|\\/),
@@ -613,6 +604,7 @@ $.connection.hub.start().done(function () {
 
     function stashCurrentSelection(selected) {
         if (window.history && window.history.pushState) {
+            // shunTODO, onpopstate does not care about this value
             window.history.pushState(selected.path(), selected.name());
         }
     }
@@ -643,8 +635,7 @@ $.connection.hub.start().done(function () {
         } else {
             var selected = viewModel.selected();
             if (selected.parent) {
-                viewModel.selected(selected.parent);
-                selected.parent.fetchChildren(/* force */ true);
+                updateSelectedAndNotifyCommandLine(selected.parent);
             }
         }
     };
