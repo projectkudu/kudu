@@ -86,6 +86,35 @@ namespace Kudu.Services.Test
             Assert.Equal("Another check in\n", deploymentInfo.TargetChangeset.Message);
         }
 
+        [Fact]
+        public async Task BitbucketHandlerAllowsPayloadsWithNullNew()
+        {
+            // Arrange
+            string payloadContent = null;
+            using (var reader = new StreamReader(Assembly.GetExecutingAssembly().GetManifestResourceStream("Kudu.Services.Test.BitbucketDeployment.BitbucketV2Payload.json")))
+            {
+                payloadContent = await reader.ReadToEndAsync();
+            }
+
+            var payload = JObject.Parse(payloadContent);
+            foreach (var change in payload.Value<JObject>("push").Value<JArray>("changes"))
+            {
+                // simulate branch deleted push event
+                change["new"] = null;
+            }
+
+            var httpRequest = new Mock<HttpRequestBase>();
+            httpRequest.SetupGet(r => r.UserAgent).Returns("Bitbucket-Webhooks/2.0");
+            var bitbucketHandler = new BitbucketHandlerV2();
+
+            // Act
+            DeploymentInfo deploymentInfo;
+            DeployAction result = bitbucketHandler.TryParseDeploymentInfo(httpRequest.Object, payload: payload, targetBranch: "not-default", deploymentInfo: out deploymentInfo);
+
+            // Assert
+            Assert.Equal(DeployAction.NoOp, result);
+        }
+
         //// TODO once bug is fixed https://bitbucket.org/site/master/issues/11665/missing-scm-and-is_private-info-from
         ////[Fact]
         ////public void BitbucketHandlerParsesBitbucketPayloadsForMercurialRepositories()

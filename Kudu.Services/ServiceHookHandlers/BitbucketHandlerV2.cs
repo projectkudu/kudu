@@ -49,7 +49,7 @@ namespace Kudu.Services.ServiceHookHandlers
             if (changes != null && changes.Count > 0)
             {
                 JObject latestCommit = (from change in changes
-                                        where string.Equals(targetBranch, change.Value<JObject>("new").Value<string>("name") ?? targetBranch, StringComparison.OrdinalIgnoreCase)
+                                        where change.Value<JObject>("new") != null && string.Equals(targetBranch, change.Value<JObject>("new").Value<string>("name") ?? targetBranch, StringComparison.OrdinalIgnoreCase)
                                         orderby BitbucketHandler.TryParseCommitStamp(change.Value<JObject>("new").Value<JObject>("target").Value<string>("date")) descending
                                         select change.Value<JObject>("new")).FirstOrDefault();
 
