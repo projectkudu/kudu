@@ -27,3 +27,7 @@ Setup/WebPiCmdSetup.log
 Kudu.Services.Web/node_modules/
 .vs/
 Build/7zip/
+Kudu.Services.Web/Scale/build
+Kudu.Services.Web/Scale/bundle.js
+npm-debug.log*
+Kudu.Services.Web/Scale/webpack.js
