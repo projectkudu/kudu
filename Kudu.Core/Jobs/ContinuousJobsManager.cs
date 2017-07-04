@@ -44,13 +44,13 @@ namespace Kudu.Core.Jobs
             ContinuousJob continuousJob = GetJob(jobName);
             if (continuousJob == null)
             {
-                throw new JobNotFoundException();
+                throw new JobNotFoundException($"Cannot find '{jobName}' continuous job");
             }
 
             ContinuousJobRunner continuousJobRunner;
             if (!_continuousJobRunners.TryGetValue(continuousJob.Name, out continuousJobRunner))
             {
-                throw new InvalidOperationException("Missing job runner for an existing job - " + jobName);
+                throw new JobNotFoundException($"Missing job runner for '{jobName}' continuous job");
             }
 
             continuousJobRunner.EnableJob();
@@ -100,7 +100,7 @@ namespace Kudu.Core.Jobs
             ContinuousJobRunner continuousJobRunner;
             if (!_continuousJobRunners.TryGetValue(jobName, out continuousJobRunner))
             {
-                throw new JobNotFoundException();
+                throw new JobNotFoundException($"Missing job runner for '{jobName}' continuous job");
             }
             return continuousJobRunner;
         }

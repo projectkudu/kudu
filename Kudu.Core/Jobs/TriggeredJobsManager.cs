@@ -227,7 +227,7 @@ namespace Kudu.Core.Jobs
             TriggeredJob triggeredJob = GetJob(jobName);
             if (triggeredJob == null)
             {
-                throw new JobNotFoundException();
+                throw new JobNotFoundException($"Cannot find '{jobName}' triggered job");
             }
 
             triggeredJob.CommandArguments = arguments;
