@@ -294,6 +294,8 @@
     <Compile Include="Jobs\WebJobsStoppedException.cs" />
     <Compile Include="Jobs\WindowsScriptHost.cs" />
     <Compile Include="Jobs\TriggeredJobsScheduler.cs" />
+    <Compile Include="Scaling\AzureTableUtils.cs" />
+    <Compile Include="Scaling\ScaleManager.cs" />
     <Compile Include="Settings\DiagnosticsSettingsManager.cs" />
     <Compile Include="SiteExtensions\DummyReference.cs" />
     <Compile Include="SiteExtensions\FeedExtensions.cs" />

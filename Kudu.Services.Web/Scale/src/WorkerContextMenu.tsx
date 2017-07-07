@@ -7,7 +7,7 @@ type ContextEventHandler = (e: Event, d: { rowIdx: number }) => any;
 interface ContextProps {
     onWorkerAdd: ContextEventHandler;
     onWorkerPing: ContextEventHandler;
-    onWorkerRenew: ContextEventHandler;
+    onWorkerRemove: ContextEventHandler;
     isManager: (rowIdx: number | undefined) => boolean;
     rowIdx?: number;
     idx?: number;
@@ -15,13 +15,13 @@ interface ContextProps {
 
 export class WorkerContextMenu extends React.Component<ContextProps, { rows: WorkerInfo[] }> {
     onAdd: ContextEventHandler;
-    onRenew: ContextEventHandler;
+    onRemove: ContextEventHandler;
     onPing: ContextEventHandler;
 
     constructor() {
         super();
         this.onAdd = (e, d) => this.props.onWorkerAdd(e, d);
-        this.onRenew = (e, d) => this.props.onWorkerRenew(e, d);
+        this.onRemove = (e, d) => this.props.onWorkerRemove(e, d);
         this.onPing = (e, d) => this.props.onWorkerPing(e, d);
     }
 
@@ -35,8 +35,8 @@ export class WorkerContextMenu extends React.Component<ContextProps, { rows: Wor
         return (
             <Menu.ContextMenu>
                 {addAction}
-                <Menu.MenuItem data={{ rowIdx: this.props.rowIdx }} onClick={this.onRenew}>
-                    Renew
+                <Menu.MenuItem data={{ rowIdx: this.props.rowIdx }} onClick={this.onRemove}>
+                    Remove
                 </Menu.MenuItem>
                 <Menu.MenuItem data={{ rowIdx: this.props.rowIdx }} onClick={this.onPing}>
                     Ping

@@ -25,6 +25,7 @@ using Kudu.Core.Helpers;
 using Kudu.Core.Hooks;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Jobs;
+using Kudu.Core.Scaling;
 using Kudu.Core.Settings;
 using Kudu.Core.SiteExtensions;
 using Kudu.Core.SourceControl;
@@ -310,6 +311,9 @@ namespace Kudu.Services.Web.App_Start
             // Functions
             kernel.Bind<IFunctionManager>().To<FunctionManager>().InRequestScope();
 
+            // Scaling
+            kernel.Bind<IScaleManager>().To<ScaleManager>().InRequestScope();
+
             // Command executor
             kernel.Bind<ICommandExecutor>().To<CommandExecutor>().InRequestScope();
 
@@ -533,6 +537,14 @@ namespace Kudu.Services.Web.App_Start
             routes.MapHttpRoute("get-admintoken", "api/functions/admin/token", new { controller = "Function", action = "GetAdminToken" }, new { verb = new HttpMethodConstraint("GET") });
             routes.MapHttpRoute("delete-function", "api/functions/{name}", new { controller = "Function", action = "Delete" }, new { verb = new HttpMethodConstraint("DELETE") });
             routes.MapHttpRoute("download-functions", "api/functions/admin/download", new { controller = "Function", action = "DownloadFunctions" }, new { verb = new HttpMethodConstraint("GET") });
+
+            // Scaling
+            routes.MapHttpRoute("list-workers", "api/workers", new { controller = "Scale", action = "List" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpRoute("get-worker", "api/workers/{id}", new { controller = "Scale", action = "Get" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpRoute("update-worker", "api/workers/{id}", new { controller = "Scale", action = "Update" }, new { verb = new HttpMethodConstraint("PUT", "PATCH") });
+            routes.MapHttpRoute("delete-worker", "api/workers/{id}", new { controller = "Scale", action = "Delete" }, new { verb = new HttpMethodConstraint("DELETE") });
+            routes.MapHttpRoute("add-worker", "api/workers/{id}/add", new { controller = "Scale", action = "AddWorker" }, new { verb = new HttpMethodConstraint("POST") });
+            routes.MapHttpRoute("ping-worker", "api/workers/{id}/ping", new { controller = "Scale", action = "PingWorker" }, new { verb = new HttpMethodConstraint("POST") });
 
             // Docker Hook Endpoint
             if (!OSDetector.IsOnWindows())

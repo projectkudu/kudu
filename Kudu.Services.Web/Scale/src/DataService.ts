@@ -20,11 +20,11 @@ export function isWorkerInfo(obj: any): obj is WorkerInfo {
 
 type Unit = 'unit';
 
-const rootPath = 'https://scaleuxreact.azurewebsites.net/';
+//const rootPath = 'https://scaleuxreact.azurewebsites.net/';
+const rootPath = '/';
 const workersPath = `${rootPath}api/workers`;
 const workerPath = `${workersPath}/{id}`;
 const addWorkerPath = `${workerPath}/add`;
-const renewWorkerPath = `${workerPath}/renew`;
 const pingWorkerPath = `${workerPath}/ping`;
 
 export class DataService {
@@ -55,7 +55,11 @@ export class DataService {
     static async getWorkers(): Promise<WorkerInfo[] | null> {
         try {
             const response = await axios.get(workersPath);
-            return response.data as WorkerInfo[];
+            return (response.data as any[]).map(o => {
+                o.isManager = o.isManager.toString();
+                o.isStale = o.isStale.toString();
+                return o;
+            }) as WorkerInfo[];
         } catch (e) {
             return null;
         }
@@ -65,15 +69,6 @@ export class DataService {
         try {
             const response = await axios.post(addWorkerPath.replace('{id}', managerId));
             return response.data as WorkerInfo
-        } catch (e) {
-            return e;
-        }
-    }
-
-    static async renewWorker(workerId: string): Promise<WorkerInfo | AxiosResponse> {
-        try {
-            const response = await axios.post(renewWorkerPath.replace('{id}', workerId));
-            return response.data as WorkerInfo;
         } catch (e) {
             return e;
         }

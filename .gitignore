@@ -31,3 +31,4 @@ Kudu.Services.Web/Scale/build
 Kudu.Services.Web/Scale/bundle.js
 npm-debug.log*
 Kudu.Services.Web/Scale/webpack.js
+Kudu.Services.Web/Scale/node_modules/

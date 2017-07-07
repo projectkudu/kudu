@@ -265,10 +265,10 @@
     <Content Include="Support\Default.cshtml" />
   </ItemGroup>
   <ItemGroup>
-    <TypeScriptCompile Include="Scale\src\DataService.ts" />
-    <TypeScriptCompile Include="Scale\src\Index.tsx" />
-    <TypeScriptCompile Include="Scale\src\Scale.tsx" />
-    <TypeScriptCompile Include="Scale\src\WorkerContextMenu.tsx" />
+    <None Include="Scale\src\DataService.ts" />
+    <None Include="Scale\src\Index.tsx" />
+    <None Include="Scale\src\Scale.tsx" />
+    <None Include="Scale\src\WorkerContextMenu.tsx" />
   </ItemGroup>
   <ItemGroup>
     <Service Include="{4A0DDDB5-7A95-4FBF-97CC-616D07737A77}" />
@@ -300,7 +300,8 @@
     </VisualStudio>
   </ProjectExtensions>
   <PropertyGroup>
-    <RunPostBuildEvent>Always</RunPostBuildEvent>
+    <RunPostBuildEvent>OnOutputUpdated</RunPostBuildEvent>
+    <!--RunPostBuildEvent>Always</RunPostBuildEvent-->
   </PropertyGroup>
   <Target Name="AfterClean">
     <ItemGroup>
@@ -334,10 +335,6 @@
     <Error Condition="!Exists('..\packages\Microsoft.Bcl.Build.1.0.21\build\Microsoft.Bcl.Build.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Bcl.Build.1.0.21\build\Microsoft.Bcl.Build.targets'))" />
   </Target>
   <Import Project="..\packages\Microsoft.Bcl.Build.1.0.21\build\Microsoft.Bcl.Build.targets" Condition="Exists('..\packages\Microsoft.Bcl.Build.1.0.21\build\Microsoft.Bcl.Build.targets')" />
-  <PropertyGroup>
-    <PreBuildEvent>cd $(ProjectDir)Scale
-npm install</PreBuildEvent>
-  </PropertyGroup>
   <PropertyGroup>
     <PostBuildEvent>cd $(ProjectDir)Scale
 node_modules\.bin\webpack.cmd</PostBuildEvent>

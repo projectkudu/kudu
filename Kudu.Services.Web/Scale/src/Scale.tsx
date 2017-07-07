@@ -53,12 +53,12 @@ export class Scale extends React.Component<{}, AppState> {
         this.setState({ isLoading: false });
     }
 
-    async renewWorker(rowIdx: number) {
+    async removeWorker(rowIdx: number) {
         const worker = this.getWorkerAt(rowIdx);
 
         this.setState({ isLoading: true });
 
-        const result = await DataService.renewWorker(worker.id);
+        const result = await DataService.removeWorker(worker.id);
         if (isWorkerInfo(result)) {
             const workers = this.state.workers.slice();
             for (let i = 0; i < workers.length; i++) {
@@ -93,7 +93,7 @@ export class Scale extends React.Component<{}, AppState> {
         if (typeof rowIdx === 'undefined' || rowIdx < 0) {
             return false;
         } else {
-            return this.getWorkerAt(rowIdx).isManager === 'true';
+            return this.getWorkerAt(rowIdx).isManager == "true";
         }
     }
 
@@ -111,7 +111,7 @@ export class Scale extends React.Component<{}, AppState> {
                     <ReactDataGrid
                         contextMenu={<WorkerContextMenu
                             onWorkerAdd={(e, d) => this.addWorker(d.rowIdx)}
-                            onWorkerRenew={(e, d) => this.renewWorker(d.rowIdx)}
+                            onWorkerRemove={(e, d) => this.removeWorker(d.rowIdx)}
                             onWorkerPing={(e, d) => this.pingWorker(d.rowIdx)}
                             isManager={d => this.isManager(d)}
                         />}
