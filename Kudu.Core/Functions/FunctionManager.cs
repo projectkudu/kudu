@@ -527,7 +527,7 @@ namespace Kudu.Core.Functions
                 .Where(p => p.Key.ToString().StartsWith(appSettingsPrefix, StringComparison.OrdinalIgnoreCase))
                 .ToDictionary(k => k.Key.ToString().Substring(appSettingsPrefix.Length), v => v.Value);
 
-            var localSettings = JsonConvert.SerializeObject(new { IsEncrypted = false, Value = appSettings }, Formatting.Indented);
+            var localSettings = JsonConvert.SerializeObject(new { IsEncrypted = false, Values = appSettings }, Formatting.Indented);
 
             return zip.AddFile(localAppSettingsFileName, localSettings);
         }
