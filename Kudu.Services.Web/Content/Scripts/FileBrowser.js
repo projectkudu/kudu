@@ -1,67 +1,67 @@
 // Custom status bar for Ace (aka Project Wunderbar)
 var statusbar = {
     showFilename:
-        function () {
-            var filename;
-            try {
-                filename = viewModel.fileEdit.peek().name();
-            }
-            catch (e) {
-                filename = 'Can not get filename. See console for details.';
-                if (typeof console == 'object') {
-                    console.error('Can not get filename: %s', e);
-                }
-            }
-            finally {
-                $('#statusbar').text(filename);
-            }
-        },
-    reset:
-        function () {
-            $('#statusbar').text('');
-            $('#statusbar').removeClass('statusbar-red');
-            $('#statusbar').removeClass('statusbar-saved');
-            $('#statusbar').css('background', 'none');
-            // Clear editor window
-            editor.setValue('');
-            // Flag from ace-init.js
-            contentHasChanged = false;
-            // Clear search box
-            if (editor.searchBox) {
-                editor.searchBox.activeInput.value = '';
-                editor.searchBox.hide();
-            }
-        },
-    savingChanges:
-        function () {
-            $('#statusbar').text('Saving changes...');
-            $('#statusbar').prepend('<i class="glyphicon glyphicon-cloud-upload" style="margin-right: 6px"></i>');
-        },
-    fetchingContents:
-        function () {
-            $('#statusbar').text('Fetching contents...');
-            $('#statusbar').prepend('<i class="glyphicon glyphicon-cloud-download" style="margin-right: 6px"></i>');
-        },
-    acknowledgeSave:
-        function () {
-            this.errorState.remove();
-            $('#statusbar').addClass('statusbar-saved');
-            contentHasChanged = false;
-            this.showFilename();
-        },
-    errorState:
-        {
-            set: function () {
-                // We could not save the file
-                // Mild panic attack, turn statusbar red
-                statusbar.showFilename();
-                $('#statusbar').css('background', '#ffdddd');
-            },
-            remove: function () {
-                $('#statusbar').css('background', 'none');
-                $('#statusbar').removeClass('statusbar-red');
+    function () {
+        var filename;
+        try {
+            filename = viewModel.fileEdit.peek().name();
+        }
+        catch (e) {
+            filename = 'Can not get filename. See console for details.';
+            if (typeof console == 'object') {
+                console.error('Can not get filename: %s', e);
             }
         }
+        finally {
+            $('#statusbar').text(filename);
+        }
+    },
+    reset:
+    function () {
+        $('#statusbar').text('');
+        $('#statusbar').removeClass('statusbar-red');
+        $('#statusbar').removeClass('statusbar-saved');
+        $('#statusbar').css('background', 'none');
+        // Clear editor window
+        editor.setValue('');
+        // Flag from ace-init.js
+        contentHasChanged = false;
+        // Clear search box
+        if (editor.searchBox) {
+            editor.searchBox.activeInput.value = '';
+            editor.searchBox.hide();
+        }
+    },
+    savingChanges:
+    function () {
+        $('#statusbar').text('Saving changes...');
+        $('#statusbar').prepend('<i class="glyphicon glyphicon-cloud-upload" style="margin-right: 6px"></i>');
+    },
+    fetchingContents:
+    function () {
+        $('#statusbar').text('Fetching contents...');
+        $('#statusbar').prepend('<i class="glyphicon glyphicon-cloud-download" style="margin-right: 6px"></i>');
+    },
+    acknowledgeSave:
+    function () {
+        this.errorState.remove();
+        $('#statusbar').addClass('statusbar-saved');
+        contentHasChanged = false;
+        this.showFilename();
+    },
+    errorState:
+    {
+        set: function () {
+            // We could not save the file
+            // Mild panic attack, turn statusbar red
+            statusbar.showFilename();
+            $('#statusbar').css('background', '#ffdddd');
+        },
+        remove: function () {
+            $('#statusbar').css('background', 'none');
+            $('#statusbar').removeClass('statusbar-red');
+        }
+    }
 };
 
 function showAceHelpModal() {
@@ -70,11 +70,11 @@ function showAceHelpModal() {
         function (response, status, xhr) {
             if (status == 'error') {
                 $(this).html('<div class="alert alert-warning" role="alert">' +
-                             'Yikes! Can not load help page:<br>' +
-                             'Error Code ' + xhr.status + ' ' + xhr.statusText + '</div>');
+                    'Yikes! Can not load help page:<br>' +
+                    'Error Code ' + xhr.status + ' ' + xhr.statusText + '</div>');
                 if (typeof console == 'object') {
                     console.error('Can not load help page: ' + 'xhr.status = ' +
-                                  xhr.status + ' ' + xhr.statusText);
+                        xhr.status + ' ' + xhr.statusText);
                 }
             }
         });
@@ -278,33 +278,33 @@ $.connection.hub.start().done(function () {
                 viewModel.processing(true);
 
                 return Vfs.getChildren(that)
-                .done(function (data) {
-                    viewModel.processing(false);
-                    var children = that.children;
-                    children.removeAll();
+                    .done(function (data) {
+                        viewModel.processing(false);
+                        var children = that.children;
+                        children.removeAll();
 
-                    // maxViewItems overridable by localStorage setting.
-                    var maxViewItems = getLocalStorageSetting("maxViewItems", MAX_VIEW_ITEMS);
-                    var folders = [];
-                    var files = $.map(data, function (elem) {
-                        if (elem.mime === "inode/shortcut") {
-                            viewModel.specialDirs.push(new node(elem));
-                        } else if (--maxViewItems > 0) {
-                            if (elem.mime === "inode/directory") {
-                                // track folders explicitly to avoid additional sort
-                                folders.push(new node(elem, that));
-                            } else {
-                                return new node(elem, that);
+                        // maxViewItems overridable by localStorage setting.
+                        var maxViewItems = getLocalStorageSetting("maxViewItems", MAX_VIEW_ITEMS);
+                        var folders = [];
+                        var files = $.map(data, function (elem) {
+                            if (elem.mime === "inode/shortcut") {
+                                viewModel.specialDirs.push(new node(elem));
+                            } else if (--maxViewItems > 0) {
+                                if (elem.mime === "inode/directory") {
+                                    // track folders explicitly to avoid additional sort
+                                    folders.push(new node(elem, that));
+                                } else {
+                                    return new node(elem, that);
+                                }
                             }
-                        }
-                    });
+                        });
 
-                    // view display folders then files
-                    children.push.apply(children, folders);
-                    children.push.apply(children, files);
+                        // view display folders then files
+                        children.push.apply(children, folders);
+                        children.push.apply(children, files);
 
-                    that._fetchStatus = 2;
-                }).fail(showError);
+                        that._fetchStatus = 2;
+                    }).fail(showError);
             } else {
                 return $.Deferred().resolve();
             }
@@ -332,9 +332,9 @@ $.connection.hub.start().done(function () {
 
         this.selectChild = function (descendantPath) {
             var childName = descendantPath.split(/\/|\\/)[0].toLowerCase(),
-                    matches = $.grep(this.children(), function (elm) {
-                        return elm.name().toLowerCase() === childName;
-                    });
+                matches = $.grep(this.children(), function (elm) {
+                    return elm.name().toLowerCase() === childName;
+                });
 
             if (matches && matches.length) {
                 var selectedChild = matches[0];
@@ -362,21 +362,21 @@ $.connection.hub.start().done(function () {
             viewModel.fileEdit(this);
             if (this.mime === "text/xml") {
                 Vfs.getContent(this)
-                   .done(function (data) {
-                       viewModel.editText(vkbeautify.xml(data));
-                       statusbar.showFilename();
-                       // Editor h-scroll workaround
-                       editor.session.setScrollLeft(-1);
-                   }).fail(showError);
+                    .done(function (data) {
+                        viewModel.editText(vkbeautify.xml(data));
+                        statusbar.showFilename();
+                        // Editor h-scroll workaround
+                        editor.session.setScrollLeft(-1);
+                    }).fail(showError);
             }
             else {
                 Vfs.getContent(this)
-                   .done(function (data) {
-                       viewModel.editText(data);
-                       statusbar.showFilename();
-                       // Editor h-scroll workaround
-                       editor.session.setScrollLeft(-1);
-                   }).fail(showError);
+                    .done(function (data) {
+                        viewModel.editText(data);
+                        statusbar.showFilename();
+                        // Editor h-scroll workaround
+                        editor.session.setScrollLeft(-1);
+                    }).fail(showError);
             }
         }
 
@@ -465,12 +465,12 @@ $.connection.hub.start().done(function () {
         return result;
     }, viewModel),
 
-    viewModel.showSiteRoot = ko.computed(function () {
-        if ($.isEmptyObject(viewModel.specialDirsIndex())) {
-            return true;
-        }
-        return viewModel.specialDirsIndex()['LocalSiteRoot'] !== undefined;
-    }, viewModel);
+        viewModel.showSiteRoot = ko.computed(function () {
+            if ($.isEmptyObject(viewModel.specialDirsIndex())) {
+                return true;
+            }
+            return viewModel.specialDirsIndex()['LocalSiteRoot'] !== undefined;
+        }, viewModel);
 
     root.fetchChildren();
     ko.applyBindings(viewModel, document.getElementById("#main"));
@@ -830,14 +830,24 @@ $.connection.hub.start().done(function () {
                 deferred.resolveWith(null, [{ name: parentPath + '/' + entry.name, contents: file }]);
             });
         } else {
-            entry.createReader().readEntries(function (entries) {
-                var directoryPath = parentPath + '/' + entry.name;
-                whenArray($.map(entries, function (e) {
-                    return _processEntry(e, directoryPath);
-                })).done(function () {
-                    deferred.resolveWith(null, [Array.prototype.concat.apply([], arguments)]);
-                });;
-            });
+            var dirReader = entry.createReader();
+            var totalEntriesInDir = [];
+            var directoryCallback = function (entries) {
+                if (entries.length) {
+                    totalEntriesInDir = totalEntriesInDir.concat(entries);
+                    // keep reading
+                    dirReader.readEntries(directoryCallback);
+                } else {
+                    // finished reading, process totalEntriesInDir
+                    var directoryPath = parentPath + '/' + entry.name;
+                    whenArray($.map(totalEntriesInDir, function (e) {
+                        return _processEntry(e, directoryPath);
+                    })).done(function () {
+                        deferred.resolveWith(null, [Array.prototype.concat.apply([], arguments)]);
+                    });
+                }
+            }
+            dirReader.readEntries(directoryCallback);
         }
         return deferred.promise();
     }
@@ -881,7 +891,7 @@ $.connection.hub.start().done(function () {
             var textToRender = status + ' ' + statusText + (typeof message !== 'undefined' ? ': ' + message : '');
             toast(textToRender);
         }
-            // 'error' is a string
+        // 'error' is a string
         else toast(error);
     }
 
@@ -896,8 +906,8 @@ function toast(errorMsg) {
             </div>\
             <div id="toast-msg" class="col-md-10">\
                 <p><strong>ERROR</strong></p>' +
-                    errorMsg +
-            '</div>\
+        errorMsg +
+        '</div>\
         </div>';
     var item = $(scaffold);
     $('#toast').append($(item));
