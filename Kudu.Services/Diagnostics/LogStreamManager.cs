@@ -94,12 +94,12 @@ namespace Kudu.Services.Performance
             {
                 _operationLock.LockOperation(() =>
                 {
-                    // retry 5 times with 1 sec interval
-                    OperationManager.Attempt(() =>
+                    // best effort trying to enable application logging
+                    OperationManager.SafeExecute(() =>
                     {
                         var diagnostics = new DiagnosticsSettingsManager(Path.Combine(_environment.DiagnosticsPath, Constants.SettingsJsonFile), _tracer);
                         diagnostics.UpdateSetting(AzureDriveEnabledKey, true);
-                    }, retries: 5, delayBeforeRetry: 1000);
+                    });
                 }, "Updating diagnostics setting", TimeSpan.FromSeconds(30));
             }
 
