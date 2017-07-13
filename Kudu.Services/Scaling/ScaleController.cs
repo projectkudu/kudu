@@ -6,6 +6,7 @@ using Kudu.Core.Scaling;
 using Kudu.Core.Tracing;
 using Kudu.Services.Arm;
 using Kudu.Services.Filters;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace Kudu.Services.Scaling
@@ -40,7 +41,7 @@ namespace Kudu.Services.Scaling
             var tracer = _traceFactory.GetTracer();
             using (tracer.Step($"ScaleController.Get({id})"))
             {
-                WorkerInfo worker = await _manager.GetWorker(id);
+                var worker = await _manager.GetWorker(id);
                 return Request.CreateResponse<object>(HttpStatusCode.OK, ArmUtils.AddEnvelopeOnArmRequest<WorkerInfo>(worker, Request));
             }
         }
@@ -51,7 +52,8 @@ namespace Kudu.Services.Scaling
             var tracer = _traceFactory.GetTracer();
             using (tracer.Step($"ScaleController.Update({id})"))
             {
-                await Task.Delay(0);
+                var info = JsonConvert.DeserializeObject<WorkerInfo>(await Request.Content.ReadAsStringAsync());
+                await _manager.UpdateWorker(id, info);
                 return new HttpResponseMessage(HttpStatusCode.NoContent);
             }
         }
@@ -62,8 +64,7 @@ namespace Kudu.Services.Scaling
             var tracer = _traceFactory.GetTracer();
             using (tracer.Step($"ScaleController.Delete({id})"))
             {
-                await Task.Delay(0);
-                return new HttpResponseMessage(HttpStatusCode.NoContent);
+                return await _manager.RemoveWorker(id);
             }
         }
 
@@ -73,8 +74,7 @@ namespace Kudu.Services.Scaling
             var tracer = _traceFactory.GetTracer();
             using (tracer.Step($"ScaleController.AddWorker({id})"))
             {
-                await Task.Delay(0);
-                return new HttpResponseMessage(HttpStatusCode.NoContent);
+                return await _manager.AddWorker(id);
             }
         }
 
@@ -84,30 +84,28 @@ namespace Kudu.Services.Scaling
             var tracer = _traceFactory.GetTracer();
             using (tracer.Step($"ScaleController.PingWorker({id})"))
             {
-                await Task.Delay(0);
-                return new HttpResponseMessage(HttpStatusCode.NoContent);
+                return await _manager.PingWorker(id);
             }
         }
+        ////private JObject GetJsonContent()
+        ////{
+        ////    try
+        ////    {
+        ////        var payload = Request.Content.ReadAsAsync<JObject>().Result;
+        ////        if (ArmUtils.IsArmRequest(Request))
+        ////        {
+        ////            payload = payload.Value<JObject>("properties");
+        ////        }
 
-        private JObject GetJsonContent()
-        {
-            try
-            {
-                var payload = Request.Content.ReadAsAsync<JObject>().Result;
-                if (ArmUtils.IsArmRequest(Request))
-                {
-                    payload = payload.Value<JObject>("properties");
-                }
-
-                return payload;
-            }
-            catch
-            {
-                // We're going to return null here since we don't want to force a breaking change
-                // on the client side. If the incoming request isn't application/json, we want this
-                // to return null.
-                return null;
-            }
-        }
+        ////        return payload;
+        ////    }
+        ////    catch
+        ////    {
+        ////        // We're going to return null here since we don't want to force a breaking change
+        ////        // on the client side. If the incoming request isn't application/json, we want this
+        ////        // to return null.
+        ////        return null;
+        ////    }
+        ////}
     }
 }

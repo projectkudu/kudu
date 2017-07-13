@@ -26,7 +26,7 @@ export class WorkerContextMenu extends React.Component<ContextProps, { rows: Wor
     }
 
     render() {
-        const addAction = this.props.isManager(this.props.rowIdx)
+        const addAction = (this.props.isManager(this.props.rowIdx) || true)
             ? (<Menu.MenuItem data={{ rowIdx: this.props.rowIdx }} onClick={this.onAdd}>
                     Add
                 </Menu.MenuItem>)

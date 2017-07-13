@@ -34,7 +34,7 @@ namespace Kudu.Core.Scaling
                 if (_azureTableClient == null)
                 {
                     HttpClient httpClient = new HttpClient();
-                    httpClient.DefaultRequestHeaders.UserAgent.Add(AzureTableUtils._userAgent.Value);
+                    httpClient.DefaultRequestHeaders.UserAgent.Add(_userAgent.Value);
                     httpClient.DefaultRequestHeaders.Add("Accept", "application/json;odata=nometadata");
                     httpClient.DefaultRequestHeaders.Add("x-ms-version", "2015-04-05");
                     httpClient.DefaultRequestHeaders.Add("MaxDataServiceVersion", "3.0;NetFx");
@@ -127,84 +127,69 @@ namespace Kudu.Core.Scaling
             }
         }
 
-        public static async Task<AzureTableUtils.AzureWorkerInfo> GetWorker(string partitionKey, string stampName = null, string workerName = null)
+        public static async Task<AzureWorkerInfo> GetWorker(string partitionKey, string stampName = null, string workerName = null)
         {
-            string str1;
+            string rowKey;
             if (partitionKey.IndexOf('(') <= 0)
-                str1 = string.Format("{0}:{1}", (object)stampName, (object)workerName);
+            {
+                rowKey = string.Format("{0}:{1}", stampName, workerName);
+            }
             else
-                str1 = ((IEnumerable<string>)partitionKey.Split('(')).First<string>();
-            string rowKey = str1;
-            Uri uri = new Uri(string.Format("{0}://{1}.table.core.windows.net/appserviceworkertable(PartitionKey='{2}',RowKey='{3}')", new object[4]
             {
-        (object) AzureTableUtils.Protocol,
-        (object) AzureTableUtils.StorageAccount,
-        (object) partitionKey,
-        (object) rowKey
-            }));
-            HttpResponseMessage httpResponseMessage = await AzureTableUtils.HttpInvoke(HttpMethod.Get, uri, (HttpContent)null);
-            HttpResponseMessage response = httpResponseMessage;
-            httpResponseMessage = (HttpResponseMessage)null;
-            AzureTableUtils.AzureWorkerInfo azureWorkerInfo;
-            try
-            {
-                string str = await response.Content.ReadAsStringAsync();
-                azureWorkerInfo = JsonConvert.DeserializeObject<AzureTableUtils.AzureWorkerInfo>(str);
+                rowKey = partitionKey.Split('(').First();
             }
-            finally
+
+            var uri = new Uri(string.Format("{0}://{1}.table.core.windows.net/appserviceworkertable(PartitionKey='{2}',RowKey='{3}')", Protocol, StorageAccount, partitionKey, rowKey));
+            using (var response = await HttpInvoke(HttpMethod.Get, uri))
             {
-                if (response != null)
-                    response.Dispose();
+                string json = await response.Content.ReadAsStringAsync();
+                return JsonConvert.DeserializeObject<AzureWorkerInfo>(json);
             }
-            return azureWorkerInfo;
         }
 
         public static async Task UpdateWorker(string partitionKey, string stampName, string workerName, int loadFactor)
         {
-            string str;
+            string rowKey;
             if (partitionKey.IndexOf('(') <= 0)
-                str = string.Format("{0}:{1}", (object)stampName, (object)workerName);
-            else
-                str = ((IEnumerable<string>)partitionKey.Split('(')).First<string>();
-            string rowKey = str;
-            Uri uri = new Uri(string.Format("{0}://{1}.table.core.windows.net/appserviceworkertable(PartitionKey='{2}',RowKey='{3}')", new object[4]
             {
-        (object) AzureTableUtils.Protocol,
-        (object) AzureTableUtils.StorageAccount,
-        (object) partitionKey,
-        (object) (rowKey ?? string.Format("{0}:{1}", (object) stampName, (object) workerName))
-            }));
-            AzureTableUtils.AzureWorkerInfo info = new AzureTableUtils.AzureWorkerInfo()
+                rowKey = string.Format("{0}:{1}", stampName, workerName);
+            }
+            else
+            {
+                rowKey = partitionKey.Split('(').First();
+            }
+
+            var uri = new Uri(string.Format("{0}://{1}.table.core.windows.net/appserviceworkertable(PartitionKey='{2}',RowKey='{3}')", Protocol, StorageAccount, partitionKey, rowKey));
+
+            var info = new AzureWorkerInfo()
             {
                 StampName = stampName,
                 WorkerName = workerName,
                 LoadFactor = loadFactor
             };
-            StringContent content = new StringContent(JsonConvert.SerializeObject((object)info), Encoding.UTF8, "application/json");
-            HttpResponseMessage httpResponseMessage1 = await AzureTableUtils.HttpInvoke(HttpMethod.Put, uri, (HttpContent)content);
-            HttpResponseMessage httpResponseMessage2 = httpResponseMessage1;
-            httpResponseMessage1 = (HttpResponseMessage)null;
-            try
+
+            var content = new StringContent(JsonConvert.SerializeObject(info), Encoding.UTF8, "application/json");
+            using (await HttpInvoke(HttpMethod.Put, uri, content))
             {
+                // no-op
             }
-            finally
-            {
-                if (httpResponseMessage2 != null)
-                    httpResponseMessage2.Dispose();
-            }
-            httpResponseMessage2 = (HttpResponseMessage)null;
         }
 
         public static async Task InsertWorker(string partitionKey, string stampName, string workerName, int loadFactor)
         {
-            string str;
+            string rowKey;
             if (partitionKey.IndexOf('(') <= 0)
-                str = string.Format("{0}:{1}", (object)stampName, (object)workerName);
+            {
+                rowKey = string.Format("{0}:{1}", stampName, workerName);
+            }
             else
-                str = ((IEnumerable<string>)partitionKey.Split('(')).First<string>();
-            string rowKey = str;
-            Uri uri = new Uri(string.Format("{0}://{1}.table.core.windows.net/appserviceworkertable", (object)AzureTableUtils.Protocol, (object)AzureTableUtils.StorageAccount));
-            AzureTableUtils.AzureWorkerInfo info = new AzureTableUtils.AzureWorkerInfo()
+            {
+                rowKey = partitionKey.Split('(').First();
+            }
+
+            var uri = new Uri(string.Format("{0}://{1}.table.core.windows.net/appserviceworkertable", Protocol, StorageAccount));
+
+            var info = new AzureWorkerInfo()
             {
                 PartitionKey = partitionKey,
                 RowKey = rowKey,
@@ -212,126 +197,95 @@ namespace Kudu.Core.Scaling
                 WorkerName = workerName,
                 LoadFactor = loadFactor
             };
-            StringContent content = new StringContent(JsonConvert.SerializeObject((object)info), Encoding.UTF8, "application/json");
-            HttpResponseMessage httpResponseMessage1 = await AzureTableUtils.HttpInvoke(HttpMethod.Post, uri, (HttpContent)content);
-            HttpResponseMessage httpResponseMessage2 = httpResponseMessage1;
-            httpResponseMessage1 = (HttpResponseMessage)null;
-            try
+
+            var content = new StringContent(JsonConvert.SerializeObject(info), Encoding.UTF8, "application/json");
+            using (await HttpInvoke(HttpMethod.Post, uri, content))
             {
+                // no-op
             }
-            finally
-            {
-                if (httpResponseMessage2 != null)
-                    httpResponseMessage2.Dispose();
-            }
-            httpResponseMessage2 = (HttpResponseMessage)null;
         }
 
         public static async Task DeleteWorker(string partitionKey, string stampName = null, string workerName = null)
         {
-            string str;
+            string rowKey;
             if (partitionKey.IndexOf('(') <= 0)
-                str = string.Format("{0}:{1}", (object)stampName, (object)workerName);
+            {
+                rowKey = string.Format("{0}:{1}", stampName, workerName);
+            }
             else
-                str = ((IEnumerable<string>)partitionKey.Split('(')).First<string>();
-            string rowKey = str;
-            Uri uri = new Uri(string.Format("{0}://{1}.table.core.windows.net/appserviceworkertable(PartitionKey='{2}',RowKey='{3}')", new object[4]
             {
-        (object) AzureTableUtils.Protocol,
-        (object) AzureTableUtils.StorageAccount,
-        (object) partitionKey,
-        (object) rowKey
-            }));
-            HttpResponseMessage httpResponseMessage = await AzureTableUtils.HttpInvoke(HttpMethod.Delete, uri, (HttpContent)null);
-            HttpResponseMessage response = httpResponseMessage;
-            httpResponseMessage = (HttpResponseMessage)null;
-            try
-            {
+                rowKey = partitionKey.Split('(').First();
             }
-            finally
+
+            var uri = new Uri(string.Format("{0}://{1}.table.core.windows.net/appserviceworkertable(PartitionKey='{2}',RowKey='{3}')", Protocol, StorageAccount, partitionKey, rowKey));
+
+            using (await HttpInvoke(HttpMethod.Delete, uri))
             {
-                if (response != null)
-                    response.Dispose();
+                // no-op
             }
-            response = (HttpResponseMessage)null;
         }
 
         private static void Initialize()
         {
-            IEnumerable<string[]> source = ((IEnumerable<string>)(System.Environment.GetEnvironmentVariable("AzureWebJobsDashboard") ?? "DefaultEndpointsProtocol=https;AccountName=antfunctions;AccountKey=XVYaUffMUpRPldbS9EmMNZ8+SsD+O+Gm1BFLEuFkekFNRTy/DDl7t9fpkEuPO3u3t5UjrdVPa+kR0y8A4bzttQ==").Split(new char[1]
-            {
-        ';'
-            }, StringSplitOptions.RemoveEmptyEntries)).Select<string, string[]>((Func<string, string[]>)(p => p.Split(new char[1]
-     {
-        '='
-            }, 2)));
-            Func<string[], string> func = (Func<string[], string>)(p => p[0]);
-            Func<string[], string> keySelector;
-            Dictionary<string, string> dictionary = source.ToDictionary<string[], string, string>(keySelector, (Func<string[], string>)(p => p[1]));
-            AzureTableUtils._protocol = dictionary["DefaultEndpointsProtocol"];
-            AzureTableUtils._storageAccount = dictionary["AccountName"];
-            AzureTableUtils._storageKey = dictionary["AccountKey"];
+            // TODO, suwatch: remove
+            var dictionary = (System.Environment.GetEnvironmentVariable("AzureWebJobsDashboard") ?? "DefaultEndpointsProtocol=https;AccountName=antfunctions;AccountKey=XVYaUffMUpRPldbS9EmMNZ8+SsD+O+Gm1BFLEuFkekFNRTy/DDl7t9fpkEuPO3u3t5UjrdVPa+kR0y8A4bzttQ==")
+                .Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(p => p.Split(new[] { '=' }, 2))
+                .ToDictionary(p => p[0], p => p[1]);
+
+            _protocol = dictionary["DefaultEndpointsProtocol"];
+            _storageAccount = dictionary["AccountName"];
+            _storageKey = dictionary["AccountKey"];
         }
 
         private static async Task<HttpResponseMessage> HttpInvoke(HttpMethod method, Uri uri, HttpContent content = null)
         {
             HttpRequestMessage request = new HttpRequestMessage(method, uri);
+
             if (content != null)
+            {
                 request.Content = content;
+            }
+
             if (method == HttpMethod.Put || method == HttpMethod.Delete)
+            {
                 request.Headers.Add("If-Match", "*");
-            string date = DateTime.UtcNow.ToString("R", (IFormatProvider)CultureInfo.InvariantCulture);
+            }
+
+            var date = DateTime.UtcNow.ToString("R", CultureInfo.InvariantCulture);
             request.Headers.Add("x-ms-date", date);
-            request.Headers.Authorization = AzureTableUtils.CreateAuthorizationHeader(date, uri.AbsolutePath);
-            HttpClient client = AzureTableUtils.HttpClient;
-            HttpResponseMessage httpResponseMessage = await client.SendAsync(request);
-            HttpResponseMessage response = httpResponseMessage;
-            httpResponseMessage = (HttpResponseMessage)null;
+            request.Headers.Authorization = CreateAuthorizationHeader(date, uri.AbsolutePath);
+
+            var response = await HttpClient.SendAsync(request);
             if (response.IsSuccessStatusCode)
+            {
                 return response;
-            AzureTableUtils.AzureODataError odataError = (AzureTableUtils.AzureODataError)null;
+            }
+
+            AzureODataError odataError = null;
             try
             {
-                string str = await response.Content.ReadAsStringAsync();
-                odataError = JsonConvert.DeserializeObject<AzureTableUtils.AzureODataError>(str);
-                str = (string)null;
+                odataError = JsonConvert.DeserializeObject<AzureODataError>(await response.Content.ReadAsStringAsync());
                 return response.EnsureSuccessStatusCode();
             }
             catch (Exception ex)
             {
-                AzureTableUtils.AzureODataError azureOdataError = odataError;
-                string str;
-                if (azureOdataError == null)
+                if (odataError != null && odataError.Error != null && odataError.Error.Message != null)
                 {
-                    str = (string)null;
+                    throw new HttpRequestException(string.Format("{0} {1}", odataError.Error.Code, odataError.Error.Message.Value), ex);
                 }
-                else
-                {
-                    AzureTableUtils.AzureODataError.ODataError error = azureOdataError.Error;
-                    if (error == null)
-                    {
-                        str = (string)null;
-                    }
-                    else
-                    {
-                        AzureTableUtils.AzureODataError.ODataMessage message = error.Message;
-                        str = message != null ? message.Value : (string)null;
-                    }
-                }
-                if (!string.IsNullOrEmpty(str))
-                    throw new HttpRequestException(string.Format("{0} {1}", (object)odataError.Error.Code, (object)odataError.Error.Message.Value), ex);
+
                 throw;
             }
         }
 
         private static AuthenticationHeaderValue CreateAuthorizationHeader(string date, string resourcePath)
         {
-            string s = string.Format("{0}\n/{1}{2}", (object)date, (object)AzureTableUtils.StorageAccount, (object)resourcePath);
-            string empty = string.Empty;
-            using (HMACSHA256 hmacshA256 = new HMACSHA256(Convert.FromBase64String(AzureTableUtils.StorageKey)))
+            var canonicalizedString = string.Format("{0}\n/{1}{2}", date, StorageAccount, resourcePath);
+            var bytes = Encoding.UTF8.GetBytes(canonicalizedString);
+            using (var hmacshA256 = new HMACSHA256(Convert.FromBase64String(StorageKey)))
             {
-                byte[] bytes = Encoding.UTF8.GetBytes(s);
-                return new AuthenticationHeaderValue("SharedKeyLite", string.Format("{0}:{1}", (object)AzureTableUtils.StorageAccount, (object)Convert.ToBase64String(hmacshA256.ComputeHash(bytes))));
+                return new AuthenticationHeaderValue("SharedKeyLite", string.Format("{0}:{1}", StorageAccount, Convert.ToBase64String(hmacshA256.ComputeHash(bytes))));
             }
         }
 
