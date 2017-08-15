@@ -8,6 +8,14 @@ namespace Kudu.Core.Infrastructure
 {
     public abstract class PathUtilityBase
     {
+        static readonly string[] _npmTools = new string[]
+        {
+            "bower",
+            "grunt",
+            "gulp",
+            "funcpack",
+        };
+
         // Return a list of folders that need to be on the %PATH%
         public virtual List<string> GetPathFolders(IEnvironment environment)
         {
@@ -26,12 +34,8 @@ namespace Kudu.Core.Infrastructure
             toolsPaths.AddRange(ResolveNodeNpmPaths());
             toolsPaths.Add(ResolveNpmGlobalPrefix());
 
-            toolsPaths.AddRange(new[]
-            {
-                ResolveBowerPath(),
-                ResolveGruntPath(),
-                ResolveGulpPath()
-            }.Where(p => !String.IsNullOrEmpty(p)).Select(Path.GetDirectoryName));
+            toolsPaths.AddRange(_npmTools.Select(ResolveNpmToolsPath)
+                .Where(p => !String.IsNullOrEmpty(p)).Select(Path.GetDirectoryName));
 
             return toolsPaths;
         }
@@ -52,6 +56,11 @@ namespace Kudu.Core.Infrastructure
         internal abstract string ResolveNpmJsPath();
 
         internal abstract string ResolveMSBuildPath();
+
+        internal virtual string ResolveMSBuild15Dir()
+        {
+            return null;
+        }
 
         internal virtual string ResolveVsTestPath()
         {
@@ -89,11 +98,7 @@ namespace Kudu.Core.Infrastructure
 
         internal abstract bool PathsEquals(string path1, string path2);
 
-        internal abstract string ResolveBowerPath();
-
-        internal abstract string ResolveGulpPath();
-
-        internal abstract string ResolveGruntPath();
+        internal abstract string ResolveNpmToolsPath(string toolName);
 
         internal virtual string ResolveFSharpCPath()
         {

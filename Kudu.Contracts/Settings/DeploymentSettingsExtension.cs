@@ -102,6 +102,13 @@ namespace Kudu.Contracts.Settings
             return StringUtils.IsTrueLike(value);
         }
 
+        public static bool IsWebJobsScheduleDisabled(this IDeploymentSettingsManager settings)
+        {
+            string value = settings.GetValue(SettingsKeys.WebJobsDisableSchedule);
+
+            return StringUtils.IsTrueLike(value);
+        }
+
         public static string GetBranch(this IDeploymentSettingsManager settings)
         {
             string value = settings.GetValue(SettingsKeys.Branch, onlyPerSite: true);

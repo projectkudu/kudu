@@ -87,7 +87,7 @@ namespace Kudu.Core.Deployment.Generator
             // figure out with some heuristic, which one to deploy.
 
             // TODO: Pick only 1 and throw if there's more than one
-            VsSolutionProject project = solution.Projects.Where(p => p.IsWap || p.IsWebSite || p.IsAspNetCore).FirstOrDefault();
+            VsSolutionProject project = solution.Projects.Where(p => p.IsWap || p.IsWebSite || p.IsAspNetCore || p.IsFunctionApp).FirstOrDefault();
 
             if (project == null)
             {
@@ -128,18 +128,33 @@ namespace Kudu.Core.Deployment.Generator
                                       solution.Path);
             }
 
-            return new WebSiteBuilder(_environment,
+            if (project.IsWebSite)
+            {
+                return new WebSiteBuilder(_environment,
                                       settings,
                                       _propertyProvider,
                                       repositoryRoot,
                                       project.AbsolutePath,
                                       solution.Path);
+            }
+
+            return new FunctionMsbuildBuilder(_environment,
+                                            settings,
+                                            _propertyProvider,
+                                            repositoryRoot,
+                                            project.AbsolutePath,
+                                            solution.Path);
         }
 
         private ISiteBuilder ResolveNonAspProject(string repositoryRoot, string projectPath, IDeploymentSettingsManager perDeploymentSettings)
         {
             string sourceProjectPath = projectPath ?? repositoryRoot;
-            if (IsNodeSite(sourceProjectPath))
+            // "FUNCTIONS_EXTENSION_VERSION" environment variable implies a functionApp
+            if (FunctionAppHelper.LooksLikeFunctionApp())
+            {
+                return new FunctionBasicBuilder(_environment, perDeploymentSettings, _propertyProvider, repositoryRoot, projectPath);
+            }
+            else if (IsNodeSite(sourceProjectPath))
             {
                 return new NodeSiteBuilder(_environment, perDeploymentSettings, _propertyProvider, repositoryRoot, projectPath);
             }
@@ -151,13 +166,13 @@ namespace Kudu.Core.Deployment.Generator
             {
                 return new GoSiteBuilder(_environment, perDeploymentSettings, _propertyProvider, repositoryRoot, projectPath);
             }
-            else if (IsFunctionApp(sourceProjectPath))
-            {
-                return new FunctionAppBuilder(_environment, perDeploymentSettings, _propertyProvider, repositoryRoot, projectPath);
-            }
             else if (IsRubySite(sourceProjectPath))
             {
                 return new RubySiteBuilder(_environment, perDeploymentSettings, _propertyProvider, repositoryRoot, projectPath);
+            }
+            else if (IsPHPSite(sourceProjectPath))
+            {
+                return new PHPSiteBuilder(_environment, perDeploymentSettings, _propertyProvider, repositoryRoot, projectPath);
             }
 
             return new BasicBuilder(_environment, perDeploymentSettings, _propertyProvider, repositoryRoot, projectPath);
@@ -183,9 +198,9 @@ namespace Kudu.Core.Deployment.Generator
             return RubySiteEnabler.LooksLikeRuby(projectPath);
         }
 
-        private static bool IsFunctionApp(string projectPath)
+        private static bool IsPHPSite(string projectPath)
         {
-            return FunctionAppEnabler.LooksLikeFunctionApp(projectPath);
+            return PHPSiteEnabler.LooksLikePHP(projectPath);
         }
 
         private ISiteBuilder ResolveProject(string repositoryRoot, IDeploymentSettingsManager perDeploymentSettings, IFileFinder fileFinder, bool tryWebSiteProject = false, SearchOption searchOption = SearchOption.AllDirectories)
@@ -193,6 +208,7 @@ namespace Kudu.Core.Deployment.Generator
             return ResolveProject(repositoryRoot, repositoryRoot, perDeploymentSettings, fileFinder, tryWebSiteProject, searchOption, specificConfiguration: false);
         }
 
+        // unless user specifies which project to deploy, targetPath == repositoryRoot
         private ISiteBuilder ResolveProject(string repositoryRoot, string targetPath, IDeploymentSettingsManager perDeploymentSettings, IFileFinder fileFinder, bool tryWebSiteProject, SearchOption searchOption = SearchOption.AllDirectories, bool specificConfiguration = true)
         {
             if (DeploymentHelper.IsProject(targetPath))
@@ -222,7 +238,7 @@ namespace Kudu.Core.Deployment.Generator
             }
 
             // Check for ASP.NET Core project without VS solution or project
-            // for ASP.NET Core project which only has project.json, but not xproj ie: AspNetCoreRC2YeomanProject
+            // for ASP.NET Core project which only has project.json, but not xproj ie: dotnet preview2 cli project
             string projectJson;
             if (AspNetCoreHelper.TryAspNetCoreWebProject(targetPath, fileFinder, out projectJson))
             {
@@ -230,7 +246,8 @@ namespace Kudu.Core.Deployment.Generator
                                            perDeploymentSettings,
                                            _propertyProvider,
                                            repositoryRoot,
-                                           projectJson);
+                                           projectJson,
+                                           null);
             }
 
             if (tryWebSiteProject)
@@ -269,6 +286,7 @@ namespace Kudu.Core.Deployment.Generator
             return ResolveNonAspProject(repositoryRoot, targetPath, perDeploymentSettings);
         }
 
+        // used when we have a project file
         private ISiteBuilder DetermineProject(string repositoryRoot, string targetPath, IDeploymentSettingsManager perDeploymentSettings, IFileFinder fileFinder)
         {
             var solution = VsHelper.FindContainingSolution(repositoryRoot, targetPath, fileFinder);
@@ -286,11 +304,11 @@ namespace Kudu.Core.Deployment.Generator
             else if (AspNetCoreHelper.IsDotnetCoreFromProjectFile(targetPath, projectTypeGuids))
             {
                 return new AspNetCoreBuilder(_environment,
-                       perDeploymentSettings,
-                       _propertyProvider,
-                       repositoryRoot,
-                       targetPath,
-                       solutionPath);
+                                            perDeploymentSettings,
+                                            _propertyProvider,
+                                            repositoryRoot,
+                                            targetPath,
+                                            solutionPath);
             }
             else if (VsHelper.IsExecutableProject(targetPath))
             {
@@ -301,6 +319,15 @@ namespace Kudu.Core.Deployment.Generator
                                       repositoryRoot,
                                       targetPath,
                                       solutionPath);
+            }
+            else if (FunctionAppHelper.LooksLikeFunctionApp())
+            {
+                return new FunctionMsbuildBuilder(_environment,
+                                                perDeploymentSettings,
+                                                _propertyProvider,
+                                                repositoryRoot,
+                                                targetPath,
+                                                solutionPath);
             }
 
             throw new InvalidOperationException(String.Format(CultureInfo.CurrentCulture,

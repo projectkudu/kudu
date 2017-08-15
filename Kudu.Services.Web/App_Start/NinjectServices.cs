@@ -142,7 +142,7 @@ namespace Kudu.Services.Web.App_Start
 
             kernel.Bind<IBuildPropertyProvider>().ToConstant(new BuildPropertyProvider());
 
-            System.Func<ITracer> createTracerThunk = () => GetTracer(environment, kernel);
+            System.Func<ITracer> createTracerThunk = () => GetTracer(kernel);
             System.Func<ILogger> createLoggerThunk = () => GetLogger(environment, kernel);
 
             // First try to use the current request profiler if any, otherwise create a new one
@@ -180,6 +180,7 @@ namespace Kudu.Services.Web.App_Start
             TraceServices.TraceLevel = noContextDeploymentsSettingsManager.GetTraceLevel();
 
             var noContextTraceFactory = new TracerFactory(() => GetTracerWithoutContext(environment, noContextDeploymentsSettingsManager));
+            var etwTraceFactory = new TracerFactory(() => new ETWTracer(string.Empty, string.Empty));
 
             kernel.Bind<IAnalytics>().ToMethod(context => new Analytics(context.Kernel.Get<IDeploymentSettingsManager>(),
                                                                         context.Kernel.Get<IServerConfiguration>(),
@@ -232,7 +233,7 @@ namespace Kudu.Services.Web.App_Start
                                              .InRequestScope();
 
             ITriggeredJobsManager triggeredJobsManager = new TriggeredJobsManager(
-                noContextTraceFactory,
+                etwTraceFactory,
                 kernel.Get<IEnvironment>(),
                 kernel.Get<IDeploymentSettingsManager>(),
                 kernel.Get<IAnalytics>(),
@@ -242,14 +243,15 @@ namespace Kudu.Services.Web.App_Start
 
             TriggeredJobsScheduler triggeredJobsScheduler = new TriggeredJobsScheduler(
                 triggeredJobsManager,
-                noContextTraceFactory,
+                etwTraceFactory,
                 environment,
+                kernel.Get<IDeploymentSettingsManager>(),
                 kernel.Get<IAnalytics>());
             kernel.Bind<TriggeredJobsScheduler>().ToConstant(triggeredJobsScheduler)
                                              .InTransientScope();
 
             IContinuousJobsManager continuousJobManager = new ContinuousJobsManager(
-                noContextTraceFactory,
+                etwTraceFactory,
                 kernel.Get<IEnvironment>(),
                 kernel.Get<IDeploymentSettingsManager>(),
                 kernel.Get<IAnalytics>());
@@ -320,7 +322,7 @@ namespace Kudu.Services.Web.App_Start
             EnsureUserProfileDirectory();
 
             // Skip SSL Certificate Validate
-            if (System.Environment.GetEnvironmentVariable(SettingsKeys.SkipSslValidation) == "1")
+            if (Kudu.Core.Environment.SkipSslValidation)
             {
                 ServicePointManager.ServerCertificateValidationCallback = delegate { return true; };
             }
@@ -528,7 +530,15 @@ namespace Kudu.Services.Web.App_Start
             routes.MapHttpRoute("get-function", "api/functions/{name}", new { controller = "Function", action = "Get" }, new { verb = new HttpMethodConstraint("GET") });
             routes.MapHttpRoute("list-secrets", "api/functions/{name}/listsecrets", new { controller = "Function", action = "GetSecrets" }, new { verb = new HttpMethodConstraint("POST") });
             routes.MapHttpRoute("get-masterkey", "api/functions/admin/masterkey", new { controller = "Function", action = "GetMasterKey" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpRoute("get-admintoken", "api/functions/admin/token", new { controller = "Function", action = "GetAdminToken" }, new { verb = new HttpMethodConstraint("GET") });
             routes.MapHttpRoute("delete-function", "api/functions/{name}", new { controller = "Function", action = "Delete" }, new { verb = new HttpMethodConstraint("DELETE") });
+            routes.MapHttpRoute("download-functions", "api/functions/admin/download", new { controller = "Function", action = "DownloadFunctions" }, new { verb = new HttpMethodConstraint("GET") });
+
+            // Docker Hook Endpoint
+            if (!OSDetector.IsOnWindows())
+            {
+                routes.MapHttpRoute("docker", "docker/hook", new { controller = "Docker", action = "ReceiveHook" }, new { verb = new HttpMethodConstraint("POST") });
+            }
 
             // catch all unregistered url to properly handle not found
             // this is to work arounf the issue in TraceModule where we see double OnBeginRequest call
@@ -613,13 +623,14 @@ namespace Kudu.Services.Web.App_Start
             });
         }
 
-        private static ITracer GetTracer(IEnvironment environment, IKernel kernel)
+        private static ITracer GetTracer(IKernel kernel)
         {
+            IEnvironment environment = kernel.Get<IEnvironment>();
             TraceLevel level = kernel.Get<IDeploymentSettingsManager>().GetTraceLevel();
             if (level > TraceLevel.Off && TraceServices.CurrentRequestTraceFile != null)
             {
                 string textPath = Path.Combine(environment.TracePath, TraceServices.CurrentRequestTraceFile);
-                return new CascadeTracer(new XmlTracer(environment.TracePath, level), new TextTracer(textPath, level));
+                return new CascadeTracer(new XmlTracer(environment.TracePath, level), new TextTracer(textPath, level), new ETWTracer(environment.RequestId, TraceServices.HttpMethod));
             }
 
             return NullTracer.Instance;

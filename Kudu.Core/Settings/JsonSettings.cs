@@ -119,7 +119,15 @@ namespace Kudu.Core.Settings
                 // it is the most optimal where write is infrequent and dirty read is acceptable.
                 using (var reader = new JsonTextReader(new StreamReader(FileSystemHelpers.OpenFile(_path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))))
                 {
-                    return JObject.Load(reader);
+                    try
+                    {
+                        return JObject.Load(reader);
+                    }
+                    catch (JsonException)
+                    {
+                        // reset if corrupted.
+                        return new JObject();
+                    }
                 }
             }, "Getting setting", _timeout);
         }

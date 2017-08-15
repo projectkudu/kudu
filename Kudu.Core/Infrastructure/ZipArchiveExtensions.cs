@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.IO.Abstractions;
 using System.IO.Compression;
@@ -15,7 +16,18 @@ namespace Kudu.Core.Infrastructure
             zipArchive.AddDirectory(directoryInfo, tracer, directoryNameInArchive);
         }
 
+        public static void AddDirectory(this ZipArchive zipArchive, DirectoryInfoBase directory, ITracer tracer, string directoryNameInArchive, out IList<ZipArchiveEntry> files)
+        {
+            files = new List<ZipArchiveEntry>();
+            InternalAddDirectory(zipArchive, directory, tracer, directoryNameInArchive, files);
+        }
+
         public static void AddDirectory(this ZipArchive zipArchive, DirectoryInfoBase directory, ITracer tracer, string directoryNameInArchive)
+        {
+            InternalAddDirectory(zipArchive, directory, tracer, directoryNameInArchive);
+        }
+
+        private static void InternalAddDirectory(ZipArchive zipArchive, DirectoryInfoBase directory, ITracer tracer, string directoryNameInArchive, IList<ZipArchiveEntry> files = null)
         {
             bool any = false;
             foreach (var info in directory.GetFileSystemInfos())
@@ -25,11 +37,12 @@ namespace Kudu.Core.Infrastructure
                 if (subDirectoryInfo != null)
                 {
                     string childName = ForwardSlashCombine(directoryNameInArchive, subDirectoryInfo.Name);
-                    zipArchive.AddDirectory(subDirectoryInfo, tracer, childName);
+                    InternalAddDirectory(zipArchive, subDirectoryInfo, tracer, childName, files);
                 }
                 else
                 {
-                    zipArchive.AddFile((FileInfoBase)info, tracer, directoryNameInArchive);
+                    var entry = zipArchive.AddFile((FileInfoBase)info, tracer, directoryNameInArchive);
+                    files?.Add(entry);
                 }
             }
 
@@ -45,13 +58,13 @@ namespace Kudu.Core.Infrastructure
             return Path.Combine(part1, part2).Replace('\\', '/');
         }
 
-        public static void AddFile(this ZipArchive zipArchive, string filePath, ITracer tracer, string directoryNameInArchive = "")
+        public static ZipArchiveEntry AddFile(this ZipArchive zipArchive, string filePath, ITracer tracer, string directoryNameInArchive = "")
         {
             var fileInfo = new FileInfoWrapper(new FileInfo(filePath));
-            zipArchive.AddFile(fileInfo, tracer, directoryNameInArchive);
+            return zipArchive.AddFile(fileInfo, tracer, directoryNameInArchive);
         }
 
-        public static void AddFile(this ZipArchive zipArchive, FileInfoBase file, ITracer tracer, string directoryNameInArchive)
+        public static ZipArchiveEntry AddFile(this ZipArchive zipArchive, FileInfoBase file, ITracer tracer, string directoryNameInArchive)
         {
             Stream fileStream = null;
             try
@@ -63,7 +76,7 @@ namespace Kudu.Core.Infrastructure
                 // tolerate if file in use.
                 // for simplicity, any exception.
                 tracer.TraceError(String.Format("{0}, {1}", file.FullName, ex));
-                return;
+                return null;
             }
 
             try
@@ -76,6 +89,7 @@ namespace Kudu.Core.Infrastructure
                 {
                     fileStream.CopyTo(zipStream);
                 }
+                return entry;
             }
             finally
             {
@@ -83,13 +97,14 @@ namespace Kudu.Core.Infrastructure
             }
         }
 
-        public static void AddFile(this ZipArchive zip, string fileName, string fileContent)
+        public static ZipArchiveEntry AddFile(this ZipArchive zip, string fileName, string fileContent)
         {
             ZipArchiveEntry entry = zip.CreateEntry(fileName, CompressionLevel.Fastest);
             using (var writer = new StreamWriter(entry.Open()))
             {
                 writer.Write(fileContent);
             }
+            return entry;
         }
 
         public static void Extract(this ZipArchive archive, string directoryName)

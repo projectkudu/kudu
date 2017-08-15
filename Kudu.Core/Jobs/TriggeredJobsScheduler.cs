@@ -17,15 +17,17 @@ namespace Kudu.Core.Jobs
         private readonly ITriggeredJobsManager _triggeredJobsManager;
         private readonly ITraceFactory _traceFactory;
         private readonly IEnvironment _environment;
+        private readonly IDeploymentSettingsManager _settings;
         private readonly IAnalytics _analytics;
 
         private readonly Dictionary<string, TriggeredJobSchedule> _triggeredJobsSchedules = new Dictionary<string, TriggeredJobSchedule>(StringComparer.OrdinalIgnoreCase);
 
-        public TriggeredJobsScheduler(ITriggeredJobsManager triggeredJobsManager, ITraceFactory traceFactory, IEnvironment environment, IAnalytics analytics)
+        public TriggeredJobsScheduler(ITriggeredJobsManager triggeredJobsManager, ITraceFactory traceFactory, IEnvironment environment, IDeploymentSettingsManager settings, IAnalytics analytics)
         {
             _triggeredJobsManager = triggeredJobsManager;
             _traceFactory = traceFactory;
             _environment = environment;
+            _settings = settings;
             _analytics = analytics;
 
             _triggeredJobsManager.RegisterExtraEventHandlerForFileChange(OnJobChanged);
@@ -41,7 +43,11 @@ namespace Kudu.Core.Jobs
 
             TriggeredJob triggeredJob = _triggeredJobsManager.GetJob(jobName);
 
-            if (triggeredJob != null)
+            if (_settings.IsWebJobsScheduleDisabled())
+            {
+                _traceFactory.GetTracer().Trace("All WebJobs schedules have been disabled via WEBJOBS_DISABLE_SCHEDULE");
+            }
+            else if (triggeredJob != null)
             {
                 string cronExpression = triggeredJob.Settings != null ? triggeredJob.Settings.GetSchedule() : null;
                 if (cronExpression != null)

@@ -233,14 +233,9 @@ namespace Kudu.Services.SiteExtensions
                 ITracer backgroundTracer = NullTracer.Instance;
                 IDictionary<string, string> traceAttributes = new Dictionary<string, string>();
 
-                if (tracer.TraceLevel == TraceLevel.Off)
-                {
-                    backgroundTracer = NullTracer.Instance;
-                }
-
                 if (tracer.TraceLevel > TraceLevel.Off)
                 {
-                    backgroundTracer = new XmlTracer(_environment.TracePath, tracer.TraceLevel);
+                    backgroundTracer = new CascadeTracer(new XmlTracer(_environment.TracePath, tracer.TraceLevel), new ETWTracer(_environment.RequestId, "PUT"));
                     traceAttributes = new Dictionary<string, string>()
                     {
                         {"url", Request.RequestUri.AbsolutePath},
@@ -267,7 +262,7 @@ namespace Kudu.Services.SiteExtensions
                         {
                             using (backgroundTracer.Step("Background thread started for {0} installation", id))
                             {
-                                _manager.InstallExtension(id, requestInfo.Version, requestInfo.FeedUrl, requestInfo.Type, backgroundTracer).Wait();
+                                _manager.InstallExtension(id, requestInfo.Version, requestInfo.FeedUrl, requestInfo.Type, backgroundTracer, requestInfo.InstallationArgs).Wait();
                             }
                         }
                         finally
@@ -297,7 +292,7 @@ namespace Kudu.Services.SiteExtensions
             }
             else
             {
-                result = await _manager.InstallExtension(id, requestInfo.Version, requestInfo.FeedUrl, requestInfo.Type, tracer);
+                result = await _manager.InstallExtension(id, requestInfo.Version, requestInfo.FeedUrl, requestInfo.Type, tracer, requestInfo.InstallationArgs);
 
                 if (string.Equals(Constants.SiteExtensionProvisioningStateFailed, result.ProvisioningState, StringComparison.OrdinalIgnoreCase))
                 {

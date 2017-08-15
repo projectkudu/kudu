@@ -1,42 +1,35 @@
-﻿using Kudu.Contracts.Settings;
-using Kudu.Core.SourceControl;
-using System.IO;
+﻿using System;
+using Kudu.Contracts.Settings;
+using System.Globalization;
 
 namespace Kudu.Core.Deployment.Generator
 {
-    class AspNetCoreBuilder : GeneratorSiteBuilder
+    class AspNetCoreBuilder : MicrosoftSiteBuilder
     {
-        private readonly string _projectPath;
-        private readonly string _solutionPath;
+        private readonly string _version;
 
-        public AspNetCoreBuilder(IEnvironment environment, IDeploymentSettingsManager settings, IBuildPropertyProvider propertyProvider, string sourcePath, string projectPath, string solutionPath = null)
-            : base(environment, settings, propertyProvider, sourcePath)
+        public AspNetCoreBuilder(IEnvironment environment, IDeploymentSettingsManager settings, IBuildPropertyProvider propertyProvider, string sourcePath, string projectFilePath, string solutionPath)
+            : base(environment, settings, propertyProvider, sourcePath, projectFilePath, solutionPath, "--aspNetCore")
         {
-            _projectPath = projectPath;
-            _solutionPath = solutionPath;
-        }
-
-        protected override string ScriptGeneratorCommandArguments
-        {
-            get
+            if (projectFilePath.EndsWith(".csproj", StringComparison.OrdinalIgnoreCase))
             {
-
-                if (string.IsNullOrEmpty(_solutionPath))
-                {
-                    return $"--aspNetCore \"{_projectPath}\""; 
-                    // projectfile is either project.json for preview2, ***.csproj for preview3
-                }
-                else
-                {
-                    return $"--aspNetCore \"{_projectPath}\" --solutionFile \"{_solutionPath}\"";
-                    // if we have a solution file, projectfile is either ***.xproj for preview2, ***.csproj for preview3
-                }
+                _version = "CSPROJ";
+            }
+            else if (projectFilePath.EndsWith(".xproj", StringComparison.OrdinalIgnoreCase))
+            {
+                // if it's xproj, throw invalidOperationException
+                throw new InvalidOperationException(@"Building Asp.Net Core .xproj is no longer supported in Azure, please move to .csproj
+For more information, please visit https://go.microsoft.com/fwlink/?linkid=850964");
+            }
+            else
+            {
+                _version = "PROJECT.JSON";
             }
         }
 
         public override string ProjectType
         {
-            get { return "ASP.NET Core"; }
+            get { return $"ASP.NET CORE {_version}"; }
         }
     }
 }

@@ -95,10 +95,16 @@ namespace Kudu.Core.Infrastructure
             return Path.Combine(programFiles, "nodejs", npmCliPath);
         }
 
+        internal override string ResolveMSBuild15Dir()
+        {
+            string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);
+            return Path.Combine(programFiles, "MSBuild-15.3-preview", "MSBuild", "15.0", "Bin");
+        }
+
         internal override string ResolveMSBuildPath()
         {
             string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);
-            return Path.Combine(programFiles, @"MSBuild", "14.0", "Bin", "MSBuild.exe");
+            return Path.Combine(programFiles, "MSBuild", "14.0", "Bin", "MSBuild.exe");
         }
 
         internal override string ResolveVsTestPath()
@@ -238,7 +244,7 @@ namespace Kudu.Core.Infrastructure
 
             return paths;
         }
-        
+
         internal override bool PathsEquals(string path1, string path2)
         {
             if (path1 == null)
@@ -249,28 +255,13 @@ namespace Kudu.Core.Infrastructure
             return String.Equals(CleanPath(path1), CleanPath(path2), StringComparison.OrdinalIgnoreCase);
         }
 
-        internal override string ResolveBowerPath()
-        {
-            return ResolveNpmToolsPath("bower");
-        }
-
-        internal override string ResolveGulpPath()
-        {
-            return ResolveNpmToolsPath("gulp");
-        }
-
-        internal override string ResolveGruntPath()
-        {
-            return ResolveNpmToolsPath("grunt");
-        }
-
         internal override string ResolveFSharpCPath()
         {
             string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);
             return Path.Combine(programFiles, @"Microsoft SDKs", "F#", "3.1", "Framework", "v4.0", "Fsc.exe");
         }
 
-        private static string ResolveNpmToolsPath(string toolName)
+        internal override string ResolveNpmToolsPath(string toolName)
         {
             // If there is a TOOLNAME_PATH specified, then use that.
             // Otherwise use the pre-installed one

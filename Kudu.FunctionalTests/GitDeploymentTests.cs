@@ -367,83 +367,6 @@ namespace Kudu.FunctionalTests
     }
 
     [KuduXunitTestClass]
-    public class AspNetCoreRC2Yeoman2ProjectsTests : GitDeploymentTests
-    {
-        [Fact]
-        [KuduXunitTest(PrivateOnly = true)]
-        public void PushAndDeployAspNetCoreRC2Yeoman2Projects()
-        {
-            PushAndDeployApps("AspNetCoreRC2Yeoman2Projects", "master", "AspNetCoreRC2Yeoman2Projects", HttpStatusCode.OK, "Deployment successful");
-        }
-    }
-
-    [KuduXunitTestClass]
-    public class AspNetCoreRC2YeomanProjectTests : GitDeploymentTests
-    {
-        [Fact]
-        [KuduXunitTest(PrivateOnly = true)]
-        public void PushAndDeployAspNetCoreRC2YeomanProject()
-        {
-            PushAndDeployApps("AspNetCoreRC2YeomanProject", "master", "AspNetCoreRC2YeomanProject", HttpStatusCode.OK, "Deployment successful");
-        }
-    }
-
-    [KuduXunitTestClass]
-    public class AspNetCoreRC2VisualStudioSlnTests : GitDeploymentTests
-    {
-        [Fact]
-        [KuduXunitTest(PrivateOnly = true)]
-        public void PushAndDeployAspNetCoreRC2VisualStudioSln()
-        {
-            PushAndDeployApps("AspNetCoreRC2VisualStudioSln", "master", "AspNetCoreRC2", HttpStatusCode.OK, "Deployment successful");
-        }
-    }
-
-    [KuduXunitTestClass]
-    public class AspNetCorePreview2MultipleProjectsTests : GitDeploymentTests
-    {
-        [Fact]
-        [KuduXunitTest(PrivateOnly = true)]
-        public void PushAndDeployAspNetCorePreview2MultipleProjects()
-        {
-            PushAndDeployApps("AspNetCorePreview2MultipleProjects", "master", "WebApplication1!", HttpStatusCode.OK, "Deployment successful");
-        }
-    }
-
-    [KuduXunitTestClass]
-    public class AspNetCorePreview3MultipleProjectsTests : GitDeploymentTests
-    {
-        [Fact]
-        [KuduXunitTest(PrivateOnly = true)]
-        public void PushAndDeployAspNetCorePreview3MultipleProjects()
-        {
-            PushAndDeployApps("AspNetCorePreview3MultipleProjects", "master", "Preview3WebApplication2!", HttpStatusCode.OK, "Deployment successful");
-        }
-    }
-
-    [KuduXunitTestClass]
-    public class AspNetCorePreview3VSslnTests : GitDeploymentTests
-    {
-        [Fact]
-        [KuduXunitTest(PrivateOnly = true)]
-        public void PushAndDeployAspNetCorePreview3VSsln()
-        {
-            PushAndDeployApps("AspNetCorePreview3VSsln", "master", "Preview3VSsln!", HttpStatusCode.OK, "Deployment successful");
-        }
-    }
-
-    [KuduXunitTestClass]
-    public class AspNetCorePreview3CliTests : GitDeploymentTests
-    {
-        [Fact]
-        [KuduXunitTest(PrivateOnly = true)]
-        public void PushAndDeployAspNetCorePreview3Cli()
-        {
-            PushAndDeployApps("AspNetCorePreview3Cli", "master", "MvcApp", HttpStatusCode.OK, "Deployment successful");
-        }
-    }
-
-    [KuduXunitTestClass]
     public class AspNetCoreRC3CliWithLibTests : GitDeploymentTests
     {
         [Fact]
@@ -455,13 +378,35 @@ namespace Kudu.FunctionalTests
     }
 
     [KuduXunitTestClass]
+    public class AspNetCore2CliWithLibTests : GitDeploymentTests
+    {
+        [Fact]
+        [KuduXunitTest(PrivateOnly = true)]
+        public void PushAndDeployAspNetCore2CliWithLib()
+        {
+            PushAndDeployApps("AspNetCore2.0CliWithLib", "master", "lib success", HttpStatusCode.OK, "Deployment successful");
+        }
+    }
+
+    [KuduXunitTestClass]
     public class AspNetCoreRC4WebApiVsSlnTests : GitDeploymentTests
     {
         [Fact]
         [KuduXunitTest(PrivateOnly = true)]
         public void PushAndDeployAspNetCoreRC4WebApiVsSln()
-        { 
-            PushAndDeployApps("AspNetCoreRC4WebApiVsSln", "master", "[\"value1\",\"value2\"]", HttpStatusCode.OK, "Deployment successful", resourcePath:"/api/values");
+        {
+            PushAndDeployApps("AspNetCoreRC4WebApiVsSln", "master", "[\"classlibrary\",\"netstandard\"]", HttpStatusCode.OK, "Deployment successful", resourcePath: "/api/values");
+        }
+    }
+
+    [KuduXunitTestClass]
+    public class AspNetCoreYeomanProjectTest : GitDeploymentTests
+    {
+        [Fact]
+        [KuduXunitTest(PrivateOnly = true)]
+        public void PushAndDeployAspNetCoreYeomanProject()
+        {
+            PushAndDeployApps("AspNetCoreYeomanProject", "master", "[\"value1\",\"value2\"]", HttpStatusCode.OK, "Deployment successful", resourcePath: "/api/values");
         }
     }
 
@@ -479,9 +424,9 @@ namespace Kudu.FunctionalTests
     public abstract class GitDeploymentTests
     {
         //Common code
-        internal static void PushAndDeployApps(string repoCloneUrl, string defaultBranchName, string verificationText, 
-                                              HttpStatusCode expectedResponseCode, string verificationLogText, 
-                                              DeployStatus expectedStatus = DeployStatus.Success, string resourcePath = "", 
+        internal static void PushAndDeployApps(string repoCloneUrl, string defaultBranchName, string verificationText,
+                                              HttpStatusCode expectedResponseCode, string verificationLogText,
+                                              DeployStatus expectedStatus = DeployStatus.Success, string resourcePath = "",
                                               string httpMethod = "GET", string jsonPayload = "", bool deleteSCM = false)
         {
             using (new LatencyLogger("PushAndDeployApps - " + repoCloneUrl))

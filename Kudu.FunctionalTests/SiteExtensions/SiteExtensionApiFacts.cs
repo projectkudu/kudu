@@ -30,12 +30,6 @@ namespace Kudu.FunctionalTests.SiteExtensions
             {"AzureMinifier", "Minifier"},
         };
 
-        private static readonly Dictionary<string, string> _preInstalledExtensions = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
-        {
-            {"Monaco", "Visual Studio Online"},
-            {"DaaS", "Site Diagnostics"}
-        };
-
         [Theory]
         [InlineData(null, "sitereplicator")]    // default site extension endpoint (v2)
         [InlineData("https://api.nuget.org/v3/index.json", "bootstrap")]    // v3 endpoint
@@ -86,6 +80,7 @@ namespace Kudu.FunctionalTests.SiteExtensions
         public async Task SiteExtensionBasicTests()
         {
             const string appName = "SiteExtensionBasicTests";
+            const string installationArgument = "arg0";
 
             await ApplicationManager.RunAsync(appName, async appManager =>
             {
@@ -98,6 +93,7 @@ namespace Kudu.FunctionalTests.SiteExtensions
 
                 // pick site extension
                 var expectedId = _galleryInstalledExtensions.Keys.ToArray()[new Random().Next(_galleryInstalledExtensions.Count)];
+                var expectedInstallationArgs = installationArgument;
                 var expected = results.Find(ext => string.Equals(ext.Id, expectedId, StringComparison.OrdinalIgnoreCase));
                 Assert.True(expected != null, string.Format(CultureInfo.InvariantCulture, "Should able to find {0} from search result", expectedId));
                 TestTracer.Trace("Testing Against Site Extension '{0}' - '{1}'", expectedId, expected.Version);
@@ -121,11 +117,12 @@ namespace Kudu.FunctionalTests.SiteExtensions
                 }
 
                 // install/update
-                TestTracer.Trace("Perform InstallExtension with id '{0}' only", expectedId);
-                responseMessage = await manager.InstallExtension(expected.Id);
+                TestTracer.Trace("Perform InstallExtension with id '{0}' and installationArgs '{1}'", expectedId, installationArgument);
+                responseMessage = await manager.InstallExtension(expected.Id, installationArgs:installationArgument);
                 result = await responseMessage.Content.ReadAsAsync<SiteExtensionInfo>();
                 Assert.Equal(expected.Id, result.Id);
                 Assert.Equal(expected.Version, result.Version);
+                Assert.Equal(expectedInstallationArgs, result.InstallationArgs);
                 Assert.True(responseMessage.Headers.Contains(Constants.RequestIdHeader));
 
                 // list
@@ -138,6 +135,7 @@ namespace Kudu.FunctionalTests.SiteExtensions
                 responseMessage = await manager.GetLocalExtension(expected.Id);
                 result = await responseMessage.Content.ReadAsAsync<SiteExtensionInfo>();
                 Assert.Equal(expected.Id, result.Id);
+                Assert.Equal(expectedInstallationArgs, result.InstallationArgs);
                 Assert.True(responseMessage.Headers.Contains(Constants.RequestIdHeader));
 
                 // delete
@@ -153,18 +151,28 @@ namespace Kudu.FunctionalTests.SiteExtensions
                 Assert.False(results.Exists(ext => ext.Id == expected.Id), "After deletion extension " + expected.Id + " should not exist.");
 
                 // install from non-default endpoint
-                responseMessage = await manager.InstallExtension("bootstrap", version: "3.0.0", feedUrl: "https://www.nuget.org/api/v2/");
+                responseMessage = await manager.InstallExtension("bootstrap", version: "3.0.0", feedUrl: "https://www.nuget.org/api/v2/", installationArgs:installationArgument);
                 result = await responseMessage.Content.ReadAsAsync<SiteExtensionInfo>();
                 Assert.Equal("bootstrap", result.Id);
                 Assert.Equal("3.0.0", result.Version);
                 Assert.Equal("https://www.nuget.org/api/v2/", result.FeedUrl);
+                Assert.Equal(expectedInstallationArgs, result.InstallationArgs);
                 Assert.True(responseMessage.Headers.Contains(Constants.RequestIdHeader));
 
-                // update site extension installed from non-default endpoint
+                // update site extension installed from non-default endpoint with no installation arguments
                 responseMessage = await manager.InstallExtension("bootstrap");
                 result = await responseMessage.Content.ReadAsAsync<SiteExtensionInfo>();
                 Assert.Equal("bootstrap", result.Id);
                 Assert.Equal("https://www.nuget.org/api/v2/", result.FeedUrl);
+                Assert.True(string.IsNullOrWhiteSpace(result.InstallationArgs));
+                Assert.True(responseMessage.Headers.Contains(Constants.RequestIdHeader));
+
+                // update site extension installed using installation arguments
+                responseMessage = await manager.InstallExtension("bootstrap", installationArgs:installationArgument);
+                result = await responseMessage.Content.ReadAsAsync<SiteExtensionInfo>();
+                Assert.Equal("bootstrap", result.Id);
+                Assert.Equal("https://www.nuget.org/api/v2/", result.FeedUrl);
+                Assert.Equal(expectedInstallationArgs, result.InstallationArgs);
                 Assert.True(responseMessage.Headers.Contains(Constants.RequestIdHeader));
             });
         }
@@ -302,6 +310,7 @@ namespace Kudu.FunctionalTests.SiteExtensions
             const string appName = "SiteExtensionGetAsyncTest";
             const string externalPackageId = "bootstrap";
             const string externalFeed = "https://api.nuget.org/v3/index.json";
+            const string installationArgument = "arg0";
 
             await ApplicationManager.RunAsync(appName, async appManager =>
             {
@@ -327,7 +336,7 @@ namespace Kudu.FunctionalTests.SiteExtensions
                 Assert.True(responseMessage.Headers.Contains(Constants.RequestIdHeader));
 
                 UpdateHeaderIfGoingToBeArmRequest(manager.Client, false);
-                responseMessage = await manager.InstallExtension(externalPackageId, feedUrl: externalFeed);
+                responseMessage = await manager.InstallExtension(externalPackageId, feedUrl: externalFeed, installationArgs: installationArgument);
                 SiteExtensionInfo syncResult = await responseMessage.Content.ReadAsAsync<SiteExtensionInfo>();
                 Assert.Equal(externalPackageId, syncResult.Id);
                 Assert.True(responseMessage.Headers.Contains(Constants.RequestIdHeader));
@@ -345,6 +354,7 @@ namespace Kudu.FunctionalTests.SiteExtensions
                 foreach (var item in armResultList.Value)
                 {
                     Assert.Equal(Constants.SiteExtensionProvisioningStateSucceeded, item.Properties.ProvisioningState);
+                    Assert.Equal(installationArgument, item.Properties.InstallationArgs);
                 }
 
                 TestTracer.Trace("GetLocalExtensions (with filter) with Arm header, expecting site extension info will be wrap inside Arm envelop");
@@ -358,6 +368,7 @@ namespace Kudu.FunctionalTests.SiteExtensions
                 foreach (var item in armResultList.Value)
                 {
                     Assert.Equal(Constants.SiteExtensionProvisioningStateSucceeded, item.Properties.ProvisioningState);
+                    Assert.Equal(installationArgument, item.Properties.InstallationArgs);
                 }
             });
         }

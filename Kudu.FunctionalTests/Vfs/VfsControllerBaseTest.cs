@@ -396,11 +396,13 @@ namespace Kudu.FunctionalTests
                     // NoContent is the expected success case.
                     // PreConditionFailed can happen due to race condition between LibGit2Sharp cleanup and lock acquisition and release.
                     // In PreConditionFailed case, nothing is written and the repo isn't updated or corrupted. 
+                    // Conflict can happen due to multiple threads pass LibGit2Sharp cleanup step (one after another) and race to write to the same file.
                     // This is an edge case for a legacy feature
                     Assert.True(
                        concurrentResponse.StatusCode == HttpStatusCode.NoContent ||
-                       concurrentResponse.StatusCode == HttpStatusCode.PreconditionFailed,
-                       $"Status code expected to be either {HttpStatusCode.NoContent} or {HttpStatusCode.PreconditionFailed} but got {concurrentResponse.StatusCode}");
+                       concurrentResponse.StatusCode == HttpStatusCode.PreconditionFailed ||
+                       concurrentResponse.StatusCode == HttpStatusCode.Conflict,
+                       $"Status code expected to be either {HttpStatusCode.NoContent}, {HttpStatusCode.PreconditionFailed} or {HttpStatusCode.Conflict} but got {concurrentResponse.StatusCode}");
                 }
 
                 TestTracer.Trace("==== Check that 'nodeploy' doesn't deploy and that the old content remains.");

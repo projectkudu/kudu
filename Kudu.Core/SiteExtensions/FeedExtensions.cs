@@ -35,6 +35,29 @@ namespace Kudu.Core.SiteExtensions
 
             filterOptions.IncludePrerelease = true; // keep the good old behavior
             var searchResource = await srcRepo.GetResourceAndValidateAsync<SearchLatestResource>();
+
+            // When using nuget.org, we only look at packages that have our tag. Later, we should switch to filtering
+            // by PackageType once nuget.org starts supporting that
+            if (srcRepo.PackageSource.Source.StartsWith("https://www.nuget.org/", StringComparison.InvariantCultureIgnoreCase))
+            {
+                if (String.IsNullOrWhiteSpace(searchTerm))
+                {
+                    // No user provided search string: just search by tag
+                    searchTerm = "tags:AzureSiteExtension";
+                }
+                else if (searchTerm.Contains(":"))
+                {
+                    // User provided complex query with fields: add it as is to the tag field query
+                    searchTerm = $"tags:AzureSiteExtension {searchTerm}";
+                }
+                else
+                {
+                    // User provided simple string: treat it as a title. This is not ideal behavior, but
+                    // is the best we can do based on how nuget.org works
+                    searchTerm = $"tags:AzureSiteExtension title:\"{searchTerm}\"";
+                }
+            }
+
             return await searchResource.Search(searchTerm, filterOptions, skip, take, CancellationToken.None);
         }
 

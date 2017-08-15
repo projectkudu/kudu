@@ -507,7 +507,7 @@ namespace Kudu.Core.Jobs
             DirectoryInfoBase jobDirectory = GetJobDirectory(jobName);
             if (!jobDirectory.Exists)
             {
-                throw new JobNotFoundException();
+                throw new JobNotFoundException($"Cannot find '{jobDirectory.FullName}' directory for '{jobName}' triggered job");
             }
 
             return GetJobScriptDirectory(jobDirectory);

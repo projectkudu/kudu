@@ -24,24 +24,26 @@ namespace Kudu.Services.Diagnostics
         }
 
         [HttpGet]
-        public RuntimeInfo GetRuntimeVersions()
+        public RuntimeInfo GetRuntimeVersions(bool allVersions = false)
         {
             using (_tracer.Step("RuntimeController.GetRuntimeVersions"))
             {
                 return new RuntimeInfo
                 {
-                    NodeVersions = GetNodeVersions()
+                    NodeVersions = GetNodeVersions(allVersions)
                 };
             }
         }
 
-        private static IEnumerable<Dictionary<string, string>> GetNodeVersions()
+        private static IEnumerable<Dictionary<string, string>> GetNodeVersions(bool allVersions)
         {
             string nodeRoot = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "nodejs");
             var directoryInfo = FileSystemHelpers.DirectoryInfoFromDirectoryName(nodeRoot);
             if (directoryInfo.Exists)
             {
                 return directoryInfo.GetDirectories()
+                                    // filter out symbolic link
+                                    .Where(dir => allVersions || (dir.Attributes & FileAttributes.ReparsePoint) != FileAttributes.ReparsePoint)
                                     .Where(dir => _versionRegex.IsMatch(dir.Name))
                                     .Select(dir => new Dictionary<string, string>
                                     {

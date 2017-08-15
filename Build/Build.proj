@@ -18,7 +18,7 @@
     </PropertyGroup>
     
     <PropertyGroup>
-        <MajorVersion>61</MajorVersion>
+        <MajorVersion>65</MajorVersion>
         <!-- Ensure that we come up with a new version every 65535 years -->
         <VersionStartYear>2012</VersionStartYear>
         
@@ -54,7 +54,7 @@
         <ItemGroup>
             <ServiceSiteFilesToCopy Include="$(ProjectRoot)\Kudu.Services.Web\bin*\node_modules*\**\*.*" />
             <ServiceSiteFilesToCopy Include="$(ProjectRoot)\Kudu.Services.Web\commit.txt" />
-            <ServiceSiteFilesToCopy Include="$(ProjectRoot)\Kudu.Services.Web\applicationHost.xdt" />
+            <ServiceSiteFilesToCopy Include="$(ProjectRoot)\Kudu.Services.Web\scmApplicationHost.xdt" />
             <ServiceSiteFilesToCopy Include="$(ProjectRoot)\Kudu.Services.Web\bin*\Kudu.exe" />
             <ServiceSiteFilesToCopy Include="$(ProjectRoot)\Kudu.Services.Web\bin*\Kudu.exe.config" />
             <ServiceSiteFilesToCopy Include="$(ProjectRoot)\Kudu.Services.Web\bin*\Scripts\*" />

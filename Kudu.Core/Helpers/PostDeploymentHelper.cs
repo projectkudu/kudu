@@ -8,8 +8,11 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Reflection;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Web.Script.Serialization;
+using Kudu.Contracts.Settings;
+using Microsoft.Win32.SafeHandles;
 
 namespace Kudu.Core.Helpers
 {
@@ -30,7 +33,7 @@ namespace Kudu.Core.Helpers
         // for mocking or override behavior
         public static Func<HttpClient> HttpClientFactory
         {
-            get {  return _httpClientFactory ?? new Func<HttpClient>(() => new HttpClient()); }
+            get { return _httpClientFactory ?? new Func<HttpClient>(() => new HttpClient()); }
             set { _httpClientFactory = value; }
         }
 
@@ -75,6 +78,12 @@ namespace Kudu.Core.Helpers
             get { return System.Environment.ExpandEnvironmentVariables(@"%HOME%\site\wwwroot\" + Constants.LogicAppJson); }
         }
 
+        // WEBSITE_SKU = Dynamic
+        private static string WebSiteSku
+        {
+            get { return System.Environment.GetEnvironmentVariable(Constants.WebSiteSku); }
+        }
+
         /// <summary>
         /// This common codes is to invoke post deployment operations.
         /// It is written to require least dependencies but framework assemblies.
@@ -82,6 +91,8 @@ namespace Kudu.Core.Helpers
         /// </summary>
         public static async Task Run(string requestId, string siteRestrictedJwt, TraceListener tracer)
         {
+            RunPostDeploymentScripts(tracer);
+
             await SyncFunctionsTriggers(requestId, siteRestrictedJwt, tracer);
 
             await PerformAutoSwap(requestId, siteRestrictedJwt, tracer);
@@ -93,7 +104,13 @@ namespace Kudu.Core.Helpers
 
             if (string.IsNullOrEmpty(FunctionRunTimeVersion))
             {
-                Trace(TraceEventType.Verbose, "Functions are not enabled");
+                Trace(TraceEventType.Verbose, "Skip function trigger and logicapp sync because function is not enabled.");
+                return;
+            }
+
+            if (!string.Equals(Constants.DynamicSku, WebSiteSku, StringComparison.OrdinalIgnoreCase))
+            {
+                Trace(TraceEventType.Verbose, string.Format("Skip function trigger and logicapp sync because sku ({0}) is not dynamic (consumption plan).", WebSiteSku));
                 return;
             }
 
@@ -132,7 +149,7 @@ namespace Kudu.Core.Helpers
                       "Syncing {0} function triggers with payload size {1} bytes {2}",
                       triggers.Count,
                       content.Length,
-                      exception == null ? "successful." : "failed with " + exception.Message);
+                      exception == null ? "successful." : ("failed with " + exception));
             }
 
             // this couples with sync function triggers
@@ -197,7 +214,7 @@ namespace Kudu.Core.Helpers
                       "Syncing logicapp {0} with payload size {1} bytes {2}",
                       displayUrl,
                       content.Length,
-                      exception == null ? "successful." : "failed with " + exception.Message);
+                      exception == null ? "successful." : ("failed with " + exception));
             }
         }
 
@@ -246,11 +263,11 @@ namespace Kudu.Core.Helpers
             }
             finally
             {
-                Trace(TraceEventType.Information, 
-                      "Requesting auto swap to '{0}' slot with '{1}' id {2}", 
-                      slotSwapName, 
+                Trace(TraceEventType.Information,
+                      "Requesting auto swap to '{0}' slot with '{1}' id {2}",
+                      slotSwapName,
                       operationId,
-                      exception == null ? "successful." : "failed with " + exception.Message);
+                      exception == null ? "successful." : ("failed with " + exception));
             }
         }
 
@@ -270,11 +287,25 @@ namespace Kudu.Core.Helpers
                 var json = (Dictionary<string, object>)serializer.DeserializeObject(File.ReadAllText(functionJson));
 
                 object value;
-                var disabled = json.TryGetValue("disabled", out value) && (bool)value;
-                if (disabled)
+                // https://github.com/Azure/azure-webjobs-sdk-script/blob/a9bafba78a3a8092bfd61a8c7093200dae867efb/src/WebJobs.Script/Host/ScriptHost.cs#L1476-L1498
+                if (json.TryGetValue("disabled", out value))
                 {
-                    Trace(TraceEventType.Verbose, "Function {0} is disabled", functionName);
-                    return Enumerable.Empty<Dictionary<string, object>>();
+                    string stringValue = value.ToString();
+                    bool disabled;
+                    // if "disabled" is not a boolean, we try to expend it as an environment variable
+                    if (!Boolean.TryParse(stringValue, out disabled))
+                    {
+                        string expandValue = System.Environment.GetEnvironmentVariable(stringValue);
+                        // "1"/"true" -> true, else false
+                        disabled = string.Equals(expandValue, "1", StringComparison.OrdinalIgnoreCase) ||
+                                   string.Equals(expandValue, "true", StringComparison.OrdinalIgnoreCase);
+                    }
+
+                    if (disabled)
+                    {
+                        Trace(TraceEventType.Verbose, "Function {0} is disabled", functionName);
+                        return Enumerable.Empty<Dictionary<string, object>>();
+                    }
                 }
 
                 var excluded = json.TryGetValue("excluded", out value) && (bool)value;
@@ -304,7 +335,7 @@ namespace Kudu.Core.Helpers
             }
             catch (Exception ex)
             {
-                Trace(TraceEventType.Warning, "{0} is invalid. {1}", functionJson, ex.Message);
+                Trace(TraceEventType.Warning, "{0} is invalid. {1}", functionJson, ex);
             }
 
             return Enumerable.Empty<Dictionary<string, object>>();
@@ -351,6 +382,119 @@ namespace Kudu.Core.Helpers
             {
                 Trace(TraceEventType.Verbose, "End HttpPost, status: {0}", statusCode);
             }
+        }
+
+        public static void RunPostDeploymentScripts(TraceListener tracer)
+        {
+            _tracer = tracer;
+
+            foreach (var file in GetPostBuildActionScripts())
+            {
+                ExecuteScript(file);
+            }
+        }
+
+        private static void ExecuteScript(string file)
+        {
+            var fi = new FileInfo(file);
+            ProcessStartInfo processInfo;
+            if (string.Equals(".ps1", fi.Extension, StringComparison.OrdinalIgnoreCase))
+            {
+                processInfo = new ProcessStartInfo("PowerShell.exe", string.Format("-ExecutionPolicy RemoteSigned -File \"{0}\"", file));
+            }
+            else
+            {
+                processInfo = new ProcessStartInfo(file);
+            }
+
+            processInfo.CreateNoWindow = true;
+            processInfo.UseShellExecute = false;
+            processInfo.RedirectStandardInput = true;
+            processInfo.RedirectStandardError = true;
+            processInfo.RedirectStandardOutput = true;
+
+            DataReceivedEventHandler stdoutHandler = (object sender, DataReceivedEventArgs e) =>
+            {
+                if (!string.IsNullOrWhiteSpace(e.Data))
+                {
+                    Trace(TraceEventType.Information, "{0}", e.Data);
+                }
+            };
+
+            DataReceivedEventHandler stderrHandler = (object sender, DataReceivedEventArgs e) =>
+            {
+                if (!string.IsNullOrWhiteSpace(e.Data))
+                {
+                    Trace(TraceEventType.Error, "{0}", e.Data);
+                }
+            };
+
+            Trace(TraceEventType.Information, "Run post-deployment: \"{0}\" {1}", processInfo.FileName, processInfo.Arguments);
+            var process = Process.Start(processInfo);
+            var processName = process.ProcessName;
+            var processId = process.Id;
+            Trace(TraceEventType.Information, "Process {0}({1}) started", processName, processId);
+
+            // hook stdout and stderr
+            process.OutputDataReceived += stdoutHandler;
+            process.BeginOutputReadLine();
+            process.ErrorDataReceived += stderrHandler;
+            process.BeginErrorReadLine();
+
+            var timeout = (int)GetCommandTimeOut().TotalMilliseconds;
+            if (!process.WaitForExit(timeout))
+            {
+                process.Kill();
+                throw new TimeoutException(String.Format("Process {0}({1}) exceeded {2}ms timeout", processName, processId, timeout));
+            }
+
+            process.WaitForExit();
+            if (process.ExitCode != 0)
+            {
+                throw new InvalidOperationException(String.Format("Process {0}({1}) exited with {2} exitcode.", processName, processId, process.ExitCode));
+            }
+
+            Trace(TraceEventType.Information, "Process {0}({1}) executed successfully.", processName, processId);
+        }
+
+        private static TimeSpan GetCommandTimeOut()
+        {
+            const int DefaultCommandTimeout = 60;
+
+            var val = System.Environment.GetEnvironmentVariable(SettingsKeys.CommandIdleTimeout);
+            if (!string.IsNullOrEmpty(val))
+            {
+                int commandTimeout;
+                if (Int32.TryParse(val, out commandTimeout) && commandTimeout > 0)
+                {
+                    return TimeSpan.FromSeconds(commandTimeout);
+                }
+            }
+
+            return TimeSpan.FromSeconds(DefaultCommandTimeout);
+        }
+
+        private static IEnumerable<string> GetPostBuildActionScripts()
+        {
+            // "/site/deployments/tools/PostDeploymentActions" (can override with %SCM_POST_DEPLOYMENT_ACTIONS_PATH%)
+            // if %SCM_POST_DEPLOYMENT_ACTIONS_PATH% is set, it is absolute path to the post-deployment script folder
+            var postDeploymentPath = System.Environment.GetEnvironmentVariable(SettingsKeys.PostDeploymentActionsDirectory);
+            if (string.IsNullOrEmpty(postDeploymentPath))
+            {
+                postDeploymentPath = System.Environment.ExpandEnvironmentVariables(@"%HOME%\site\deployments\tools\PostDeploymentActions");
+            }
+
+            if (!Directory.Exists(postDeploymentPath))
+            {
+                return Enumerable.Empty<string>();
+            }
+
+            // Find all post action scripts and order file alphabetically for each folder
+            return Directory.GetFiles(postDeploymentPath, "*", SearchOption.TopDirectoryOnly)
+                                    .Where(f => f.EndsWith(".cmd", StringComparison.OrdinalIgnoreCase)
+                                        || f.EndsWith(".bat", StringComparison.OrdinalIgnoreCase)
+                                        || f.EndsWith(".ps1", StringComparison.OrdinalIgnoreCase))
+                                    .OrderBy(n => n);
         }
 
         private static void Trace(TraceEventType eventType, string message)
