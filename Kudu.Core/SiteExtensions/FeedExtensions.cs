@@ -85,6 +85,14 @@ namespace Kudu.Core.SiteExtensions
                 }
             }
 
+            // If we couldn't find any listed version, fall back to looking for unlisted versions, to avoid failing completely.
+            // Reasoning is that if all the versions have been unlisted, it should still be possible to install it by
+            // explicit id, even without specifying a version
+            if (latestPackage == null && !includeUnlisted)
+            {
+                latestPackage = await GetLatestPackageByIdFromMetaRes(metadataResource, packageId, includePrerelease, includeUnlisted: true);
+            }
+
             return latestPackage;
         }
 
