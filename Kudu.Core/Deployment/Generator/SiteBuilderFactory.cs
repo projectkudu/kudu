@@ -87,6 +87,7 @@ namespace Kudu.Core.Deployment.Generator
             // figure out with some heuristic, which one to deploy.
 
             // TODO: Pick only 1 and throw if there's more than one
+            // shunTODO need to implement this
             VsSolutionProject project = solution.Projects.Where(p => p.IsWap || p.IsWebSite || p.IsAspNetCore || p.IsFunctionApp).FirstOrDefault();
 
             if (project == null)
@@ -105,6 +106,8 @@ namespace Kudu.Core.Deployment.Generator
 
                 logger.Log(Resources.Log_NoDeployableProjects, solution.Path);
 
+                // we have a solution file, but no deployable project
+                // shunTODO how often do we run into this
                 return ResolveNonAspProject(repositoryRoot, null, settings);
             }
 
@@ -149,8 +152,7 @@ namespace Kudu.Core.Deployment.Generator
         private ISiteBuilder ResolveNonAspProject(string repositoryRoot, string projectPath, IDeploymentSettingsManager perDeploymentSettings)
         {
             string sourceProjectPath = projectPath ?? repositoryRoot;
-            // "FUNCTIONS_EXTENSION_VERSION" environment variable implies a functionApp
-            if (FunctionAppHelper.LooksLikeFunctionApp())
+            if (IsFunctionApp(sourceProjectPath))
             {
                 return new FunctionBasicBuilder(_environment, perDeploymentSettings, _propertyProvider, repositoryRoot, projectPath);
             }
@@ -176,6 +178,12 @@ namespace Kudu.Core.Deployment.Generator
             }
 
             return new BasicBuilder(_environment, perDeploymentSettings, _propertyProvider, repositoryRoot, projectPath);
+        }
+
+        private static bool IsFunctionApp(string projectPath)
+        {
+            // projectPath ==> project folder
+            return FunctionAppHelper.LooksLikeFunctionApp(projectPath);
         }
 
         private static bool IsGoSite(string projectPath)
@@ -320,7 +328,7 @@ namespace Kudu.Core.Deployment.Generator
                                       targetPath,
                                       solutionPath);
             }
-            else if (FunctionAppHelper.LooksLikeFunctionApp())
+            else if (FunctionAppHelper.LooksLikeFunctionApp(Path.GetDirectoryName(targetPath)))
             {
                 return new FunctionMsbuildBuilder(_environment,
                                                 perDeploymentSettings,

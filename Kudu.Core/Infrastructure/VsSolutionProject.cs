@@ -161,22 +161,11 @@ namespace Kudu.Core.Infrastructure
             {
                 // used to determine project type
                 _projectTypeGuids = VsHelper.GetProjectTypeGuids(_absolutePath);
-                if (AspNetCoreHelper.IsDotnetCoreFromProjectFile(_absolutePath, _projectTypeGuids))
-                {
-                    _isAspNetCore = true;
-                }
-                else if (projectType == SolutionProjectType.KnownToBeMSBuildFormat)
-                {
-                    // KnownToBeMSBuildFormat: C#, VB, and VJ# projects
-                    // Check if it's a wap
-                    _isWap = VsHelper.IsWap(_projectTypeGuids);
 
-                    _isExecutable = VsHelper.IsExecutableProject(_absolutePath);
-                }
-                else if (FunctionAppHelper.LooksLikeFunctionApp())
-                {
-                    _isFunctionApp = true;
-                }
+                _isAspNetCore = AspNetCoreHelper.IsDotnetCoreFromProjectFile(_absolutePath, _projectTypeGuids);
+                _isWap = VsHelper.IsWap(_projectTypeGuids);
+                _isExecutable = VsHelper.IsExecutableProject(_absolutePath);
+                _isFunctionApp = FunctionAppHelper.LooksLikeFunctionApp(Path.GetDirectoryName(_absolutePath));
             }
             else
             {
@@ -190,7 +179,7 @@ namespace Kudu.Core.Infrastructure
         private enum SolutionProjectType
         {
             Unknown,
-            KnownToBeMSBuildFormat,
+            KnownToBeMSBuildFormat,  // KnownToBeMSBuildFormat: C#, VB, and VJ# projects
             SolutionFolder,
             WebProject,
             WebDeploymentProject,
