@@ -376,13 +376,35 @@ namespace Kudu.FunctionalTests
     }
 
     [KuduXunitTestClass]
-    public class AspNetCoreRC3CliWithLibTests : GitDeploymentTests
+    public class AspNetCore2VS17WithLibTests : GitDeploymentTests
     {
         [Fact]
         [KuduXunitTest(PrivateOnly = true)]
-        public void PushAndDeployAspNetCoreRC3CliWithLib()
+        public void PushAndDeployAspNetCore2VS17WithLib()
         {
-            PushAndDeployApps("AspNetCoreRC3CliWithLib", "master", "MvcApp", HttpStatusCode.OK, "Deployment successful");
+            PushAndDeployApps("AspNetCore2.0.0VS17WithLib", "master", "DotNetCore200", HttpStatusCode.OK, "Deployment successful");
+        }
+    }
+
+    [KuduXunitTestClass]
+    public class AspNetCore10VS17WithLibTests : GitDeploymentTests
+    {
+        [Fact]
+        [KuduXunitTest(PrivateOnly = true)]
+        public void PushAndDeployAspNetCore10VS17WithLib()
+        {
+            PushAndDeployApps("AspNetCore1.0.0VS17WithLib", "master", "DotNetCore100", HttpStatusCode.OK, "Deployment successful");
+        }
+    }
+
+    [KuduXunitTestClass]
+    public class AspNetCore11VS17WithLibTests : GitDeploymentTests
+    {
+        [Fact]
+        [KuduXunitTest(PrivateOnly = true)]
+        public void PushAndDeployAspNetCore11VS17WithLib()
+        {
+            PushAndDeployApps("AspNetCore1.1.0VS17WithLib", "master", "DotNetCore110", HttpStatusCode.OK, "Deployment successful");
         }
     }
 
@@ -398,6 +420,17 @@ namespace Kudu.FunctionalTests
     }
 
     [KuduXunitTestClass]
+    public class AspNetCore2CliTests : GitDeploymentTests
+    {
+        [Fact]
+        [KuduXunitTest(PrivateOnly = true)]
+        public void PushAndDeployAspNetCore2Cli()
+        {
+            PushAndDeployApps("AspNetCore2.0.0Cli", "master", "Hello World!", HttpStatusCode.OK, "Deployment successful");
+        }
+    }
+
+    [KuduXunitTestClass]
     public class AspNetCoreRC4WebApiVsSlnTests : GitDeploymentTests
     {
         [Fact]
@@ -409,24 +442,13 @@ namespace Kudu.FunctionalTests
     }
 
     [KuduXunitTestClass]
-    public class AspNetCoreYeomanProjectTest : GitDeploymentTests
+    public class AspNetCoreYeomanProjectTests : GitDeploymentTests
     {
         [Fact]
         [KuduXunitTest(PrivateOnly = true)]
         public void PushAndDeployAspNetCoreYeomanProject()
         {
             PushAndDeployApps("AspNetCoreYeomanProject", "master", "[\"value1\",\"value2\"]", HttpStatusCode.OK, "Deployment successful", resourcePath: "/api/values");
-        }
-    }
-
-    [KuduXunitTestClass]
-    public class AspNetCoreRC4WebApiCliTests : GitDeploymentTests
-    {
-        [Fact]
-        [KuduXunitTest(PrivateOnly = true)]
-        public void PushAndDeployAspNetCoreRC4WebApiCli()
-        {
-            PushAndDeployApps("AspNetCoreRC4WebApiCli", "master", "[\"value1\",\"value2\"]", HttpStatusCode.OK, "Deployment successful", resourcePath: "/api/values");
         }
     }
 
