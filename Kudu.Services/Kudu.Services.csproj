@@ -104,6 +104,7 @@
     <Compile Include="Commands\PersistentCommandController.cs" />
     <Compile Include="Deployment\DeploymentController.cs" />
     <Compile Include="Diagnostics\HttpRequestExtensions.cs" />
+    <Compile Include="Diagnostics\LinuxProcessController.cs" />
     <Compile Include="Diagnostics\LogStreamHandler.cs" />
     <Compile Include="Diagnostics\LogStreamManager.cs" />
     <Compile Include="Diagnostics\ProfileManager.cs" />
