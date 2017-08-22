@@ -11,77 +11,76 @@ namespace Kudu.Services.Performance
 
     public class LinuxProcessController : ApiController
     {
-        private const HttpStatusCode RETURNCODE = HttpStatusCode.BadRequest;
         private const string ERRORMSG = "Not supported on Linux";
 
         [SuppressMessage("Microsoft.Usage", "CA1801:ReviewUnusedParameters", Justification = "Parameters preserved for equivalent route binding")]
         [HttpGet]
         public HttpResponseMessage GetThread(int processId, int threadId)
         {
-            return Request.CreateErrorResponse(RETURNCODE, ERRORMSG);
+            return Request.CreateErrorResponse(HttpStatusCode.BadRequest, ERRORMSG);
         }
 
         [SuppressMessage("Microsoft.Usage", "CA1801:ReviewUnusedParameters", Justification = "Parameters preserved for equivalent route binding")]
         [HttpGet]
         public HttpResponseMessage GetAllThreads(int id)
         {
-            return Request.CreateErrorResponse(RETURNCODE, ERRORMSG);
+            return Request.CreateErrorResponse(HttpStatusCode.BadRequest, ERRORMSG);
         }
 
         [SuppressMessage("Microsoft.Usage", "CA1801:ReviewUnusedParameters", Justification = "Parameters preserved for equivalent route binding")]
         [HttpGet]
         public HttpResponseMessage GetModule(int id, string baseAddress)
         {
-            return Request.CreateErrorResponse(RETURNCODE, ERRORMSG);
+            return Request.CreateErrorResponse(HttpStatusCode.BadRequest, ERRORMSG);
         }
 
         [SuppressMessage("Microsoft.Usage", "CA1801:ReviewUnusedParameters", Justification = "Parameters preserved for equivalent route binding")]
         [HttpGet]
         public HttpResponseMessage GetAllModules(int id)
         {
-            return Request.CreateErrorResponse(RETURNCODE, ERRORMSG);
+            return Request.CreateErrorResponse(HttpStatusCode.BadRequest, ERRORMSG);
         }
 
         [SuppressMessage("Microsoft.Usage", "CA1801:ReviewUnusedParameters", Justification = "Parameters preserved for equivalent route binding")]
         [HttpGet]
         public HttpResponseMessage GetAllProcesses(bool allUsers = false)
         {
-            return Request.CreateErrorResponse(RETURNCODE, ERRORMSG);
+            return Request.CreateErrorResponse(HttpStatusCode.BadRequest, ERRORMSG);
         }
 
         [SuppressMessage("Microsoft.Usage", "CA1801:ReviewUnusedParameters", Justification = "Parameters preserved for equivalent route binding")]
         [HttpGet]
         public HttpResponseMessage GetProcess(int id)
         {
-            return Request.CreateErrorResponse(RETURNCODE, ERRORMSG);
+            return Request.CreateErrorResponse(HttpStatusCode.BadRequest, ERRORMSG);
         }
 
         [SuppressMessage("Microsoft.Usage", "CA1801:ReviewUnusedParameters", Justification = "Parameters preserved for equivalent route binding")]
         [HttpDelete]
         public HttpResponseMessage KillProcess(int id)
         {
-            return Request.CreateErrorResponse(RETURNCODE, ERRORMSG);
+            return Request.CreateErrorResponse(HttpStatusCode.BadRequest, ERRORMSG);
         }
 
         [SuppressMessage("Microsoft.Usage", "CA1801:ReviewUnusedParameters", Justification = "Parameters preserved for equivalent route binding")]
         [HttpGet]
         public HttpResponseMessage MiniDump(int id, int dumpType = 0, string format = null)
         {
-            return Request.CreateErrorResponse(RETURNCODE, ERRORMSG);
+            return Request.CreateErrorResponse(HttpStatusCode.BadRequest, ERRORMSG);
         }
 
         [SuppressMessage("Microsoft.Usage", "CA1801:ReviewUnusedParameters", Justification = "Parameters preserved for equivalent route binding")]
         [HttpPost]
         public HttpResponseMessage StartProfileAsync(int id, bool iisProfiling = false)
         {
-            return Request.CreateErrorResponse(RETURNCODE, ERRORMSG);
+            return Request.CreateErrorResponse(HttpStatusCode.BadRequest, ERRORMSG);
         }
 
         [SuppressMessage("Microsoft.Usage", "CA1801:ReviewUnusedParameters", Justification = "Parameters preserved for equivalent route binding")]
         [HttpGet]
         public HttpResponseMessage StopProfileAsync(int id)
         {
-            return Request.CreateErrorResponse(RETURNCODE, ERRORMSG);
+            return Request.CreateErrorResponse(HttpStatusCode.BadRequest, ERRORMSG);
         }
     }
 }
