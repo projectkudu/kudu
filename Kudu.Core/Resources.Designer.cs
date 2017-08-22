@@ -340,6 +340,15 @@ namespace Kudu.Core {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to App container will begin restart within 10 seconds..
+        /// </summary>
+        internal static string Log_TriggeringContainerRestart {
+            get {
+                return ResourceManager.GetString("Log_TriggeringContainerRestart", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to An unknown error has occurred. Check the diagnostic log for details..
         /// </summary>
         internal static string Log_UnexpectedError {

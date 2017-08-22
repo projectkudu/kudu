@@ -1,21 +1,24 @@
-﻿using Kudu.Core.Helpers;
-using Kudu.Core.Tracing;
-using System;
-using System.IO;
+﻿using System;
 using System.Net;
 using System.Net.Http;
 using System.Web.Http;
+using Kudu.Core.Helpers;
+using Kudu.Core.Tracing;
+using Kudu.Contracts.Settings;
+using Kudu.Core.Infrastructure;
 
 namespace Kudu.Services.Docker
 {
     public class DockerController : ApiController
     {
-        const string TimestampDirectory = "/home/site/config";
-        ITraceFactory _traceFactory;
+        private const string RESTART_REASON = "Docker CI webhook";
+        private readonly ITraceFactory _traceFactory;
+        private readonly IDeploymentSettingsManager _settings;
 
-        public DockerController(ITraceFactory traceFactory)
+        public DockerController(ITraceFactory traceFactory, IDeploymentSettingsManager settings)
         {
             _traceFactory = traceFactory;
+            _settings = settings;
         }
 
         [HttpPost]
@@ -29,19 +32,20 @@ namespace Kudu.Services.Docker
             var tracer = _traceFactory.GetTracer();
             using (tracer.Step("Docker.SetDockerTimestamp"))
             {
-                string timestampPath = Path.Combine(TimestampDirectory, "dockerTimestamp.txt");
                 try
                 {
-                    Directory.CreateDirectory(Path.GetDirectoryName((timestampPath)));
-                    File.WriteAllText(timestampPath, DateTime.UtcNow.ToString());
+                    if (_settings.IsDockerCiEnabled())
+                    {
+                        LinuxContainerRestartTrigger.RequestContainerRestart(RESTART_REASON);
+                    }
                 }
                 catch (Exception e)
                 {
-                    return Request.CreateResponse(HttpStatusCode.InternalServerError, e.Message);
+                    return Request.CreateResponse(HttpStatusCode.InternalServerError, e.Message); 
                 }
-
-                return Request.CreateResponse(HttpStatusCode.OK);
             }
+
+            return Request.CreateResponse(HttpStatusCode.OK);
         }
     }
 }

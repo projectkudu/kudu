@@ -34,6 +34,7 @@ namespace Kudu.Core.Deployment
         private readonly IDeploymentStatusManager _status;
         private readonly IWebHooksManager _hooksManager;
 
+        private const string RestartTriggerReason = "App deployment";
         private const string XmlLogFile = "log.xml";
         public const string TextLogFile = "log.log";
         private const string TemporaryDeploymentIdPrefix = "temp-";
@@ -225,6 +226,12 @@ namespace Kudu.Core.Deployment
 
                     // Perform the build deployment of this changeset
                     await Build(changeSet, tracer, deployStep, repository, deploymentAnalytics);
+
+                    if (!OSDetector.IsOnWindows() && _settings.RestartAppContainerOnGitDeploy())
+                    {
+                        logger.Log(Resources.Log_TriggeringContainerRestart);
+                        LinuxContainerRestartTrigger.RequestContainerRestart(RestartTriggerReason);
+                    }
                 }
                 catch (Exception ex)
                 {
