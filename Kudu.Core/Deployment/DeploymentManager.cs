@@ -230,7 +230,7 @@ namespace Kudu.Core.Deployment
                     if (!OSDetector.IsOnWindows() && _settings.RestartAppContainerOnGitDeploy())
                     {
                         logger.Log(Resources.Log_TriggeringContainerRestart);
-                        LinuxContainerRestartTrigger.RequestContainerRestart(RestartTriggerReason);
+                        LinuxContainerRestartTrigger.RequestContainerRestart(_environment, RestartTriggerReason);
                     }
                 }
                 catch (Exception ex)

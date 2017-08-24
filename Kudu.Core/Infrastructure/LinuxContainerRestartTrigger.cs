@@ -17,24 +17,14 @@ namespace Kudu.Core.Infrastructure
             "The last modification Kudu made to this file was at {0}, for the following reason: {1}.",
             System.Environment.NewLine);
 
-        private static string restartTriggerPath;
-
-        public static void Initialize(string siteRootPath)
-        {
-            restartTriggerPath = Path.Combine(siteRootPath, "config", "restartTrigger.txt");
-        }
-
-        public static void RequestContainerRestart(string reason)
+        public static void RequestContainerRestart(IEnvironment environment, string reason)
         {
             if (OSDetector.IsOnWindows())
             {
                 throw new NotSupportedException("RequestContainerRestart not supported on Windows");
             }
 
-            if (restartTriggerPath == null)
-            {
-                throw new InvalidOperationException("LinuxContainerRestartTrigger not initialized");
-            }
+            var restartTriggerPath = Path.Combine(environment.SiteRootPath, "config", "restartTrigger.txt");
 
             FileSystemHelpers.CreateDirectory(Path.GetDirectoryName(restartTriggerPath));
 

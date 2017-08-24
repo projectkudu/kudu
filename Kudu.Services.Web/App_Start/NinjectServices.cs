@@ -347,11 +347,6 @@ namespace Kudu.Services.Web.App_Start
                     kernel.Get<IAnalytics>(),
                     kernel.Get<ITraceFactory>()));
             GlobalConfiguration.Configuration.Filters.Add(new EnsureRequestIdHandlerAttribute());
-
-            if (!OSDetector.IsOnWindows())
-            {
-                LinuxContainerRestartTrigger.Initialize(environment.SiteRootPath);
-            }
         }
 
         public static class SignalRStartup

@@ -6,6 +6,7 @@ using Kudu.Core.Helpers;
 using Kudu.Core.Tracing;
 using Kudu.Contracts.Settings;
 using Kudu.Core.Infrastructure;
+using Kudu.Core;
 
 namespace Kudu.Services.Docker
 {
@@ -14,11 +15,13 @@ namespace Kudu.Services.Docker
         private const string RESTART_REASON = "Docker CI webhook";
         private readonly ITraceFactory _traceFactory;
         private readonly IDeploymentSettingsManager _settings;
+        private readonly IEnvironment _environment;
 
-        public DockerController(ITraceFactory traceFactory, IDeploymentSettingsManager settings)
+        public DockerController(ITraceFactory traceFactory, IDeploymentSettingsManager settings, IEnvironment environment)
         {
             _traceFactory = traceFactory;
             _settings = settings;
+            _environment = environment;
         }
 
         [HttpPost]
@@ -30,13 +33,13 @@ namespace Kudu.Services.Docker
             }
 
             var tracer = _traceFactory.GetTracer();
-            using (tracer.Step("Docker.SetDockerTimestamp"))
+            using (tracer.Step("Docker.ReceiveWebhook"))
             {
                 try
                 {
                     if (_settings.IsDockerCiEnabled())
                     {
-                        LinuxContainerRestartTrigger.RequestContainerRestart(RESTART_REASON);
+                        LinuxContainerRestartTrigger.RequestContainerRestart(_environment, RESTART_REASON);
                     }
                 }
                 catch (Exception e)
