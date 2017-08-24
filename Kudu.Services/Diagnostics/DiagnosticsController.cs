@@ -13,15 +13,27 @@ using Kudu.Core.Settings;
 using Kudu.Core.Tracing;
 using Kudu.Services.Diagnostics;
 using Kudu.Services.Infrastructure;
+using Newtonsoft.Json.Linq;
+using System.Linq;
+using System.Text.RegularExpressions;
+using System.Collections.Generic;
 
 namespace Kudu.Services.Performance
 {
     public class DiagnosticsController : ApiController
     {
+        // Matches Docker log filenames of logs that haven't been rolled (are most current for a given machine name)
+        // Format is YYYY_MM_DD_<machinename>_docker[.<roll_number>].log
+        // Examples:
+        //   2017_08_23_RD00155DD0D38E_docker.log (not rolled)
+        //   2017_08_23_RD00155DD0D38E_docker.1.log (rolled)
+        private static readonly Regex NONROLLED_DOCKER_LOG_FILENAME_REGEX = new Regex(@"^\d{4}_\d{2}_\d{2}_.*_docker\.log$");
+
         private readonly DiagnosticsSettingsManager _settingsManager;
         private readonly string[] _paths;
         private readonly ITracer _tracer;
         private readonly IApplicationLogsReader _applicationLogsReader;
+        private readonly IEnvironment _environment;
 
         public DiagnosticsController(IEnvironment environment, ITracer tracer, IApplicationLogsReader applicationLogsReader)
         {
@@ -35,6 +47,7 @@ namespace Kudu.Services.Performance
                 Path.Combine(environment.WebRootPath, Constants.NpmDebugLogFile),
             };
 
+            _environment = environment;
             _applicationLogsReader = applicationLogsReader;
             _tracer = tracer;
             _settingsManager = new DiagnosticsSettingsManager(Path.Combine(environment.DiagnosticsPath, Constants.SettingsJsonFile), _tracer);
@@ -64,6 +77,90 @@ namespace Kudu.Services.Performance
                 var results = _applicationLogsReader.GetRecentLogs(top);
                 return Request.CreateResponse(HttpStatusCode.OK, results);
             }
+        }
+
+        // Route only exists for this on Linux
+        // Grabs "currently relevant" Docker logs from the LogFiles folder
+        // and returns a JSON response with links to the files in the VFS API
+        [HttpGet]
+        public HttpResponseMessage GetDockerLogs()
+        {
+            using (_tracer.Step("DiagnosticsController.GetDockerLogs"))
+            {
+                var currentDockerLogFilenames = GetCurrentDockerLogFilenames();
+
+                // On Linux, requests are forwarded from the HTTP server running on the worker. The request URI
+                // always shows up as http:// (not https://) and includes a port number, so we can't build a target URL
+                // simply by starting from AbsoluteUri or something similar. A more general fix is forthcoming for everywhere
+                // this problem occurs (VFS directory enumeration, /api/scm/info, anywhere else?)
+                var vfsBaseAddress = "https://" + Request.RequestUri.Host + "/api/vfs";
+
+                var responseContent = currentDockerLogFilenames.Select(p => CurrentDockerLogFilenameToJson(p, vfsBaseAddress));
+
+                return Request.CreateResponse(HttpStatusCode.OK, responseContent);
+            }
+        }
+
+        // Route only exists for this on Linux
+        // Grabs "currently relevant" Docker logs from the LogFiles folder
+        // and returns them in a zip archive
+        [HttpGet]
+        [SuppressMessage("Microsoft.Usage", "CA2202", Justification = "The ZipArchive is instantiated in a way that the stream is not closed on dispose")]
+        public HttpResponseMessage GetDockerLogsZip()
+        {
+            using (_tracer.Step("DiagnosticsController.GetDockerLogsZip"))
+            {
+                var currentDockerLogFilenames = GetCurrentDockerLogFilenames().ToArray();
+
+                HttpResponseMessage response = Request.CreateResponse();
+                response.Content = ZipStreamContent.Create(String.Format("dockerlogs-{0:MM-dd-HH-mm-ss}.zip", DateTime.UtcNow), _tracer, zip =>
+                {
+                    foreach (var filename in currentDockerLogFilenames)
+                    {
+                        zip.AddFile(filename, _tracer);
+                    }
+                });
+                return response;
+            }
+        }
+
+        private IEnumerable<string> GetCurrentDockerLogFilenames()
+        {
+            // Get all non-rolled Docker log filenames from the LogFiles directory
+            var nonRolledDockerLogFilenames =
+                FileSystemHelpers.ListFiles(_environment.LogFilesPath, SearchOption.TopDirectoryOnly, new[] { "*" })
+                .Where(f => NONROLLED_DOCKER_LOG_FILENAME_REGEX.IsMatch(Path.GetFileName(f)))
+                .ToArray();
+
+            // Find the latest date stamp and filter out those that don't have it
+            // Timestamps are YYYY_MM_DD (sortable as integers with the underscores removed)
+            var latestDatestamp = nonRolledDockerLogFilenames
+                .Select(p => Path.GetFileName(p).Substring(0, 10))
+                .OrderByDescending(s => int.Parse(s.Replace("_", String.Empty)))
+                .First();
+
+            return nonRolledDockerLogFilenames.Where(f => Path.GetFileName(f).StartsWith(latestDatestamp, StringComparison.OrdinalIgnoreCase));
+        }
+
+        private JObject CurrentDockerLogFilenameToJson(string path, string vfsBaseAddress)
+        {
+            var info = new FileInfo(path);
+
+            // Machine name is the middle portion of the filename, between the datestamp prefix
+            // and the _docker.log suffix.
+            var machineName = info.Name.Substring(11, info.Name.Length - 22);
+
+            // Remove the root path from the front of the FullName, as it's implicit in the vfs url
+            var vfsPath = info.FullName.Remove(0, _environment.RootPath.Length);            
+
+            var vfsUrl = (vfsBaseAddress + Uri.EscapeUriString(vfsPath)).EscapeHashCharacter();
+
+            return new JObject(
+                new JProperty("machineName", machineName),
+                new JProperty("lastUpdated", info.LastWriteTimeUtc),
+                new JProperty("size", info.Length),
+                new JProperty("href", vfsUrl),
+                new JProperty("path", info.FullName));
         }
 
         private void AddFilesToZip(ZipArchive zip)
