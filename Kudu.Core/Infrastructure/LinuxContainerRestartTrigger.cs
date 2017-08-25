@@ -11,6 +11,9 @@ namespace Kudu.Core.Infrastructure
     // users who stumble on it.
     public static class LinuxContainerRestartTrigger
     {
+        private const string CONFIG_DIR_NAME = "config";
+        private const string TRIGGER_FILENAME = "restartTrigger.txt";
+
         private static readonly string FILE_CONTENTS_FORMAT = String.Concat(
             "Modifying this file will trigger a restart of the app container.",
             System.Environment.NewLine, System.Environment.NewLine,
@@ -24,7 +27,7 @@ namespace Kudu.Core.Infrastructure
                 throw new NotSupportedException("RequestContainerRestart not supported on Windows");
             }
 
-            var restartTriggerPath = Path.Combine(environment.SiteRootPath, "config", "restartTrigger.txt");
+            var restartTriggerPath = Path.Combine(environment.SiteRootPath, CONFIG_DIR_NAME, TRIGGER_FILENAME);
 
             FileSystemHelpers.CreateDirectory(Path.GetDirectoryName(restartTriggerPath));
 
