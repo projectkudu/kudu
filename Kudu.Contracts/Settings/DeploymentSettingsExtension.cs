@@ -218,5 +218,19 @@ namespace Kudu.Contracts.Settings
         {
             return settings.GetValue(SettingsKeys.TouchWebConfigAfterDeployment) != "0";
         }
+
+        public static bool IsDockerCiEnabled(this IDeploymentSettingsManager settings)
+        {
+            string value = settings.GetValue(SettingsKeys.DockerCiEnabled);
+            return StringUtils.IsTrueLike(value);
+        }
+
+        public static bool RestartAppContainerOnGitDeploy(this IDeploymentSettingsManager settings)
+        {
+            string value = settings.GetValue(SettingsKeys.LinuxRestartAppContainerAfterDeployment);
+
+            // Default is true
+            return value == null || StringUtils.IsTrueLike(value);
+        }
     }
 }

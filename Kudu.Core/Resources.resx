@@ -225,4 +225,7 @@
   <data name="Error_FailedToLocateBash" xml:space="preserve">
     <value>Unable to locate 'bash.exe'. Make sure it is installed.</value>
   </data>
+  <data name="Log_TriggeringContainerRestart" xml:space="preserve">
+    <value>App container will begin restart within 10 seconds.</value>
+  </data>
 </root>
