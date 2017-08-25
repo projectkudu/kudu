@@ -227,9 +227,10 @@ namespace Kudu.Contracts.Settings
 
         public static bool RestartAppContainerOnGitDeploy(this IDeploymentSettingsManager settings)
         {
+            string value = settings.GetValue(SettingsKeys.LinuxRestartAppContainerAfterDeployment);
+
             // Default is true
-            string value = settings.GetValue(SettingsKeys.LinuxRestartAppContainerAfterDeployment) ?? "true";
-            return StringUtils.IsTrueLike(value);
+            return value == null || StringUtils.IsTrueLike(value);
         }
     }
 }
