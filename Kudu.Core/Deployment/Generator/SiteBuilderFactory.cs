@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
-using System.IO.Abstractions;
 using System.Linq;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
@@ -219,7 +218,7 @@ namespace Kudu.Core.Deployment.Generator
         // unless user specifies which project to deploy, targetPath == repositoryRoot
         private ISiteBuilder ResolveProject(string repositoryRoot, string targetPath, IDeploymentSettingsManager perDeploymentSettings, IFileFinder fileFinder, bool tryWebSiteProject, SearchOption searchOption = SearchOption.AllDirectories, bool specificConfiguration = true)
         {
-            if (DeploymentHelper.IsProject(targetPath))
+            if (DeploymentHelper.IsMsBuildProject(targetPath))
             {
                 // needs to check for project file existence
                 if (!File.Exists(targetPath))
@@ -232,7 +231,7 @@ namespace Kudu.Core.Deployment.Generator
             }
 
             // Check for loose projects
-            var projects = DeploymentHelper.GetProjects(targetPath, fileFinder, searchOption);
+            var projects = DeploymentHelper.GetMsBuildProjects(targetPath, fileFinder, searchOption);
             if (projects.Count > 1)
             {
                 // Can't determine which project to build
