@@ -120,15 +120,24 @@ namespace Kudu.FunctionalTests
     [KuduXunitTestClass]
     public class NodeAppExpressTests : GitDeploymentTests
     {
-        // Node apps
-
         [Fact]
+        // Ensure node is installed. --> PrivateOnly
+        [KuduXunitTest(PrivateOnly = true)]
         public void PushAndDeployNodeAppExpress()
         {
-            // Ensure node is installed.
-            Assert.Contains("nodejs", System.Environment.GetEnvironmentVariable("Path"), StringComparison.OrdinalIgnoreCase);
-
             PushAndDeployApps("Express-Template", "master", "Modify this template to jump-start your Node.JS Express Web Pages application", HttpStatusCode.OK, "");
+        }
+    }
+
+    [KuduXunitTestClass]
+    public class NodeJsVS2017Tests : GitDeploymentTests
+    {
+        [Fact]
+        // Ensure node is installed. --> PrivateOnly
+        [KuduXunitTest(PrivateOnly = true)]
+        public void PushAndDeployNodeJsVS2017()
+        {
+            PushAndDeployApps("NodeJSVS17project", "master", "Hello World", HttpStatusCode.OK, "Deployment successful");
         }
     }
 

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Kudu.Core.Deployment;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -157,9 +158,9 @@ namespace Kudu.Core.Infrastructure
             }
 
             _absolutePath = Path.Combine(Path.GetDirectoryName(_solutionPath), relativePath);
-            if (FileSystemHelpers.FileExists(_absolutePath))
+            if (FileSystemHelpers.FileExists(_absolutePath) && DeploymentHelper.IsMsBuildProject(_absolutePath))
             {
-                // used to determine project type
+                // used to determine project type from project file
                 _projectTypeGuids = VsHelper.GetProjectTypeGuids(_absolutePath);
 
                 _isAspNetCore = AspNetCoreHelper.IsDotnetCoreFromProjectFile(_absolutePath, _projectTypeGuids);

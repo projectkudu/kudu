@@ -45,6 +45,7 @@ namespace Kudu.TestHarness
             new TestRepositoryInfo("https://github.com/KuduApps/MvcAppWithTypeScript.git",          "7319dbb"),
             new TestRepositoryInfo("https://github.com/KuduApps/NodeHelloWorldNoConfig.git",        "d8a15b6"),
             new TestRepositoryInfo("https://github.com/KuduApps/NodeInnerSubDir.git",               "58f93f8"),
+            new TestRepositoryInfo("https://github.com/KuduApps/NodeJsVS17project.git",             "1fb0bd9"),
             new TestRepositoryInfo("https://github.com/KuduApps/NoDeployableProjects.git",          "04e9920"),
             new TestRepositoryInfo("https://github.com/KuduApps/NodeWebHookTest.git",               "cd5bee7"),
             new TestRepositoryInfo("https://github.com/KuduApps/NodeWithCustomStartScript.git",     "a142e44"),
