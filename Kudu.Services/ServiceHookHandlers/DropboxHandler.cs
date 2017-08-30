@@ -13,6 +13,7 @@ namespace Kudu.Services.ServiceHookHandlers
 {
     public class DropboxHandler : IServiceHookHandler
     {
+        private const string DropboxVersionKey = "dropbox_version";
         private const string DropboxTokenKey = "dropbox_token";
         private const string DropboxPathKey = "dropbox_path";
         private readonly DropboxHelper _dropBoxHelper;
@@ -37,7 +38,7 @@ namespace Kudu.Services.ServiceHookHandlers
                 dropboxInfo = DropboxInfo.CreateV1Info(payload, GetRepositoryType());
                 message = String.Format(CultureInfo.CurrentUICulture, Resources.Dropbox_SynchronizingNChanges, dropboxInfo.DeployInfo.Deltas.Count);
             }
-            else if (String.Equals(payload.Value<string>("scmType"), "DropboxV2", StringComparison.OrdinalIgnoreCase))
+            else if (String.Equals(payload.Value<string>(DropboxVersionKey), "2", StringComparison.OrdinalIgnoreCase))
             {
                 string oauthToken = GetValue(payload, DropboxTokenKey),
                        path = GetValue(payload, DropboxPathKey),
