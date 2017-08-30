@@ -109,7 +109,7 @@ namespace Kudu.FunctionalTests
 
             object payload = new
             {
-                scmType = "DropboxV2",
+                dropbox_version = "2",
                 dropbox_token = OAuth20Token,
                 dropbox_path = "/Basictest"
             };
