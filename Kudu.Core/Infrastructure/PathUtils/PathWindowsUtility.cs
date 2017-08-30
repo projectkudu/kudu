@@ -98,7 +98,7 @@ namespace Kudu.Core.Infrastructure
         internal override string ResolveMSBuild15Dir()
         {
             string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);
-            return Path.Combine(programFiles, "MSBuild-15.3-preview", "MSBuild", "15.0", "Bin");
+            return Path.Combine(programFiles, "MSBuild-15.3.409.57025", "MSBuild", "15.0", "Bin");
         }
 
         internal override string ResolveMSBuildPath()
