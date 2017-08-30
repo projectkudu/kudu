@@ -143,14 +143,13 @@ namespace Kudu.Services.Web.App_Start
             kernel.Bind<IBuildPropertyProvider>().ToConstant(new BuildPropertyProvider());
 
             System.Func<ITracer> createTracerThunk = () => GetTracer(kernel);
-            System.Func<ILogger> createLoggerThunk = () => GetLogger(environment, kernel);
 
             // First try to use the current request profiler if any, otherwise create a new one
             var traceFactory = new TracerFactory(() => TraceServices.CurrentRequestTracer ?? createTracerThunk());
 
             kernel.Bind<ITracer>().ToMethod(context => TraceServices.CurrentRequestTracer ?? NullTracer.Instance);
             kernel.Bind<ITraceFactory>().ToConstant(traceFactory);
-            TraceServices.SetTraceFactory(createTracerThunk, createLoggerThunk);
+            TraceServices.SetTraceFactory(createTracerThunk);
 
             // Setup the deployment lock
             string lockPath = Path.Combine(environment.SiteRootPath, Constants.LockPath);
