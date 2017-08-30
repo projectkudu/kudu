@@ -86,7 +86,6 @@ namespace Kudu.Services.Web.Tracing
         {
             var etwTracer = new ETWTracer((string)httpContext.Items[Constants.RequestIdHeader], httpContext.Request.HttpMethod);
 
-            _traceFactory = new Func<ITracer>(() => etwTracer);
             httpContext.Items[_traceKey] = etwTracer;
 
             return etwTracer;
