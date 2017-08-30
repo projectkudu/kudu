@@ -163,7 +163,9 @@ echo $i > pushinfo
                 {
                     DetectRenamesInIndex = false,
                     DetectRenamesInWorkDir = false
-                }).Select(c => c.FilePath);
+                })
+                .Where(c => c.State != FileStatus.Ignored)
+                .Select(c => c.FilePath);
 
                 if (!changes.Any())
                 {
