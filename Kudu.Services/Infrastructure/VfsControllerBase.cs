@@ -15,6 +15,7 @@ using Kudu.Contracts.Tracing;
 using Kudu.Core;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Tracing;
+using Kudu.Core.Helpers;
 
 namespace Kudu.Services.Infrastructure
 {
@@ -67,7 +68,7 @@ namespace Kudu.Services.Infrastructure
                 if (localFilePath[localFilePath.Length - 1] != Path.DirectorySeparatorChar)
                 {
                     HttpResponseMessage redirectResponse = Request.CreateResponse(HttpStatusCode.TemporaryRedirect);
-                    UriBuilder location = new UriBuilder(Request.RequestUri);
+                    UriBuilder location = new UriBuilder(UriHelper.GetRequestUri(Request));
                     location.Path += "/";
                     redirectResponse.Headers.Location = location.Uri;
                     return Task.FromResult(redirectResponse);
@@ -83,7 +84,7 @@ namespace Kudu.Services.Infrastructure
                 if (localFilePath[localFilePath.Length - 1] == Path.DirectorySeparatorChar)
                 {
                     HttpResponseMessage redirectResponse = Request.CreateResponse(HttpStatusCode.TemporaryRedirect);
-                    UriBuilder location = new UriBuilder(Request.RequestUri);
+                    UriBuilder location = new UriBuilder(UriHelper.GetRequestUri(Request));
                     location.Path = location.Path.TrimEnd(_uriSegmentSeparator);
                     redirectResponse.Headers.Location = location.Uri;
                     return Task.FromResult(redirectResponse);
@@ -167,7 +168,7 @@ namespace Kudu.Services.Infrastructure
                 if (localFilePath[localFilePath.Length - 1] == Path.DirectorySeparatorChar)
                 {
                     HttpResponseMessage redirectResponse = Request.CreateResponse(HttpStatusCode.TemporaryRedirect);
-                    UriBuilder location = new UriBuilder(Request.RequestUri);
+                    UriBuilder location = new UriBuilder(UriHelper.GetRequestUri(Request));
                     location.Path = location.Path.TrimEnd(_uriSegmentSeparator);
                     redirectResponse.Headers.Location = location.Uri;
                     return Task.FromResult(redirectResponse);
@@ -337,7 +338,7 @@ namespace Kudu.Services.Infrastructure
                 }
                 else
                 {
-                    string reqUri = Request.RequestUri.AbsoluteUri.Split('?').First();
+                    string reqUri = UriHelper.GetRequestUri(Request).AbsoluteUri.Split('?').First();
                     if (reqUri[reqUri.Length - 1] == UriSegmentSeparator)
                     {
                         result = Path.GetFullPath(result + Path.DirectorySeparatorChar);
@@ -349,8 +350,9 @@ namespace Kudu.Services.Infrastructure
 
         private IEnumerable<VfsStatEntry> GetDirectoryResponse(FileSystemInfoBase[] infos)
         {
-            string baseAddress = Request.RequestUri.AbsoluteUri.Split('?').First();
-            string query = Request.RequestUri.Query;
+            var requestUri = UriHelper.GetRequestUri(Request);
+            string baseAddress = requestUri.AbsoluteUri.Split('?').First();
+            string query = requestUri.Query;
             foreach (FileSystemInfoBase fileSysInfo in infos)
             {
                 bool isDirectory = (fileSysInfo.Attributes & FileAttributes.Directory) != 0;
