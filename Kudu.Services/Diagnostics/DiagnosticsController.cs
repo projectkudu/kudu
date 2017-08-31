@@ -132,6 +132,11 @@ namespace Kudu.Services.Performance
                 .Where(f => NONROLLED_DOCKER_LOG_FILENAME_REGEX.IsMatch(Path.GetFileName(f)))
                 .ToArray();
 
+            if (!nonRolledDockerLogFilenames.Any())
+            {
+                return Enumerable.Empty<string>();
+            }
+
             // Find the latest date stamp and filter out those that don't have it
             // Timestamps are YYYY_MM_DD (sortable as integers with the underscores removed)
             var latestDatestamp = nonRolledDockerLogFilenames
