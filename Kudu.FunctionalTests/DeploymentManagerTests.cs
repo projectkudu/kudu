@@ -1063,7 +1063,8 @@ namespace Kudu.FunctionalTests
     public class PullApiTestRepoInvalidUrlTests : DeploymentManagerTests
     {
         [Theory]
-        [InlineData(null)]
+        // skip this time-consuming test till further investigation 
+        // [InlineData(null)]
         [InlineData("hg")]
         public async Task PullApiTestRepoInvalidUrl(string scm)
         {
