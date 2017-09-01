@@ -441,17 +441,6 @@ namespace Kudu.FunctionalTests
         }
     }
 
-    [KuduXunitTestClass]
-    public class AspNetCoreYeomanProjectTests : GitDeploymentTests
-    {
-        [Fact]
-        [KuduXunitTest(PrivateOnly = true)]
-        public void PushAndDeployAspNetCoreYeomanProject()
-        {
-            PushAndDeployApps("AspNetCoreYeomanProject", "master", "[\"value1\",\"value2\"]", HttpStatusCode.OK, "Deployment successful", resourcePath: "/api/values");
-        }
-    }
-
     public abstract class GitDeploymentTests
     {
         //Common code
