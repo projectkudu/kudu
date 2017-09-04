@@ -15,8 +15,8 @@ namespace Kudu.Core.Jobs
     {
         private readonly ITraceFactory _traceFactory;
         private readonly IAnalytics _analytics;
-        private const int TimeoutUntilMakingChanges = 5*1000;
-        private const int CheckForWatcherTimeout = 30*1000;
+        private const int TimeoutUntilMakingChanges = 5 * 1000;
+        private const int CheckForWatcherTimeout = 30 * 1000;
 
         private HashSet<string> _updatedJobs = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
@@ -28,14 +28,16 @@ namespace Kudu.Core.Jobs
         private int _pendingOnError;
 
         private bool _makingChanges;
-        private readonly string _watchedDirectoryPath;
+        private readonly string _watchedJobOrParentDirectoryPath;
+        private readonly string _jobDirectoryPath;
         private readonly Action<string> _onJobChanged;
         private readonly string _filter;
         private readonly Func<bool, IEnumerable<string>> _listJobNames;
         private readonly string _jobType;
 
         public JobsFileWatcher(
-            string watchedDirectoryPath,
+            string watchedJobOrParentDirectoryPath,
+            string jobDirectoryPath,
             Action<string> onJobChanged,
             string filter,
             Func<bool, IEnumerable<string>> listJobNames,
@@ -45,7 +47,8 @@ namespace Kudu.Core.Jobs
         {
             _traceFactory = traceFactory;
             _analytics = analytics;
-            _watchedDirectoryPath = watchedDirectoryPath;
+            _watchedJobOrParentDirectoryPath = watchedJobOrParentDirectoryPath;
+            _jobDirectoryPath = jobDirectoryPath;
             _onJobChanged = onJobChanged;
             _filter = filter;
             _listJobNames = listJobNames;
@@ -108,7 +111,7 @@ namespace Kudu.Core.Jobs
                 lock (_lockObject)
                 {
                     // Check if there is a directory we can listen on
-                    if (!FileSystemHelpers.DirectoryExists(_watchedDirectoryPath))
+                    if (!FileSystemHelpers.DirectoryExists(_jobDirectoryPath))
                     {
                         // If not check again in 30 seconds
                         _startFileWatcherTimer.Change(CheckForWatcherTimeout, Timeout.Infinite);
@@ -119,7 +122,7 @@ namespace Kudu.Core.Jobs
                     DisposeWatcher();
 
                     // Start file system watcher
-                    _fileSystemWatcher = _filter != null ? new FileSystemWatcher(_watchedDirectoryPath, _filter) : new FileSystemWatcher(_watchedDirectoryPath);
+                    _fileSystemWatcher = _filter != null ? new FileSystemWatcher(_watchedJobOrParentDirectoryPath, _filter) : new FileSystemWatcher(_watchedJobOrParentDirectoryPath);
                     _fileSystemWatcher.Created += OnChanged;
                     _fileSystemWatcher.Changed += OnChanged;
                     _fileSystemWatcher.Deleted += OnChanged;
@@ -211,9 +214,9 @@ namespace Kudu.Core.Jobs
         private void OnChanged(object sender, FileSystemEventArgs e)
         {
             string path = e.FullPath;
-            if (path != null && path.Length > _watchedDirectoryPath.Length)
+            if (path != null && path.Length > _jobDirectoryPath.Length && path.StartsWith(_jobDirectoryPath, StringComparison.OrdinalIgnoreCase))
             {
-                path = path.Substring(_watchedDirectoryPath.Length).TrimStart(Path.DirectorySeparatorChar);
+                path = path.Substring(_jobDirectoryPath.Length).TrimStart(Path.DirectorySeparatorChar);
                 int firstSeparator = path.IndexOf(Path.DirectorySeparatorChar);
                 string jobName;
                 if (firstSeparator >= 0)
