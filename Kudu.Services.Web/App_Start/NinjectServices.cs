@@ -72,10 +72,27 @@ namespace Kudu.Services.Web.App_Start
         /// </summary>
         public static void Start()
         {
-            HttpApplication.RegisterModule(typeof(SafeOnePerRequestHttpModule));
-            HttpApplication.RegisterModule(typeof(NinjectHttpModule));
-            HttpApplication.RegisterModule(typeof(TraceModule));
-            _bootstrapper.Initialize(CreateKernel);
+            try
+            {
+                HttpApplication.RegisterModule(typeof(SafeOnePerRequestHttpModule));
+                HttpApplication.RegisterModule(typeof(NinjectHttpModule));
+                HttpApplication.RegisterModule(typeof(TraceModule));
+
+                _bootstrapper.Initialize(CreateKernel);
+            }
+            catch (Exception ex)
+            {
+                // trace initialization error
+                KuduEventSource.Log.KuduException(
+                    ServerConfiguration.GetApplicationName(),
+                    "NinjectServices.Start",
+                    string.Empty,
+                    string.Empty,
+                    "Fail to initialize NinjectServices",
+                    ex.ToString());
+
+                throw;
+            }
         }
 
         /// <summary>
