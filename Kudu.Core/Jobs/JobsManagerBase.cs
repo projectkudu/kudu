@@ -87,15 +87,8 @@ namespace Kudu.Core.Jobs
 
             var appDataPath = Path.Combine(Environment.WebRootPath, Constants.AppDataPath);
 
-            if (JobsBinariesPath.StartsWith(appDataPath, StringComparison.OrdinalIgnoreCase))
-            {
-                // WebDeploy may need to delete the contents in App_Data folder. We need to watch App_Data folder to avoid blocking the deletion.
-                JobsWatcher = new JobsFileWatcher(appDataPath, JobsBinariesPath, OnJobChanged, null, ListJobNames, traceFactory, analytics, jobsTypePath);
-            }
-            else
-            {
-                JobsWatcher = new JobsFileWatcher(JobsBinariesPath, JobsBinariesPath, OnJobChanged, null, ListJobNames, traceFactory, analytics, jobsTypePath);
-            }
+            // WebDeploy may need to delete the contents in App_Data folder. We need to watch App_Data folder to avoid blocking the deletion.
+            JobsWatcher = new JobsFileWatcher(appDataPath, JobsBinariesPath, OnJobChanged, null, ListJobNames, traceFactory, analytics, jobsTypePath);
 
             HostingEnvironment.RegisterObject(this);
         }
