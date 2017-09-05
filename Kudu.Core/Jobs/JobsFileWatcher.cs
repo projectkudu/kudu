@@ -214,7 +214,7 @@ namespace Kudu.Core.Jobs
         private void OnChanged(object sender, FileSystemEventArgs e)
         {
             string path = e.FullPath;
-            if (path != null && path.Length > _jobDirectoryPath.Length && path.StartsWith(_jobDirectoryPath, StringComparison.OrdinalIgnoreCase))
+            if (path != null && path.StartsWith(_jobDirectoryPath, StringComparison.OrdinalIgnoreCase))
             {
                 path = path.Substring(_jobDirectoryPath.Length).TrimStart(Path.DirectorySeparatorChar);
                 int firstSeparator = path.IndexOf(Path.DirectorySeparatorChar);
