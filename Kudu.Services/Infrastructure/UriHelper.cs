@@ -11,20 +11,31 @@ namespace Kudu.Services.Infrastructure
     {
         public static Uri GetBaseUri(HttpRequestMessage request)
         {
-            IEnumerable<string> disguisedHostValues = new List<string>();
+            return new Uri(GetRequestUri(request).GetComponents(UriComponents.SchemeAndServer, UriFormat.Unescaped));
+        }
 
-            // Azure will always pass this header to Kudu, and it always carry the right host name.
-            // when running Kudu on mono in a container, container is bound to a local ip
-            // so we cannot rely on "request.RequestUri", which will be "127.0.0.1:xxxx".
+        public static Uri GetRequestUri(HttpRequestMessage request)
+        {
+            var uri = request.RequestUri;
+
+            // On Linux, corrections to the request URI are needed due to the way the request is handled on the worker:
+            // - Set scheme to https
+            // - Set host to the value of DISGUISED-HOST
+            // - Remove port value
+            IEnumerable<string> disguisedHostValues;
             if (!OSDetector.IsOnWindows()
                 && request.Headers.TryGetValues("DISGUISED-HOST", out disguisedHostValues)
                 && disguisedHostValues.Count() > 0)
             {
-                // host value can be "{site name}.scm.azurewebsites.net:443" or "{site name}.scm.azurewebsites.net"
-                return new Uri(string.Format(CultureInfo.InvariantCulture, "https://{0}", disguisedHostValues.First()));
+                uri = (new UriBuilder(uri)
+                {
+                    Scheme = "https",
+                    Host = disguisedHostValues.First(),
+                    Port = -1
+                }).Uri;
             }
 
-            return new Uri(request.RequestUri.GetComponents(UriComponents.SchemeAndServer, UriFormat.Unescaped));
+            return uri;
         }
 
         public static Uri MakeRelative(Uri baseUri, string relativeUri)

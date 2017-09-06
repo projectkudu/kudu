@@ -97,7 +97,7 @@ namespace Kudu.Services.Infrastructure
             if (String.Equals(path, SystemDrivePath, StringComparison.OrdinalIgnoreCase))
             {
                 response = request.CreateResponse(HttpStatusCode.TemporaryRedirect);
-                UriBuilder location = new UriBuilder(request.RequestUri);
+                UriBuilder location = new UriBuilder(UriHelper.GetRequestUri(request));
                 location.Path += "/";
                 response.Headers.Location = location.Uri;
             }

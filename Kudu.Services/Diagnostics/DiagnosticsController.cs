@@ -83,19 +83,15 @@ namespace Kudu.Services.Performance
         // Grabs "currently relevant" Docker logs from the LogFiles folder
         // and returns a JSON response with links to the files in the VFS API
         [HttpGet]
-        public HttpResponseMessage GetDockerLogs()
+        public HttpResponseMessage GetDockerLogs(HttpRequestMessage request)
         {
             using (_tracer.Step("DiagnosticsController.GetDockerLogs"))
             {
                 var currentDockerLogFilenames = GetCurrentDockerLogFilenames();
 
-                // On Linux, requests are forwarded from the HTTP server running on the worker. The request URI
-                // always shows up as http:// (not https://) and includes a port number, so we can't build a target URL
-                // simply by starting from AbsoluteUri or something similar. A more general fix is forthcoming for everywhere
-                // this problem occurs (VFS directory enumeration, /api/scm/info, anywhere else?)
-                var vfsBaseAddress = "https://" + Request.RequestUri.Host + "/api/vfs";
+                var vfsBaseAddress = UriHelper.MakeRelative(UriHelper.GetBaseUri(request), "api/vfs");
 
-                var responseContent = currentDockerLogFilenames.Select(p => CurrentDockerLogFilenameToJson(p, vfsBaseAddress));
+                var responseContent = currentDockerLogFilenames.Select(p => CurrentDockerLogFilenameToJson(p, vfsBaseAddress.ToString()));
 
                 return Request.CreateResponse(HttpStatusCode.OK, responseContent);
             }
