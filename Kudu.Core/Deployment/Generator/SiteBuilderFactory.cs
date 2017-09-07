@@ -151,7 +151,7 @@ namespace Kudu.Core.Deployment.Generator
         private ISiteBuilder ResolveNonAspProject(string repositoryRoot, string projectPath, IDeploymentSettingsManager perDeploymentSettings)
         {
             string sourceProjectPath = projectPath ?? repositoryRoot;
-            if (IsFunctionApp(sourceProjectPath))
+            if (FunctionAppHelper.LooksLikeFunctionApp())
             {
                 return new FunctionBasicBuilder(_environment, perDeploymentSettings, _propertyProvider, repositoryRoot, projectPath);
             }
@@ -177,12 +177,6 @@ namespace Kudu.Core.Deployment.Generator
             }
 
             return new BasicBuilder(_environment, perDeploymentSettings, _propertyProvider, repositoryRoot, projectPath);
-        }
-
-        private static bool IsFunctionApp(string projectPath)
-        {
-            // projectPath ==> project folder
-            return FunctionAppHelper.LooksLikeFunctionApp(projectPath);
         }
 
         private static bool IsGoSite(string projectPath)
@@ -327,7 +321,7 @@ namespace Kudu.Core.Deployment.Generator
                                       targetPath,
                                       solutionPath);
             }
-            else if (FunctionAppHelper.LooksLikeFunctionApp(Path.GetDirectoryName(targetPath)))
+            else if (FunctionAppHelper.LooksLikeFunctionApp())
             {
                 return new FunctionMsbuildBuilder(_environment,
                                                 perDeploymentSettings,
