@@ -84,7 +84,12 @@ namespace Kudu.Core.Jobs
 
             JobsBinariesPath = Path.Combine(Environment.JobsBinariesPath, jobsTypePath);
             JobsDataPath = Path.Combine(Environment.JobsDataPath, jobsTypePath);
-            JobsWatcher = new JobsFileWatcher(JobsBinariesPath, OnJobChanged, null, ListJobNames, traceFactory, analytics, jobsTypePath);
+
+            var appDataPath = Path.Combine(Environment.WebRootPath, Constants.AppDataPath);
+
+            // WebDeploy may need to delete the contents in App_Data folder. We need to watch App_Data folder to avoid blocking the deletion.
+            JobsWatcher = new JobsFileWatcher(appDataPath, JobsBinariesPath, OnJobChanged, null, ListJobNames, traceFactory, analytics, jobsTypePath);
+
             HostingEnvironment.RegisterObject(this);
         }
 
