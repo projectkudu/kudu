@@ -35,8 +35,15 @@ namespace Kudu.Core.Infrastructure
 
         public static string DecryptSecretString(string content)
         {
-            var protector = DataProtectionProvider.CreateAzureDataProtector().CreateProtector(DefaultProtectorPurpose);
-            return protector.Unprotect(content);
+            try
+            {
+                var protector = DataProtectionProvider.CreateAzureDataProtector().CreateProtector(DefaultProtectorPurpose);
+                return protector.Unprotect(content);
+            }
+            catch (CryptographicException ex)
+            {
+                throw new FormatException($"unable to decrypt {content}, the key is either invalid or malformed", ex);
+            }
         }
 
         public static string GenerateFunctionToken()
