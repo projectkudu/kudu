@@ -94,6 +94,7 @@
     <Compile Include="Deployment\DeploymentManagerFacts.cs" />
     <Compile Include="FileSystemHubFacts.cs" />
     <Compile Include="Functions\FunctionManagerTests.cs" />
+    <Compile Include="Functions\FunctionSecretTests.cs" />
     <Compile Include="HgRepositoryFacts.cs" />
     <Compile Include="Hooks\WebHooksManagerTests.cs" />
     <Compile Include="IdleManagerFacts.cs" />
