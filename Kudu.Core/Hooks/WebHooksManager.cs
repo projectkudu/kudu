@@ -245,7 +245,8 @@ namespace Kudu.Core.Hooks
             {
                 try
                 {
-                    return JsonConvert.DeserializeObject<IEnumerable<WebHook>>(fileContent, JsonSerializerSettings);
+                    // It is possible for Deserialize to not throw and return null.
+                    return JsonConvert.DeserializeObject<IEnumerable<WebHook>>(fileContent, JsonSerializerSettings) ?? Enumerable.Empty<WebHook>();
                 }
                 catch (JsonSerializationException ex)
                 {
