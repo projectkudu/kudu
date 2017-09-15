@@ -20,6 +20,7 @@ using Kudu.Core.Tracing;
 using Kudu.Services.ServiceHookHandlers;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Kudu.Services.Infrastructure;
 
 namespace Kudu.Services
 {
@@ -143,7 +144,7 @@ namespace Kudu.Services
                             _environment,
                             _settings,
                             _tracer.TraceLevel,
-                            context.Request.Url,
+                            UriHelper.GetRequestUri(context.Request),
                             waitForTempDeploymentCreation);
                     }
 
@@ -151,7 +152,7 @@ namespace Kudu.Services
                     if (isAsync)
                     {
                         // latest deployment keyword reserved to poll till deployment done
-                        context.Response.Headers["Location"] = new Uri(context.Request.Url,
+                        context.Response.Headers["Location"] = new Uri(UriHelper.GetRequestUri(context.Request),
                             String.Format("/api/deployments/{0}?deployer={1}&time={2}", Constants.LatestDeployment, deployInfo.Deployer, DateTime.UtcNow.ToString("yyy-MM-dd_HH-mm-ssZ"))).ToString();
                     }
                     context.Response.StatusCode = (int)HttpStatusCode.Accepted;

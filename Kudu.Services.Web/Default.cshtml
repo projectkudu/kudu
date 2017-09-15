@@ -118,11 +118,11 @@
         <li>
             <a href="api/scm/info">Source control info</a>
         </li>
+        <li>
+            <a href="api/vfs">Files</a>
+        </li>
         @if (Kudu.Core.Helpers.OSDetector.IsOnWindows())
         {
-            <li>
-                <a href="api/vfs">Files</a>
-            </li>
             <li>
                 <a href="api/processes">Processes and mini-dumps</a>
             </li>
@@ -141,6 +141,12 @@
             <li>
             Functions: <a href="api/functions">list</a> | <a href="api/functions/config">host config</a>
         </li>
+        }
+        else
+        {
+            <li>
+                <a href="api/logs/docker">Current Docker logs</a> (<a href="api/logs/docker/zip">Download as zip</a>)
+            </li>
         }
     </ul>
 
