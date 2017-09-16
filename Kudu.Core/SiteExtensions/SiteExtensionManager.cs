@@ -81,7 +81,7 @@ namespace Kudu.Core.SiteExtensions
             SearchFilter filterOptions = new SearchFilter();
             filterOptions.IncludePrerelease = allowPrereleaseVersions;
 
-            IEnumerable<UIPackageMetadata> packages = null;
+            IEnumerable<UIPackageMetadata> packages = new List<UIPackageMetadata>();
 
             using (tracer.Step("Search site extensions by filter: {0}", filter))
             {
@@ -300,7 +300,7 @@ namespace Kudu.Core.SiteExtensions
                         {
                             foreach (SourceRepository rr in remoteRepos)
                             {
-                                repoPackage = await remoteRepo.GetPackageByIdentity(id, version);
+                                repoPackage = await rr.GetPackageByIdentity(id, version);
                                 if (repoPackage != null)
                                 {
                                     remoteRepo = rr;
@@ -319,7 +319,7 @@ namespace Kudu.Core.SiteExtensions
                             localPackage = await InstallExtension(repoPackage, installationDirectory, remoteRepo, type, tracer, installationArgs);
                             siteExtensionSettings.SetValues(new KeyValuePair<string, JToken>[] {
                                 new KeyValuePair<string, JToken>(_versionSetting, localPackage.Identity.Version.ToNormalizedString()),
-                                new KeyValuePair<string, JToken>(_feedUrlSetting, remoteRepo.PackageSource.Source),
+                                new KeyValuePair<string, JToken>(_feedUrlSetting, feedUrl),
                                 new KeyValuePair<string, JToken>(_installUtcTimestampSetting, DateTime.UtcNow.ToString("u")),
                                 new KeyValuePair<string, JToken>(_packageType, Enum.GetName(typeof(SiteExtensionInfo.SiteExtensionType), type)),
                                 new KeyValuePair<string, JToken>(_installationArgs, installationArgs)
