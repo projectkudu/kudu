@@ -87,7 +87,11 @@ namespace Kudu.Core.SiteExtensions
             {
                 foreach (SourceRepository remoteRepo in remoteRepos)
                 {
-                    packages.Concat(await remoteRepo.Search(string.IsNullOrWhiteSpace(filter) ? string.Empty : filter, filterOptions: filterOptions));
+                    var foundUIPackages = await remoteRepo.Search(string.IsNullOrWhiteSpace(filter) ? string.Empty : filter, filterOptions: filterOptions);
+                    if (null != foundUIPackages)
+                    {
+                        packages = packages.Concat(foundUIPackages);
+                    }
                 }
                 packages.OrderByDescending(p => p.DownloadCount);
             }
