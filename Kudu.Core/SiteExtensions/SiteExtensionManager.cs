@@ -88,12 +88,12 @@ namespace Kudu.Core.SiteExtensions
                 foreach (SourceRepository remoteRepo in remoteRepos)
                 {
                     var foundUIPackages = await remoteRepo.Search(string.IsNullOrWhiteSpace(filter) ? string.Empty : filter, filterOptions: filterOptions);
-                    if (null != foundUIPackages)
+                    if (null != foundUIPackages && foundUIPackages.Count() > 0)
                     {
                         packages = packages.Concat(foundUIPackages);
                     }
                 }
-                packages.OrderByDescending(p => p.DownloadCount);
+                packages = packages.OrderByDescending(p => p.DownloadCount);
             }
 
             using (tracer.Step("Convert search result to SiteExtensionInfos with max concurrent requests: {0}", System.Environment.ProcessorCount))
@@ -856,7 +856,18 @@ namespace Kudu.Core.SiteExtensions
 
         private async Task<SiteExtensionInfo> CheckRemotePackageLatestVersion(SiteExtensionInfo info, UIMetadataResource metadataResource)
         {
-            UIPackageMetadata localPackage = await metadataResource.GetLatestPackageByIdFromMetaRes(info.Id);
+            bool isNuGetPackage = false;
+
+            if (!string.IsNullOrEmpty(info.FeedUrl))
+            {
+                isNuGetPackage = System.Text.RegularExpressions.Regex.IsMatch(
+                                info.FeedUrl,
+                                @"https://.*\.nuget\.org/.*",
+                                System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+            }
+
+            UIPackageMetadata localPackage = await metadataResource.GetLatestPackageByIdFromMetaRes(info.Id,
+                explicitTag: isNuGetPackage);
 
             if (localPackage != null)
             {
