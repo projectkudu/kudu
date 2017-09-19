@@ -799,6 +799,11 @@ $.connection.hub.start().done(function () {
     }
 
     function _isZipFile(evt) {
+        if (evt.originalEvent.dataTransfer === null)
+		{
+			//dataTransfer is null in Edge / IE. Assume a zip file. Unzip will no-op
+			return true;
+		}
         var items = evt.originalEvent.dataTransfer.items || evt.originalEvent.dataTransfer.files;
         if (items) {
             var filesArray = $.map(items, function (item) {
