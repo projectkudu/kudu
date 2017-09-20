@@ -18,12 +18,12 @@ namespace Kudu.Core.SourceControl
         // for null repo, good enough for last known changeset
         private static ChangeSet _latestChangeSet;
 
-        private readonly IEnvironment _environment;
+        private readonly string _path;
         private readonly ITraceFactory _traceFactory;
 
-        public NullRepository(IEnvironment environment, ITraceFactory traceFactory)
+        public NullRepository(string path, ITraceFactory traceFactory)
         {
-            _environment = environment;
+            _path = path;
             _traceFactory = traceFactory;
         }
 
@@ -38,7 +38,7 @@ namespace Kudu.Core.SourceControl
 
         public string RepositoryPath
         {
-            get { return _environment.RepositoryPath; }
+            get { return _path; }
         }
 
         public RepositoryType RepositoryType

@@ -26,7 +26,7 @@ namespace Kudu.Core.Test
                         Mock.Of<IEnvironment>(), 
                         Mock.Of<IDeploymentSettingsManager>(),
                         Mock.Of<ITraceFactory>()) { CallBase = true };
-                    repoFactory.SetupGet(f => f.IsNullRepository)
+                    repoFactory.SetupGet(f => f.NoRepository)
                                .Returns(currentType == RepositoryType.None);
                     repoFactory.SetupGet(f => f.IsGitRepository)
                                .Returns(currentType == RepositoryType.Git);
