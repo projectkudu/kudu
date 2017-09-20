@@ -24,6 +24,11 @@ namespace Kudu.Core.Deployment.Generator
 
         public ISiteBuilder CreateBuilder(ITracer tracer, ILogger logger, IDeploymentSettingsManager settings, IFileFinder fileFinder)
         {
+            //
+            // TODO
+            // Compute repository root here, as there may be an override.
+            // Wtf is filefinder for then?
+            //
             string repositoryRoot = _environment.RepositoryPath;
 
             // Use the cached vs projects file finder for: a. better performance, b. ignoring solutions/projects under node_modules
@@ -42,6 +47,13 @@ namespace Kudu.Core.Deployment.Generator
             {
                 return new CustomGeneratorCommandSiteBuilder(_environment, settings, _propertyProvider, repositoryRoot, scriptGeneratorArgs);
             }
+
+            //
+            // NEW LOGIC GOES HERE
+            // Jump straight to a basic builder based on whether or not this is a
+            // "just deploy, no build" deployment (which should be available at the per-deployment
+            // level as well as in app settings
+            //
 
             // If the repository has an explicit pointer to a project path to be deployed
             // then use it.

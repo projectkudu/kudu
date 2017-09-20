@@ -24,32 +24,32 @@ namespace Kudu.Services.Deployment
 {
     public class PushDeploymentController : ApiController
     {
-        private readonly IDeploymentStatusManager _status;
+        //private readonly IDeploymentStatusManager _status;
         private readonly IDeploymentManager _deploymentManager;
         private readonly ITracer _tracer;
         private readonly IOperationLock _deploymentLock;
         private readonly IEnvironment _environment;
-        private readonly IDeploymentSettingsManager _settings;
+        //private readonly IDeploymentSettingsManager _settings;
         private readonly IRepositoryFactory _repositoryFactory;
         private readonly string _markerFilePath;
 
         public PushDeploymentController(
-            IDeploymentStatusManager status,
+            //IDeploymentStatusManager status,
             IDeploymentManager deploymentManager,
             ITracer tracer,
             IOperationLock deploymentLock,
             IEnvironment environment,
-            IDeploymentSettingsManager settings,
+            //IDeploymentSettingsManager settings,
             IRepositoryFactory repositoryFactory)
         {
-            _status = status;
+            //_status = status;
             _deploymentManager = deploymentManager;
             _tracer = tracer;
             _deploymentLock = deploymentLock;
             _environment = environment;
-            _settings = settings;
+            //_settings = settings;
             _repositoryFactory = repositoryFactory;
-            _markerFilePath = Path.Combine(environment.DeploymentsPath, "pending");
+            _markerFilePath = Path.Combine(_environment.DeploymentsPath, "pending");
 
             // TODO this is from fetch handler
             // This should be refactored to somewhere central

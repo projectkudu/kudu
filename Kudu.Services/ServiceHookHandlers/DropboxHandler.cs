@@ -79,7 +79,7 @@ namespace Kudu.Services.ServiceHookHandlers
 
         private RepositoryType GetRepositoryType()
         {
-            return _settings.IsNullRepository() ? RepositoryType.None : RepositoryType.Git;
+            return _settings.NoRepository() ? RepositoryType.None : RepositoryType.Git;
         }
 
         private string GetValue(JObject payload, string key)
