@@ -518,7 +518,7 @@ namespace Kudu.Core.Deployment
         /// <summary>
         /// Builds and deploys a particular changeset. Puts all build artifacts in a deployments/{id}
         /// </summary>
-        private async Task Build(ChangeSet changeSet, ITracer tracer, IDisposable deployStep, IFileFinder fileFinder, DeploymentAnalytics deploymentAnalytics)
+        private async Task Build(ChangeSet changeSet, ITracer tracer, IDisposable deployStep, IRepository repository, DeploymentAnalytics deploymentAnalytics)
         {
             if (changeSet == null || String.IsNullOrEmpty(changeSet.Id))
             {
@@ -544,8 +544,7 @@ namespace Kudu.Core.Deployment
 
                 ISiteBuilder builder = null;
 
-                string repositoryRoot = _environment.RepositoryPath;
-                var perDeploymentSettings = DeploymentSettingsManager.BuildPerDeploymentSettingsManager(repositoryRoot, _settings);
+                var perDeploymentSettings = DeploymentSettingsManager.BuildPerDeploymentSettingsManager(repository.RepositoryPath, _settings);
 
                 string delayMaxInStr = perDeploymentSettings.GetValue(SettingsKeys.MaxRandomDelayInSec);
                 if (!String.IsNullOrEmpty(delayMaxInStr))
@@ -571,7 +570,7 @@ namespace Kudu.Core.Deployment
                 {
                     using (tracer.Step("Determining deployment builder"))
                     {
-                        builder = _builderFactory.CreateBuilder(tracer, innerLogger, perDeploymentSettings, fileFinder);
+                        builder = _builderFactory.CreateBuilder(tracer, innerLogger, perDeploymentSettings, repository);
                         deploymentAnalytics.ProjectType = builder.ProjectType;
                         tracer.Trace("Builder is {0}", builder.GetType().Name);
                     }

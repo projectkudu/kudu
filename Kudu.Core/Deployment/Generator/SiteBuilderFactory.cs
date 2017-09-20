@@ -22,17 +22,12 @@ namespace Kudu.Core.Deployment.Generator
             _environment = environment;
         }
 
-        public ISiteBuilder CreateBuilder(ITracer tracer, ILogger logger, IDeploymentSettingsManager settings, IFileFinder fileFinder)
+        public ISiteBuilder CreateBuilder(ITracer tracer, ILogger logger, IDeploymentSettingsManager settings, IRepository repository)
         {
-            //
-            // TODO
-            // Compute repository root here, as there may be an override.
-            // Wtf is filefinder for then?
-            //
-            string repositoryRoot = _environment.RepositoryPath;
+            string repositoryRoot = repository.RepositoryPath;
 
             // Use the cached vs projects file finder for: a. better performance, b. ignoring solutions/projects under node_modules
-            fileFinder = new CachedVsProjectsFileFinder(fileFinder);
+            var fileFinder = new CachedVsProjectsFileFinder(repository);
 
             // If there's a custom deployment file then let that take over.
             var command = settings.GetValue(SettingsKeys.Command);

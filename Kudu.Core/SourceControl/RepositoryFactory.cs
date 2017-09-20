@@ -93,6 +93,11 @@ namespace Kudu.Core.SourceControl
             return repository;
         }
 
+        public IRepository GetZipDeployRepository(string path)
+        {
+            return new NullRepository(path, _traceFactory);
+        }
+
         public IRepository GetRepository()
         {
             ITracer tracer = _traceFactory.GetTracer();

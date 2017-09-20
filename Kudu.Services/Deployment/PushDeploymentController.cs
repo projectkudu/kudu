@@ -93,7 +93,14 @@ namespace Kudu.Services.Deployment
 
                         // TODO: For repository, should we do an EnsureRepository check, or just new it up?
                         // Not sure if we want to fail with a repository mismatch error if other work already done?
-                        var repository = _repositoryFactory.EnsureRepository(RepositoryType.None);
+                        //var repository = _repositoryFactory.EnsureRepository(RepositoryType.None);
+
+                        // TODO What should the path be? 
+                        // should repositoryFactory take care of it? What should it be based on?
+                        // Should it vary between deployments?
+                        // Also make sure that it's on the local drive and not on the user drive for speed.
+                        // size concerns?
+                        var repository = _repositoryFactory.GetZipDeployRepository(_environment.TempPath);
 
                         // TODO Not sure if inside the lock is the right place to extract the stream.
                         // TODO Would we rather write it to disk first? Should probably always do that 
