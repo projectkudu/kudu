@@ -20,11 +20,19 @@ namespace Kudu.Core.SourceControl
 
         private readonly string _path;
         private readonly ITraceFactory _traceFactory;
+        private readonly bool _doBuildDuringDeploymentByDefault;
 
         public NullRepository(string path, ITraceFactory traceFactory)
+            :this(path, traceFactory, doBuildDuringDeploymentByDefault: true)
+        {
+        }
+
+        public NullRepository(string path, ITraceFactory traceFactory,
+            bool doBuildDuringDeploymentByDefault)
         {
             _path = path;
             _traceFactory = traceFactory;
+            _doBuildDuringDeploymentByDefault = doBuildDuringDeploymentByDefault;
         }
 
         public string CurrentId
@@ -49,6 +57,11 @@ namespace Kudu.Core.SourceControl
         public bool Exists
         {
             get { return true; }
+        }
+
+        public bool DoBuildDuringDeploymentByDefault
+        {
+            get { return _doBuildDuringDeploymentByDefault; }
         }
 
         public void Initialize()

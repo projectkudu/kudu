@@ -233,5 +233,14 @@ namespace Kudu.Contracts.Settings
             // Default is true
             return value == null || StringUtils.IsTrueLike(value);
         }
+
+        // Result here is tri-state, as caller needs to know if it was set or not
+        // ("default" is context-dependent)
+        public static bool? DoBuildDuringDeployment(this IDeploymentSettingsManager settings)
+        {
+            var value = settings.GetValue(SettingsKeys.DoBuildDuringDeployment);
+
+            return value == null ? new bool?() : StringUtils.IsTrueLike(value);
+        }
     }
 }

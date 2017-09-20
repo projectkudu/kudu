@@ -48,6 +48,11 @@ namespace Kudu.Core.SourceControl
             get { return RepositoryType.Mercurial; }
         }
 
+        public bool DoBuildDuringDeploymentByDefault
+        {
+            get { return true; }
+        }
+
         public string CurrentId
         {
             get

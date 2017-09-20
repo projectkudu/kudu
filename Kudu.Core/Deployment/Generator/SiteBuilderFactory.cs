@@ -43,22 +43,26 @@ namespace Kudu.Core.Deployment.Generator
                 return new CustomGeneratorCommandSiteBuilder(_environment, settings, _propertyProvider, repositoryRoot, scriptGeneratorArgs);
             }
 
-            //
-            // NEW LOGIC GOES HERE
-            // Jump straight to a basic builder based on whether or not this is a
-            // "just deploy, no build" deployment (which should be available at the per-deployment
-            // level as well as in app settings
-            //
-
             // If the repository has an explicit pointer to a project path to be deployed
             // then use it.
             string targetProjectPath = settings.GetValue(SettingsKeys.Project);
             if (!String.IsNullOrEmpty(targetProjectPath))
             {
                 tracer.Trace("Specific project was specified: " + targetProjectPath);
-
                 targetProjectPath = Path.GetFullPath(Path.Combine(repositoryRoot, targetProjectPath.TrimStart('/', '\\')));
+            }
 
+            // The nature of the repository determines whether or not we do stack-specific build actions by default.
+            // Explicitly setting a value will always take precedence, though.
+            var doBuild = settings.DoBuildDuringDeployment() ?? repository.DoBuildDuringDeploymentByDefault;
+            if (!doBuild)
+            {
+                var projectPath = !String.IsNullOrEmpty(targetProjectPath) ? targetProjectPath : repositoryRoot;
+                return new BasicBuilder(_environment, settings, _propertyProvider, repositoryRoot, projectPath);
+            }
+                        
+            if (!String.IsNullOrEmpty(targetProjectPath))
+            {
                 // Try to resolve the project
                 return ResolveProject(repositoryRoot,
                                       targetProjectPath,

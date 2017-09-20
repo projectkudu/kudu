@@ -48,6 +48,11 @@ namespace Kudu.Core.SourceControl.Git
             }
         }
 
+        public bool DoBuildDuringDeploymentByDefault
+        {
+            get { return true; }
+        }
+
         public void Initialize()
         {
             var tracer = _tracerFactory.GetTracer();

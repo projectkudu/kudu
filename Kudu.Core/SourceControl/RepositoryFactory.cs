@@ -95,7 +95,7 @@ namespace Kudu.Core.SourceControl
 
         public IRepository GetZipDeployRepository(string path)
         {
-            return new NullRepository(path, _traceFactory);
+            return new NullRepository(path, _traceFactory, doBuildDuringDeploymentByDefault: false);
         }
 
         public IRepository GetRepository()

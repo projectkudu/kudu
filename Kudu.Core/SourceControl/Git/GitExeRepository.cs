@@ -64,6 +64,8 @@ namespace Kudu.Core.SourceControl.Git
             get { return RepositoryType.Git; }
         }
 
+   
+
         public bool SkipPostReceiveHookCheck
         {
             get;
@@ -113,6 +115,11 @@ namespace Kudu.Core.SourceControl.Git
             {
                 return Path.Combine(_gitExe.WorkingDirectory, ".git", "hooks", "git-credential-invalid.sh");
             }
+        }
+
+        public bool DoBuildDuringDeploymentByDefault
+        {
+            get { return true; }
         }
 
         public void Initialize()

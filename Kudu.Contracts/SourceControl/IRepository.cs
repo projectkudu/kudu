@@ -15,6 +15,13 @@ namespace Kudu.Core.SourceControl
         bool Exists { get; }
 
         /// <summary>
+        /// Indicates whether or not a deployment from this repo should
+        /// include a stack-specific build process. Overrideable at
+        /// deployment time with a setting.
+        /// </summary>
+        bool DoBuildDuringDeploymentByDefault { get; }
+
+        /// <summary>
         /// Initialize a new repository using the given configuration.
         /// </summary>
         void Initialize();
