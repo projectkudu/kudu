@@ -240,7 +240,14 @@ namespace Kudu.Contracts.Settings
         {
             var value = settings.GetValue(SettingsKeys.DoBuildDuringDeployment);
 
-            return value == null ? new bool?() : StringUtils.IsTrueLike(value);
+            bool result;
+
+            if (StringUtils.TryParseBool(value, out result))
+            {
+                return result;
+            }
+
+            return null;
         }
     }
 }
