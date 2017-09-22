@@ -259,6 +259,15 @@ namespace Kudu.Core {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Fetching changes..
+        /// </summary>
+        internal static string FetchingChanges {
+            get {
+                return ResourceManager.GetString("FetchingChanges", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Cleaning {0} repository..
         /// </summary>
         internal static string Log_CleaningRepository {
@@ -372,6 +381,15 @@ namespace Kudu.Core {
         internal static string Log_UpdatingSubmodules {
             get {
                 return ResourceManager.GetString("Log_UpdatingSubmodules", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Receiving changes..
+        /// </summary>
+        internal static string ReceivingChanges {
+            get {
+                return ResourceManager.GetString("ReceivingChanges", resourceCulture);
             }
         }
         

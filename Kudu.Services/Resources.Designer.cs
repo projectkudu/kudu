@@ -358,15 +358,6 @@ namespace Kudu.Services {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Fetching changes..
-        /// </summary>
-        internal static string FetchingChanges {
-            get {
-                return ResourceManager.GetString("FetchingChanges", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to {0}{1}  The application was terminated.{0}.
         /// </summary>
         internal static string LogStream_AppShutdown {
@@ -516,15 +507,6 @@ namespace Kudu.Services {
         internal static string OneDriveUnableToSync {
             get {
                 return ResourceManager.GetString("OneDriveUnableToSync", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Receiving changes..
-        /// </summary>
-        internal static string ReceivingChanges {
-            get {
-                return ResourceManager.GetString("ReceivingChanges", resourceCulture);
             }
         }
         

@@ -159,12 +159,6 @@
   <data name="Error_UnsupportedFormat" xml:space="preserve">
     <value>The json payload is unsupported.</value>
   </data>
-  <data name="FetchingChanges" xml:space="preserve">
-    <value>Fetching changes.</value>
-  </data>
-  <data name="ReceivingChanges" xml:space="preserve">
-    <value>Receiving changes.</value>
-  </data>
   <data name="SettingDoesNotExist" xml:space="preserve">
     <value>The setting '{0}' does not exist.</value>
   </data>
