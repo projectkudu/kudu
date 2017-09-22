@@ -26,7 +26,6 @@ namespace Kudu.Services.Deployment
         private readonly IEnvironment _environment;
         //private readonly IDeploymentSettingsManager _settings;
         private readonly IRepositoryFactory _repositoryFactory;
-        private readonly string _markerFilePath;
 
         public PushDeploymentController(
             //IDeploymentStatusManager status,
@@ -44,24 +43,6 @@ namespace Kudu.Services.Deployment
             _environment = environment;
             //_settings = settings;
             _repositoryFactory = repositoryFactory;
-            _markerFilePath = Path.Combine(_environment.DeploymentsPath, "pending");
-
-            // TODO the below is from fetch handler
-            // This should be refactored to somewhere central
-
-            // Prefer marker creation in ctor to delay create when needed.
-            // This is to keep the code simple and avoid creation synchronization.
-            if (!FileSystemHelpers.FileExists(_markerFilePath))
-            {
-                try
-                {
-                    FileSystemHelpers.WriteAllText(_markerFilePath, String.Empty);
-                }
-                catch (Exception ex)
-                {
-                    tracer.TraceError(ex);
-                }
-            }
         }
 
         [HttpPost]
@@ -129,21 +110,7 @@ namespace Kudu.Services.Deployment
                 }
                 catch (LockOperationException)
                 {
-                    // TODO Not sure if any of this is desired, as currently not do/while looping
-                    // over the markerfile in PerformDeployment.
-
-                    // Create a marker file that indicates if there's another deployment to pull
-                    // because there was a deployment in progress.
-                    using (_tracer.Step("Update pending deployment marker file"))
-                    {
-                        // REVIEW: This makes the assumption that the repository url is the same.
-                        // If it isn't the result would be buggy either way.
-                        FileSystemHelpers.SetLastWriteTimeUtc(_markerFilePath, DateTime.UtcNow);
-                    }
-
-                    // Return a http 202: the request has been accepted for processing, but the processing has not been completed.
-                    //context.Response.StatusCode = (int)HttpStatusCode.Accepted;
-                    return Request.CreateResponse(HttpStatusCode.Accepted);
+                    return Request.CreateResponse(HttpStatusCode.Conflict);
                 }
             }
         }
