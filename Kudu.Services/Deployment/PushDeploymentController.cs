@@ -1,24 +1,19 @@
-﻿using Kudu.Contracts.Infrastructure;
-using Kudu.Contracts.Settings;
+﻿using System;
+using System.IO;
+using System.IO.Compression;
+using System.Net;
+using System.Net.Http;
+using System.Threading.Tasks;
+using System.Web.Http;
+
+using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.SourceControl;
 using Kudu.Contracts.Tracing;
 using Kudu.Core;
 using Kudu.Core.Deployment;
 using Kudu.Core.Helpers;
 using Kudu.Core.Infrastructure;
-using Kudu.Core.SourceControl;
 using Kudu.Core.Tracing;
-using Kudu.Services.ServiceHookHandlers;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.IO.Compression;
-using System.Linq;
-using System.Net;
-using System.Net.Http;
-using System.Text;
-using System.Threading.Tasks;
-using System.Web.Http;
 
 namespace Kudu.Services.Deployment
 {
@@ -51,7 +46,7 @@ namespace Kudu.Services.Deployment
             _repositoryFactory = repositoryFactory;
             _markerFilePath = Path.Combine(_environment.DeploymentsPath, "pending");
 
-            // TODO this is from fetch handler
+            // TODO the below is from fetch handler
             // This should be refactored to somewhere central
 
             // Prefer marker creation in ctor to delay create when needed.
@@ -98,26 +93,22 @@ namespace Kudu.Services.Deployment
                         // TODO What should the path be? 
                         // should repositoryFactory take care of it? What should it be based on?
                         // Should it vary between deployments?
+                        // Should it always be a new folder? If not, do we clean it out first?
                         // Also make sure that it's on the local drive and not on the user drive for speed.
                         // size concerns?
-                        var repository = _repositoryFactory.GetZipDeployRepository(_environment.TempPath);
+
+                        // Ugly hack here for now
+                        var extractPath = Path.Combine(_environment.TempPath, Path.GetRandomFileName());
 
                         // TODO Not sure if inside the lock is the right place to extract the stream.
-                        // TODO Would we rather write it to disk first? Should probably always do that 
-                        // for async deploys.
+                        // TODO Would we rather write it to disk before expanding? Should probably always do that 
+                        // for async deploys, as the extract may take a while.
 
                         using (var stream = await Request.Content.ReadAsStreamAsync())
                         {
-                            // TODO Need to clear out any files already in the repository folder
-                            // until we implement a handler that does delta-based extraction
-                            // including deletion of files in the repository folder that are no longer there
                             var zipArchive = new ZipArchive(stream, ZipArchiveMode.Read);
-
-                            // TODO correct path
-                            zipArchive.Extract("/home/site/wwwroot");
+                            zipArchive.Extract(extractPath);
                         }
-
-                        var deployer = "Zip-Push";
 
                         // TODO We don't need to bother constructing a DeploymentInfo here but
                         // saving this for reference when doing fetch later
@@ -129,11 +120,12 @@ namespace Kudu.Services.Deployment
 
                         // TODO Doing changeset this way for consistency with future fetch deploy implementation,
                         // which requires that the repository have changeset that can be retrieved with GetChangeSet.
-                        // The beloq is what we do for OneDrive and Dropbox during a fetch.
+                        // The below is what we do for OneDrive and Dropbox during a fetch.
                         // Not sure if it's the right thing to do.
+                        var repository = _repositoryFactory.GetZipDeployRepository(extractPath);
                         repository.Commit("Extracting pushed zip file", authorName: null, emailAddress: null);
                         var changeSet = repository.GetChangeSet("HEAD");
-
+                        var deployer = "Zip-Push";
                         await _deploymentManager.DeployAsync(repository, changeSet, deployer, clean: false, needFileUpdate: false);
 
                         return Request.CreateResponse(HttpStatusCode.OK);

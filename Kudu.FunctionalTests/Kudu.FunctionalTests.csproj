@@ -71,6 +71,7 @@
     <Compile Include="CommandExecutorTests.cs" />
     <Compile Include="Jobs\WebJobsTests.cs" />
     <Compile Include="DeploymentActionsTests.cs" />
+    <Compile Include="PushDeploymentTests.cs" />
     <Compile Include="SiteExtensions\SiteExtensionApiFacts.cs" />
     <Compile Include="SiteExtensions\SiteExtensionsIncrementalDeploymentTests.cs" />
     <Compile Include="WebHooksTests.cs" />

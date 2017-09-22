@@ -107,7 +107,7 @@ namespace Kudu.Core.SourceControl
 
                 tracer.Trace("Commit id: " + changeSet.Id, new Dictionary<string, string>
                 {
-                    { "Messsage", changeSet.Message },
+                    { "Message", changeSet.Message },
                     { "AuthorName", changeSet.AuthorName },
                     { "AuthorEmail", changeSet.AuthorEmail }
                 });

@@ -42,6 +42,7 @@
       <Link>Properties\CommonAssemblyInfo.cs</Link>
     </Compile>
     <Compile Include="Command\RemoteCommandExecutor.cs" />
+    <Compile Include="Deployment\RemotePushDeploymentManager.cs" />
     <Compile Include="Deployment\RemoteFetchManager.cs" />
     <Compile Include="Diagnostics\RemoteRuntimeManager.cs" />
     <Compile Include="Diagnostics\RemoteLogFilesManager.cs" />
