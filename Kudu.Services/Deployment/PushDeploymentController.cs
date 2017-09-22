@@ -50,7 +50,6 @@ namespace Kudu.Services.Deployment
         {
             using (_tracer.Step("ZipPushDeploy"))
             {
-
                 // TODO should we reject requests if SCM is enabled?
                 // FetchHandler does on line 115, but explicitly calls out that that
                 // check is skipped for git pushes and GenericHandler/DropBoxHandler because
@@ -69,36 +68,24 @@ namespace Kudu.Services.Deployment
                         }
 
                         // TODO Create temp deployment here
+                        // Also do it for async. Make sure to do it inside the lock!
+                        // See https://github.com/projectkudu/kudu/issues/2301
 
-                        // TODO What should the path be? 
-                        // should repositoryFactory take care of it? What should it be based on?
-                        // Should it vary between deployments?
-                        // Should it be the repository folder (don't see the point of that, when we could put it
-                        // in a temp folder on the local drive for speed)
-                        // Should it always be a new folder? If not, do we clean it out first?
-                        // Also make sure that it's on the local drive and not on the user drive for speed.
-                        // size concerns?
+                        var repository = _repositoryFactory.GetZipDeployRepository();
 
-                        // Ugly hack here for now
-                        var extractPath = Path.Combine(_environment.TempPath, Path.GetRandomFileName());
+                        // TODO status file for tracking unzip progress.
+                        // See OneDrive and BitBucket handlers for how they do Sync.
 
-                        // TODO: For repository, should we do an EnsureRepository check, or just new it up?
-                        // Not sure if we want to fail with a repository mismatch error if other work already done?
-                        // TODO note that Fetch *always* does EnsureRepository, so what's happening here is not compatible
-                        // with that setup as-is.
-                        var repository = _repositoryFactory.GetZipDeployRepository(extractPath);
-
-                        // TODO For async deploys, write the stream to a file and extract later
+                        // TODO For async deploys, write the stream to a file and extract later.
+                        // Any reason to do that for sync deploys as well? Maybe just consistency?
                         using (var stream = await Request.Content.ReadAsStreamAsync())
                         {
                             var zipArchive = new ZipArchive(stream, ZipArchiveMode.Read);
-                            zipArchive.Extract(extractPath);
+                            zipArchive.Extract(repository.RepositoryPath);
                         }
 
-                        // TODO Doing changeset this way for consistency with future fetch deploy implementation,
-                        // which requires that the repository have changeset that can be retrieved with GetChangeSet.
-                        // The below is what we do for OneDrive and Dropbox during a fetch.
-                        // Not sure if it's the right thing to do.
+                        // This is the standard interaction for a NullRepository.
+                        // It's what we do for OneDrive and Dropbox during fetches for those providers.
                         repository.Commit("Extracting pushed zip file", authorName: null, emailAddress: null);
                         var changeSet = repository.GetChangeSet("HEAD");
 
@@ -110,6 +97,7 @@ namespace Kudu.Services.Deployment
                 }
                 catch (LockOperationException)
                 {
+                    // TODO need to handle marker files 
                     return Request.CreateResponse(HttpStatusCode.Conflict);
                 }
             }

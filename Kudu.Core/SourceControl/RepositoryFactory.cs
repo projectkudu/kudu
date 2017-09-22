@@ -93,8 +93,19 @@ namespace Kudu.Core.SourceControl
             return repository;
         }
 
-        public IRepository GetZipDeployRepository(string path)
+        // TODO: Should this be a part of EnsureRepository?
+        // Not sure if we want to fail with a repository mismatch error if other work already done?
+        // Note that Fetch *always* does EnsureRepository, so what's happening here is not compatible
+        // with that setup as-is.
+        public IRepository GetZipDeployRepository()
         {
+            // TODO What should the path be? 
+            // Should it vary between deployments?
+            // Should it be the repository folder? Not sure if there's any benefit to that,
+            // if we could instead put it in a temp folder on the local drive for speed.
+            // Should it always be a new folder? If not, do we clean it out first?
+
+            var path = Path.Combine(_environment.TempPath, Path.GetRandomFileName());
             return new NullRepository(path, _traceFactory, doBuildDuringDeploymentByDefault: false);
         }
 
