@@ -62,7 +62,7 @@ namespace Kudu.Core.Deployment
             }
         }
 
-        public async Task<FetchDeploymentRequestResult> DoDeployment(
+        public async Task<FetchDeploymentRequestResult> FetchDeploy(
             DeploymentInfo deployInfo,
             bool asyncRequested,
             Uri requestUri,
@@ -96,7 +96,7 @@ namespace Kudu.Core.Deployment
                         waitForTempDeploymentCreation);
                 }
 
-                return FetchDeploymentRequestResult.RunningInBackground;
+                return FetchDeploymentRequestResult.RunningAynschronously;
             }
 
             _tracer.Trace("Attempting to fetch target branch {0}", targetBranch);
@@ -124,7 +124,7 @@ namespace Kudu.Core.Deployment
                     FileSystemHelpers.SetLastWriteTimeUtc(_markerFilePath, DateTime.UtcNow);
                 }
 
-                return FetchDeploymentRequestResult.AcceptedAndPending;
+                return FetchDeploymentRequestResult.Pending;
             }
         }
 

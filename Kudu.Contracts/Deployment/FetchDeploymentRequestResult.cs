@@ -4,9 +4,9 @@
     {
         Unknown = 0,
         ForbiddenScmDisabled,
-        RunningInBackground,
+        RunningAynschronously,
         AutoSwapOngoing,
         RanSynchronously,
-        AcceptedAndPending
+        Pending
     }
 }
