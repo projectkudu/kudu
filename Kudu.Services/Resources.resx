@@ -306,4 +306,7 @@
   <data name="Error_LogDetailsNotFound" xml:space="preserve">
     <value>LogId '{0}' was not found in Deployment '{1}'.</value>
   </data>
+  <data name="ReceivingChanges" xml:space="preserve">
+    <value>Receiving changes.</value>
+  </data>
 </root>

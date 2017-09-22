@@ -1,6 +1,6 @@
-﻿namespace Kudu.Services.ServiceHookHandlers
+﻿namespace Kudu.Core.Deployment
 {
-    public enum DeploymentResponse
+    public enum FetchDeploymentRequestResult
     {
         Unknown = 0,
         ForbiddenScmDisabled,

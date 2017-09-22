@@ -3,6 +3,7 @@ using System.Linq;
 using System.Web;
 using Kudu.Core.SourceControl;
 using Newtonsoft.Json.Linq;
+using Kudu.Core.Deployment;
 
 namespace Kudu.Services.ServiceHookHandlers
 {

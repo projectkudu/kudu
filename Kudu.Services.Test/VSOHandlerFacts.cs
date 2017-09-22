@@ -8,6 +8,7 @@ using Moq;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Xunit;
+using Kudu.Core.Deployment;
 
 namespace Kudu.Services.Test
 {

@@ -1,4 +1,10 @@
-﻿using Kudu.Contracts.Infrastructure;
+﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using System.Threading.Tasks;
+using Kudu.Contracts;
+using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.SourceControl;
 using Kudu.Contracts.Tracing;
@@ -8,17 +14,10 @@ using Kudu.Core.Hooks;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.SourceControl;
 using Kudu.Core.Tracing;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Kudu.Core.Deployment
 {
-    public class FetchDeploymentManager
+    public class FetchDeploymentManager : IFetchDeploymentManager
     {
         private readonly IDeploymentSettingsManager _settings;
         private readonly IEnvironment _environment;
@@ -63,10 +62,11 @@ namespace Kudu.Core.Deployment
             }
         }
 
-        public async Task<DeploymentResponse> DoDeployment(DeploymentInfo deployInfo, bool asyncRequested,
-            Uri requestUri, // from UriHelper.GetRequestUri(context.Request)
-            string targetBranch
-            )
+        public async Task<FetchDeploymentRequestResult> DoDeployment(
+            DeploymentInfo deployInfo,
+            bool asyncRequested,
+            Uri requestUri,
+            string targetBranch)
         {
             // If Scm is not enabled, we will reject all but one payload for GenericHandler
             // This is to block the unintended CI with Scm providers like GitHub
@@ -75,7 +75,7 @@ namespace Kudu.Core.Deployment
             // push/clone endpoint.
             if (!(_settings.IsScmEnabled() || deployInfo.AllowDeploymentWhileScmDisabled))
             {
-                return DeploymentResponse.ForbiddenScmDisabled;
+                return FetchDeploymentRequestResult.ForbiddenScmDisabled;
             }
 
             // for CI payload, we will return Accepted and do the task in the BG
@@ -96,7 +96,7 @@ namespace Kudu.Core.Deployment
                         waitForTempDeploymentCreation);
                 }
 
-                return DeploymentResponse.RunningInBackground;
+                return FetchDeploymentRequestResult.RunningInBackground;
             }
 
             _tracer.Trace("Attempting to fetch target branch {0}", targetBranch);
@@ -106,11 +106,11 @@ namespace Kudu.Core.Deployment
                 {
                     if (PostDeploymentHelper.IsAutoSwapOngoing())
                     {
-                        return DeploymentResponse.AutoSwapOngoing;
+                        return FetchDeploymentRequestResult.AutoSwapOngoing;
                     }
 
                     await PerformDeployment(deployInfo);
-                    return DeploymentResponse.RanSynchronously;
+                    return FetchDeploymentRequestResult.RanSynchronously;
                 }, "Performing continuous deployment", TimeSpan.Zero);
             }
             catch (LockOperationException)
@@ -124,7 +124,7 @@ namespace Kudu.Core.Deployment
                     FileSystemHelpers.SetLastWriteTimeUtc(_markerFilePath, DateTime.UtcNow);
                 }
 
-                return DeploymentResponse.AcceptedAndPending;
+                return FetchDeploymentRequestResult.AcceptedAndPending;
             }
         }
 

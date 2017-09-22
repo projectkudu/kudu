@@ -12,7 +12,7 @@ using Kudu.Services.Infrastructure;
 using Kudu.Services.ServiceHookHandlers;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-
+using Kudu.Core.Deployment;
 
 namespace Kudu.Services
 {
@@ -21,14 +21,17 @@ namespace Kudu.Services
         private readonly IDeploymentSettingsManager _settings;
         private readonly IEnumerable<IServiceHookHandler> _serviceHookHandlers;
         private readonly ITracer _tracer;
+        private readonly IFetchDeploymentManager _manager;
 
         public FetchHandler(ITracer tracer,
                             IDeploymentSettingsManager settings,
+                            IFetchDeploymentManager manager,
                             IEnumerable<IServiceHookHandler> serviceHookHandlers)
         {
             _tracer = tracer;
             _settings = settings;
             _serviceHookHandlers = serviceHookHandlers;
+            _manager = manager;
         }
 
         public override async Task ProcessRequestAsync(HttpContext context)
@@ -79,16 +82,16 @@ namespace Kudu.Services
 
                 bool asyncRequested = String.Equals(context.Request.QueryString["isAsync"], "true", StringComparison.OrdinalIgnoreCase);
 
-                var response = await DoDeployment(deployInfo, asyncRequested, UriHelper.GetRequestUri(context.Request), targetBranch);
+                var response = await _manager.DoDeployment(deployInfo, asyncRequested, UriHelper.GetRequestUri(context.Request), targetBranch);
 
                 switch (response)
                 {
-                    case DeploymentResponse.ForbiddenScmDisabled:
+                    case FetchDeploymentRequestResult.ForbiddenScmDisabled:
                         context.Response.StatusCode = (int)HttpStatusCode.Forbidden;
                         context.ApplicationInstance.CompleteRequest();
                         _tracer.Trace("Scm is not enabled, reject all requests.");
                         return;
-                    case DeploymentResponse.RunningInBackground:
+                    case FetchDeploymentRequestResult.RunningInBackground:
                         // to avoid regression, only set location header if isAsync
                         if (asyncRequested)
                         {
@@ -99,12 +102,12 @@ namespace Kudu.Services
                         context.Response.StatusCode = (int)HttpStatusCode.Accepted;
                         context.ApplicationInstance.CompleteRequest();
                         return;
-                    case DeploymentResponse.AutoSwapOngoing:
+                    case FetchDeploymentRequestResult.AutoSwapOngoing:
                         context.Response.StatusCode = (int)HttpStatusCode.Conflict;
                         context.Response.Write(Resources.Error_AutoSwapDeploymentOngoing);
                         context.ApplicationInstance.CompleteRequest();
                         return;
-                    case DeploymentResponse.AcceptedAndPending:
+                    case FetchDeploymentRequestResult.AcceptedAndPending:
                         // Return a http 202: the request has been accepted for processing, but the processing has not been completed.
                         context.Response.StatusCode = (int)HttpStatusCode.Accepted;
                         context.ApplicationInstance.CompleteRequest();

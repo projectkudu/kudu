@@ -88,6 +88,7 @@
     <Compile Include="AsyncLockFileTests.cs" />
     <Compile Include="AutoSwapHandlerFacts.cs" />
     <Compile Include="DebugConsoleFacts.cs" />
+    <Compile Include="Deployment\FetchDeploymentManagerFacts.cs" />
     <Compile Include="Deployment\Generator\ExternalCommandBuilderFacts.cs" />
     <Compile Include="Deployment\PythonSiteEnablerTests.cs" />
     <Compile Include="Deployment\NodeSiteEnablerTests.cs" />

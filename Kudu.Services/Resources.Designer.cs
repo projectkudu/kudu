@@ -511,6 +511,15 @@ namespace Kudu.Services {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Receiving changes..
+        /// </summary>
+        internal static string ReceivingChanges {
+            get {
+                return ResourceManager.GetString("ReceivingChanges", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The setting &apos;{0}&apos; does not exist..
         /// </summary>
         internal static string SettingDoesNotExist {

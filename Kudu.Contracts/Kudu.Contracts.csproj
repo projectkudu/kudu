@@ -100,14 +100,17 @@
     <Compile Include="Commands\CommandResult.cs" />
     <Compile Include="Commands\ICommandExecutor.cs" />
     <Compile Include="Deployment\DeploymentFailedException.cs" />
+    <Compile Include="Deployment\DeploymentInfo.cs" />
     <Compile Include="Deployment\DeployResult.cs" />
     <Compile Include="Deployment\DeployStatus.cs" />
+    <Compile Include="Deployment\FetchDeploymentRequestResult.cs" />
     <Compile Include="Deployment\IDeploymentEnvironment.cs" />
     <Compile Include="Deployment\IDeploymentManager.cs" />
     <Compile Include="Deployment\IDeploymentManagerFactory.cs" />
     <Compile Include="Deployment\IDeploymentStatusManager.cs" />
     <Compile Include="Deployment\IDeploymentStatusFile.cs" />
     <Compile Include="Deployment\IDetailedLogger.cs" />
+    <Compile Include="Deployment\IFetchDeploymentManager.cs" />
     <Compile Include="Deployment\ILogger.cs" />
     <Compile Include="Deployment\LogEntry.cs" />
     <Compile Include="Deployment\LogEntryType.cs" />

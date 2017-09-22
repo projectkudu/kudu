@@ -283,6 +283,8 @@ namespace Kudu.Services.Web.App_Start
 
             kernel.Bind<IDeploymentManager>().To<DeploymentManager>()
                                              .InRequestScope();
+            kernel.Bind<IFetchDeploymentManager>().To<FetchDeploymentManager>()
+                                             .InRequestScope();
             kernel.Bind<ISSHKeyManager>().To<SSHKeyManager>()
                                              .InRequestScope();
 
