@@ -1,5 +1,4 @@
 ﻿using System;
-using System.IO;
 using System.IO.Compression;
 using System.Net;
 using System.Net.Http;
@@ -9,40 +8,25 @@ using System.Web.Http;
 using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.SourceControl;
 using Kudu.Contracts.Tracing;
-using Kudu.Core;
 using Kudu.Core.Deployment;
 using Kudu.Core.Helpers;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Tracing;
+using Kudu.Services.Infrastructure;
+using System.IO;
+using Kudu.Core.SourceControl;
 
 namespace Kudu.Services.Deployment
 {
     public class PushDeploymentController : ApiController
     {
-        //private readonly IDeploymentStatusManager _status;
-        private readonly IDeploymentManager _deploymentManager;
+        private readonly IFetchDeploymentManager _deploymentManager;
         private readonly ITracer _tracer;
-        private readonly IOperationLock _deploymentLock;
-        //private readonly IEnvironment _environment;
-        //private readonly IDeploymentSettingsManager _settings;
-        private readonly IRepositoryFactory _repositoryFactory;
 
-        public PushDeploymentController(
-            //IDeploymentStatusManager status,
-            IDeploymentManager deploymentManager,
-            ITracer tracer,
-            IOperationLock deploymentLock,
-            //IEnvironment environment,
-            //IDeploymentSettingsManager settings,
-            IRepositoryFactory repositoryFactory)
+        public PushDeploymentController(IFetchDeploymentManager deploymentManager, ITracer tracer)
         {
-            //_status = status;
             _deploymentManager = deploymentManager;
             _tracer = tracer;
-            _deploymentLock = deploymentLock;
-            //_environment = environment;
-            //_settings = settings;
-            _repositoryFactory = repositoryFactory;
         }
 
         [HttpPost]
@@ -50,50 +34,77 @@ namespace Kudu.Services.Deployment
         {
             using (_tracer.Step("ZipPushDeploy"))
             {
-                // TODO should we reject requests if SCM is enabled?
-                // FetchHandler does on line 115, but explicitly calls out that that
-                // check is skipped for git pushes and GenericHandler/DropBoxHandler because
-                // they "can only be done by user action, we loosely allow that and
-                // assume users know what they are doing"
-
                 try
                 {
-                    return await _deploymentLock.LockOperationAsync(async () =>
+                    // TODO do we need to acquire lock and create temp deployment during zip upload?
+                    // If we do, need to signal to FetchDeploy that we have already done both.
+                    // If we create a temp deployment it should be done inside the lock, see
+                    // https://github.com/projectkudu/kudu/issues/2301
+
+                    // TODO where to put the zip file?
+                    var filepath = Path.GetTempFileName();
+
+                    using (var file = File.OpenWrite(filepath))
                     {
-                        if (PostDeploymentHelper.IsAutoSwapOngoing())
-                        {
-                            // TODO make sure this works properly. Copied from FetchHandler but that uses
-                            // context
-                            return Request.CreateErrorResponse(HttpStatusCode.Conflict, Resources.Error_AutoSwapDeploymentOngoing);
-                        }
+                        await Request.Content.CopyToAsync(file);
+                    }
+                  
+                    // TODO support async based on request
+                    // TODO this should be part of DeploymentInfo, along with the other parameters as well, and it should
+                    // be called FetchDeploymentInfo
+                    var asyncRequested = false;
 
-                        // TODO Create temp deployment here
-                        // Also do it for async. Make sure to do it inside the lock!
-                        // See https://github.com/projectkudu/kudu/issues/2301
+                    var deploymentInfo = new DeploymentInfo
+                    {
+                        AllowDeploymentWhileScmDisabled = true, // TODO ??
+                        Deployer = "Zip-Push",
+                        IsContinuous = false, // TODO check on this - IsContinuous *forces* background/async deployment, but also does another check in ShouldDeploy I'm not sure about
+                        IsReusable = false, // TODO ??
+                        RepositoryUrl = "", // TODO I dont't think this will actually be used in the implementation, but set it to the file:/// location maybe
+                        TargetChangeset = null, // Needed for status file?
+                        CommitId = null, // Don't think this is needed for anything
+                        RepositoryType = RepositoryType.None, // TODO may need a new value here to trigger correct logic
+                        Fetch = null // TODO need a delegate that unzips
+                    };
 
-                        var repository = _repositoryFactory.GetZipDeployRepository();
+                    var result = await _deploymentManager.FetchDeploy(deploymentInfo, asyncRequested, UriHelper.GetRequestUri(Request), "HEAD");
 
-                        // TODO status file for tracking unzip progress.
-                        // See OneDrive and BitBucket handlers for how they do Sync.
+                    var response = Request.CreateResponse();
 
-                        // TODO For async deploys, write the stream to a file and extract later.
-                        // Any reason to do that for sync deploys as well? Maybe just consistency?
-                        using (var stream = await Request.Content.ReadAsStreamAsync())
-                        {
-                            var zipArchive = new ZipArchive(stream, ZipArchiveMode.Read);
-                            zipArchive.Extract(repository.RepositoryPath);
-                        }
+                    switch (result)
+                    {
+                        // TODO original implementation this is cribbed from is in FetchHandler. Need context.ApplicationInstance.CompleteRequest?
+                        case FetchDeploymentRequestResult.RunningAynschronously:
+                            // to avoid regression, only set location header if isAsync
+                            if (asyncRequested)
+                            {
+                                // latest deployment keyword reserved to poll till deployment done
+                                response.Headers.Location = new Uri(UriHelper.GetRequestUri(Request),
+                                    String.Format("/api/deployments/{0}?deployer={1}&time={2}", Constants.LatestDeployment, deploymentInfo.Deployer, DateTime.UtcNow.ToString("yyy-MM-dd_HH-mm-ssZ")));
+                            }
+                            response.StatusCode = HttpStatusCode.Accepted;
+                            break;
+                        case FetchDeploymentRequestResult.ForbiddenScmDisabled:
+                            response.StatusCode = HttpStatusCode.Forbidden;
+                            _tracer.Trace("Scm is not enabled, reject all requests.");
+                            break;
+                        case FetchDeploymentRequestResult.AutoSwapOngoing:
+                            response.StatusCode = HttpStatusCode.Conflict;
+                            response.Content = new StringContent(Resources.Error_AutoSwapDeploymentOngoing);
+                            break;
+                        case FetchDeploymentRequestResult.Pending:
+                            // Return a http 202: the request has been accepted for processing, but the processing has not been completed.
+                            response.StatusCode = HttpStatusCode.Accepted;
+                            break;
+                        case FetchDeploymentRequestResult.RanSynchronously:
+                            response.StatusCode = HttpStatusCode.OK;
+                            break;
+                        default:
+                            response.StatusCode = HttpStatusCode.BadRequest;
+                            break;
+                    }
 
-                        // This is the standard interaction for a NullRepository.
-                        // It's what we do for OneDrive and Dropbox during fetches for those providers.
-                        repository.Commit("Extracting pushed zip file", authorName: null, emailAddress: null);
-                        var changeSet = repository.GetChangeSet("HEAD");
-
-                        var deployer = "Zip-Push";
-                        await _deploymentManager.DeployAsync(repository, changeSet, deployer, clean: false, needFileUpdate: false);
-
-                        return Request.CreateResponse(HttpStatusCode.OK);
-                    }, "Performing zip push deployment", TimeSpan.Zero);
+                    return response;
                 }
                 catch (LockOperationException)
                 {
