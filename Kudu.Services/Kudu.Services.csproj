@@ -142,6 +142,7 @@
     <Compile Include="ServiceHookHandlers\BitbucketHandlerV2.cs" />
     <Compile Include="ServiceHookHandlers\CodebaseHqHandler.cs" />
     <Compile Include="ServiceHookHandlers\CodePlexHandler.cs" />
+    <Compile Include="ServiceHookHandlers\DeploymentResponse.cs" />
     <Compile Include="ServiceHookHandlers\DropboxHandler.cs" />
     <Compile Include="ServiceHookHandlers\GenericHandler.cs" />
     <Compile Include="ServiceHookHandlers\GitHubCompatHandler.cs" />

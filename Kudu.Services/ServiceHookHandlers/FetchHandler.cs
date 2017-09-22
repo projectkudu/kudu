@@ -106,19 +106,6 @@ namespace Kudu.Services
                         _tracer.Trace("No-op for deployment.");
                         return;
                     }
-
-                    // If Scm is not enabled, we will reject all but one payload for GenericHandler
-                    // This is to block the unintended CI with Scm providers like GitHub
-                    // Since Generic payload can only be done by user action, we loosely allow
-                    // that and assume users know what they are doing.  Same applies to git
-                    // push/clone endpoint.
-                    if (!_settings.IsScmEnabled() && !(deployInfo.Handler is GenericHandler || deployInfo.Handler is DropboxHandler))
-                    {
-                        context.Response.StatusCode = (int)HttpStatusCode.Forbidden;
-                        context.ApplicationInstance.CompleteRequest();
-                        _tracer.Trace("Scm is not enabled, reject all requests.");
-                        return;
-                    }
                 }
                 catch (FormatException ex)
                 {
@@ -129,71 +116,107 @@ namespace Kudu.Services
                     return;
                 }
 
-                // for CI payload, we will return Accepted and do the task in the BG
-                // if isAsync is defined, we will return Accepted and do the task in the BG
-                // since autoSwap relies on the response header, deployment has to be synchronously.
-                bool isAsync = String.Equals(context.Request.QueryString["isAsync"], "true", StringComparison.OrdinalIgnoreCase);
-                bool isBackground = isAsync || deployInfo.IsContinuous;
-                if (isBackground)
-                {
-                    using (_tracer.Step("Start deployment in the background"))
-                    {
-                        var waitForTempDeploymentCreation = isAsync;
-                        await PerformBackgroundDeployment(
-                            deployInfo,
-                            _environment,
-                            _settings,
-                            _tracer.TraceLevel,
-                            UriHelper.GetRequestUri(context.Request),
-                            waitForTempDeploymentCreation);
-                    }
+                bool asyncRequested = String.Equals(context.Request.QueryString["isAsync"], "true", StringComparison.OrdinalIgnoreCase);
+                var response = await DoDeployment(deployInfo, asyncRequested, UriHelper.GetRequestUri(context.Request), targetBranch);
 
-                    // to avoid regression, only set location header if isAsync
-                    if (isAsync)
-                    {
-                        // latest deployment keyword reserved to poll till deployment done
-                        context.Response.Headers["Location"] = new Uri(UriHelper.GetRequestUri(context.Request),
-                            String.Format("/api/deployments/{0}?deployer={1}&time={2}", Constants.LatestDeployment, deployInfo.Deployer, DateTime.UtcNow.ToString("yyy-MM-dd_HH-mm-ssZ"))).ToString();
-                    }
-                    context.Response.StatusCode = (int)HttpStatusCode.Accepted;
-                    context.ApplicationInstance.CompleteRequest();
-                    return;
-                }
-
-                _tracer.Trace("Attempting to fetch target branch {0}", targetBranch);
-                try
+                switch (response)
                 {
-                    await _deploymentLock.LockOperationAsync(async () =>
-                    {
-                        if (PostDeploymentHelper.IsAutoSwapOngoing())
+                    case DeploymentResponse.ForbiddenScmDisabled:
+                        context.Response.StatusCode = (int)HttpStatusCode.Forbidden;
+                        context.ApplicationInstance.CompleteRequest();
+                        _tracer.Trace("Scm is not enabled, reject all requests.");
+                        return;
+                    case DeploymentResponse.RunningInBackground:
+                        // to avoid regression, only set location header if isAsync
+                        if (asyncRequested)
                         {
-                            context.Response.StatusCode = (int)HttpStatusCode.Conflict;
-                            context.Response.Write(Resources.Error_AutoSwapDeploymentOngoing);
-                            context.ApplicationInstance.CompleteRequest();
-                            return;
+                            // latest deployment keyword reserved to poll till deployment done
+                            context.Response.Headers["Location"] = new Uri(UriHelper.GetRequestUri(context.Request),
+                                String.Format("/api/deployments/{0}?deployer={1}&time={2}", Constants.LatestDeployment, deployInfo.Deployer, DateTime.UtcNow.ToString("yyy-MM-dd_HH-mm-ssZ"))).ToString();
                         }
-
-                        await PerformDeployment(deployInfo);
-                    }, "Performing continuous deployment", TimeSpan.Zero);
-                }
-                catch (LockOperationException)
-                {
-                    // Create a marker file that indicates if there's another deployment to pull
-                    // because there was a deployment in progress.
-                    using (_tracer.Step("Update pending deployment marker file"))
-                    {
-                        // REVIEW: This makes the assumption that the repository url is the same.
-                        // If it isn't the result would be buggy either way.
-                        FileSystemHelpers.SetLastWriteTimeUtc(_markerFilePath, DateTime.UtcNow);
-                    }
-
-                    // Return a http 202: the request has been accepted for processing, but the processing has not been completed.
-                    context.Response.StatusCode = (int)HttpStatusCode.Accepted;
-                    context.ApplicationInstance.CompleteRequest();
+                        context.Response.StatusCode = (int)HttpStatusCode.Accepted;
+                        context.ApplicationInstance.CompleteRequest();
+                        return;
+                    case DeploymentResponse.AutoSwapOngoing:
+                        context.Response.StatusCode = (int)HttpStatusCode.Conflict;
+                        context.Response.Write(Resources.Error_AutoSwapDeploymentOngoing);
+                        context.ApplicationInstance.CompleteRequest();
+                        return;
+                    case DeploymentResponse.AcceptedAndPending:
+                        // Return a http 202: the request has been accepted for processing, but the processing has not been completed.
+                        context.Response.StatusCode = (int)HttpStatusCode.Accepted;
+                        context.ApplicationInstance.CompleteRequest();
+                        return;
+                    default:
+                        break;
                 }
             }
         }
 
+        public async Task<DeploymentResponse> DoDeployment(DeploymentInfo deployInfo, bool asyncRequested,
+            Uri requestUri, // from UriHelper.GetRequestUri(context.Request)
+            string targetBranch
+            )
+        {
+            // If Scm is not enabled, we will reject all but one payload for GenericHandler
+            // This is to block the unintended CI with Scm providers like GitHub
+            // Since Generic payload can only be done by user action, we loosely allow
+            // that and assume users know what they are doing.  Same applies to git
+            // push/clone endpoint.
+            if (!_settings.IsScmEnabled() && !(deployInfo.Handler is GenericHandler || deployInfo.Handler is DropboxHandler))
+            {
+                return DeploymentResponse.ForbiddenScmDisabled;
+            }
+
+            // for CI payload, we will return Accepted and do the task in the BG
+            // if isAsync is defined, we will return Accepted and do the task in the BG
+            // since autoSwap relies on the response header, deployment has to be synchronously.
+            bool isBackground = asyncRequested || deployInfo.IsContinuous;
+            if (isBackground)
+            {
+                using (_tracer.Step("Start deployment in the background"))
+                {
+                    var waitForTempDeploymentCreation = asyncRequested;
+                    await PerformBackgroundDeployment(
+                        deployInfo,
+                        _environment,
+                        _settings,
+                        _tracer.TraceLevel,
+                        requestUri,
+                        waitForTempDeploymentCreation);
+                }
+
+                return DeploymentResponse.RunningInBackground;
+            }
+
+            _tracer.Trace("Attempting to fetch target branch {0}", targetBranch);
+            try
+            {
+                return await _deploymentLock.LockOperationAsync(async () =>
+                {
+                    if (PostDeploymentHelper.IsAutoSwapOngoing())
+                    {
+                        return DeploymentResponse.AutoSwapOngoing;
+                    }
+
+                    await PerformDeployment(deployInfo);
+                    return DeploymentResponse.RanSynchronously;
+                }, "Performing continuous deployment", TimeSpan.Zero);
+            }
+            catch (LockOperationException)
+            {
+                // Create a marker file that indicates if there's another deployment to pull
+                // because there was a deployment in progress.
+                using (_tracer.Step("Update pending deployment marker file"))
+                {
+                    // REVIEW: This makes the assumption that the repository url is the same.
+                    // If it isn't the result would be buggy either way.
+                    FileSystemHelpers.SetLastWriteTimeUtc(_markerFilePath, DateTime.UtcNow);
+                }
+
+                return DeploymentResponse.AcceptedAndPending;
+            }
+        }
 
         public async Task PerformDeployment(DeploymentInfo deploymentInfo, IDisposable tempDeployment = null, ChangeSet tempChangeSet = null)
         {
