@@ -23,7 +23,7 @@ namespace Kudu.Services.Deployment
         private readonly IDeploymentManager _deploymentManager;
         private readonly ITracer _tracer;
         private readonly IOperationLock _deploymentLock;
-        private readonly IEnvironment _environment;
+        //private readonly IEnvironment _environment;
         //private readonly IDeploymentSettingsManager _settings;
         private readonly IRepositoryFactory _repositoryFactory;
 
@@ -32,7 +32,7 @@ namespace Kudu.Services.Deployment
             IDeploymentManager deploymentManager,
             ITracer tracer,
             IOperationLock deploymentLock,
-            IEnvironment environment,
+            //IEnvironment environment,
             //IDeploymentSettingsManager settings,
             IRepositoryFactory repositoryFactory)
         {
@@ -40,7 +40,7 @@ namespace Kudu.Services.Deployment
             _deploymentManager = deploymentManager;
             _tracer = tracer;
             _deploymentLock = deploymentLock;
-            _environment = environment;
+            //_environment = environment;
             //_settings = settings;
             _repositoryFactory = repositoryFactory;
         }

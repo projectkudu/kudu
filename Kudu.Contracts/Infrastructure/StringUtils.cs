@@ -18,7 +18,7 @@ namespace Kudu.Contracts.Infrastructure
         // Like bool.TryParse but accepts "0" and "1" as well.
         // This is for when there is no hard default and we need to see if the configured
         // value is a confirmed "true" or "false" in order to override behavior
-        public static bool TryParseBool(string value, out bool result)
+        public static bool TryParseBoolean(string value, out bool result)
         {
             if (IsTrueLike(value))
             {

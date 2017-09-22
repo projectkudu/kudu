@@ -242,7 +242,7 @@ namespace Kudu.Contracts.Settings
 
             bool result;
 
-            if (StringUtils.TryParseBool(value, out result))
+            if (StringUtils.TryParseBoolean(value, out result))
             {
                 return result;
             }
