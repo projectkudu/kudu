@@ -61,6 +61,8 @@ namespace Kudu.Services.ServiceHookHandlers
                     authorEmail: dropboxInfo.DeployInfo.Email,
                     message: message
                 );
+
+                deploymentInfo.AllowDeploymentWhileScmDisabled = true;
                 
                 return DeployAction.ProcessDeployment;
             }

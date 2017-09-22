@@ -152,7 +152,7 @@ namespace Kudu.Services
                         // Although a payload may be intended for a handler, it might not need to fetch.
                         // For instance, if a different branch was pushed than the one the repository is deploying, we can no-op it.
                         Debug.Assert(info != null);
-                        info.Handler = handler;
+                        info.Fetch = handler.Fetch;
                     }
 
                     return result;

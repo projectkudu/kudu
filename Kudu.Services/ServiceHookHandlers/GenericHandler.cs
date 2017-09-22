@@ -47,6 +47,7 @@ namespace Kudu.Services.ServiceHookHandlers
             deploymentInfo.RepositoryType = is_hg ? RepositoryType.Mercurial : RepositoryType.Git;
             deploymentInfo.Deployer = GetDeployerFromUrl(url);
             deploymentInfo.TargetChangeset = DeploymentManager.CreateTemporaryChangeSet(message: "Fetch from " + url);
+            deploymentInfo.AllowDeploymentWhileScmDisabled = true;
 
             return DeployAction.ProcessDeployment;
         }

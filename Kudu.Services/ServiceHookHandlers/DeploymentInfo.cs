@@ -1,10 +1,15 @@
 ﻿using System;
 using Kudu.Core.SourceControl;
+using Kudu.Core.Deployment;
+using Kudu.Contracts.Tracing;
+using System.Threading.Tasks;
 
 namespace Kudu.Services.ServiceHookHandlers
 {
     public class DeploymentInfo
     {
+        public delegate Task FetchDelegate(IRepository repository, DeploymentInfo deploymentInfo, string targetBranch, ILogger logger, ITracer tracer);
+
         public DeploymentInfo()
         {
             IsReusable = true;
@@ -17,7 +22,8 @@ namespace Kudu.Services.ServiceHookHandlers
         public bool IsReusable { get; set; }
         // indicating that this is a CI triggered by SCM provider 
         public bool IsContinuous { get; set; }
-        public IServiceHookHandler Handler { get; set; }
+        public FetchDelegate Fetch { get; set; }
+        public bool AllowDeploymentWhileScmDisabled { get; set; }
 
         // this is only set by GenericHandler
         // the RepositoryUrl can specify specific commitid to deploy

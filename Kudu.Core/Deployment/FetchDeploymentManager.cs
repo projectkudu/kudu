@@ -73,7 +73,7 @@ namespace Kudu.Core.Deployment
             // Since Generic payload can only be done by user action, we loosely allow
             // that and assume users know what they are doing.  Same applies to git
             // push/clone endpoint.
-            if (!_settings.IsScmEnabled() && !(deployInfo.Handler is GenericHandler || deployInfo.Handler is DropboxHandler))
+            if (!(_settings.IsScmEnabled() || deployInfo.AllowDeploymentWhileScmDisabled))
             {
                 return DeploymentResponse.ForbiddenScmDisabled;
             }
@@ -164,7 +164,7 @@ namespace Kudu.Core.Deployment
 
                         try
                         {
-                            await deploymentInfo.Handler.Fetch(repository, deploymentInfo, targetBranch, innerLogger, _tracer);
+                            await deploymentInfo.Fetch(repository, deploymentInfo, targetBranch, innerLogger, _tracer);
                         }
                         catch (BranchNotFoundException)
                         {
