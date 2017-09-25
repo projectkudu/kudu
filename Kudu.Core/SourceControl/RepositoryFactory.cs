@@ -66,13 +66,27 @@ namespace Kudu.Core.SourceControl
         {
             // Validate if conflicting with existing repository
             RepositoryType existingType;
-            if (TryGetExistingRepositoryType(out existingType) && existingType != repositoryType)
+            if (TryGetExistingRepositoryType(out existingType) && existingType != repositoryType && repositoryType != RepositoryType.Prebuilt)
             {
                 throw new InvalidOperationException(String.Format(CultureInfo.CurrentCulture, Resources.Error_MismatchRepository, repositoryType, existingType, _environment.RepositoryPath));
             }
 
             IRepository repository;
-            if (repositoryType == RepositoryType.None)
+            if (repositoryType == RepositoryType.Prebuilt)
+            {
+                // TODO Not sure if/how to handle the "conflicting type" check above.
+
+                // TODO What should the path be? 
+                // Should it vary between deployments?
+                // Should it be the repository folder? Not sure if there's any benefit to that,
+                // if we could instead put it in a temp folder on the local drive for speed.
+                // Should it always be a new folder? If not, do we clean it out first?
+                // This may need heavier refactoring
+
+                var path = Path.Combine(_environment.TempPath, Path.GetRandomFileName());
+                repository = new NullRepository(path, _traceFactory, doBuildDuringDeploymentByDefault: false);
+            }
+            else if (repositoryType == RepositoryType.None)
             {
                 repository = new NullRepository(_environment.RepositoryPath, _traceFactory);
             }
@@ -91,22 +105,6 @@ namespace Kudu.Core.SourceControl
                 repository.Initialize();
             }
             return repository;
-        }
-
-        // TODO: Should this be a part of EnsureRepository?
-        // Not sure if we want to fail with a repository mismatch error if other work already done?
-        // Note that Fetch *always* does EnsureRepository, so what's happening here is not compatible
-        // with that setup as-is.
-        public IRepository GetZipDeployRepository()
-        {
-            // TODO What should the path be? 
-            // Should it vary between deployments?
-            // Should it be the repository folder? Not sure if there's any benefit to that,
-            // if we could instead put it in a temp folder on the local drive for speed.
-            // Should it always be a new folder? If not, do we clean it out first?
-
-            var path = Path.Combine(_environment.TempPath, Path.GetRandomFileName());
-            return new NullRepository(path, _traceFactory, doBuildDuringDeploymentByDefault: false);
         }
 
         public IRepository GetRepository()

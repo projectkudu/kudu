@@ -4,6 +4,7 @@
     {
         None,
         Git,
-        Mercurial
+        Mercurial,
+        Prebuilt
     }
 }

@@ -8,6 +8,5 @@ namespace Kudu.Contracts.SourceControl
         IRepository GetRepository();
         IRepository GetCustomRepository();
         IRepository GetGitRepository();
-        IRepository GetZipDeployRepository();
     }
 }
