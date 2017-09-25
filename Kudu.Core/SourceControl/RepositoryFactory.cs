@@ -66,7 +66,7 @@ namespace Kudu.Core.SourceControl
         {
             // Validate if conflicting with existing repository
             RepositoryType existingType;
-            if (TryGetExistingRepositoryType(out existingType) && existingType != repositoryType && repositoryType != RepositoryType.Prebuilt)
+            if (TryGetExistingRepositoryType(out existingType) && existingType != repositoryType)
             {
                 throw new InvalidOperationException(String.Format(CultureInfo.CurrentCulture, Resources.Error_MismatchRepository, repositoryType, existingType, _environment.RepositoryPath));
             }
@@ -74,13 +74,11 @@ namespace Kudu.Core.SourceControl
             IRepository repository;
             if (repositoryType == RepositoryType.Prebuilt)
             {
-                // TODO Not sure if/how to handle the "conflicting type" check above.
-
                 // TODO What should the path be? 
                 // Should it vary between deployments?
-                // Should it be the repository folder? Not sure if there's any benefit to that,
-                // if we could instead put it in a temp folder on the local drive for speed.
                 // Should it always be a new folder? If not, do we clean it out first?
+                // Note that if we want it to be the repository folder, some other changes are needed,
+                // as the rest of Kudu assumes that "Prebuilt" repositories don't interfere with others.
                 // This may need heavier refactoring
 
                 var path = Path.Combine(_environment.TempPath, Path.GetRandomFileName());

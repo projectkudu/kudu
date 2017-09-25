@@ -60,9 +60,9 @@ namespace Kudu.Services.Deployment
                     AllowDeploymentWhileScmDisabled = true,
                     Deployer = "Zip-Push",
                     IsContinuous = false,
-                    IsReusable = false, // TODO?? I think just exists to prevent the marker file loop from running. Should probably remain false.
+                    IsReusable = false,
                     RepositoryUrl = filepath, // TODO this is kind of an ugly overload of this. Maybe just bake filepath into the Fetch() closure?
-                    TargetChangeset = DeploymentManager.CreateTemporaryChangeSet(message: "Deploying from zip"), // TODO better msg?
+                    TargetChangeset = DeploymentManager.CreateTemporaryChangeSet(message: "Deploying from zip"), // TODO better msg? This is our temp message
                     CommitId = null,
                     RepositoryType = RepositoryType.Prebuilt,
                     Fetch = LocalZipFetch,
@@ -111,19 +111,34 @@ namespace Kudu.Services.Deployment
 
         private static async Task LocalZipFetch(IRepository repository, DeploymentInfo deploymentInfo, string targetBranch, ILogger logger, ITracer tracer)
         {
-            // TODO update status file here?
-            
             // For this deployment, RepositoryUrl is a local path.
-            using (var file = File.OpenRead(deploymentInfo.RepositoryUrl))
-            using (var zip = new ZipArchive(file, ZipArchiveMode.Read))
+            var source = deploymentInfo.RepositoryUrl;
+            var target = repository.RepositoryPath;
+
+            var info = FileSystemHelpers.FileInfoFromFileName(source);
+            var sizeInMb = (info.Length / (1024f * 1024f)).ToString("0.00", CultureInfo.InvariantCulture);
+
+            var message = String.Format(
+                CultureInfo.InvariantCulture,
+                "Extracting pushed zip file {0} ({1} MB) to {2}",
+                info.FullName,
+                sizeInMb,
+                repository.RepositoryPath);
+
+            logger.Log(message);
+
+            using (tracer.Step(message))
             {
-                await Task.Run(() => zip.Extract(repository.RepositoryPath));
+                using (var file = info.OpenRead())
+                using (var zip = new ZipArchive(file, ZipArchiveMode.Read))
+                {
+                    await Task.Run(() => zip.Extract(target));
+                }
             }
 
             // Needed in order for repository.GetChangeSet() to work.
             // Similar to what OneDriveHelper and DropBoxHelper do.
-            var message = String.Format(CultureInfo.InvariantCulture, "Unzipped {0} to {1}", deploymentInfo.RepositoryUrl, repository.RepositoryPath);
-            repository.Commit(message, null, null);
+            repository.Commit("Created via zip push deployment", null, null);
         }
     }
 }
