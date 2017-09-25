@@ -1,5 +1,4 @@
-﻿using Kudu.Core.Deployment;
-using Kudu.Core.SourceControl;
+﻿using Kudu.Core.SourceControl;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Linq;

@@ -13,6 +13,7 @@ using Kudu.Core.Infrastructure;
 using Kudu.Core.SourceControl;
 using Moq;
 using Xunit;
+using Kudu.Services.ServiceHookHandlers;
 
 namespace Kudu.Core.Test
 {

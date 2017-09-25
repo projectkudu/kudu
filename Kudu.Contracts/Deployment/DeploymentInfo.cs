@@ -4,7 +4,7 @@ using Kudu.Contracts.Tracing;
 using System.Threading.Tasks;
 using Kudu.Core.Deployment;
 
-namespace Kudu.Core.Deployment
+namespace Kudu.Services.ServiceHookHandlers
 {
     public class DeploymentInfo
     {

@@ -2,9 +2,9 @@
 using System.Globalization;
 using System.Web;
 using Kudu.Contracts.Settings;
-using Kudu.Core.Deployment;
 using Kudu.Core.SourceControl;
 using Newtonsoft.Json.Linq;
+using Kudu.Core.Deployment;
 
 namespace Kudu.Services.ServiceHookHandlers
 {

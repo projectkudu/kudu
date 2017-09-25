@@ -1,7 +1,13 @@
+using System;
+using System.IO;
+using System.Net.Http;
+using System.Text;
+using System.Threading.Tasks;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
 using Kudu.Core;
 using Kudu.Core.Deployment;
+using Kudu.Services.FetchHelpers;
 using Kudu.Services.ServiceHookHandlers;
 using Kudu.TestHarness.Xunit;
 using Moq;

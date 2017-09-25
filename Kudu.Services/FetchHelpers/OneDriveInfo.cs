@@ -1,5 +1,4 @@
-
-using Kudu.Core.Deployment;
+using Kudu.Services.ServiceHookHandlers;
 
 namespace Kudu.Services.FetchHelpers
 {

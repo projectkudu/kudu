@@ -15,6 +15,7 @@ using Kudu.Core.Tracing;
 using Kudu.Services.Infrastructure;
 using System.IO;
 using Kudu.Core.SourceControl;
+using Kudu.Services.ServiceHookHandlers;
 
 namespace Kudu.Services.Deployment
 {
@@ -58,7 +59,7 @@ namespace Kudu.Services.Deployment
                     {
                         AllowDeploymentWhileScmDisabled = true, // TODO ??
                         Deployer = "Zip-Push",
-                        IsContinuous = false, // TODO check on this - IsContinuous *forces* background/async deployment, but also does another check in ShouldDeploy I'm not sure about
+                        IsContinuous = false, // TODO check on this - prob. keep false. It *forces* background/async deployment, but also does another check in ShouldDeploy I'm not sure about
                         IsReusable = false, // TODO ??
                         RepositoryUrl = "", // TODO I dont't think this will actually be used in the implementation, but set it to the file:/// location maybe
                         TargetChangeset = null, // Needed for status file?

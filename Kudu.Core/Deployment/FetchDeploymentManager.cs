@@ -14,6 +14,7 @@ using Kudu.Core.Hooks;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.SourceControl;
 using Kudu.Core.Tracing;
+using Kudu.Services.ServiceHookHandlers;
 
 namespace Kudu.Core.Deployment
 {
