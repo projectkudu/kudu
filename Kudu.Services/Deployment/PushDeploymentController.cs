@@ -105,10 +105,10 @@ namespace Kudu.Services.Deployment
         private static async Task LocalZipFetch(IRepository repository, DeploymentInfo deploymentInfo, string targetBranch, ILogger logger, ITracer tracer)
         {
             // For this deployment, RepositoryUrl is a local path.
-            var source = deploymentInfo.RepositoryUrl;
-            var target = repository.RepositoryPath;
+            var sourceZipFile = deploymentInfo.RepositoryUrl;
+            var extractTargetDirectory = repository.RepositoryPath;
 
-            var info = FileSystemHelpers.FileInfoFromFileName(source);
+            var info = FileSystemHelpers.FileInfoFromFileName(sourceZipFile);
             var sizeInMb = (info.Length / (1024f * 1024f)).ToString("0.00", CultureInfo.InvariantCulture);
 
             var message = String.Format(
@@ -122,10 +122,12 @@ namespace Kudu.Services.Deployment
 
             using (tracer.Step(message))
             {
+                FileSystemHelpers.CreateDirectory(extractTargetDirectory);
+
                 using (var file = info.OpenRead())
                 using (var zip = new ZipArchive(file, ZipArchiveMode.Read))
                 {
-                    await Task.Run(() => zip.Extract(target));
+                    await Task.Run(() => zip.Extract(extractTargetDirectory));
                 }
             }
 
