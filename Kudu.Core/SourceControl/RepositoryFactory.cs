@@ -74,13 +74,6 @@ namespace Kudu.Core.SourceControl
             IRepository repository;
             if (repositoryType == RepositoryType.Prebuilt)
             {
-                // TODO What should the path be? 
-                // Should it vary between deployments?
-                // Should it always be a new folder? If not, do we clean it out first?
-                // Note that if we want it to be the repository folder, some other changes are needed,
-                // as the rest of Kudu assumes that "Prebuilt" repositories don't interfere with others.
-                // This may need heavier refactoring
-
                 var path = Path.Combine(_environment.TempPath, Path.GetRandomFileName());
                 repository = new NullRepository(path, _traceFactory, doBuildDuringDeploymentByDefault: false);
             }

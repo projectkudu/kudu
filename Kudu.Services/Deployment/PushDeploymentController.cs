@@ -19,16 +19,19 @@ using Kudu.Services.ServiceHookHandlers;
 using static Kudu.Services.ServiceHookHandlers.DeploymentInfo;
 using System.Globalization;
 using System.Linq;
+using Kudu.Core;
 
 namespace Kudu.Services.Deployment
 {
     public class PushDeploymentController : ApiController
     {
+        private readonly IEnvironment _environment;
         private readonly IFetchDeploymentManager _deploymentManager;
         private readonly ITracer _tracer;
 
-        public PushDeploymentController(IFetchDeploymentManager deploymentManager, ITracer tracer)
+        public PushDeploymentController(IEnvironment environment, IFetchDeploymentManager deploymentManager, ITracer tracer)
         {
+            _environment = environment;
             _deploymentManager = deploymentManager;
             _tracer = tracer;
         }
@@ -43,12 +46,14 @@ namespace Kudu.Services.Deployment
                 // Despite https://github.com/projectkudu/kudu/issues/2301, in this case we may
                 // be OK creating a temporary deployment outside of the lock due to the way this API is used.
 
-                // TODO where to put the zip file?
-                var filepath = Path.GetTempFileName();
+                var filepath = Path.Combine(_environment.TempPath, Path.GetRandomFileName());
 
-                using (var file = File.OpenWrite(filepath))
-                { 
-                    await request.Content.CopyToAsync(file);
+                using (_tracer.Step("Writing zip file to {0}", filepath))
+                {
+                    using (var file = File.OpenWrite(filepath))
+                    {
+                        await request.Content.CopyToAsync(file);
+                    }
                 }
 
                 var deploymentInfo = new DeploymentInfo
