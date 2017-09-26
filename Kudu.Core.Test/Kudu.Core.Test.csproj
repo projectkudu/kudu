@@ -13,6 +13,7 @@
     <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
     <TargetFrameworkProfile />
   </PropertyGroup>
+  <PropertyGroup />
   <ItemGroup>
     <Reference Include="Mercurial.Net, Version=1.1.1.607, Culture=neutral, PublicKeyToken=9e2fabf3af85dba9, processorArchitecture=MSIL">
       <HintPath>..\packages\Mercurial.Net.1.1.1.607\lib\net35-Client\Mercurial.Net.dll</HintPath>
@@ -90,6 +91,7 @@
     <Compile Include="DebugConsoleFacts.cs" />
     <Compile Include="Deployment\FetchDeploymentManagerFacts.cs" />
     <Compile Include="Deployment\Generator\ExternalCommandBuilderFacts.cs" />
+    <Compile Include="Deployment\Generator\SiteBuilderFactoryFacts.cs" />
     <Compile Include="Deployment\PythonSiteEnablerTests.cs" />
     <Compile Include="Deployment\NodeSiteEnablerTests.cs" />
     <Compile Include="Deployment\DeploymentManagerFacts.cs" />
