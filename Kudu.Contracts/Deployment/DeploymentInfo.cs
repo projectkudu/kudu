@@ -2,9 +2,8 @@
 using Kudu.Core.SourceControl;
 using Kudu.Contracts.Tracing;
 using System.Threading.Tasks;
-using Kudu.Core.Deployment;
 
-namespace Kudu.Services.ServiceHookHandlers
+namespace Kudu.Core.Deployment
 {
     public class DeploymentInfo
     {

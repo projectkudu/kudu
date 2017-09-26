@@ -1,5 +1,4 @@
-﻿using Kudu.Services.ServiceHookHandlers;
-using System;
+﻿using System;
 using System.Threading.Tasks;
 
 namespace Kudu.Core.Deployment

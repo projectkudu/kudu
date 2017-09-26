@@ -4,21 +4,14 @@ using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using System.Web.Http;
-
-using Kudu.Contracts.Infrastructure;
-using Kudu.Contracts.SourceControl;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Deployment;
-using Kudu.Core.Helpers;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Tracing;
 using Kudu.Services.Infrastructure;
 using System.IO;
 using Kudu.Core.SourceControl;
-using Kudu.Services.ServiceHookHandlers;
-using static Kudu.Services.ServiceHookHandlers.DeploymentInfo;
 using System.Globalization;
-using System.Linq;
 using Kudu.Core;
 
 namespace Kudu.Services.Deployment
