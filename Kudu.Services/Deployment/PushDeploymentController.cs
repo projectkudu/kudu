@@ -18,6 +18,7 @@ using Kudu.Core.SourceControl;
 using Kudu.Services.ServiceHookHandlers;
 using static Kudu.Services.ServiceHookHandlers.DeploymentInfo;
 using System.Globalization;
+using System.Linq;
 
 namespace Kudu.Services.Deployment
 {
@@ -33,12 +34,12 @@ namespace Kudu.Services.Deployment
         }
 
         [HttpPost]
-        public async Task<HttpResponseMessage> ZipPushDeploy()
+        public async Task<HttpResponseMessage> ZipPushDeploy(HttpRequestMessage request, [FromUri] bool isAsync = false)
         {
             using (_tracer.Step("ZipPushDeploy"))
-            {
-                // TODO do we need to acquire lock and create temp deployment during zip upload?
-                // If we do, need to signal to FetchDeploy that we have already done one or noth.
+            { 
+                // TODO do we need create temp deployment and/or acquire lock during zip upload?
+                // If we do, need to signal to FetchDeploy that we have already done one or both.
                 // Despite https://github.com/projectkudu/kudu/issues/2301, in this case we may
                 // be OK creating a temporary deployment outside of the lock due to the way this API is used.
 
@@ -46,14 +47,9 @@ namespace Kudu.Services.Deployment
                 var filepath = Path.GetTempFileName();
 
                 using (var file = File.OpenWrite(filepath))
-                {
-                    await Request.Content.CopyToAsync(file);
+                { 
+                    await request.Content.CopyToAsync(file);
                 }
-
-                // TODO support async based on request
-                // TODO async indicator should be part of DeploymentInfo, along with the other parameters as well, and it should
-                // be called FetchDeploymentInfo
-                var asyncRequested = false;
 
                 var deploymentInfo = new DeploymentInfo
                 {
@@ -61,23 +57,22 @@ namespace Kudu.Services.Deployment
                     Deployer = "Zip-Push",
                     IsContinuous = false,
                     IsReusable = false,
-                    RepositoryUrl = filepath, // TODO this is kind of an ugly overload of this. Maybe just bake filepath into the Fetch() closure?
-                    TargetChangeset = DeploymentManager.CreateTemporaryChangeSet(message: "Deploying from zip"), // TODO better msg? This is our temp message
+                    RepositoryUrl = filepath,
+                    TargetChangeset = DeploymentManager.CreateTemporaryChangeSet(message: "Deploying from pushed zip file"),
                     CommitId = null,
                     RepositoryType = RepositoryType.Prebuilt,
                     Fetch = LocalZipFetch,
                 };
 
-                var result = await _deploymentManager.FetchDeploy(deploymentInfo, asyncRequested, UriHelper.GetRequestUri(Request), "HEAD");
+                var result = await _deploymentManager.FetchDeploy(deploymentInfo, isAsync, UriHelper.GetRequestUri(Request), "HEAD");
 
-                var response = Request.CreateResponse();
+                var response = request.CreateResponse();
 
                 switch (result)
                 {
-                    // TODO original implementation this is cribbed from is in FetchHandler. Need context.ApplicationInstance.CompleteRequest?
                     case FetchDeploymentRequestResult.RunningAynschronously:
                         // to avoid regression, only set location header if isAsync
-                        if (asyncRequested)
+                        if (isAsync)
                         {
                             // latest deployment keyword reserved to poll till deployment done
                             response.Headers.Location = new Uri(UriHelper.GetRequestUri(Request),

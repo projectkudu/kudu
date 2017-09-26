@@ -27,7 +27,7 @@ namespace Kudu.FunctionalTests
                     TestTracer.Trace("Push-deploying zip with file {0}.", testFileName);
                     File.WriteAllText(testFileLocalPath, testFileContent);
                     ZipFile.CreateFromDirectory(tempDirectory, tempZipPath);
-                    appManager.PushDeploymentManager.PushDeployFromFile(tempZipPath);
+                    appManager.PushDeploymentManager.PushDeployFromFile(tempZipPath, doAsync: true);
 
                     TestTracer.Trace("Verifying second file {0} is in uploaded.", testFileName);
                     foundContent = appManager.VfsWebRootManager.ReadAllText(testFileName);
