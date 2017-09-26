@@ -34,11 +34,6 @@ namespace Kudu.Services.Deployment
         {
             using (_tracer.Step("ZipPushDeploy"))
             { 
-                // TODO do we need create temp deployment and/or acquire lock during zip upload?
-                // If we do, need to signal to FetchDeploy that we have already done one or both.
-                // Despite https://github.com/projectkudu/kudu/issues/2301, in this case we may
-                // be OK creating a temporary deployment outside of the lock due to the way this API is used.
-
                 var filepath = Path.Combine(_environment.TempPath, Path.GetRandomFileName());
 
                 using (_tracer.Step("Writing zip file to {0}", filepath))
@@ -69,7 +64,6 @@ namespace Kudu.Services.Deployment
                 switch (result)
                 {
                     case FetchDeploymentRequestResult.RunningAynschronously:
-                        // to avoid regression, only set location header if isAsync
                         if (isAsync)
                         {
                             // latest deployment keyword reserved to poll till deployment done
@@ -79,6 +73,7 @@ namespace Kudu.Services.Deployment
                         response.StatusCode = HttpStatusCode.Accepted;
                         break;
                     case FetchDeploymentRequestResult.ForbiddenScmDisabled:
+                        // Should never hit this for zip push deploy
                         response.StatusCode = HttpStatusCode.Forbidden;
                         _tracer.Trace("Scm is not enabled, reject all requests.");
                         break;
