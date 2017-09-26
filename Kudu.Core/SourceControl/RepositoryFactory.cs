@@ -72,7 +72,7 @@ namespace Kudu.Core.SourceControl
             }
 
             IRepository repository;
-            if (repositoryType == RepositoryType.Prebuilt)
+            if (repositoryType == RepositoryType.Zip)
             {
                 var path = Path.Combine(_environment.TempPath, Path.GetRandomFileName());
                 repository = new NullRepository(path, _traceFactory, doBuildDuringDeploymentByDefault: false);

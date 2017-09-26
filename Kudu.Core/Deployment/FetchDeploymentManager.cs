@@ -72,7 +72,7 @@ namespace Kudu.Core.Deployment
             // This is to block the unintended CI with Scm providers like GitHub
             // Since Generic payload can only be done by user action, we loosely allow
             // that and assume users know what they are doing.  Same applies to git
-            // push/clone endpoint.
+            // push/clone endpoint and zip deployment.
             if (!(_settings.IsScmEnabled() || deployInfo.AllowDeploymentWhileScmDisabled))
             {
                 return FetchDeploymentRequestResult.ForbiddenScmDisabled;

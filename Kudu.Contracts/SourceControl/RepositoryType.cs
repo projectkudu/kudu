@@ -5,6 +5,6 @@
         None,
         Git,
         Mercurial,
-        Prebuilt
+        Zip // No git/hg functionality; uses temp local folder; builds with BasicBuilder by default
     }
 }

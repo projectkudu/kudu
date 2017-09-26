@@ -58,7 +58,7 @@ namespace Kudu.Services.Deployment
                     RepositoryUrl = filepath,
                     TargetChangeset = DeploymentManager.CreateTemporaryChangeSet(message: "Deploying from pushed zip file"),
                     CommitId = null,
-                    RepositoryType = RepositoryType.Prebuilt,
+                    RepositoryType = RepositoryType.Zip,
                     Fetch = LocalZipFetch,
                 };
 
