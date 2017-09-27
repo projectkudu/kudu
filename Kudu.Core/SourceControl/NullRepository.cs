@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Threading.Tasks;
+using System.Web;
+using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Tracing;
 
@@ -20,23 +21,18 @@ namespace Kudu.Core.SourceControl
         private readonly string _path;
         private readonly ITraceFactory _traceFactory;
         private readonly bool _doBuildDuringDeploymentByDefault;
-        private readonly bool _deleteDirectoryAfterBuild;
 
         public NullRepository(string path, ITraceFactory traceFactory)
-            :this(path, traceFactory, doBuildDuringDeploymentByDefault: true, deleteDirectoryAfterBuild: false)
+            :this(path, traceFactory, doBuildDuringDeploymentByDefault: true)
         {
         }
 
-        public NullRepository(
-            string path,
-            ITraceFactory traceFactory,
-            bool doBuildDuringDeploymentByDefault,
-            bool deleteDirectoryAfterBuild)
+        public NullRepository(string path, ITraceFactory traceFactory,
+            bool doBuildDuringDeploymentByDefault)
         {
             _path = path;
             _traceFactory = traceFactory;
             _doBuildDuringDeploymentByDefault = doBuildDuringDeploymentByDefault;
-            _deleteDirectoryAfterBuild = deleteDirectoryAfterBuild;
         }
 
         public string CurrentId
@@ -183,20 +179,6 @@ namespace Kudu.Core.SourceControl
         public bool DoesBranchContainCommit(string branch, string commit)
         {
             throw new NotImplementedException();
-        }
-
-        public Task PostBuild()
-        {
-            if (_deleteDirectoryAfterBuild)
-            {
-                var tracer = _traceFactory.GetTracer();
-                using (tracer.Step("Repository post-build: Deleting repo folder " + _path))
-                {
-                    FileSystemHelpers.DeleteDirectorySafe(_path);
-                }
-            }
-
-            return Task.CompletedTask;
         }
     }
 }

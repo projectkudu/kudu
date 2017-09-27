@@ -1,6 +1,4 @@
 ﻿
-using System.Threading.Tasks;
-
 namespace Kudu.Core.SourceControl
 {
     public interface IRepository : IFileFinder
@@ -86,10 +84,5 @@ namespace Kudu.Core.SourceControl
         /// Indicates whether a given branch contains a given commit.
         /// </summary>
         bool DoesBranchContainCommit(string branch, string commit);
-
-        /// <summary>
-        /// Post-build action.
-        /// </summary>
-        Task PostBuild();
     }
 }

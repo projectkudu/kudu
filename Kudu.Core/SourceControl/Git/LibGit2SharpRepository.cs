@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
 using Kudu.Contracts.Settings;
 using Kudu.Core.Helpers;
 using Kudu.Core.Infrastructure;
@@ -456,12 +455,6 @@ echo $i > pushinfo
         public void RebaseAbort()
         {
             _legacyGitExeRepository.RebaseAbort();
-        }
-
-        public Task PostBuild()
-        {
-            // no-op
-            return Task.CompletedTask;
         }
     }
 

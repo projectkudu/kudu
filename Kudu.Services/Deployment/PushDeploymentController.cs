@@ -131,14 +131,6 @@ namespace Kudu.Services.Deployment
                 }
             }
 
-            message = "Deleting source zip file " + sourceZipFile;
-
-            logger.Log(message);
-            using (tracer.Step(message))
-            {
-                FileSystemHelpers.DeleteFileSafe(sourceZipFile);
-            }
-
             // Needed in order for repository.GetChangeSet() to work.
             // Similar to what OneDriveHelper and DropBoxHelper do.
             repository.Commit("Created via zip push deployment", null, null);
