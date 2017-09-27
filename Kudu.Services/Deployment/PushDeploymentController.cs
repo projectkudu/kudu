@@ -13,6 +13,8 @@ using System.IO;
 using Kudu.Core.SourceControl;
 using System.Globalization;
 using Kudu.Core;
+using System.Linq;
+using System.IO.Abstractions;
 
 namespace Kudu.Services.Deployment
 {
@@ -33,12 +35,12 @@ namespace Kudu.Services.Deployment
         public async Task<HttpResponseMessage> ZipPushDeploy(HttpRequestMessage request, [FromUri] bool isAsync = false)
         {
             using (_tracer.Step("ZipPushDeploy"))
-            { 
-                var filepath = Path.Combine(_environment.TempPath, Path.GetRandomFileName());
+            {
+                var zipFilepath = Path.Combine(_environment.ZipTempPath, Path.GetRandomFileName());
 
-                using (_tracer.Step("Writing zip file to {0}", filepath))
+                using (_tracer.Step("Writing zip file to {0}", zipFilepath))
                 {
-                    using (var file = File.OpenWrite(filepath))
+                    using (var file = FileSystemHelpers.CreateFile(zipFilepath))
                     {
                         await request.Content.CopyToAsync(file);
                     }
@@ -49,9 +51,9 @@ namespace Kudu.Services.Deployment
                     AllowDeploymentWhileScmDisabled = true,
                     Deployer = "Zip-Push",
                     IsContinuous = false,
-                    AllowDeferral = false,
+                    AllowDeferredDeployment = false,
                     IsReusable = false,
-                    RepositoryUrl = filepath,
+                    RepositoryUrl = zipFilepath,
                     TargetChangeset = DeploymentManager.CreateTemporaryChangeSet(message: "Deploying from pushed zip file"),
                     CommitId = null,
                     RepositoryType = RepositoryType.Zip,
@@ -102,9 +104,9 @@ namespace Kudu.Services.Deployment
             }
         }
 
-        private static async Task LocalZipFetch(IRepository repository, DeploymentInfo deploymentInfo, string targetBranch, ILogger logger, ITracer tracer)
+        private async Task LocalZipFetch(IRepository repository, DeploymentInfo deploymentInfo, string targetBranch, ILogger logger, ITracer tracer)
         {
-            // For this deployment, RepositoryUrl is a local path.
+            // For this kind of deployment, RepositoryUrl is a local path.
             var sourceZipFile = deploymentInfo.RepositoryUrl;
             var extractTargetDirectory = repository.RepositoryPath;
 
@@ -113,27 +115,50 @@ namespace Kudu.Services.Deployment
 
             var message = String.Format(
                 CultureInfo.InvariantCulture,
-                "Extracting pushed zip file {0} ({1} MB) to {2}",
+                "Cleaning up temp folders from previous zip deployments and extracting pushed zip file {0} ({1} MB) to {2}",
                 info.FullName,
                 sizeInMb,
-                repository.RepositoryPath);
+                extractTargetDirectory);
 
             logger.Log(message);
 
             using (tracer.Step(message))
             {
-                FileSystemHelpers.CreateDirectory(extractTargetDirectory);
-
-                using (var file = info.OpenRead())
-                using (var zip = new ZipArchive(file, ZipArchiveMode.Read))
+                var cleanTask = Task.Run(() => DeleteFilesAndDirsExcept(sourceZipFile, extractTargetDirectory));
+                var extractTask = Task.Run(() =>
                 {
-                    await Task.Run(() => zip.Extract(extractTargetDirectory));
-                }
+                    using (var file = info.OpenRead())
+                    using (var zip = new ZipArchive(file, ZipArchiveMode.Read))
+                    {
+                        zip.Extract(extractTargetDirectory);
+                    }
+                });
+
+                await Task.WhenAll(cleanTask, extractTask);
             }
 
             // Needed in order for repository.GetChangeSet() to work.
             // Similar to what OneDriveHelper and DropBoxHelper do.
             repository.Commit("Created via zip push deployment", null, null);
+        }
+
+        private void DeleteFilesAndDirsExcept(string fileToKeep, string dirToKeep)
+        {
+            var files = FileSystemHelpers.GetFiles(_environment.ZipTempPath, "*")
+                .Where(p => !PathUtilityFactory.Instance.PathsEquals(p, fileToKeep));
+
+            foreach (var file in files)
+            {
+                FileSystemHelpers.DeleteFileSafe(file);
+            }
+
+            var dirs = FileSystemHelpers.GetDirectories(_environment.ZipTempPath)
+                .Where(p => !PathUtilityFactory.Instance.PathsEquals(p, dirToKeep));
+
+            foreach (var dir in dirs)
+            {
+                FileSystemHelpers.DeleteDirectorySafe(dir);
+            }
         }
     }
 }

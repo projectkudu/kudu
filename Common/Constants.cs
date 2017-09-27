@@ -8,6 +8,7 @@ namespace Kudu
         public const string WebRoot = "wwwroot";
         public const string MappedSite = "/_app";
         public const string RepositoryPath = "repository";
+        public const string ZipTempPath = "zipdeploy";
 
         public const string LockPath = "locks";
         public const string DeploymentLockFile = "deployments.lock";

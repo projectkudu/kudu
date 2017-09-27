@@ -67,7 +67,7 @@ namespace Kudu.Core.SourceControl
             // Zip "repository" does not conflict with other types, including NoRepository
             if (repositoryType == RepositoryType.Zip)
             {
-                var path = Path.Combine(_environment.TempPath, Path.GetRandomFileName());
+                var path = Path.Combine(_environment.ZipTempPath, Path.GetRandomFileName());
                 return new NullRepository(path, _traceFactory, doBuildDuringDeploymentByDefault: false);
             }
 

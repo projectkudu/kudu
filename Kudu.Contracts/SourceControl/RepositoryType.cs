@@ -5,6 +5,6 @@
         None,
         Git,
         Mercurial,
-        Zip // No git/hg functionality; uses temp local folder; folder deleted after build & deploy; builds with BasicBuilder by default;
+        Zip // Uses separate temporary folder as repo folder; does not conflict with other deployment types
     }
 }

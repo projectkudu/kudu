@@ -115,7 +115,7 @@ namespace Kudu.Core.Deployment
             }
             catch (LockOperationException)
             {
-                if (deployInfo.AllowDeferral)
+                if (deployInfo.AllowDeferredDeployment)
                 {
                     // Create a marker file that indicates if there's another deployment to pull
                     // because there was a deployment in progress.

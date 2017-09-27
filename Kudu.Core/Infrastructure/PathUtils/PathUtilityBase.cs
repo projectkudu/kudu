@@ -96,7 +96,7 @@ namespace Kudu.Core.Infrastructure
             return Path.GetFullPath(path.Trim()).TrimEnd(Path.DirectorySeparatorChar);
         }
 
-        internal abstract bool PathsEquals(string path1, string path2);
+        public abstract bool PathsEquals(string path1, string path2);
 
         internal abstract string ResolveNpmToolsPath(string toolName);
 
