@@ -4,6 +4,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Deployment;
@@ -653,6 +654,12 @@ fi" + "\n";
 
             string message = messageBuilder.ToString().Trim();
             return new ChangeSet(id, author, email, message, DateTimeOffset.ParseExact(date, "ddd MMM d HH:mm:ss yyyy zzz", CultureInfo.InvariantCulture));
+        }
+
+        public Task PostBuild()
+        {
+            // no-op
+            return Task.CompletedTask;
         }
     }
 }

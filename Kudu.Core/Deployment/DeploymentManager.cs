@@ -227,6 +227,8 @@ namespace Kudu.Core.Deployment
                     // Perform the build deployment of this changeset
                     await Build(changeSet, tracer, deployStep, repository, deploymentAnalytics);
 
+                    await repository.PostBuild();
+
                     if (!OSDetector.IsOnWindows() && _settings.RestartAppContainerOnGitDeploy())
                     {
                         logger.Log(Resources.Log_TriggeringContainerRestart);

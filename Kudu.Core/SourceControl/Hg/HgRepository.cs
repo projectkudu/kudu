@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
@@ -352,6 +353,12 @@ namespace Kudu.Core.SourceControl
                 Client.SetClientPath(PathUtilityFactory.Instance.ResolveHgPath());
             }
             return true;
+        }
+
+        public Task PostBuild()
+        {
+            // no-op
+            return Task.CompletedTask;
         }
     }
 }

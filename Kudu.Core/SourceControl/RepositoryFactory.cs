@@ -68,7 +68,7 @@ namespace Kudu.Core.SourceControl
             if (repositoryType == RepositoryType.Zip)
             {
                 var path = Path.Combine(_environment.TempPath, Path.GetRandomFileName());
-                return new NullRepository(path, _traceFactory, doBuildDuringDeploymentByDefault: false);
+                return new NullRepository(path, _traceFactory, doBuildDuringDeploymentByDefault: false, deleteDirectoryAfterBuild: true);
             }
 
             // Validate if conflicting with existing repository
