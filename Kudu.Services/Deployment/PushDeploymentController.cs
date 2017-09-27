@@ -49,6 +49,7 @@ namespace Kudu.Services.Deployment
                     AllowDeploymentWhileScmDisabled = true,
                     Deployer = "Zip-Push",
                     IsContinuous = false,
+                    AllowDeferral = false,
                     IsReusable = false,
                     RepositoryUrl = filepath,
                     TargetChangeset = DeploymentManager.CreateTemporaryChangeSet(message: "Deploying from pushed zip file"),
@@ -77,16 +78,20 @@ namespace Kudu.Services.Deployment
                         response.StatusCode = HttpStatusCode.Forbidden;
                         _tracer.Trace("Scm is not enabled, reject all requests.");
                         break;
-                    case FetchDeploymentRequestResult.AutoSwapOngoing:
+                    case FetchDeploymentRequestResult.ConflictAutoSwapOngoing:
                         response.StatusCode = HttpStatusCode.Conflict;
                         response.Content = new StringContent(Resources.Error_AutoSwapDeploymentOngoing);
                         break;
                     case FetchDeploymentRequestResult.Pending:
-                        // Return a http 202: the request has been accepted for processing, but the processing has not been completed.
+                        // Shouldn't happen here, as we disallow deferral for this use case
                         response.StatusCode = HttpStatusCode.Accepted;
                         break;
                     case FetchDeploymentRequestResult.RanSynchronously:
                         response.StatusCode = HttpStatusCode.OK;
+                        break;
+                    case FetchDeploymentRequestResult.ConflictDeploymentInProgress:
+                        response.StatusCode = HttpStatusCode.Conflict;
+                        response.Content = new StringContent(Resources.Error_DeploymentInProgress);
                         break;
                     default:
                         response.StatusCode = HttpStatusCode.BadRequest;

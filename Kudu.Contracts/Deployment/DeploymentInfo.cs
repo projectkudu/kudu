@@ -12,6 +12,7 @@ namespace Kudu.Core.Deployment
         public DeploymentInfo()
         {
             IsReusable = true;
+            AllowDeferral = true;
         }
 
         public RepositoryType RepositoryType { get; set; }
@@ -19,6 +20,8 @@ namespace Kudu.Core.Deployment
         public string Deployer { get; set; }
         public ChangeSet TargetChangeset { get; set; }
         public bool IsReusable { get; set; }
+        // Allow deferred deployment via marker file mechanism.
+        public bool AllowDeferral { get; set; }
         // indicating that this is a CI triggered by SCM provider 
         public bool IsContinuous { get; set; }
         public FetchDelegate Fetch { get; set; }

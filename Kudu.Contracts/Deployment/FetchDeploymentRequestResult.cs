@@ -5,8 +5,9 @@
         Unknown = 0,
         ForbiddenScmDisabled,
         RunningAynschronously,
-        AutoSwapOngoing,
+        ConflictAutoSwapOngoing,
         RanSynchronously,
-        Pending
+        Pending,
+        ConflictDeploymentInProgress
     }
 }

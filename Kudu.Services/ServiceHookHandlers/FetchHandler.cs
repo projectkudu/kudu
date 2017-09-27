@@ -102,8 +102,7 @@ namespace Kudu.Services
                         context.ApplicationInstance.CompleteRequest();
                         _tracer.Trace("Scm is not enabled, reject all requests.");
                         return;
-                    
-                    case FetchDeploymentRequestResult.AutoSwapOngoing:
+                    case FetchDeploymentRequestResult.ConflictAutoSwapOngoing:
                         context.Response.StatusCode = (int)HttpStatusCode.Conflict;
                         context.Response.Write(Resources.Error_AutoSwapDeploymentOngoing);
                         context.ApplicationInstance.CompleteRequest();
@@ -113,6 +112,11 @@ namespace Kudu.Services
                         context.Response.StatusCode = (int)HttpStatusCode.Accepted;
                         context.ApplicationInstance.CompleteRequest();
                         return;
+                    case FetchDeploymentRequestResult.ConflictDeploymentInProgress:
+                        context.Response.StatusCode = (int)HttpStatusCode.Conflict;
+                        context.Response.Write(Resources.Error_DeploymentInProgress);
+                        context.ApplicationInstance.CompleteRequest();
+                        break;
                     case FetchDeploymentRequestResult.RanSynchronously:
                     default:
                         break;

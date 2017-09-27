@@ -106,7 +106,7 @@ namespace Kudu.Core.Deployment
                 {
                     if (PostDeploymentHelper.IsAutoSwapOngoing())
                     {
-                        return FetchDeploymentRequestResult.AutoSwapOngoing;
+                        return FetchDeploymentRequestResult.ConflictAutoSwapOngoing;
                     }
 
                     await PerformDeployment(deployInfo);
@@ -115,16 +115,23 @@ namespace Kudu.Core.Deployment
             }
             catch (LockOperationException)
             {
-                // Create a marker file that indicates if there's another deployment to pull
-                // because there was a deployment in progress.
-                using (_tracer.Step("Update pending deployment marker file"))
+                if (deployInfo.AllowDeferral)
                 {
-                    // REVIEW: This makes the assumption that the repository url is the same.
-                    // If it isn't the result would be buggy either way.
-                    FileSystemHelpers.SetLastWriteTimeUtc(_markerFilePath, DateTime.UtcNow);
-                }
+                    // Create a marker file that indicates if there's another deployment to pull
+                    // because there was a deployment in progress.
+                    using (_tracer.Step("Update pending deployment marker file"))
+                    {
+                        // REVIEW: This makes the assumption that the repository url is the same.
+                        // If it isn't the result would be buggy either way.
+                        FileSystemHelpers.SetLastWriteTimeUtc(_markerFilePath, DateTime.UtcNow);
+                    }
 
-                return FetchDeploymentRequestResult.Pending;
+                    return FetchDeploymentRequestResult.Pending;
+                }
+                else
+                {
+                    return FetchDeploymentRequestResult.ConflictDeploymentInProgress;
+                }
             }
         }
 
