@@ -16,6 +16,7 @@ namespace Kudu.Contracts.Settings
         public const int DefaultMaxJobRunsHistoryCount = 50;
 
         public static readonly string DefaultSiteExtensionFeedUrl = "https://www.siteextensions.net/api/v2/";
+        public static readonly string NuGetSiteExtensionFeedUrl = "https://www.nuget.org/api/v2/";
 
         public static string GetValue(this IDeploymentSettingsManager settings, string key)
         {
