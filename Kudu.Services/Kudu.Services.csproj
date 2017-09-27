@@ -11,11 +11,6 @@
     <DocumentationFile>bin\Debug\Kudu.Services.XML</DocumentationFile>
     <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
     <TargetFrameworkProfile />
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <NoWarn>1591</NoWarn>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'">
     <NoWarn>1591</NoWarn>
   </PropertyGroup>
   <ItemGroup>
