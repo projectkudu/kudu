@@ -38,7 +38,7 @@ namespace Kudu.Core.SiteExtensions
 
             // When using nuget.org, we only look at packages that have our tag. Later, we should switch to filtering
             // by PackageType once nuget.org starts supporting that
-            if (IsNuGetRepo(srcRepo))
+            if (IsNuGetRepo(srcRepo.PackageSource.Source))
             {
                 if (String.IsNullOrWhiteSpace(searchTerm))
                 {
@@ -69,7 +69,7 @@ namespace Kudu.Core.SiteExtensions
             // 7 references none of which uses bool includePrerelease = true, bool includeUnlisted = false
             var metadataResource = await srcRepo.GetResourceAndValidateAsync<UIMetadataResource>();
             return await metadataResource.GetLatestPackageByIdFromMetaRes(packageId,
-                explicitTag: IsNuGetRepo(srcRepo));
+                explicitTag: IsNuGetRepo(srcRepo.PackageSource.Source));
         }
 
         // can be called concurrently if metaDataResource is provided
@@ -120,7 +120,7 @@ namespace Kudu.Core.SiteExtensions
 
             // When using nuget.org, we only look at packages that have our tag.
             if (ret != null &&
-                IsNuGetRepo(srcRepo) &&
+                IsNuGetRepo(srcRepo.PackageSource.Source) &&
                 (ret.Tags.IndexOf("azuresiteextension", StringComparison.OrdinalIgnoreCase) < 0))
             {
                 ret = null;
@@ -403,10 +403,10 @@ namespace Kudu.Core.SiteExtensions
             }
         }
 
-        private static bool IsNuGetRepo(SourceRepository srcRepo)
+        internal static bool IsNuGetRepo(string repoUrl)
         {
             return System.Text.RegularExpressions.Regex.IsMatch(
-                srcRepo.PackageSource.Source,
+                repoUrl,
                 @"https://.*\.nuget\.org/.*",
                 System.Text.RegularExpressions.RegexOptions.IgnoreCase);
         }

@@ -860,10 +860,7 @@ namespace Kudu.Core.SiteExtensions
 
             if (!string.IsNullOrEmpty(info.FeedUrl))
             {
-                isNuGetPackage = System.Text.RegularExpressions.Regex.IsMatch(
-                                info.FeedUrl,
-                                @"https://.*\.nuget\.org/.*",
-                                System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                isNuGetPackage = FeedExtensions.IsNuGetRepo(info.FeedUrl);
             }
 
             UIPackageMetadata localPackage = await metadataResource.GetLatestPackageByIdFromMetaRes(info.Id,
