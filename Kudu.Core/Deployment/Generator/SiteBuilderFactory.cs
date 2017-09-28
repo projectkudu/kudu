@@ -52,10 +52,7 @@ namespace Kudu.Core.Deployment.Generator
                 targetProjectPath = Path.GetFullPath(Path.Combine(repositoryRoot, targetProjectPath.TrimStart('/', '\\')));
             }
 
-            // The nature of the repository determines whether or not we do stack-specific build actions by default.
-            // Explicitly setting a value will always take precedence, though.
-            var doBuild = settings.DoBuildDuringDeployment() ?? repository.DoBuildDuringDeploymentByDefault;
-            if (!doBuild)
+            if (!settings.DoBuildDuringDeployment())
             {
                 var projectPath = !String.IsNullOrEmpty(targetProjectPath) ? targetProjectPath : repositoryRoot;
                 return new BasicBuilder(_environment, settings, _propertyProvider, repositoryRoot, projectPath);

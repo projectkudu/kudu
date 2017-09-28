@@ -22,7 +22,7 @@ namespace Kudu.Core.Test
                     }
 
                     var environment = new Mock<IEnvironment>();
-                    environment.SetupGet(e => e.TempPath).Returns("x:\\temp");
+                    environment.SetupGet(e => e.ZipTempPath).Returns("x:\\temp");
 
                     // Arrange
                     var repoFactory = new Mock<RepositoryFactory>(

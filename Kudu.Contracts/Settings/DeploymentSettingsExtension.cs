@@ -234,20 +234,13 @@ namespace Kudu.Contracts.Settings
             return value == null || StringUtils.IsTrueLike(value);
         }
 
-        // Result here is tri-state, as caller needs to know if it was set or not
-        // ("default" is context-dependent)
-        public static bool? DoBuildDuringDeployment(this IDeploymentSettingsManager settings)
+        public static bool DoBuildDuringDeployment(this IDeploymentSettingsManager settings)
         {
-            var value = settings.GetValue(SettingsKeys.DoBuildDuringDeployment);
+            string value = settings.GetValue(SettingsKeys.DoBuildDuringDeployment);
 
-            bool result;
-
-            if (StringUtils.TryParseBoolean(value, out result))
-            {
-                return result;
-            }
-
-            return null;
+            // A default value should be set on a per-deployment basis depending on the context, but
+            // returning true by default here as an indicator of generally expected behavior
+            return value == null || StringUtils.IsTrueLike(value);
         }
     }
 }

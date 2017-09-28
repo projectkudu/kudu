@@ -13,6 +13,7 @@ namespace Kudu.Core.Deployment
         {
             IsReusable = true;
             AllowDeferredDeployment = true;
+            DoFullBuildByDefault = true;
         }
 
         public RepositoryType RepositoryType { get; set; }
@@ -31,6 +32,11 @@ namespace Kudu.Core.Deployment
         // the RepositoryUrl can specify specific commitid to deploy
         // for instance, http://github.com/kuduapps/hellokudu.git#<commitid>
         public string CommitId { get; set; }
+
+        // Can set to false for deployments where we assume that the repository contains the entire
+        // built site, meaning we can skip app stack detection and simply use BasicBuilder
+        // (KuduSync only)
+        public bool DoFullBuildByDefault { get; set; }
 
         public bool IsValid()
         {

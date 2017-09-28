@@ -58,6 +58,7 @@ namespace Kudu.Services.Deployment
                     CommitId = null,
                     RepositoryType = RepositoryType.Zip,
                     Fetch = LocalZipFetch,
+                    DoFullBuildByDefault = false
                 };
 
                 var result = await _deploymentManager.FetchDeploy(deploymentInfo, isAsync, UriHelper.GetRequestUri(Request), "HEAD");

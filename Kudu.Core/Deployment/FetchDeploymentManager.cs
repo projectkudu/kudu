@@ -204,7 +204,13 @@ namespace Kudu.Core.Deployment
                             // unless for GenericHandler where specific commitId is specified
                             bool deploySpecificCommitId = !String.IsNullOrEmpty(deploymentInfo.CommitId);
 
-                            await _deploymentManager.DeployAsync(repository, changeSet, deploymentInfo.Deployer, clean: false, needFileUpdate: deploySpecificCommitId);
+                            await _deploymentManager.DeployAsync(
+                                repository,
+                                changeSet,
+                                deploymentInfo.Deployer,
+                                clean: false,
+                                needFileUpdate: deploySpecificCommitId,
+                                fullBuildByDefault: deploymentInfo.DoFullBuildByDefault);
                         }
                     }
                     catch (Exception ex)
