@@ -135,7 +135,7 @@ namespace Kudu.Services.Deployment
                     targetInfo.MoveTo(moveTarget);
                 }
 
-                var cleanTask = Task.Run(() => DeleteFilesAndDirsExcept(sourceZipFile, extractTargetDirectory));
+                var cleanTask = Task.Run(() => DeleteFilesAndDirsExcept(sourceZipFile, extractTargetDirectory, tracer));
                 var extractTask = Task.Run(() =>
                 {
                     using (var file = info.OpenRead())
@@ -153,22 +153,32 @@ namespace Kudu.Services.Deployment
             repository.Commit("Created via zip push deployment", null, null);
         }
 
-        private void DeleteFilesAndDirsExcept(string fileToKeep, string dirToKeep)
+        private void DeleteFilesAndDirsExcept(string fileToKeep, string dirToKeep, ITracer tracer)
         {
-            var files = FileSystemHelpers.GetFiles(_environment.ZipTempPath, "*")
+            // Best effort. Using the "Safe" variants does retries and swallows exceptions but
+            // we may catch something non-obvious.
+            try
+            {
+                var files = FileSystemHelpers.GetFiles(_environment.ZipTempPath, "*")
                 .Where(p => !PathUtilityFactory.Instance.PathsEquals(p, fileToKeep));
 
-            foreach (var file in files)
-            {
-                FileSystemHelpers.DeleteFileSafe(file);
+                foreach (var file in files)
+                {
+                    FileSystemHelpers.DeleteFileSafe(file);
+                }
+
+                var dirs = FileSystemHelpers.GetDirectories(_environment.ZipTempPath)
+                    .Where(p => !PathUtilityFactory.Instance.PathsEquals(p, dirToKeep));
+
+                foreach (var dir in dirs)
+                {
+                    FileSystemHelpers.DeleteDirectorySafe(dir);
+                }
             }
-
-            var dirs = FileSystemHelpers.GetDirectories(_environment.ZipTempPath)
-                .Where(p => !PathUtilityFactory.Instance.PathsEquals(p, dirToKeep));
-
-            foreach (var dir in dirs)
+            catch (Exception ex)
             {
-                FileSystemHelpers.DeleteDirectorySafe(dir);
+                tracer.TraceError(ex, "Exception encountered during zip folder cleanup");
+                throw;
             }
         }
     }
