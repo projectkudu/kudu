@@ -36,11 +36,12 @@ namespace Kudu.Services.Deployment
         {
             using (_tracer.Step("ZipPushDeploy"))
             {
-                var zipFilepath = Path.Combine(_environment.ZipTempPath, Path.GetRandomFileName());
+                var zipFileName = Path.ChangeExtension(Path.GetRandomFileName(), "zip");
+                var zipFilePath = Path.Combine(_environment.ZipTempPath, zipFileName);
 
-                using (_tracer.Step("Writing zip file to {0}", zipFilepath))
+                using (_tracer.Step("Writing zip file to {0}", zipFilePath))
                 {
-                    using (var file = FileSystemHelpers.CreateFile(zipFilepath))
+                    using (var file = FileSystemHelpers.CreateFile(zipFilePath))
                     {
                         await request.Content.CopyToAsync(file);
                     }
@@ -53,7 +54,7 @@ namespace Kudu.Services.Deployment
                     IsContinuous = false,
                     AllowDeferredDeployment = false,
                     IsReusable = false,
-                    RepositoryUrl = zipFilepath,
+                    RepositoryUrl = zipFilePath,
                     TargetChangeset = DeploymentManager.CreateTemporaryChangeSet(message: "Deploying from pushed zip file"),
                     CommitId = null,
                     RepositoryType = RepositoryType.Zip,
@@ -125,6 +126,15 @@ namespace Kudu.Services.Deployment
 
             using (tracer.Step(message))
             {
+                // If extractTargetDirectory already exists, rename it so we can delete it concurrently with
+                // the unzip (along with any other junk in the folder)
+                var targetInfo = FileSystemHelpers.DirectoryInfoFromDirectoryName(extractTargetDirectory);
+                if (targetInfo.Exists)
+                {
+                    var moveTarget = Path.Combine(targetInfo.Parent.FullName, Path.GetRandomFileName());
+                    targetInfo.MoveTo(moveTarget);
+                }
+
                 var cleanTask = Task.Run(() => DeleteFilesAndDirsExcept(sourceZipFile, extractTargetDirectory));
                 var extractTask = Task.Run(() =>
                 {
