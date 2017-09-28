@@ -87,16 +87,18 @@ namespace Kudu.Core.Deployment
                 using (_tracer.Step("Start deployment in the background"))
                 {
                     var waitForTempDeploymentCreation = asyncRequested;
-                    await PerformBackgroundDeployment(
+                    var successfullyRequested = await PerformBackgroundDeployment(
                         deployInfo,
                         _environment,
                         _settings,
                         _tracer.TraceLevel,
                         requestUri,
                         waitForTempDeploymentCreation);
-                }
 
-                return FetchDeploymentRequestResult.RunningAynschronously;
+                    return successfullyRequested
+                    ? FetchDeploymentRequestResult.RunningAynschronously
+                    : FetchDeploymentRequestResult.ConflictDeploymentInProgress;
+                }
             }
 
             _tracer.Trace("Attempting to fetch target branch {0}", targetBranch);
@@ -259,7 +261,7 @@ namespace Kudu.Core.Deployment
         }
 
         // key goal is to create background tracer that is independent of request.
-        public static async Task PerformBackgroundDeployment(
+        public static Task<bool> PerformBackgroundDeployment(
             DeploymentInfo deployInfo,
             IEnvironment environment,
             IDeploymentSettingsManager settings,
@@ -276,8 +278,16 @@ namespace Kudu.Core.Deployment
                 {"method", "POST"}
             });
 
-            // For monitoring creation of temp deployment
-            var tcs = new TaskCompletionSource<object>();
+            // Previously this was just for waiting for creation of temp deployment before returning
+            // (when the frontend/ARM calls /deploy with isAsync=true, it starts polling
+            // the deployment status immediately, so it's important that the temp deployment
+            // is created before we return.)
+            // Now that DeploymentInfo.AllowDeferredDeployment=false allows creation of a deployment request that
+            // can't be deferred, we *always* need to at least wait for the lock to be entered so we can tell
+            // if the deployment was actually created or not.
+            // A true result indicates the deployment was successfully requested (deferred or not); a false
+            // result indicates that we could not acquire the lock and 
+            var deploymentRequestedTcs = new TaskCompletionSource<bool>();
 
             // This task will be let out of scope intentionally
             var deploymentTask = Task.Run(() =>
@@ -319,9 +329,9 @@ namespace Kudu.Core.Deployment
                                                                 out tempChangeSet,
                                                                 deployInfo.TargetChangeset,
                                                                 deployInfo.Deployer);
-
-                                tcs.TrySetResult(null);
                             }
+
+                            deploymentRequestedTcs.TrySetResult(true);
 
                             fetchDeploymentManager.PerformDeployment(deployInfo, tempDeployment, tempChangeSet).Wait();
                         }, "Performing continuous deployment", TimeSpan.Zero);
@@ -333,11 +343,20 @@ namespace Kudu.Core.Deployment
                             tempDeployment.Dispose();
                         }
 
-                        using (tracer.Step("Update pending deployment marker file"))
+                        if (deployInfo.AllowDeferredDeployment)
                         {
-                            // REVIEW: This makes the assumption that the repository url is the same.
-                            // If it isn't the result would be buggy either way.
-                            FileSystemHelpers.SetLastWriteTimeUtc(fetchDeploymentManager._markerFilePath, DateTime.UtcNow);
+                            using (tracer.Step("Update pending deployment marker file"))
+                            {
+                                // REVIEW: This makes the assumption that the repository url is the same.
+                                // If it isn't the result would be buggy either way.
+                                FileSystemHelpers.SetLastWriteTimeUtc(fetchDeploymentManager._markerFilePath, DateTime.UtcNow);
+                            }
+
+                            deploymentRequestedTcs.TrySetResult(true);
+                        }
+                        else
+                        {
+                            deploymentRequestedTcs.TrySetResult(false);
                         }
                     }
                 }
@@ -347,19 +366,15 @@ namespace Kudu.Core.Deployment
                 }
                 finally
                 {
+                    // If something really blew up, make sure we have set a result at least once to allow execution to continue.
+                    // Setting to "true" to preserve existing behavior.
+                    deploymentRequestedTcs.TrySetResult(true);
                     backgroundTrace.Dispose();
                 }
             });
 
-            // When the frontend/ARM calls /deploy with isAsync=true, it starts polling
-            // the deployment status immediately, so it's important that the temp deployment
-            // is created before we return.
-            if (waitForTempDeploymentCreation)
-            {
-                // If deploymentTask blows up before it creates the temp deployment,
-                // go ahead and return.
-                await Task.WhenAny(tcs.Task, deploymentTask);
-            }
+            var requestDeploymentTask = deploymentRequestedTcs.Task;
+            return requestDeploymentTask;
         }
     }
 }
