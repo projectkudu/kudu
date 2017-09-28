@@ -6,6 +6,7 @@ using Moq;
 using Newtonsoft.Json.Linq;
 using Xunit;
 using Kudu.Core.Deployment;
+using Kudu.Contracts.SourceControl;
 
 namespace Kudu.Services.Test
 {
@@ -18,10 +19,10 @@ namespace Kudu.Services.Test
             var payload = JObject.Parse(@"{ ""repository"":{ ""repourl"":""http://test.codebasehq.com/projects/test-repositories/repositories/git1/commit/840daf31f4f87cb5cafd295ef75de989095f415b"" } }");
             var httpRequest = new Mock<HttpRequestBase>();
             var settingsManager = new MockDeploymentSettingsManager();
-            var kilnHandler = new KilnHgHandler(settingsManager);
+            var kilnHandler = new KilnHgHandler(settingsManager, Mock.Of<IRepositoryFactory>());
 
             // Act
-            DeploymentInfo deploymentInfo;
+            DeploymentInfoBase deploymentInfo;
             DeployAction result = kilnHandler.TryParseDeploymentInfo(httpRequest.Object, payload: payload, targetBranch: null, deploymentInfo: out deploymentInfo);
 
             // Assert
@@ -35,10 +36,10 @@ namespace Kudu.Services.Test
             const string payload = @" { ""commits"": [ { ""author"": ""Brian Surowiec <xtorted@optonline.net>"", ""branch"": ""default"", ""id"": ""771363bfb8e6e2b76a3da8d156c6a3db0ea9a9c4"", ""message"": ""did a commit"", ""revision"": 1, ""timestamp"": ""1/7/2013 6:54:25 AM"" } ], ""repository"": { ""url"": ""https://kudutest.kilnhg.com/Code/Test/Group/KuduApp"" } } ";
             var httpRequest = new Mock<HttpRequestBase>();
             var settingsManager = new MockDeploymentSettingsManager();
-            var kilnHandler = new KilnHgHandler(settingsManager);
+            var kilnHandler = new KilnHgHandler(settingsManager, Mock.Of<IRepositoryFactory>());
 
             // Act
-            DeploymentInfo deploymentInfo;
+            DeploymentInfoBase deploymentInfo;
             DeployAction result = kilnHandler.TryParseDeploymentInfo(httpRequest.Object, payload: JObject.Parse(payload), targetBranch: "not-default", deploymentInfo: out deploymentInfo);
 
             // Assert
@@ -55,10 +56,10 @@ namespace Kudu.Services.Test
             string payload = @"{ ""commits"": [ { ""author"": ""Brian Surowiec <xtorted@optonline.net>"", ""branch"": ""default"", ""id"": ""f1525c29206072f6565e6ba70831afb65b55e9a0"", ""message"": ""commit message"", ""revision"": 14, ""timestamp"": ""1/15/2013 2:23:37 AM"" } ], ""repository"": { ""url"": """ + repositoryUrl + @""" } }";
             var httpRequest = new Mock<HttpRequestBase>();
             var settingsManager = new MockDeploymentSettingsManager();
-            var kilnHandler = new KilnHgHandler(settingsManager);
+            var kilnHandler = new KilnHgHandler(settingsManager, Mock.Of<IRepositoryFactory>());
 
             // Act
-            DeploymentInfo deploymentInfo;
+            DeploymentInfoBase deploymentInfo;
             DeployAction result = kilnHandler.TryParseDeploymentInfo(httpRequest.Object, payload: JObject.Parse(payload), targetBranch: "default", deploymentInfo: out deploymentInfo);
 
             // Assert
@@ -79,10 +80,10 @@ namespace Kudu.Services.Test
             const string payload = @"{ ""commits"": [ { ""author"": ""a1444778-8d5d-413d-83f7-6dbf9e2cd77d"", ""branch"": ""default"", ""id"": ""f1525c29206072f6565e6ba70831afb65b55e9a0"", ""message"": ""commit message"", ""revision"": 14, ""timestamp"": ""1/15/2013 2:23:37 AM"" } ], ""repository"": { ""url"": ""https://kudutest.kilnhg.com/Code/Test/Group/KuduApp"" } }";
             var httpRequest = new Mock<HttpRequestBase>();
             var settingsManager = new MockDeploymentSettingsManager();
-            var kilnHandler = new KilnHgHandler(settingsManager);
+            var kilnHandler = new KilnHgHandler(settingsManager, Mock.Of<IRepositoryFactory>());
 
             // Act
-            DeploymentInfo deploymentInfo;
+            DeploymentInfoBase deploymentInfo;
             DeployAction result = kilnHandler.TryParseDeploymentInfo(httpRequest.Object, payload: JObject.Parse(payload), targetBranch: "default", deploymentInfo: out deploymentInfo);
 
             // Assert
@@ -106,10 +107,10 @@ namespace Kudu.Services.Test
             var httpRequest = new Mock<HttpRequestBase>();
             var settingsManager = new MockDeploymentSettingsManager();
             settingsManager.SetValue("kiln.accesstoken", "hg-user");
-            var kilnHandler = new KilnHgHandler(settingsManager);
+            var kilnHandler = new KilnHgHandler(settingsManager, Mock.Of<IRepositoryFactory>());
 
             // Act
-            DeploymentInfo deploymentInfo;
+            DeploymentInfoBase deploymentInfo;
             DeployAction result = kilnHandler.TryParseDeploymentInfo(httpRequest.Object, payload: JObject.Parse(payload), targetBranch: "default", deploymentInfo: out deploymentInfo);
 
             // Assert
@@ -135,10 +136,10 @@ namespace Kudu.Services.Test
             var httpRequest = new Mock<HttpRequestBase>();
             var settingsManager = new MockDeploymentSettingsManager();
             settingsManager.SetValue("kiln.accesstoken", "hg-user");
-            var kilnHandler = new KilnHgHandler(settingsManager);
+            var kilnHandler = new KilnHgHandler(settingsManager, Mock.Of<IRepositoryFactory>());
 
             // Act
-            DeploymentInfo deploymentInfo;
+            DeploymentInfoBase deploymentInfo;
             DeployAction result = kilnHandler.TryParseDeploymentInfo(httpRequest.Object, payload: JObject.Parse(payload), targetBranch: "default", deploymentInfo: out deploymentInfo);
 
             // Assert
@@ -159,7 +160,7 @@ namespace Kudu.Services.Test
         {
             // Arrange
             var settingsManager = new MockDeploymentSettingsManager();
-            var kilnHandler = new KilnHgHandler(settingsManager);
+            var kilnHandler = new KilnHgHandler(settingsManager, Mock.Of<IRepositoryFactory>());
 
             // Act
             bool result = kilnHandler.IsKilnRequest(JObject.Parse(payloadContent));
@@ -179,7 +180,7 @@ namespace Kudu.Services.Test
             var settingsManager = new MockDeploymentSettingsManager();
             settingsManager.SetValue("kiln.domain", domainPattern);
 
-            var kilnHandler = new KilnHgHandler(settingsManager);
+            var kilnHandler = new KilnHgHandler(settingsManager, Mock.Of<IRepositoryFactory>());
 
             // Act
             bool result = kilnHandler.IsKilnRequest(JObject.Parse(payload));
@@ -196,7 +197,7 @@ namespace Kudu.Services.Test
             // Arrange
             var payload = string.Format(@"{{ ""repository"": {{ ""url"": ""https://kudu.{0}/Code/Test/Group/KuduApp"" }} }} ", domain);
             var settingsManager = new MockDeploymentSettingsManager();
-            var kilnHandler = new KilnHgHandler(settingsManager);
+            var kilnHandler = new KilnHgHandler(settingsManager, Mock.Of<IRepositoryFactory>());
 
             // Act
             bool result = kilnHandler.IsKilnRequest(JObject.Parse(payload));

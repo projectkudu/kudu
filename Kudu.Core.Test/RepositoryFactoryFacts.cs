@@ -16,19 +16,19 @@ namespace Kudu.Core.Test
             {
                 foreach (RepositoryType currentType in Enum.GetValues(typeof(RepositoryType)))
                 {
-                    if (repoType == currentType || currentType == RepositoryType.Zip)
+                    if (repoType == currentType)
                     {
                         continue;
                     }
 
                     var environment = new Mock<IEnvironment>();
-                    environment.SetupGet(e => e.ZipTempPath).Returns("x:\\temp");
 
                     // Arrange
                     var repoFactory = new Mock<RepositoryFactory>(
                         environment.Object,
                         Mock.Of<IDeploymentSettingsManager>(),
-                        Mock.Of<ITraceFactory>()) { CallBase = true };
+                        Mock.Of<ITraceFactory>())
+                    { CallBase = true };
                     repoFactory.SetupGet(f => f.NoRepository)
                                .Returns(currentType == RepositoryType.None);
                     repoFactory.SetupGet(f => f.IsGitRepository)
@@ -37,16 +37,9 @@ namespace Kudu.Core.Test
                                .Returns(currentType == RepositoryType.Mercurial);
 
                     // Act and Assert
-                    if (repoType == RepositoryType.Zip)
-                    {
-                        // No assertion except that it doesn't throw
-                        repoFactory.Object.EnsureRepository(repoType);
-                    }
-                    else
-                    {
-                        var ex = Assert.Throws<InvalidOperationException>(() => repoFactory.Object.EnsureRepository(repoType));
-                        Assert.Equal(String.Format("Expected a '{0}' repository but found a '{1}' repository at path ''.", repoType, currentType), ex.Message);
-                    }
+                    var ex = Assert.Throws<InvalidOperationException>(() => repoFactory.Object.EnsureRepository(repoType));
+                    Assert.Equal(String.Format("Expected a '{0}' repository but found a '{1}' repository at path ''.", repoType, currentType), ex.Message);
+
                 }
             }
         }

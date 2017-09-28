@@ -8,6 +8,7 @@ using Kudu.Core;
 using Kudu.Core.Deployment;
 using Kudu.Core.SourceControl;
 using Newtonsoft.Json.Linq;
+using Kudu.Contracts.SourceControl;
 
 namespace Kudu.Services.ServiceHookHandlers
 {
@@ -18,24 +19,27 @@ namespace Kudu.Services.ServiceHookHandlers
         private const string DropboxPathKey = "dropbox_path";
         private readonly DropboxHelper _dropBoxHelper;
         private readonly IDeploymentSettingsManager _settings;
+        private readonly IRepositoryFactory _repositoryFactory;
 
         public DropboxHandler(ITracer tracer,
                               IDeploymentStatusManager status,
                               IDeploymentSettingsManager settings,
-                              IEnvironment environment)
+                              IEnvironment environment,
+                              IRepositoryFactory repositoryFactory)
         {
             _settings = settings;
+            _repositoryFactory = repositoryFactory;
             _dropBoxHelper = new DropboxHelper(tracer, status, settings, environment);
         }
 
-        public DeployAction TryParseDeploymentInfo(HttpRequestBase request, JObject payload, string targetBranch, out DeploymentInfo deploymentInfo)
+        public DeployAction TryParseDeploymentInfo(HttpRequestBase request, JObject payload, string targetBranch, out DeploymentInfoBase deploymentInfo)
         {
             DropboxInfo dropboxInfo = null;
             string message = null;
 
             if (!String.IsNullOrEmpty(payload.Value<string>("NewCursor")))
             {
-                dropboxInfo = DropboxInfo.CreateV1Info(payload, GetRepositoryType());
+                dropboxInfo = DropboxInfo.CreateV1Info(payload, GetRepositoryType(), _repositoryFactory);
                 message = String.Format(CultureInfo.CurrentUICulture, Resources.Dropbox_SynchronizingNChanges, dropboxInfo.DeployInfo.Deltas.Count);
             }
             else if (String.Equals(payload.Value<string>(DropboxVersionKey), "2", StringComparison.OrdinalIgnoreCase))
@@ -45,7 +49,7 @@ namespace Kudu.Services.ServiceHookHandlers
                        userName = payload.Value<string>("dropbox_username") ?? "Dropbox",
                        email = payload.Value<string>("dropbox_email");
                 
-                dropboxInfo = DropboxInfo.CreateV2Info(path, oauthToken, GetRepositoryType());
+                dropboxInfo = DropboxInfo.CreateV2Info(path, oauthToken, GetRepositoryType(), _repositoryFactory);
                 dropboxInfo.DeployInfo.UserName = userName;
                 dropboxInfo.DeployInfo.Email = email;
                 message = String.Format(CultureInfo.CurrentUICulture, Resources.Dropbox_Synchronizing);
@@ -71,7 +75,7 @@ namespace Kudu.Services.ServiceHookHandlers
             return DeployAction.UnknownPayload;
         }
 
-        public virtual async Task Fetch(IRepository repository, DeploymentInfo deploymentInfo, string targetBranch, ILogger logger, ITracer tracer)
+        public virtual async Task Fetch(IRepository repository, DeploymentInfoBase deploymentInfo, string targetBranch, ILogger logger, ITracer tracer)
         {
             // (A)sync with dropbox
             var dropboxInfo = (DropboxInfo)deploymentInfo;

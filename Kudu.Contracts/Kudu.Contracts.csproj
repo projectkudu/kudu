@@ -100,7 +100,7 @@
     <Compile Include="Commands\CommandResult.cs" />
     <Compile Include="Commands\ICommandExecutor.cs" />
     <Compile Include="Deployment\DeploymentFailedException.cs" />
-    <Compile Include="Deployment\DeploymentInfo.cs" />
+    <Compile Include="Deployment\DeploymentInfoBase.cs" />
     <Compile Include="Deployment\DeployResult.cs" />
     <Compile Include="Deployment\DeployStatus.cs" />
     <Compile Include="Deployment\FetchDeploymentRequestResult.cs" />

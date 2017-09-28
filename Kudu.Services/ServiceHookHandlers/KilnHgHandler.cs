@@ -7,6 +7,7 @@ using Kudu.Contracts.Settings;
 using Kudu.Core.SourceControl;
 using Newtonsoft.Json.Linq;
 using Kudu.Core.Deployment;
+using Kudu.Contracts.SourceControl;
 
 namespace Kudu.Services.ServiceHookHandlers
 {
@@ -27,12 +28,13 @@ namespace Kudu.Services.ServiceHookHandlers
 
         private readonly IDeploymentSettingsManager _settings;
 
-        public KilnHgHandler(IDeploymentSettingsManager settings)
+        public KilnHgHandler(IDeploymentSettingsManager settings, IRepositoryFactory repositoryFactory)
+            : base(repositoryFactory)
         {
             _settings = settings;
         }
 
-        public override DeployAction TryParseDeploymentInfo(HttpRequestBase request, JObject payload, string targetBranch, out DeploymentInfo deploymentInfo)
+        public override DeployAction TryParseDeploymentInfo(HttpRequestBase request, JObject payload, string targetBranch, out DeploymentInfoBase deploymentInfo)
         {
             deploymentInfo = null;
 
@@ -74,7 +76,7 @@ namespace Kudu.Services.ServiceHookHandlers
             return true;
         }
 
-        private DeploymentInfo GetDeploymentInfo(JObject payload, string targetBranch)
+        private DeploymentInfoBase GetDeploymentInfo(JObject payload, string targetBranch)
         {
             var repository = payload.Value<JObject>("repository");
             var commits = payload.Value<JArray>("commits");
@@ -101,7 +103,7 @@ namespace Kudu.Services.ServiceHookHandlers
                 author = "System Account";
             }
 
-            var info = new DeploymentInfo
+            var info = new DeploymentInfo(RepositoryFactory)
             {
                 Deployer = "Kiln",
                 RepositoryUrl = repository.Value<string>("url"),

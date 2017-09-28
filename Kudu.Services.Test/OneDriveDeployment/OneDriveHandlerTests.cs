@@ -13,6 +13,7 @@ using Kudu.TestHarness.Xunit;
 using Moq;
 using Newtonsoft.Json.Linq;
 using Xunit;
+using Kudu.Contracts.SourceControl;
 
 namespace Kudu.Services.Test.OneDriveDeployment
 {
@@ -22,9 +23,9 @@ namespace Kudu.Services.Test.OneDriveDeployment
         [Fact]
         public void TryParseDeploymentInfoShouldReturnUnknownPayload()
         {
-            var oneDriveHandler = new OneDriveHandler(Mock.Of<ITracer>(), Mock.Of<IDeploymentStatusManager>(), Mock.Of<IDeploymentSettingsManager>(), Mock.Of<IEnvironment>());
+            var oneDriveHandler = new OneDriveHandler(Mock.Of<ITracer>(), Mock.Of<IDeploymentStatusManager>(), Mock.Of<IDeploymentSettingsManager>(), Mock.Of<IEnvironment>(), Mock.Of<IRepositoryFactory>());
             JObject payload = JObject.FromObject(new { });
-            DeploymentInfo deploymentInfo = null;
+            DeploymentInfoBase deploymentInfo = null;
 
             DeployAction result = oneDriveHandler.TryParseDeploymentInfo(null, payload, null, out deploymentInfo);
             Assert.Equal(DeployAction.UnknownPayload, result);
@@ -33,9 +34,9 @@ namespace Kudu.Services.Test.OneDriveDeployment
         [Fact]
         public void TryParseDeploymentInfoShouldReturnProcessDeployment()
         {
-            var oneDriveHandler = new OneDriveHandler(Mock.Of<ITracer>(), Mock.Of<IDeploymentStatusManager>(), Mock.Of<IDeploymentSettingsManager>(), Mock.Of<IEnvironment>());
+            var oneDriveHandler = new OneDriveHandler(Mock.Of<ITracer>(), Mock.Of<IDeploymentStatusManager>(), Mock.Of<IDeploymentSettingsManager>(), Mock.Of<IEnvironment>(), Mock.Of<IRepositoryFactory>());
             JObject payload = JObject.FromObject(new { RepositoryUrl = "https://api.onedrive.com", AccessToken = "one-drive-access-token" });
-            DeploymentInfo deploymentInfo = null;
+            DeploymentInfoBase deploymentInfo = null;
 
             DeployAction result = oneDriveHandler.TryParseDeploymentInfo(null, payload, null, out deploymentInfo);
             Assert.Equal(DeployAction.ProcessDeployment, result);

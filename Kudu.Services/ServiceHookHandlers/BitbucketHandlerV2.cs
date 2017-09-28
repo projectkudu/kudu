@@ -5,6 +5,7 @@ using System.Web;
 using Kudu.Core.SourceControl;
 using Newtonsoft.Json.Linq;
 using Kudu.Core.Deployment;
+using Kudu.Contracts.SourceControl;
 
 namespace Kudu.Services.ServiceHookHandlers
 {
@@ -13,7 +14,12 @@ namespace Kudu.Services.ServiceHookHandlers
     /// </summary>
     public class BitbucketHandlerV2 : ServiceHookHandlerBase
     {
-        public override DeployAction TryParseDeploymentInfo(HttpRequestBase request, JObject payload, string targetBranch, out DeploymentInfo deploymentInfo)
+        public BitbucketHandlerV2(IRepositoryFactory repositoryFactory)
+            : base(repositoryFactory)
+        {
+        }
+
+        public override DeployAction TryParseDeploymentInfo(HttpRequestBase request, JObject payload, string targetBranch, out DeploymentInfoBase deploymentInfo)
         {
             deploymentInfo = null;
             if (request.UserAgent != null &&
@@ -26,9 +32,9 @@ namespace Kudu.Services.ServiceHookHandlers
             return DeployAction.UnknownPayload;
         }
 
-        protected static DeploymentInfo GetDeploymentInfo(JObject payload, string targetBranch)
+        protected DeploymentInfoBase GetDeploymentInfo(JObject payload, string targetBranch)
         {
-            var info = new DeploymentInfo
+            var info = new DeploymentInfo(RepositoryFactory)
             {
                 Deployer = "Bitbucket",
                 IsContinuous = true

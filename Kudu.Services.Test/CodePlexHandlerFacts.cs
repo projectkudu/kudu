@@ -5,6 +5,7 @@ using Moq;
 using Newtonsoft.Json.Linq;
 using Xunit;
 using Kudu.Core.Deployment;
+using Kudu.Contracts.SourceControl;
 
 namespace Kudu.Services.Test
 {
@@ -18,11 +19,11 @@ namespace Kudu.Services.Test
         {
             // Arrange
             var httpRequest = new Mock<HttpRequestBase>();
-            var handler = new CodePlexHandler();
+            var handler = new CodePlexHandler(Mock.Of<IRepositoryFactory>());
             JObject payload = JObject.Parse(payloadContent);
 
             // Act
-            DeploymentInfo deploymentInfo;
+            DeploymentInfoBase deploymentInfo;
             DeployAction result = handler.TryParseDeploymentInfo(httpRequest.Object, payload: payload, targetBranch: null, deploymentInfo: out deploymentInfo);
 
             // Assert
@@ -35,11 +36,11 @@ namespace Kudu.Services.Test
             // Arrange
             string payloadContent = @"{ url: ""https://git01.codeplex.com/pranavkmgittest"", branch: ""master"", deployer: ""codeplex"", oldRef: ""3dc5fc28310a7906a9809f81fc5dc68aa681a1f8"", newRef: ""dcda9b7e70157a89423fd7862f2ee193586ca64f"", scmType: ""Git"" }";
             var httpRequest = new Mock<HttpRequestBase>();
-            var handler = new CodePlexHandler();
+            var handler = new CodePlexHandler(Mock.Of<IRepositoryFactory>());
             JObject payload = JObject.Parse(payloadContent);
 
             // Act
-            DeploymentInfo deploymentInfo;
+            DeploymentInfoBase deploymentInfo;
             DeployAction result = handler.TryParseDeploymentInfo(httpRequest.Object, payload: payload, targetBranch: "master", deploymentInfo: out deploymentInfo);
 
             // Assert
@@ -57,11 +58,11 @@ namespace Kudu.Services.Test
             // Arrange
             string payloadContent = @"{ url: ""https://git01.codeplex.com/pranavkmgittest"", branch: ""master"", deployer: ""codeplex"", oldRef: ""3dc5fc28310a7906a9809f81fc5dc68aa681a1f8"", newRef: ""0000000000000000000000000000000000000000"", scmType: ""Git"" }";
             var httpRequest = new Mock<HttpRequestBase>();
-            var handler = new CodePlexHandler();
+            var handler = new CodePlexHandler(Mock.Of<IRepositoryFactory>());
             JObject payload = JObject.Parse(payloadContent);
 
             // Act
-            DeploymentInfo deploymentInfo;
+            DeploymentInfoBase deploymentInfo;
             DeployAction result = handler.TryParseDeploymentInfo(httpRequest.Object, payload: payload, targetBranch: "master", deploymentInfo: out deploymentInfo);
 
             // Assert
@@ -74,11 +75,11 @@ namespace Kudu.Services.Test
             // Arrange
             string payloadContent = @"{ url: ""https://git01.codeplex.com/pranavkmgittest"", branch: ""test"", deployer: ""codeplex"", oldRef: ""3dc5fc28310a7906a9809f81fc5dc68aa681a1f8"", newRef: ""dcda9b7e70157a89423fd7862f2ee193586ca64f"", scmType: ""Git"" }";
             var httpRequest = new Mock<HttpRequestBase>();
-            var handler = new CodePlexHandler();
+            var handler = new CodePlexHandler(Mock.Of<IRepositoryFactory>());
             JObject payload = JObject.Parse(payloadContent);
 
             // Act
-            DeploymentInfo deploymentInfo;
+            DeploymentInfoBase deploymentInfo;
             DeployAction result = handler.TryParseDeploymentInfo(httpRequest.Object, payload: payload, targetBranch: "prod", deploymentInfo: out deploymentInfo);
 
             // Assert
@@ -91,11 +92,11 @@ namespace Kudu.Services.Test
             // Arrange
             string payloadContent = @"{ url: ""https://hg01.codeplex.com/pranavkmmerctest"", branch: ""default"", deployer: ""codeplex"", oldRef: ""3dc5fc28310a7906a9809f81fc5dc68aa681a1f8"", newRef: ""dcda9b7e70157a89423fd7862f2ee193586ca64f"", scmType: ""Mercurial"" }";
             var httpRequest = new Mock<HttpRequestBase>();
-            var handler = new CodePlexHandler();
+            var handler = new CodePlexHandler(Mock.Of<IRepositoryFactory>());
             JObject payload = JObject.Parse(payloadContent);
 
             // Act
-            DeploymentInfo deploymentInfo;
+            DeploymentInfoBase deploymentInfo;
             DeployAction result = handler.TryParseDeploymentInfo(httpRequest.Object, payload: payload, targetBranch: "default", deploymentInfo: out deploymentInfo);
 
             // Assert
@@ -113,11 +114,11 @@ namespace Kudu.Services.Test
             // Arrange
             string payloadContent = @"{ url: ""https://hg01.codeplex.com/pranavkmmerctest"", branch: ""test"", deployer: ""codeplex"", oldRef: ""3dc5fc28310a7906a9809f81fc5dc68aa681a1f8"", newRef: ""dcda9b7e70157a89423fd7862f2ee193586ca64f"", scmType: ""Mercurial"" }";
             var httpRequest = new Mock<HttpRequestBase>();
-            var handler = new CodePlexHandler();
+            var handler = new CodePlexHandler(Mock.Of<IRepositoryFactory>());
             JObject payload = JObject.Parse(payloadContent);
 
             // Act
-            DeploymentInfo deploymentInfo;
+            DeploymentInfoBase deploymentInfo;
             DeployAction result = handler.TryParseDeploymentInfo(httpRequest.Object, payload: payload, targetBranch: "production", deploymentInfo: out deploymentInfo);
 
             // Assert
@@ -131,11 +132,11 @@ namespace Kudu.Services.Test
         {
             // Arrange
             var httpRequest = new Mock<HttpRequestBase>();
-            var handler = new CodePlexHandler();
+            var handler = new CodePlexHandler(Mock.Of<IRepositoryFactory>());
             JObject payload = JObject.Parse(payloadContent);
 
             // Act
-            DeploymentInfo deploymentInfo;
+            DeploymentInfoBase deploymentInfo;
             DeployAction result = handler.TryParseDeploymentInfo(httpRequest.Object, payload: payload, targetBranch: "production", deploymentInfo: out deploymentInfo);
 
             // Assert

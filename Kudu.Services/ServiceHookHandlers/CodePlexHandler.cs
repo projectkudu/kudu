@@ -4,12 +4,18 @@ using System.Web;
 using Kudu.Core.SourceControl;
 using Newtonsoft.Json.Linq;
 using Kudu.Core.Deployment;
+using Kudu.Contracts.SourceControl;
 
 namespace Kudu.Services.ServiceHookHandlers
 {
     public class CodePlexHandler : ServiceHookHandlerBase
     {
-        public override DeployAction TryParseDeploymentInfo(HttpRequestBase request, JObject payload, string targetBranch, out DeploymentInfo deploymentInfo)
+        public CodePlexHandler(IRepositoryFactory repositoryFactory)
+            : base(repositoryFactory)
+        {
+        }
+
+        public override DeployAction TryParseDeploymentInfo(HttpRequestBase request, JObject payload, string targetBranch, out DeploymentInfoBase deploymentInfo)
         {
             deploymentInfo = null;
             string deployer = payload.Value<string>("deployer");
@@ -23,7 +29,7 @@ namespace Kudu.Services.ServiceHookHandlers
             string scm = payload.Value<string>("scmType");
             string branch = payload.Value<string>("branch");
 
-            deploymentInfo = new DeploymentInfo
+            deploymentInfo = new DeploymentInfo(RepositoryFactory)
             {
                 RepositoryUrl = payload.Value<string>("url"),
                 Deployer = "CodePlex",

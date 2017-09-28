@@ -24,7 +24,6 @@ namespace Kudu.Core.Deployment
         private readonly ITracer _tracer;
         private readonly IOperationLock _deploymentLock;
         private readonly IDeploymentManager _deploymentManager;
-        private readonly IRepositoryFactory _repositoryFactory;
         private readonly IDeploymentStatusManager _status;
         private readonly string _markerFilePath;
 
@@ -34,7 +33,6 @@ namespace Kudu.Core.Deployment
             ITracer tracer,
             IOperationLock deploymentLock,
             IDeploymentManager deploymentManager,
-            IRepositoryFactory repositoryFactory,
             IDeploymentStatusManager status)
         {
             _settings = settings;
@@ -42,7 +40,6 @@ namespace Kudu.Core.Deployment
             _tracer = tracer;
             _deploymentLock = deploymentLock;
             _deploymentManager = deploymentManager;
-            _repositoryFactory = repositoryFactory;
             _status = status;
 
             _markerFilePath = Path.Combine(environment.DeploymentsPath, "pending");
@@ -63,7 +60,7 @@ namespace Kudu.Core.Deployment
         }
 
         public async Task<FetchDeploymentRequestResult> FetchDeploy(
-            DeploymentInfo deployInfo,
+            DeploymentInfoBase deployInfo,
             bool asyncRequested,
             Uri requestUri,
             string targetBranch)
@@ -137,7 +134,7 @@ namespace Kudu.Core.Deployment
             }
         }
 
-        public async Task PerformDeployment(DeploymentInfo deploymentInfo, IDisposable tempDeployment = null, ChangeSet tempChangeSet = null)
+        public async Task PerformDeployment(DeploymentInfoBase deploymentInfo, IDisposable tempDeployment = null, ChangeSet tempChangeSet = null)
         {
             DateTime currentMarkerFileUTC;
             DateTime nextMarkerFileUTC = FileSystemHelpers.GetLastWriteTimeUtc(_markerFilePath);
@@ -169,7 +166,7 @@ namespace Kudu.Core.Deployment
                         // Fetch changes from the repository
                         innerLogger = logger.Log(Resources.FetchingChanges);
 
-                        IRepository repository = _repositoryFactory.EnsureRepository(deploymentInfo.RepositoryType);
+                        IRepository repository = deploymentInfo.GetRepository();
 
                         try
                         {
@@ -255,7 +252,7 @@ namespace Kudu.Core.Deployment
 
         // For continuous integration, we will only build/deploy if fetch new changes
         // The immediate goal is to address duplicated /deploy requests from Bitbucket (retry if taken > 20s)
-        private bool ShouldDeploy(IRepository repository, DeploymentInfo deploymentInfo, string targetBranch)
+        private bool ShouldDeploy(IRepository repository, DeploymentInfoBase deploymentInfo, string targetBranch)
         {
             if (deploymentInfo.IsContinuous)
             {
@@ -268,7 +265,7 @@ namespace Kudu.Core.Deployment
 
         // key goal is to create background tracer that is independent of request.
         public static async Task<bool> PerformBackgroundDeployment(
-            DeploymentInfo deployInfo,
+            DeploymentInfoBase deployInfo,
             IEnvironment environment,
             IDeploymentSettingsManager settings,
             TraceLevel traceLevel,
@@ -308,11 +305,10 @@ namespace Kudu.Core.Deployment
 
                     var analytics = new Analytics(settings, new ServerConfiguration(), traceFactory);
                     var deploymentStatusManager = new DeploymentStatusManager(environment, analytics, statusLock);
-                    var repositoryFactory = new RepositoryFactory(environment, settings, traceFactory);
                     var siteBuilderFactory = new SiteBuilderFactory(new BuildPropertyProvider(), environment);
                     var webHooksManager = new WebHooksManager(tracer, environment, hooksLock);
                     var deploymentManager = new DeploymentManager(siteBuilderFactory, environment, traceFactory, analytics, settings, deploymentStatusManager, deploymentLock, NullLogger.Instance, webHooksManager);
-                    var fetchDeploymentManager = new FetchDeploymentManager(settings, environment, tracer, deploymentLock, deploymentManager, repositoryFactory, deploymentStatusManager);
+                    var fetchDeploymentManager = new FetchDeploymentManager(settings, environment, tracer, deploymentLock, deploymentManager, deploymentStatusManager);
 
                     IDisposable tempDeployment = null;
 

@@ -23,12 +23,18 @@ namespace Kudu.Services.Deployment
         private readonly IEnvironment _environment;
         private readonly IFetchDeploymentManager _deploymentManager;
         private readonly ITracer _tracer;
+        private readonly ITraceFactory _traceFactory;
 
-        public PushDeploymentController(IEnvironment environment, IFetchDeploymentManager deploymentManager, ITracer tracer)
+        public PushDeploymentController(
+            IEnvironment environment,
+            IFetchDeploymentManager deploymentManager,
+            ITracer tracer,
+            ITraceFactory traceFactory)
         {
             _environment = environment;
             _deploymentManager = deploymentManager;
             _tracer = tracer;
+            _traceFactory = traceFactory;
         }
 
         [HttpPost]
@@ -47,7 +53,7 @@ namespace Kudu.Services.Deployment
                     }
                 }
 
-                var deploymentInfo = new DeploymentInfo
+                var deploymentInfo = new ZipDeploymentInfo(_environment, _traceFactory)
                 {
                     AllowDeploymentWhileScmDisabled = true,
                     Deployer = "Zip-Push",
@@ -57,7 +63,7 @@ namespace Kudu.Services.Deployment
                     RepositoryUrl = zipFilePath,
                     TargetChangeset = DeploymentManager.CreateTemporaryChangeSet(message: "Deploying from pushed zip file"),
                     CommitId = null,
-                    RepositoryType = RepositoryType.Zip,
+                    RepositoryType = RepositoryType.None,
                     Fetch = LocalZipFetch,
                     DoFullBuildByDefault = false
                 };
@@ -106,7 +112,7 @@ namespace Kudu.Services.Deployment
             }
         }
 
-        private async Task LocalZipFetch(IRepository repository, DeploymentInfo deploymentInfo, string targetBranch, ILogger logger, ITracer tracer)
+        private async Task LocalZipFetch(IRepository repository, DeploymentInfoBase deploymentInfo, string targetBranch, ILogger logger, ITracer tracer)
         {
             // For this kind of deployment, RepositoryUrl is a local path.
             var sourceZipFile = deploymentInfo.RepositoryUrl;

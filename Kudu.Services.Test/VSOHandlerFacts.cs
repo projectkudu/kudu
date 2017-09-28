@@ -9,6 +9,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Xunit;
 using Kudu.Core.Deployment;
+using Kudu.Contracts.SourceControl;
 
 namespace Kudu.Services.Test
 {
@@ -20,10 +21,10 @@ namespace Kudu.Services.Test
             // Arrange
             var payload = GetVSOPayload();
             var httpRequest = new Mock<HttpRequestBase>();
-            var handler = new VSOHandler(GetMockDeploymentSettingsMgr());
+            var handler = new VSOHandler(GetMockDeploymentSettingsMgr(), Mock.Of<IRepositoryFactory>());
 
             // Act
-            DeploymentInfo deploymentInfo;
+            DeploymentInfoBase deploymentInfo;
             DeployAction result = handler.TryParseDeploymentInfo(httpRequest.Object, payload: payload, targetBranch: "master", deploymentInfo: out deploymentInfo);
 
             // Assert
@@ -47,10 +48,10 @@ namespace Kudu.Services.Test
             // Arrange
             var payload = new JObject();
             var httpRequest = new Mock<HttpRequestBase>();
-            var handler = new VSOHandler(GetMockDeploymentSettingsMgr());
+            var handler = new VSOHandler(GetMockDeploymentSettingsMgr(), Mock.Of<IRepositoryFactory>());
 
             // Act
-            DeploymentInfo deploymentInfo;
+            DeploymentInfoBase deploymentInfo;
             DeployAction result = handler.TryParseDeploymentInfo(httpRequest.Object, payload: payload, targetBranch: "master", deploymentInfo: out deploymentInfo);
 
             // Assert

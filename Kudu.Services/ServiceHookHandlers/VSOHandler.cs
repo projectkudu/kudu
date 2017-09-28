@@ -5,6 +5,7 @@ using Kudu.Contracts.Settings;
 using Kudu.Core.SourceControl;
 using Newtonsoft.Json.Linq;
 using Kudu.Core.Deployment;
+using Kudu.Contracts.SourceControl;
 
 namespace Kudu.Services.ServiceHookHandlers
 {
@@ -15,12 +16,13 @@ namespace Kudu.Services.ServiceHookHandlers
     {
         private IDeploymentSettingsManager _settings;
 
-        public VSOHandler(IDeploymentSettingsManager settings)
+        public VSOHandler(IDeploymentSettingsManager settings, IRepositoryFactory repositoryFactory)
+            : base(repositoryFactory)
         {
             _settings = settings;
         }
 
-        public override DeployAction TryParseDeploymentInfo(HttpRequestBase request, JObject payload, string targetBranch, out DeploymentInfo deploymentInfo)
+        public override DeployAction TryParseDeploymentInfo(HttpRequestBase request, JObject payload, string targetBranch, out DeploymentInfoBase deploymentInfo)
         {
             deploymentInfo = null;
 
@@ -34,11 +36,11 @@ namespace Kudu.Services.ServiceHookHandlers
             return DeployAction.UnknownPayload;
         }
 
-        protected virtual DeploymentInfo GetDeploymentInfo(HttpRequestBase request, JObject payload, string targetBranch)
+        protected virtual DeploymentInfoBase GetDeploymentInfo(HttpRequestBase request, JObject payload, string targetBranch)
         {
             var sessionToken = payload.Value<JObject>("sessionToken");
 
-            var info = new DeploymentInfo
+            var info = new DeploymentInfo(RepositoryFactory)
             {
                 RepositoryType = RepositoryType.Git,
                 Deployer = GetDeployer(),

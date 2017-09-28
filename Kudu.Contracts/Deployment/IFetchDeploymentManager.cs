@@ -6,7 +6,7 @@ namespace Kudu.Core.Deployment
     public interface IFetchDeploymentManager
     {
         Task<FetchDeploymentRequestResult> FetchDeploy(
-            DeploymentInfo deployInfo,
+            DeploymentInfoBase deployInfo,
             bool asyncRequested,
             Uri requestUri,
             string targetBranch);

@@ -5,11 +5,11 @@ using System.Threading.Tasks;
 
 namespace Kudu.Core.Deployment
 {
-    public class DeploymentInfo
+    public abstract class DeploymentInfoBase
     {
-        public delegate Task FetchDelegate(IRepository repository, DeploymentInfo deploymentInfo, string targetBranch, ILogger logger, ITracer tracer);
+        public delegate Task FetchDelegate(IRepository repository, DeploymentInfoBase deploymentInfo, string targetBranch, ILogger logger, ITracer tracer);
 
-        public DeploymentInfo()
+        protected DeploymentInfoBase()
         {
             IsReusable = true;
             AllowDeferredDeployment = true;
@@ -42,5 +42,7 @@ namespace Kudu.Core.Deployment
         {
             return !String.IsNullOrEmpty(Deployer);
         }
+
+        public abstract IRepository GetRepository();
     }
 }

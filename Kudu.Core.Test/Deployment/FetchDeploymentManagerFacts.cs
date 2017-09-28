@@ -31,11 +31,10 @@ namespace Kudu.Core.Test
             var repositoryFactory = GetRepositoryFactory();
             var handler = CreateFetchDeploymentManager(deploymentManager: deploymentManager,
                                              fileSystem: fileSystem.Object,
-                                             repositoryFactory: repositoryFactory.Object,
                                              environment: environment.Object);
 
             // Test
-            await handler.PerformDeployment(new DeploymentInfo
+            await handler.PerformDeployment(new DeploymentInfo(repositoryFactory.Object)
             {
                 IsReusable = scenario.IsReusable,
                 Fetch = FakeFetch,
@@ -46,7 +45,7 @@ namespace Kudu.Core.Test
             Assert.Equal(scenario.DeployCount, deploymentManager.DeployCount);
         }
 
-        public static Task FakeFetch(IRepository repository, DeploymentInfo deploymentInfo, string targetBranch, ILogger logger, ITracer tracer)
+        public static Task FakeFetch(IRepository repository, DeploymentInfoBase deploymentInfo, string targetBranch, ILogger logger, ITracer tracer)
         {
             return Task.FromResult(0);
         }
@@ -95,7 +94,6 @@ namespace Kudu.Core.Test
                                                 IDeploymentStatusManager status = null,
                                                 IOperationLock deploymentLock = null,
                                                 IEnvironment environment = null,
-                                                IRepositoryFactory repositoryFactory = null,
                                                 IFileSystem fileSystem = null)
         {
             FileSystemHelpers.Instance = fileSystem ?? Mock.Of<IFileSystem>();
@@ -106,7 +104,6 @@ namespace Kudu.Core.Test
                 tracer ?? Mock.Of<ITracer>(),
                 deploymentLock ?? Mock.Of<IOperationLock>(),
                 deploymentManager ?? Mock.Of<IDeploymentManager>(),
-                repositoryFactory ?? Mock.Of<IRepositoryFactory>(),
                 status ?? Mock.Of<IDeploymentStatusManager>());
         }
 

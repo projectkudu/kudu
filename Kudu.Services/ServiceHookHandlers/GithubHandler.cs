@@ -1,4 +1,5 @@
-﻿using Kudu.Core;
+﻿using Kudu.Contracts.SourceControl;
+using Kudu.Core;
 using Kudu.Core.Infrastructure;
 using Newtonsoft.Json.Linq;
 using System;
@@ -13,12 +14,14 @@ namespace Kudu.Services.ServiceHookHandlers
         private const string PrivateKeyFile = "id_rsa";
 
         public GitHubHandler()
+            : base(null)
         {
             // do nothing, 5 tests called this function
             _environment = null;
         }
 
-        public GitHubHandler(IEnvironment enviromentInject)
+        public GitHubHandler(IEnvironment enviromentInject, IRepositoryFactory repositoryFactory)
+            : base(repositoryFactory)
         {
             _environment = enviromentInject;
         }

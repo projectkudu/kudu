@@ -5,6 +5,7 @@ using System.Web;
 using Kudu.Core.SourceControl;
 using Newtonsoft.Json.Linq;
 using Kudu.Core.Deployment;
+using Kudu.Contracts.SourceControl;
 
 namespace Kudu.Services.ServiceHookHandlers
 {
@@ -13,7 +14,12 @@ namespace Kudu.Services.ServiceHookHandlers
     /// </summary>
     public class GitHubCompatHandler : ServiceHookHandlerBase
     {
-        public override DeployAction TryParseDeploymentInfo(HttpRequestBase request, JObject payload, string targetBranch, out DeploymentInfo deploymentInfo)
+        public GitHubCompatHandler(IRepositoryFactory repositoryFactory)
+            : base(repositoryFactory)
+        {
+        }
+
+        public override DeployAction TryParseDeploymentInfo(HttpRequestBase request, JObject payload, string targetBranch, out DeploymentInfoBase deploymentInfo)
         {
             // check if this parser can be used to interprete request
             if (ParserMatches(request, payload, targetBranch))
@@ -27,7 +33,7 @@ namespace Kudu.Services.ServiceHookHandlers
                 }
 
                 // fill deploymentinfo body
-                deploymentInfo = new DeploymentInfo { RepositoryType = RepositoryType.Git, IsContinuous = true };
+                deploymentInfo = new DeploymentInfo(RepositoryFactory) { RepositoryType = RepositoryType.Git, IsContinuous = true };
                 var commits = payload.Value<JArray>("commits");
                 string newRef = payload.Value<string>("after");
                 deploymentInfo.TargetChangeset = ParseChangeSet(newRef, commits);

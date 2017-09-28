@@ -21,7 +21,7 @@ namespace Kudu.Services.Test
             var handler = new GitHubHandler();
 
             // Act
-            DeploymentInfo deploymentInfo;
+            DeploymentInfoBase deploymentInfo;
             DeployAction result = handler.TryParseDeploymentInfo(httpRequest.Object, payload: null, targetBranch: null, deploymentInfo: out deploymentInfo);
 
             // Assert
@@ -40,7 +40,7 @@ namespace Kudu.Services.Test
             JObject payload = JObject.Parse(payloadContent);
 
             // Act
-            DeploymentInfo deploymentInfo;
+            DeploymentInfoBase deploymentInfo;
             DeployAction result = handler.TryParseDeploymentInfo(httpRequest, payload: payload, targetBranch: "master", deploymentInfo: out deploymentInfo);
 
             // Assert
@@ -58,7 +58,7 @@ namespace Kudu.Services.Test
             JObject payload = JObject.Parse(payloadContent);
 
             // Act
-            DeploymentInfo deploymentInfo;
+            DeploymentInfoBase deploymentInfo;
             DeployAction result = handler.TryParseDeploymentInfo(httpRequest, payload: payload, targetBranch: "master", deploymentInfo: out deploymentInfo);
 
             // Assert
@@ -76,7 +76,7 @@ namespace Kudu.Services.Test
             JObject payload = JObject.Parse(payloadContent);
             
             // Act
-            DeploymentInfo deploymentInfo;
+            DeploymentInfoBase deploymentInfo;
             DeployAction result = handler.TryParseDeploymentInfo(httpRequest, payload: payload, targetBranch: "master", deploymentInfo: out deploymentInfo);
 
             // Assert
@@ -95,7 +95,7 @@ namespace Kudu.Services.Test
             JObject payload = JObject.Parse(payloadContent);
 
             // Act
-            DeploymentInfo deploymentInfo;
+            DeploymentInfoBase deploymentInfo;
             DeployAction result = handler.TryParseDeploymentInfo(httpRequest, payload: payload, targetBranch: "master", deploymentInfo: out deploymentInfo);
 
             // Assert

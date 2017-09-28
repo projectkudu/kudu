@@ -211,6 +211,7 @@
     <Compile Include="Commands\CommandExecutor.cs" />
     <Compile Include="Deployment\CascadeLogger.cs" />
     <Compile Include="Deployment\BuildPropertyProvider.cs" />
+    <Compile Include="Deployment\DeploymentInfo.cs" />
     <Compile Include="Deployment\DeploymentStatusFileExtensions.cs" />
     <Compile Include="Deployment\DeploymentStatusManager.cs" />
     <Compile Include="Deployment\FetchDeploymentManager.cs" />
@@ -241,6 +242,7 @@
     <Compile Include="Deployment\StructuredTextDocument.cs" />
     <Compile Include="Deployment\StructuredTextDocumentEntry.cs" />
     <Compile Include="Deployment\StructuredTextLogger.cs" />
+    <Compile Include="Deployment\ZipDeploymentInfo.cs" />
     <Compile Include="Functions\FunctionManager.cs" />
     <Compile Include="Helpers\EnvironmentHelper.cs" />
     <Compile Include="Helpers\OSDetector.cs" />

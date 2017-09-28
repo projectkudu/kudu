@@ -64,13 +64,6 @@ namespace Kudu.Core.SourceControl
 
         public IRepository EnsureRepository(RepositoryType repositoryType)
         {
-            // Zip "repository" does not conflict with other types, including NoRepository
-            if (repositoryType == RepositoryType.Zip)
-            {
-                var path = Path.Combine(_environment.ZipTempPath, Constants.ZipExtractPath);
-                return new NullRepository(path, _traceFactory);
-            }
-
             // Validate if conflicting with existing repository
             RepositoryType existingType;
             if (TryGetExistingRepositoryType(out existingType) && existingType != repositoryType)

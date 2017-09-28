@@ -55,7 +55,7 @@ namespace Kudu.Services
 
                 context.Response.TrySkipIisCustomErrors = true;
 
-                DeploymentInfo deployInfo = null;
+                DeploymentInfoBase deployInfo = null;
 
                 // We are going to assume that the branch details are already set by the time it gets here. This is particularly important in the mercurial case,
                 // since Settings hardcodes the default value for Branch to be "master". Consequently, Kudu will NoOp requests for Mercurial commits.
@@ -144,7 +144,7 @@ namespace Kudu.Services
             _tracer.Trace("handler", attribs);
         }
 
-        private DeployAction GetRepositoryInfo(HttpRequestBase request, JObject payload, string targetBranch, out DeploymentInfo info)
+        private DeployAction GetRepositoryInfo(HttpRequestBase request, JObject payload, string targetBranch, out DeploymentInfoBase info)
         {
             foreach (var handler in _serviceHookHandlers)
             {
