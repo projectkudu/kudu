@@ -144,6 +144,8 @@ namespace Kudu.Services.Deployment
                 var cleanTask = Task.Run(() => DeleteFilesAndDirsExcept(sourceZipFile, extractTargetDirectory, tracer));
                 var extractTask = Task.Run(() =>
                 {
+                    FileSystemHelpers.CreateDirectory(extractTargetDirectory);
+
                     using (var file = info.OpenRead())
                     using (var zip = new ZipArchive(file, ZipArchiveMode.Read))
                     {
