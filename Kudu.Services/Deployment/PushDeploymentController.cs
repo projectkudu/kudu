@@ -14,7 +14,6 @@ using Kudu.Core.SourceControl;
 using System.Globalization;
 using Kudu.Core;
 using System.Linq;
-using System.IO.Abstractions;
 
 namespace Kudu.Services.Deployment
 {

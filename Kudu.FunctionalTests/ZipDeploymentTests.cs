@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using Kudu.Core.Deployment;
 using System.Net.Http;
 using System.Net;
+using Kudu.Contracts.Settings;
 
 namespace Kudu.FunctionalTests
 {
@@ -24,7 +25,7 @@ namespace Kudu.FunctionalTests
                 var files = CreateRandomFilesForZip(10);
                 var response = await DeployZip(appManager, files, doAsync: false);
                 response.EnsureSuccessStatusCode();
-                await AssertSuccessfulDeploymentByFilenames(appManager, files);
+                await AssertSuccessfulDeploymentByFilenames(appManager, files.Select(f => f.Filename).ToArray());
             });
         }
 
@@ -48,7 +49,7 @@ namespace Kudu.FunctionalTests
                     await Task.Delay(TimeSpan.FromSeconds(2));
                 } while (!new[] { DeployStatus.Failed, DeployStatus.Success }.Contains(result.Status));
 
-                await AssertSuccessfulDeploymentByFilenames(appManager, files);
+                await AssertSuccessfulDeploymentByFilenames(appManager, files.Select(f => f.Filename).ToArray());
             });
         }
 
@@ -60,11 +61,11 @@ namespace Kudu.FunctionalTests
                 var files = CreateRandomFilesForZip(10);
                 var response = await DeployZip(appManager, files, doAsync: false);
                 response.EnsureSuccessStatusCode();
-                await AssertSuccessfulDeploymentByFilenames(appManager, files);
+                await AssertSuccessfulDeploymentByFilenames(appManager, files.Select(f => f.Filename).ToArray());
 
                 var empty = new FileForZip[0];
                 var response2 = await DeployZip(appManager, empty, doAsync: false);
-                await AssertSuccessfulDeploymentByFilenames(appManager, empty);
+                await AssertSuccessfulDeploymentByFilenames(appManager, new string[0]);
             });
         }
 
@@ -91,7 +92,7 @@ namespace Kudu.FunctionalTests
                     await Task.Delay(TimeSpan.FromSeconds(2));
                 } while (!new[] { DeployStatus.Failed, DeployStatus.Success }.Contains(result.Status));
 
-                await AssertSuccessfulDeploymentByFilenames(appManager, files);
+                await AssertSuccessfulDeploymentByFilenames(appManager, files.Select(f => f.Filename).ToArray());
             });
         }
 
@@ -118,7 +119,7 @@ namespace Kudu.FunctionalTests
                     await Task.Delay(TimeSpan.FromSeconds(2));
                 } while (!new[] { DeployStatus.Failed, DeployStatus.Success }.Contains(result.Status));
 
-                await AssertSuccessfulDeploymentByFilenames(appManager, files);
+                await AssertSuccessfulDeploymentByFilenames(appManager, files.Select(f => f.Filename).ToArray());
             });
         }
 
@@ -165,7 +166,7 @@ namespace Kudu.FunctionalTests
                 var files = new[] { rootFile, subdirFile };
                 var response = await DeployZip(appManager, files, doAsync: false);
                 response.EnsureSuccessStatusCode();
-                await AssertSuccessfulDeploymentByFilenames(appManager, new[] { new FileForZip { Filename = "should-be-deployed" } });
+                await AssertSuccessfulDeploymentByFilenames(appManager, new[] { "should-be-deployed" });
             });
         }
 
@@ -182,7 +183,7 @@ namespace Kudu.FunctionalTests
                 // Should do KuduSync copy only, no build (zip deployments are assumed to be complete by default)
                 var response = await DeployZip(appManager, files, doAsync: false);
                 response.EnsureSuccessStatusCode();
-                await AssertSuccessfulDeploymentByFilenames(appManager, files);
+                await AssertSuccessfulDeploymentByFilenames(appManager, files.Select(f => f.Filename).ToArray());
 
                 var files2 = files.Concat(new[]
                 {
@@ -195,6 +196,7 @@ namespace Kudu.FunctionalTests
                 // expect .deployment to be copied to the site root.
                 var response2 = await DeployZip(appManager, files2, doAsync: false);
                 response2.EnsureSuccessStatusCode();
+                await AssertSuccessfulDeploymentByFilenames(appManager, files.Select(f => f.Filename).ToArray());
 
                 await appManager.SettingsManager.Delete("SCM_DO_BUILD_DURING_DEPLOYMENT");
 
@@ -203,11 +205,46 @@ namespace Kudu.FunctionalTests
                 response3.EnsureSuccessStatusCode();
 
                 var expected = files.Concat(new[] { new FileForZip { Filename = "node_modules" } }).ToArray();
-                await AssertSuccessfulDeploymentByFilenames(appManager, expected);
+                await AssertSuccessfulDeploymentByFilenames(appManager, expected.Select(f => f.Filename).ToArray());
             });
         }
 
-        // Helpers
+        [Fact]
+        public Task TestSideBySideWithGitRepo()
+        {
+            return ApplicationManager.RunAsync("TestSimpleZipDeployment", async appManager =>
+            {
+                using (var repo = Git.Init(Path.Combine(Path.GetTempPath(), Path.GetRandomFileName())))
+                {
+                    // First deploy zip
+                    var files = CreateRandomFilesForZip(10);
+                    var response = await DeployZip(appManager, files, doAsync: false);
+                    response.EnsureSuccessStatusCode();
+                    await AssertSuccessfulDeploymentByFilenames(appManager, files.Select(f => f.Filename).ToArray());
+
+                    await appManager.SettingsManager.SetValue(SettingsKeys.ScmType, "LocalGit");
+
+                    // Push-deploy git repo
+                    var gitFilePath = Path.Combine(repo.PhysicalPath, Path.GetRandomFileName());
+                    File.WriteAllText(gitFilePath, Guid.NewGuid().ToString("N"));
+                    Git.Commit(repo.PhysicalPath, "Initial commit");
+                    var gitResult = appManager.GitDeploy(repo.PhysicalPath);
+                    await AssertSuccessfulDeploymentByFilenames(appManager, Directory.GetFiles(repo.PhysicalPath).Select(f => Path.GetFileName(f)).ToArray());
+
+                    // Deploy new zip
+                    var files2 = CreateRandomFilesForZip(10);
+                    var response2 = await DeployZip(appManager, files2, doAsync: false);
+                    response2.EnsureSuccessStatusCode();
+                    await AssertSuccessfulDeploymentByFilenames(appManager, files2.Select(f => f.Filename).ToArray());
+
+                    // Redeploy git deployment
+                    var id = Git.Id(repo.PhysicalPath);
+                    var response3 = await appManager.DeploymentManager.DeployAsync(id);
+                    response3.EnsureSuccessStatusCode();
+                    await AssertSuccessfulDeploymentByFilenames(appManager, Directory.GetFiles(repo.PhysicalPath).Select(f => Path.GetFileName(f)).ToArray());
+                }
+            });
+        }
 
         private static async Task AssertSuccessfulDeploymentByContent(ApplicationManager appManager, FileForZip[] files)
         {
@@ -231,19 +268,18 @@ namespace Kudu.FunctionalTests
             }
         }
 
-        private static async Task AssertSuccessfulDeploymentByFilenames(ApplicationManager appManager, FileForZip[] files)
+        private static async Task AssertSuccessfulDeploymentByFilenames(ApplicationManager appManager, string[] filenames)
         {
             TestTracer.Trace("Verifying files are deployed and deployment record created.");
 
             var deployment = await appManager.DeploymentManager.GetResultAsync("latest");
 
             Assert.Equal(DeployStatus.Success, deployment.Status);
-            Assert.Equal("Zip-Push", deployment.Deployer);
 
             var entries = await appManager.VfsWebRootManager.ListAsync(null);
             var deployedFilenames = entries.Select(e => e.Name);
 
-            var filenameSet = new HashSet<string>(files.Select(f => f.Filename));
+            var filenameSet = new HashSet<string>(filenames);
             Assert.True(filenameSet.SetEquals(entries.Select(e => e.Name)));
         }
 
@@ -285,11 +321,12 @@ namespace Kudu.FunctionalTests
                 foreach (var file in files)
                 {
                     var entry = archive.CreateEntry(file.Filename);
-                    using (var entryStream = entry.Open())
-                    using (var w = new StreamWriter(entryStream))
+
+                    using (var w = new StreamWriter(entry.Open()))
                     {
                         w.Write(file.Content);
                     }
+
                     if (file.ModifiedTime.HasValue)
                     {
                         entry.LastWriteTime = file.ModifiedTime.Value;

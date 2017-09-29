@@ -62,9 +62,7 @@ namespace Kudu.Core.SourceControl.Git
         public RepositoryType RepositoryType
         {
             get { return RepositoryType.Git; }
-        }
-
-   
+        } 
 
         public bool SkipPostReceiveHookCheck
         {

@@ -89,7 +89,6 @@
     <Compile Include="OneDriveDeployment\OneDriveHandlerTests.cs" />
     <Compile Include="OneDriveDeployment\OneDriveHelperTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="PushDeploymentControllerFacts.cs" />
     <Compile Include="ReceivePackHandlerFacts.cs" />
     <Compile Include="RuntimeControllerFacts.cs" />
     <Compile Include="SettingsControllerFacts.cs" />
