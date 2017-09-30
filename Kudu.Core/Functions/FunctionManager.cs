@@ -126,6 +126,13 @@ namespace Kudu.Core.Functions
 
         private async Task<T> GetKeyObjectFromFile<T>(string name, IKeyJsonOps<T> keyOp)
         {
+            var secretStorageType = System.Environment.GetEnvironmentVariable(Constants.AzureWebJobsSecretStorageType);
+            if (!string.IsNullOrEmpty(secretStorageType) &&
+                secretStorageType.Equals("Blob", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException("Runtime keys are stored on blob storage. This API doesn't support this configuration.");
+            }
+
             string keyPath = GetFunctionSecretsFilePath(name);
             string key = null;
             if (!FileSystemHelpers.FileExists(keyPath) || FileSystemHelpers.FileInfoFromFileName(keyPath).Length == 0)

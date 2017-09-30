@@ -118,5 +118,6 @@ namespace Kudu
         public const string RoutingRunTimeVersion = "ROUTING_EXTENSION_VERSION";
         public const string WebSiteSku = "WEBSITE_SKU";
         public const string DynamicSku = "Dynamic";
+        public const string AzureWebJobsSecretStorageType = "AzureWebJobsSecretStorageType";
     }
 }
