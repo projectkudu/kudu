@@ -41,6 +41,7 @@ namespace Kudu.Services
 
             return new DropboxInfo
             {
+                Deployer = DropboxHelper.Dropbox,
                 DeployInfo = new DropboxDeployInfo
                              {
                                  Path = dropboxPath,
