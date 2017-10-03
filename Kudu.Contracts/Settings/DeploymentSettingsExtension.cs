@@ -152,7 +152,7 @@ namespace Kudu.Contracts.Settings
             }
 
             // in case of no repository, we will default to webroot (preferring inplace).
-            if (settings.IsNullRepository())
+            if (settings.NoRepository())
             {
                 return Constants.WebRoot;
             }
@@ -171,7 +171,7 @@ namespace Kudu.Contracts.Settings
             return null;
         }
 
-        public static bool IsNullRepository(this IDeploymentSettingsManager settings)
+        public static bool NoRepository(this IDeploymentSettingsManager settings)
         {
             return settings.GetValue(SettingsKeys.NoRepository) == "1";
         }
@@ -231,6 +231,15 @@ namespace Kudu.Contracts.Settings
             string value = settings.GetValue(SettingsKeys.LinuxRestartAppContainerAfterDeployment);
 
             // Default is true
+            return value == null || StringUtils.IsTrueLike(value);
+        }
+
+        public static bool DoBuildDuringDeployment(this IDeploymentSettingsManager settings)
+        {
+            string value = settings.GetValue(SettingsKeys.DoBuildDuringDeployment);
+
+            // A default value should be set on a per-deployment basis depending on the context, but
+            // returning true by default here as an indicator of generally expected behavior
             return value == null || StringUtils.IsTrueLike(value);
         }
     }

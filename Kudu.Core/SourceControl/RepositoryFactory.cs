@@ -47,9 +47,9 @@ namespace Kudu.Core.SourceControl
             }
         }
 
-        public virtual bool IsNullRepository
+        public virtual bool NoRepository
         {
-            get { return _settings.IsNullRepository(); }
+            get { return _settings.NoRepository(); }
         }
 
         public virtual bool IsCustomGitRepository
@@ -74,7 +74,7 @@ namespace Kudu.Core.SourceControl
             IRepository repository;
             if (repositoryType == RepositoryType.None)
             {
-                repository = new NullRepository(_environment, _traceFactory);
+                repository = new NullRepository(_environment.RepositoryPath, _traceFactory);
             }
             else if (repositoryType == RepositoryType.Mercurial)
             {
@@ -96,10 +96,10 @@ namespace Kudu.Core.SourceControl
         public IRepository GetRepository()
         {
             ITracer tracer = _traceFactory.GetTracer();
-            if (IsNullRepository)
+            if (NoRepository)
             {
                 tracer.Trace("Assuming none repository at {0}", _environment.RepositoryPath);
-                return new NullRepository(_environment, _traceFactory);
+                return new NullRepository(_environment.RepositoryPath, _traceFactory);
             }
             else if (IsGitRepository)
             {
@@ -134,7 +134,7 @@ namespace Kudu.Core.SourceControl
 
         private bool TryGetExistingRepositoryType(out RepositoryType repositoryType)
         {
-            if (IsNullRepository)
+            if (NoRepository)
             {
                 repositoryType = RepositoryType.None;
                 return true;

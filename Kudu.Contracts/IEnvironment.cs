@@ -13,6 +13,7 @@
         string LocksPath { get; }               // e.g. /site/locks
         string SSHKeyPath { get; }
         string TempPath { get; }
+        string ZipTempPath { get; }             // e.g. ${TempPath}/zipdeploy
         string ScriptPath { get; }
         string NodeModulesPath { get; }
         string LogFilesPath { get; }            // e.g. /logfiles

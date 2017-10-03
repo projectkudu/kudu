@@ -8,6 +8,7 @@ namespace Kudu.Core.Settings
     public enum SettingsProvidersPriority
     {
         Default = 0,
+        PerDeploymentDefault = 3,
         PerDeployment = 5,
         Environment = 10,
         PerSite = 100

@@ -17,6 +17,7 @@ using Kudu.Services.FetchHelpers;
 using Kudu.TestHarness.Xunit;
 using Moq;
 using Xunit;
+using Kudu.Contracts.SourceControl;
 
 namespace Kudu.Services.Test.OneDriveDeployment
 {
@@ -33,6 +34,7 @@ namespace Kudu.Services.Test.OneDriveDeployment
                 .Setup(m => m.Trace(It.IsAny<string>(), It.IsAny<IDictionary<string, string>>()));
 
             var repository = Mock.Of<IRepository>();
+            var repoFactory = Mock.Of<IRepositoryFactory>();
             var fileSystem = new Mock<IFileSystem>();
             var fileBase = new Mock<FileBase>();
             var fileInfoFactory = new Mock<IFileInfoFactory>();
@@ -64,7 +66,7 @@ namespace Kudu.Services.Test.OneDriveDeployment
             change.IsDeleted = false;
 
             // prepare OneDriveInfo
-            var info = new OneDriveInfo();
+            var info = new OneDriveInfo(repoFactory);
             info.AccessToken = "fake-token";
             info.RepositoryUrl = "https://api.onedrive.com/v1.0/drive/special/approot:/fake-folder";
             info.TargetChangeset = new ChangeSet("id", "authorName", "authorEmail", "message", DateTime.UtcNow);

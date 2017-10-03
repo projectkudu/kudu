@@ -32,15 +32,15 @@ namespace Kudu.Core.Test
         {
             // arrange
             var settings = MockSettings();
-            var environment = MockEnviroment(@"x:\site", settings.Object);
+            var repoPath = @"x:\site\repository";
             var traceFactory = MockTraceFactory();
 
             // test
-            var repository = new NullRepository(environment.Object, traceFactory.Object);
+            var repository = new NullRepository(repoPath, traceFactory.Object);
 
             // Assert
             Assert.Equal(RepositoryType.None, repository.RepositoryType);
-            Assert.Equal(environment.Object.RepositoryPath, repository.RepositoryPath);
+            Assert.Equal(repoPath, repository.RepositoryPath);
             Assert.Null(repository.CurrentId);
             Assert.Throws<InvalidOperationException>(() => repository.GetChangeSet("dummy"));
             Assert.Throws<InvalidOperationException>(() => repository.GetChangeSet("master"));

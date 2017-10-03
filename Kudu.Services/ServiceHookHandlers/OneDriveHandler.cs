@@ -9,6 +9,7 @@ using Kudu.Core.Deployment;
 using Kudu.Core.SourceControl;
 using Kudu.Services.FetchHelpers;
 using Newtonsoft.Json.Linq;
+using Kudu.Contracts.SourceControl;
 
 namespace Kudu.Services.ServiceHookHandlers
 {
@@ -17,16 +18,20 @@ namespace Kudu.Services.ServiceHookHandlers
         private OneDriveHelper _oneDriveHelper { get; set; }
 
         private IDeploymentSettingsManager _settings;
+        private IRepositoryFactory _repositoryFactory;
+
         public OneDriveHandler(ITracer tracer,
                                IDeploymentStatusManager status,
                                IDeploymentSettingsManager settings,
-                               IEnvironment environment)
+                               IEnvironment environment,
+                               IRepositoryFactory repositoryFactory)
         {
             _settings = settings;
+            _repositoryFactory = repositoryFactory;
             _oneDriveHelper = new OneDriveHelper(tracer, status, settings, environment);
         }
 
-        public DeployAction TryParseDeploymentInfo(HttpRequestBase request, JObject payload, string targetBranch, out DeploymentInfo deploymentInfo)
+        public DeployAction TryParseDeploymentInfo(HttpRequestBase request, JObject payload, string targetBranch, out DeploymentInfoBase deploymentInfo)
         {
             deploymentInfo = null;
             string url = payload.Value<string>("RepositoryUrl");
@@ -45,7 +50,7 @@ namespace Kudu.Services.ServiceHookHandlers
             string accessToken = payload.Value<string>("AccessToken");
 
             // keep email and name, so that can be re-used in later commit
-            OneDriveInfo oneDriveInfo = new OneDriveInfo()
+            OneDriveInfo oneDriveInfo = new OneDriveInfo(_repositoryFactory)
             {
                 Deployer = "OneDrive",
                 RepositoryUrl = url,
@@ -65,7 +70,7 @@ namespace Kudu.Services.ServiceHookHandlers
             return DeployAction.ProcessDeployment;
         }
 
-        public async Task Fetch(IRepository repository, DeploymentInfo deploymentInfo, string targetBranch, ILogger logger, ITracer tracer)
+        public async Task Fetch(IRepository repository, DeploymentInfoBase deploymentInfo, string targetBranch, ILogger logger, ITracer tracer)
         {
             var oneDriveInfo = (OneDriveInfo)deploymentInfo;
             _oneDriveHelper.Logger = logger;

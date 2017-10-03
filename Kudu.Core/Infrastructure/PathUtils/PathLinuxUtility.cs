@@ -51,7 +51,7 @@ namespace Kudu.Core.Infrastructure
             return new List<string>() { "/usr/bin" };
         }
 
-        internal override bool PathsEquals(string path1, string path2)
+        public override bool PathsEquals(string path1, string path2)
         {
             return String.Equals(CleanPath(path1), CleanPath(path2), StringComparison.Ordinal);
         }
