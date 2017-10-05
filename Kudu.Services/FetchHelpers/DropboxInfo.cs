@@ -1,13 +1,15 @@
 ﻿using System;
 using Kudu.Core.SourceControl;
-using Kudu.Services.ServiceHookHandlers;
 using Newtonsoft.Json.Linq;
+using Kudu.Core.Deployment;
+using Kudu.Contracts.SourceControl;
 
 namespace Kudu.Services
 {
     public class DropboxInfo : DeploymentInfo
     {
-        private DropboxInfo()
+        private DropboxInfo(IRepositoryFactory repositoryFactory)
+            : base(repositoryFactory)
         {
         }
 
@@ -15,9 +17,9 @@ namespace Kudu.Services
 
         public DropboxDeployInfo DeployInfo { get; private set; }
 
-        public static DropboxInfo CreateV1Info(JObject payload, RepositoryType repositoryType)
+        public static DropboxInfo CreateV1Info(JObject payload, RepositoryType repositoryType, IRepositoryFactory repositoryFactory)
         {
-            return new DropboxInfo
+            return new DropboxInfo(repositoryFactory)
             {
                 Deployer = DropboxHelper.Dropbox,
                 DeployInfo = payload.ToObject<DropboxDeployInfo>(),
@@ -27,7 +29,7 @@ namespace Kudu.Services
             };
         }
 
-        public static DropboxInfo CreateV2Info(string dropboxPath, string oauthToken, RepositoryType repositoryType)
+        public static DropboxInfo CreateV2Info(string dropboxPath, string oauthToken, RepositoryType repositoryType, IRepositoryFactory repositoryFactory)
         {
             if (String.IsNullOrEmpty(dropboxPath))
             {
@@ -39,8 +41,9 @@ namespace Kudu.Services
                 throw new ArgumentNullException("oauthToken");
             }
 
-            return new DropboxInfo
+            return new DropboxInfo(repositoryFactory)
             {
+                Deployer = DropboxHelper.Dropbox,
                 DeployInfo = new DropboxDeployInfo
                              {
                                  Path = dropboxPath,

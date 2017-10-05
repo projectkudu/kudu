@@ -10,6 +10,7 @@ using Kudu.FunctionalTests.Infrastructure;
 using Kudu.Services;
 using Kudu.TestHarness;
 using Kudu.TestHarness.Xunit;
+using Newtonsoft.Json.Linq;
 using Xunit;
 using TimeoutException = System.TimeoutException;
 
@@ -60,7 +61,7 @@ namespace Kudu.FunctionalTests
                         // only run in private kudu
                         return;
                     }
-                    DropboxDeployInfo deploy;
+                    JObject deploy;
                     DropboxTests.AccountInfo account = db.GetAccountInfo(oauth);
                     using (new LatencyLogger("DropboxGetDeployInfo - " + appName))
                     {

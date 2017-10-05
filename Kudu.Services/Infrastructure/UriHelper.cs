@@ -1,14 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using System.Net.Http;
+using System.Web;
 using Kudu.Core.Helpers;
 
 namespace Kudu.Services.Infrastructure
 {
     public static class UriHelper
     {
+        private const string DisguisedHostHeaderName = "DISGUISED-HOST";
+
         public static Uri GetBaseUri(HttpRequestMessage request)
         {
             return new Uri(GetRequestUri(request).GetComponents(UriComponents.SchemeAndServer, UriFormat.Unescaped));
@@ -16,21 +18,35 @@ namespace Kudu.Services.Infrastructure
 
         public static Uri GetRequestUri(HttpRequestMessage request)
         {
-            var uri = request.RequestUri;
+            string disguisedHost = null;
 
+            IEnumerable<string> disguisedHostValues;
+            if (request.Headers.TryGetValues(DisguisedHostHeaderName, out disguisedHostValues)
+                && disguisedHostValues.Count() > 0)
+            {
+                disguisedHost = disguisedHostValues.First();
+            }
+
+            return GetRequestUriInternal(request.RequestUri, disguisedHost);
+        }
+
+        public static Uri GetRequestUri(HttpRequest request)
+        {
+            return GetRequestUriInternal(request.Url, request.Headers[DisguisedHostHeaderName]);
+        }
+
+        private static Uri GetRequestUriInternal(Uri uri, string disguisedHostValue)
+        {
             // On Linux, corrections to the request URI are needed due to the way the request is handled on the worker:
             // - Set scheme to https
             // - Set host to the value of DISGUISED-HOST
             // - Remove port value
-            IEnumerable<string> disguisedHostValues;
-            if (!OSDetector.IsOnWindows()
-                && request.Headers.TryGetValues("DISGUISED-HOST", out disguisedHostValues)
-                && disguisedHostValues.Count() > 0)
+            if (!OSDetector.IsOnWindows() && disguisedHostValue != null)
             {
                 uri = (new UriBuilder(uri)
                 {
                     Scheme = "https",
-                    Host = disguisedHostValues.First(),
+                    Host = disguisedHostValue,
                     Port = -1
                 }).Uri;
             }

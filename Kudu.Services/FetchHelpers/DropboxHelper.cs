@@ -374,7 +374,7 @@ namespace Kudu.Services
                     if (useOAuth20)
                     {
                         var request = new HttpRequestMessage(HttpMethod.Post, string.Empty);
-                        request.Headers.Add("Dropbox-API-Arg", "{\"path\": \"" + path + "\"}");
+                        request.Headers.Add("Dropbox-API-Arg", "{\"path\": \"" + DropboxJsonHeaderEncode(path) + "\"}");
                         using (HttpResponseMessage response = await client.SendAsync(request))
                         {
                             using (Stream stream = await response.EnsureSuccessStatusCode().Content.ReadAsStreamAsync())
@@ -410,7 +410,7 @@ namespace Kudu.Services
                     if (retries == MaxRetries)
                     {
                         Interlocked.Increment(ref _failedCount);
-                        LogError("Get({0}) '{1}' failed with {2}", retries, SandboxFilePath + path, ex.Message);
+                        LogError("Get({0}) '{1}' failed with {2}", retries, (useOAuth20 ? DownloadContentApiUri : SandboxFilePath) + path, ex.Message);
                         throw;
                     }
                 }
@@ -508,6 +508,27 @@ namespace Kudu.Services
             return sb.ToString();
         }
 
+
+        private static string DropboxJsonHeaderEncode(string path)
+        {
+            StringBuilder result = new StringBuilder();
+            foreach (char symbol in path)
+            {
+                byte[] bytes = Encoding.Unicode.GetBytes(new char[] { symbol });
+
+                // none ANSI
+                if (bytes[1] > 0)
+                {
+                    result.AppendFormat(@"\u{0:x2}{1:x2}", bytes[1], bytes[0]);
+                }
+                else
+                {
+                    result.Append(symbol);
+                }
+            }
+
+            return result.ToString();
+        }
 
         // Ported from https://github.com/SpringSource/spring-net-social-dropbox/blob/master/src/Spring.Social.Dropbox/Social/Dropbox/Api/Impl/DropboxTemplate.cs#L1713
         private static string DropboxPathEncode(string path)

@@ -22,12 +22,12 @@ namespace Kudu.Core.Deployment.Generator
             _environment = environment;
         }
 
-        public ISiteBuilder CreateBuilder(ITracer tracer, ILogger logger, IDeploymentSettingsManager settings, IFileFinder fileFinder)
+        public ISiteBuilder CreateBuilder(ITracer tracer, ILogger logger, IDeploymentSettingsManager settings, IRepository repository)
         {
-            string repositoryRoot = _environment.RepositoryPath;
+            string repositoryRoot = repository.RepositoryPath;
 
             // Use the cached vs projects file finder for: a. better performance, b. ignoring solutions/projects under node_modules
-            fileFinder = new CachedVsProjectsFileFinder(fileFinder);
+            var fileFinder = new CachedVsProjectsFileFinder(repository);
 
             // If there's a custom deployment file then let that take over.
             var command = settings.GetValue(SettingsKeys.Command);
@@ -49,9 +49,17 @@ namespace Kudu.Core.Deployment.Generator
             if (!String.IsNullOrEmpty(targetProjectPath))
             {
                 tracer.Trace("Specific project was specified: " + targetProjectPath);
-
                 targetProjectPath = Path.GetFullPath(Path.Combine(repositoryRoot, targetProjectPath.TrimStart('/', '\\')));
+            }
 
+            if (!settings.DoBuildDuringDeployment())
+            {
+                var projectPath = !String.IsNullOrEmpty(targetProjectPath) ? targetProjectPath : repositoryRoot;
+                return new BasicBuilder(_environment, settings, _propertyProvider, repositoryRoot, projectPath);
+            }
+                        
+            if (!String.IsNullOrEmpty(targetProjectPath))
+            {
                 // Try to resolve the project
                 return ResolveProject(repositoryRoot,
                                       targetProjectPath,
@@ -151,7 +159,7 @@ namespace Kudu.Core.Deployment.Generator
         private ISiteBuilder ResolveNonAspProject(string repositoryRoot, string projectPath, IDeploymentSettingsManager perDeploymentSettings)
         {
             string sourceProjectPath = projectPath ?? repositoryRoot;
-            if (IsFunctionApp(sourceProjectPath))
+            if (FunctionAppHelper.LooksLikeFunctionApp())
             {
                 return new FunctionBasicBuilder(_environment, perDeploymentSettings, _propertyProvider, repositoryRoot, projectPath);
             }
@@ -177,12 +185,6 @@ namespace Kudu.Core.Deployment.Generator
             }
 
             return new BasicBuilder(_environment, perDeploymentSettings, _propertyProvider, repositoryRoot, projectPath);
-        }
-
-        private static bool IsFunctionApp(string projectPath)
-        {
-            // projectPath ==> project folder
-            return FunctionAppHelper.LooksLikeFunctionApp(projectPath);
         }
 
         private static bool IsGoSite(string projectPath)
@@ -327,7 +329,7 @@ namespace Kudu.Core.Deployment.Generator
                                       targetPath,
                                       solutionPath);
             }
-            else if (FunctionAppHelper.LooksLikeFunctionApp(Path.GetDirectoryName(targetPath)))
+            else if (FunctionAppHelper.LooksLikeFunctionApp())
             {
                 return new FunctionMsbuildBuilder(_environment,
                                                 perDeploymentSettings,

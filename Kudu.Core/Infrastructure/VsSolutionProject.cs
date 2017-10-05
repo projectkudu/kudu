@@ -166,7 +166,7 @@ namespace Kudu.Core.Infrastructure
                 _isAspNetCore = AspNetCoreHelper.IsDotnetCoreFromProjectFile(_absolutePath, _projectTypeGuids);
                 _isWap = VsHelper.IsWap(_projectTypeGuids);
                 _isExecutable = VsHelper.IsExecutableProject(_absolutePath);
-                _isFunctionApp = FunctionAppHelper.LooksLikeFunctionApp(Path.GetDirectoryName(_absolutePath));
+                _isFunctionApp = FunctionAppHelper.LooksLikeFunctionApp();
             }
             else
             {

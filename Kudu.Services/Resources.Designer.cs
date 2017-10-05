@@ -214,6 +214,15 @@ namespace Kudu.Services {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to There is a deployment currently in progress. Please try again when it completes..
+        /// </summary>
+        internal static string Error_DeploymentInProgress {
+            get {
+                return ResourceManager.GetString("Error_DeploymentInProgress", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Deployment &apos;{0}&apos; not found..
         /// </summary>
         internal static string Error_DeploymentNotFound {
@@ -354,15 +363,6 @@ namespace Kudu.Services {
         internal static string Error_WebJobsStopped {
             get {
                 return ResourceManager.GetString("Error_WebJobsStopped", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Fetching changes..
-        /// </summary>
-        internal static string FetchingChanges {
-            get {
-                return ResourceManager.GetString("FetchingChanges", resourceCulture);
             }
         }
         
