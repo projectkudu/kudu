@@ -596,10 +596,13 @@ namespace Kudu.Core.SiteExtensions
         /// </summary>
         private async Task<bool> IsSiteExtensionInstalled(string id, string version, string feedUrl, string installationArgs)
         {
+            ITracer tracer = _traceFactory.GetTracer();
             JsonSettings siteExtensionSettings = GetSettingManager(id);
             string localPackageVersion = siteExtensionSettings.GetValue(_versionSetting);
             string localPackageFeedUrl = siteExtensionSettings.GetValue(_feedUrlSetting);
             string localPackageInstallationArgs = siteExtensionSettings.GetValue(_installationArgs);
+            NuGetVersion localPkgVer = NuGetVersion.Parse(localPackageVersion);
+            NuGetVersion lastFoundVer = null;
             bool isInstalled = false;
 
             // Shortcircuit check: if the installation arguments do not match, then we should return false here to avoid other checks which are now unnecessary.
@@ -622,19 +625,28 @@ namespace Kudu.Core.SiteExtensions
                 {
                     isInstalled = true;
                 }
-                else if (string.IsNullOrWhiteSpace(version) && string.IsNullOrWhiteSpace(feedUrl))
+                else if (string.IsNullOrWhiteSpace(version)
+                         && string.IsNullOrWhiteSpace(feedUrl)
+                         && string.Equals(localPackageInstallationArgs, installationArgs))
                 {
                     // case 3
                     UIPackageMetadata remotePackage = await rr.GetLatestPackageByIdFromSrcRepo(id);
                     if (remotePackage != null)
                     {
-                        isInstalled = remotePackage.Identity.Version.ToNormalizedString().Equals(localPackageVersion, StringComparison.OrdinalIgnoreCase) && string.Equals(localPackageInstallationArgs, installationArgs);
+                        tracer.Trace("Found version: {0} on feed: {1}",
+                                     remotePackage.Identity.Version.ToNormalizedString(),
+                                     rr.PackageSource.Source);
+                        if (lastFoundVer < remotePackage.Identity.Version)
+                        {
+                            lastFoundVer = remotePackage.Identity.Version;
+                        }
                     }
                 }
-                if (isInstalled)
-                {
-                    break;
-                }
+            }
+
+            if (lastFoundVer != null && lastFoundVer <= localPkgVer)
+            {
+                isInstalled = true;
             }
 
             return isInstalled;
