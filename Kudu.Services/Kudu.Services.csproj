@@ -98,6 +98,7 @@
     <Compile Include="Commands\CommandsNativeMethods.cs" />
     <Compile Include="Commands\PersistentCommandController.cs" />
     <Compile Include="Deployment\DeploymentController.cs" />
+    <Compile Include="Deployment\PushDeploymentController.cs" />
     <Compile Include="Diagnostics\HttpRequestExtensions.cs" />
     <Compile Include="Diagnostics\LinuxProcessController.cs" />
     <Compile Include="Diagnostics\LogStreamHandler.cs" />
@@ -140,7 +141,6 @@
     <Compile Include="ServiceHookHandlers\GenericHandler.cs" />
     <Compile Include="ServiceHookHandlers\GitHubCompatHandler.cs" />
     <Compile Include="ServiceHookHandlers\GitlabHqHandler.cs" />
-    <Compile Include="ServiceHookHandlers\DeploymentInfo.cs" />
     <Compile Include="ServiceHookHandlers\IServiceHookHandler.cs" />
     <Compile Include="ServiceHookHandlers\BitbucketHandler.cs" />
     <Compile Include="ServiceHookHandlers\GitHubHandler.cs" />

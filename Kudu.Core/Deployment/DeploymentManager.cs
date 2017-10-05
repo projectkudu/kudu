@@ -151,7 +151,13 @@ namespace Kudu.Core.Deployment
             }
         }
 
-        public async Task DeployAsync(IRepository repository, ChangeSet changeSet, string deployer, bool clean, bool needFileUpdate = true)
+        public async Task DeployAsync(
+            IRepository repository,
+            ChangeSet changeSet,
+            string deployer,
+            bool clean,
+            bool needFileUpdate = true,
+            bool fullBuildByDefault = true)
         {
             using (var deploymentAnalytics = new DeploymentAnalytics(_analytics, _settings))
             {
@@ -225,7 +231,7 @@ namespace Kudu.Core.Deployment
                     innerLogger = null;
 
                     // Perform the build deployment of this changeset
-                    await Build(changeSet, tracer, deployStep, repository, deploymentAnalytics);
+                    await Build(changeSet, tracer, deployStep, repository, deploymentAnalytics, fullBuildByDefault);
 
                     if (!OSDetector.IsOnWindows() && _settings.RestartAppContainerOnGitDeploy())
                     {
@@ -518,7 +524,13 @@ namespace Kudu.Core.Deployment
         /// <summary>
         /// Builds and deploys a particular changeset. Puts all build artifacts in a deployments/{id}
         /// </summary>
-        private async Task Build(ChangeSet changeSet, ITracer tracer, IDisposable deployStep, IFileFinder fileFinder, DeploymentAnalytics deploymentAnalytics)
+        private async Task Build(
+            ChangeSet changeSet,
+            ITracer tracer,
+            IDisposable deployStep,
+            IRepository repository,
+            DeploymentAnalytics deploymentAnalytics,
+            bool fullBuildByDefault)
         {
             if (changeSet == null || String.IsNullOrEmpty(changeSet.Id))
             {
@@ -544,8 +556,12 @@ namespace Kudu.Core.Deployment
 
                 ISiteBuilder builder = null;
 
-                string repositoryRoot = _environment.RepositoryPath;
-                var perDeploymentSettings = DeploymentSettingsManager.BuildPerDeploymentSettingsManager(repositoryRoot, _settings);
+                // Add in per-deploy default settings values based on the details of this deployment
+                var perDeploymentDefaults = new Dictionary<string, string> { { SettingsKeys.DoBuildDuringDeployment, fullBuildByDefault.ToString() } };
+                var settingsProviders = _settings.SettingsProviders.Concat(
+                    new[] { new BasicSettingsProvider(perDeploymentDefaults, SettingsProvidersPriority.PerDeploymentDefault) });
+
+                var perDeploymentSettings = DeploymentSettingsManager.BuildPerDeploymentSettingsManager(repository.RepositoryPath, settingsProviders);
 
                 string delayMaxInStr = perDeploymentSettings.GetValue(SettingsKeys.MaxRandomDelayInSec);
                 if (!String.IsNullOrEmpty(delayMaxInStr))
@@ -571,7 +587,7 @@ namespace Kudu.Core.Deployment
                 {
                     using (tracer.Step("Determining deployment builder"))
                     {
-                        builder = _builderFactory.CreateBuilder(tracer, innerLogger, perDeploymentSettings, fileFinder);
+                        builder = _builderFactory.CreateBuilder(tracer, innerLogger, perDeploymentSettings, repository);
                         deploymentAnalytics.ProjectType = builder.ProjectType;
                         tracer.Trace("Builder is {0}", builder.GetType().Name);
                     }

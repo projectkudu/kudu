@@ -41,9 +41,9 @@ namespace Kudu.Core.Settings
             get { return _settingsProviders; }
         }
 
-        public static IDeploymentSettingsManager BuildPerDeploymentSettingsManager(string path, IDeploymentSettingsManager deploymentSettingsManager)
+        public static IDeploymentSettingsManager BuildPerDeploymentSettingsManager(string path, IEnumerable<ISettingsProvider> settingsProviders)
         {
-            var combinedSettingsProviders = new List<ISettingsProvider>(deploymentSettingsManager.SettingsProviders);
+            var combinedSettingsProviders = new List<ISettingsProvider>(settingsProviders);
             combinedSettingsProviders.Add(new DeploymentSettingsProvider(path));
 
             PerSiteSettingsProvider perSiteSettings = null;

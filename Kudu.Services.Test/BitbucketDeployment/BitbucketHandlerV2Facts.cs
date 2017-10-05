@@ -7,6 +7,8 @@ using Kudu.Services.ServiceHookHandlers;
 using Moq;
 using Newtonsoft.Json.Linq;
 using Xunit;
+using Kudu.Core.Deployment;
+using Kudu.Contracts.SourceControl;
 
 namespace Kudu.Services.Test
 {
@@ -18,10 +20,10 @@ namespace Kudu.Services.Test
             // Arrange
             var httpRequest = new Mock<HttpRequestBase>();
             httpRequest.SetupGet(r => r.UserAgent).Returns("Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 6.2; WOW64; Trident/6.0)");
-            var bitbucketHandler = new BitbucketHandlerV2();
+            var bitbucketHandler = new BitbucketHandlerV2(Mock.Of<IRepositoryFactory>());
 
             // Act
-            DeploymentInfo deploymentInfo;
+            DeploymentInfoBase deploymentInfo;
             DeployAction result = bitbucketHandler.TryParseDeploymentInfo(httpRequest.Object, payload: null, targetBranch: null, deploymentInfo: out deploymentInfo);
 
             // Assert
@@ -40,10 +42,10 @@ namespace Kudu.Services.Test
 
             var httpRequest = new Mock<HttpRequestBase>();
             httpRequest.SetupGet(r => r.UserAgent).Returns("Bitbucket-Webhooks/2.0");
-            var bitbucketHandler = new BitbucketHandlerV2();
+            var bitbucketHandler = new BitbucketHandlerV2(Mock.Of<IRepositoryFactory>());
 
             // Act
-            DeploymentInfo deploymentInfo;
+            DeploymentInfoBase deploymentInfo;
             DeployAction result = bitbucketHandler.TryParseDeploymentInfo(
                 httpRequest.Object,
                 payload: JObject.Parse(payloadContent),
@@ -69,10 +71,10 @@ namespace Kudu.Services.Test
 
             var httpRequest = new Mock<HttpRequestBase>();
             httpRequest.SetupGet(r => r.UserAgent).Returns("Bitbucket-Webhooks/2.0");
-            var bitbucketHandler = new BitbucketHandlerV2();
+            var bitbucketHandler = new BitbucketHandlerV2(Mock.Of<IRepositoryFactory>());
 
             // Act
-            DeploymentInfo deploymentInfo;
+            DeploymentInfoBase deploymentInfo;
             DeployAction result = bitbucketHandler.TryParseDeploymentInfo(httpRequest.Object, payload: JObject.Parse(payloadContent), targetBranch: "not-default", deploymentInfo: out deploymentInfo);
 
             // Assert
@@ -105,10 +107,10 @@ namespace Kudu.Services.Test
 
             var httpRequest = new Mock<HttpRequestBase>();
             httpRequest.SetupGet(r => r.UserAgent).Returns("Bitbucket-Webhooks/2.0");
-            var bitbucketHandler = new BitbucketHandlerV2();
+            var bitbucketHandler = new BitbucketHandlerV2(Mock.Of<IRepositoryFactory>());
 
             // Act
-            DeploymentInfo deploymentInfo;
+            DeploymentInfoBase deploymentInfo;
             DeployAction result = bitbucketHandler.TryParseDeploymentInfo(httpRequest.Object, payload: payload, targetBranch: "not-default", deploymentInfo: out deploymentInfo);
 
             // Assert
@@ -124,7 +126,7 @@ namespace Kudu.Services.Test
 
         ////    var httpRequest = new Mock<HttpRequestBase>();
         ////    httpRequest.SetupGet(r => r.UserAgent).Returns("Bitbucket.org");
-        ////    var bitbucketHandler = new BitbucketHandler();
+        ////    var bitbucketHandler = new BitbucketHandlerV2();
 
         ////    // Act
         ////    DeploymentInfo deploymentInfo;
@@ -149,7 +151,7 @@ namespace Kudu.Services.Test
 
         ////    var httpRequest = new Mock<HttpRequestBase>();
         ////    httpRequest.SetupGet(r => r.UserAgent).Returns("Bitbucket.org");
-        ////    var bitbucketHandler = new BitbucketHandler();
+        ////    var bitbucketHandler = new BitbucketHandlerV2();
 
         ////    // Act
         ////    DeploymentInfo deploymentInfo;
@@ -173,7 +175,7 @@ namespace Kudu.Services.Test
 
         ////    var httpRequest = new Mock<HttpRequestBase>();
         ////    httpRequest.SetupGet(r => r.UserAgent).Returns("Bitbucket.org");
-        ////    var bitbucketHandler = new BitbucketHandler();
+        ////    var bitbucketHandler = new BitbucketHandlerV2();
 
         ////    // Act
         ////    DeploymentInfo deploymentInfo;
@@ -197,7 +199,7 @@ namespace Kudu.Services.Test
 
         ////    var httpRequest = new Mock<HttpRequestBase>();
         ////    httpRequest.SetupGet(r => r.UserAgent).Returns("Bitbucket.org");
-        ////    var bitbucketHandler = new BitbucketHandler();
+        ////    var bitbucketHandler = new BitbucketHandlerV2();
 
         ////    // Act
         ////    DeploymentInfo deploymentInfo;
@@ -221,7 +223,7 @@ namespace Kudu.Services.Test
 
         ////    var httpRequest = new Mock<HttpRequestBase>();
         ////    httpRequest.SetupGet(r => r.UserAgent).Returns("Bitbucket.org");
-        ////    var bitbucketHandler = new BitbucketHandler();
+        ////    var bitbucketHandler = new BitbucketHandlerV2();
 
         ////    // Act
         ////    DeploymentInfo deploymentInfo;
@@ -245,7 +247,7 @@ namespace Kudu.Services.Test
 
         ////    var httpRequest = new Mock<HttpRequestBase>();
         ////    httpRequest.SetupGet(r => r.UserAgent).Returns("Bitbucket.org");
-        ////    var bitbucketHandler = new BitbucketHandler();
+        ////    var bitbucketHandler = new BitbucketHandlerV2();
 
         ////    // Act
         ////    DeploymentInfo deploymentInfo;

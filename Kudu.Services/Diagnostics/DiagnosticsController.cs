@@ -91,6 +91,18 @@ namespace Kudu.Services.Performance
 
                 var vfsBaseAddress = UriHelper.MakeRelative(UriHelper.GetBaseUri(request), "api/vfs");
 
+                // Open files in order to refresh (not update) the timestamp and file size.
+                // This is needed on Linux due to the way that metadata for files on the CIFS
+                // mount gets cached and not always refreshed. Limit to 10 as a safety.
+
+                foreach (var filename in currentDockerLogFilenames.Take(10))
+                {
+                    using (var file = File.OpenRead(filename))
+                    {
+                        // This space intentionally left blank
+                    }
+                }
+
                 var responseContent = currentDockerLogFilenames.Select(p => CurrentDockerLogFilenameToJson(p, vfsBaseAddress.ToString()));
 
                 return Request.CreateResponse(HttpStatusCode.OK, responseContent);
@@ -106,7 +118,7 @@ namespace Kudu.Services.Performance
         {
             using (_tracer.Step("DiagnosticsController.GetDockerLogsZip"))
             {
-                var currentDockerLogFilenames = GetCurrentDockerLogFilenames().ToArray();
+                var currentDockerLogFilenames = GetCurrentDockerLogFilenames();
 
                 HttpResponseMessage response = Request.CreateResponse();
                 response.Content = ZipStreamContent.Create(String.Format("dockerlogs-{0:MM-dd-HH-mm-ss}.zip", DateTime.UtcNow), _tracer, zip =>
@@ -120,7 +132,7 @@ namespace Kudu.Services.Performance
             }
         }
 
-        private IEnumerable<string> GetCurrentDockerLogFilenames()
+        private string[] GetCurrentDockerLogFilenames()
         {
             // Get all non-rolled Docker log filenames from the LogFiles directory
             var nonRolledDockerLogFilenames =
@@ -130,7 +142,7 @@ namespace Kudu.Services.Performance
 
             if (!nonRolledDockerLogFilenames.Any())
             {
-                return Enumerable.Empty<string>();
+                return new string[0];
             }
 
             // Find the latest date stamp and filter out those that don't have it
@@ -140,7 +152,9 @@ namespace Kudu.Services.Performance
                 .OrderByDescending(s => int.Parse(s.Replace("_", String.Empty)))
                 .First();
 
-            return nonRolledDockerLogFilenames.Where(f => Path.GetFileName(f).StartsWith(latestDatestamp, StringComparison.OrdinalIgnoreCase));
+            return nonRolledDockerLogFilenames
+                .Where(f => Path.GetFileName(f).StartsWith(latestDatestamp, StringComparison.OrdinalIgnoreCase))
+                .ToArray();
         }
 
         private JObject CurrentDockerLogFilenameToJson(string path, string vfsBaseAddress)
@@ -152,7 +166,7 @@ namespace Kudu.Services.Performance
             var machineName = info.Name.Substring(11, info.Name.Length - 22);
 
             // Remove the root path from the front of the FullName, as it's implicit in the vfs url
-            var vfsPath = info.FullName.Remove(0, _environment.RootPath.Length);            
+            var vfsPath = info.FullName.Remove(0, _environment.RootPath.Length);
 
             var vfsUrl = (vfsBaseAddress + Uri.EscapeUriString(vfsPath)).EscapeHashCharacter();
 

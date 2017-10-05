@@ -8,6 +8,8 @@ namespace Kudu
         public const string WebRoot = "wwwroot";
         public const string MappedSite = "/_app";
         public const string RepositoryPath = "repository";
+        public const string ZipTempPath = "zipdeploy";
+        public const string ZipExtractPath = "extracted";
 
         public const string LockPath = "locks";
         public const string DeploymentLockFile = "deployments.lock";
@@ -116,5 +118,6 @@ namespace Kudu
         public const string RoutingRunTimeVersion = "ROUTING_EXTENSION_VERSION";
         public const string WebSiteSku = "WEBSITE_SKU";
         public const string DynamicSku = "Dynamic";
+        public const string AzureWebJobsSecretStorageType = "AzureWebJobsSecretStorageType";
     }
 }
