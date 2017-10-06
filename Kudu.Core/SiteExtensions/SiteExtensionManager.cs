@@ -601,7 +601,7 @@ namespace Kudu.Core.SiteExtensions
             string localPackageVersion = siteExtensionSettings.GetValue(_versionSetting);
             string localPackageFeedUrl = siteExtensionSettings.GetValue(_feedUrlSetting);
             string localPackageInstallationArgs = siteExtensionSettings.GetValue(_installationArgs);
-            NuGetVersion localPkgVer = NuGetVersion.Parse(localPackageVersion);
+            NuGetVersion localPkgVer = null;
             NuGetVersion lastFoundVer = null;
             bool isInstalled = false;
 
@@ -609,6 +609,11 @@ namespace Kudu.Core.SiteExtensions
             if (!string.Equals(localPackageInstallationArgs, installationArgs))
             {
                 return false;
+            }
+
+            if (!string.IsNullOrEmpty(localPackageVersion))
+            {
+                localPkgVer = NuGetVersion.Parse(localPackageVersion);
             }
 
             // Try to use given feed
@@ -644,7 +649,7 @@ namespace Kudu.Core.SiteExtensions
                 }
             }
 
-            if (lastFoundVer != null && lastFoundVer <= localPkgVer)
+            if (lastFoundVer != null && localPkgVer != null && lastFoundVer <= localPkgVer)
             {
                 isInstalled = true;
             }
