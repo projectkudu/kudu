@@ -204,6 +204,12 @@ namespace Kudu.Services.SiteExtensions
         [HttpPut]
         public async Task<HttpResponseMessage> InstallExtensionArm(string id, ArmEntry<SiteExtensionInfo> requestInfo)
         {
+            if (requestInfo == null)
+            {
+                // Body should not be empty
+                return Request.CreateResponse(HttpStatusCode.BadRequest);
+            }
+
             return await InstallExtension(id, requestInfo.Properties);
         }
 
