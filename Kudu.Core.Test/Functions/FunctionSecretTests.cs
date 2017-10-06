@@ -1,5 +1,6 @@
 ﻿using Kudu.Core.Infrastructure;
 using System;
+using System.Security.Cryptography;
 using Xunit;
 
 namespace Kudu.Core.Test.Functions
@@ -15,10 +16,13 @@ namespace Kudu.Core.Test.Functions
             string encryptedKey = keyPairs[0].Item2;
 
             Assert.Equal(unencryptedKey, SecurityUtility.DecryptSecretString(encryptedKey));
-            var exception = Assert.Throws<FormatException>(() => SecurityUtility.DecryptSecretString(unencryptedKey)); // try to decrypt an unencrypted key will throw exception
+            // try to decrypte an invalid encryptedkey will throw an error
+            string malformattedKey = encryptedKey.Substring(1);
+            var exception = Assert.Throws<FormatException>(() => SecurityUtility.DecryptSecretString(malformattedKey));
 
             // map CryptographicException to FormatException so that HTTP return 400 instead of 500
-            Assert.Equal($"unable to decrypt {unencryptedKey}, the key is either invalid or malformed", exception.Message);
+            Assert.Equal($"unable to decrypt {malformattedKey}, the key is either invalid or malformed", exception.Message);
+            Assert.Equal<Type>(typeof(CryptographicException), exception.InnerException.GetType());
         }
     }
 }

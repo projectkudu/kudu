@@ -40,9 +40,9 @@ namespace Kudu.Core.Infrastructure
                 var protector = DataProtectionProvider.CreateAzureDataProtector().CreateProtector(DefaultProtectorPurpose);
                 return protector.Unprotect(content);
             }
-            catch (CryptographicException)
+            catch (CryptographicException ex)
             {
-                throw new FormatException($"unable to decrypt {content}, the key is either invalid or malformed");
+                throw new FormatException($"unable to decrypt {content}, the key is either invalid or malformed", ex);
             }
         }
 
