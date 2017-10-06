@@ -636,7 +636,7 @@ namespace Kudu.Core.SiteExtensions
                         tracer.Trace("Found version: {0} on feed: {1}",
                                      remotePackage.Identity.Version.ToNormalizedString(),
                                      rr.PackageSource.Source);
-                        if (lastFoundVer < remotePackage.Identity.Version)
+                        if (lastFoundVer == null || lastFoundVer < remotePackage.Identity.Version)
                         {
                             lastFoundVer = remotePackage.Identity.Version;
                         }
