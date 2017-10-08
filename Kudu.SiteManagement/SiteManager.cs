@@ -375,6 +375,7 @@ namespace Kudu.SiteManagement
                 kuduAppPool.ManagedRuntimeVersion = "v4.0";
                 kuduAppPool.AutoStart = true;
                 kuduAppPool.ProcessModel.LoadUserProfile = true;
+                kuduAppPool.Failure.RapidFailProtection = false;
 
                 // We've seen strange errors after switching to VS 2015 msbuild when using App Pool Identity.
                 // The errors look like:
