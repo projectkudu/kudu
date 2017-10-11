@@ -406,7 +406,8 @@ namespace Kudu.Services.Performance
                             changes.Add(line);
                         }
 
-                        offset += line.Length;
+                        byte[] bytes = reader.CurrentEncoding.GetBytes(line);
+                        offset += bytes.Length;
                     }
 
                     // Adjust offset and return changes
