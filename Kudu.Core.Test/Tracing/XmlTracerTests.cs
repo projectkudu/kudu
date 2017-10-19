@@ -219,6 +219,7 @@ namespace Kudu.Core.Test.Tracing
         [Theory]
         [InlineData(true, TraceExtensions.AlwaysTrace)]
         [InlineData(true, TraceExtensions.TraceLevelKey)]
+        [InlineData(true, "X-MS-CLIENT-PRINCIPAL-NAME")]
         [InlineData(true, "Max-Forwards")]
         [InlineData(false, "X-ARR-LOG-ID")]
         [InlineData(false, "url")]
