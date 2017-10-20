@@ -369,6 +369,11 @@ namespace Kudu.Core.Deployment
                 }
             });
 
+#pragma warning disable 4014
+            // Track pending task
+            PostDeploymentHelper.TrackPendingOperation(deploymentTask, TimeSpan.Zero);
+#pragma warning restore 4014
+
             // When the frontend/ARM calls /deploy with isAsync=true, it starts polling
             // the deployment status immediately, so it's important that the temp deployment
             // is created before we return.
