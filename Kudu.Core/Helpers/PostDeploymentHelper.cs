@@ -12,7 +12,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Web.Script.Serialization;
 using Kudu.Contracts.Settings;
-using Microsoft.Win32.SafeHandles;
+using Kudu.Core.Infrastructure;
 
 namespace Kudu.Core.Helpers
 {
@@ -392,6 +392,51 @@ namespace Kudu.Core.Helpers
             {
                 ExecuteScript(file);
             }
+        }
+
+        /// <summary>
+        /// As long as the task was not completed, we will keep updating the marker file.
+        /// The routine completes when either task completes or timeout.
+        /// If task is completed, we will remove the marker.
+        /// If timeout, we will leave the stale marker.
+        /// </summary>
+        public static async Task TrackPendingOperation(Task task, TimeSpan timeout)
+        {
+            const int DefaultTimeoutMinutes = 30;
+            const int DefaultUpdateMarkerIntervalMS = 10000;
+            const string MarkerFilePath = @"%TEMP%\SCMPendingOperation.txt";
+
+            // only applicable to azure env
+            if (!Environment.IsAzureEnvironment())
+            {
+                return;
+            }
+
+            if (timeout <= TimeSpan.Zero || timeout >= TimeSpan.FromMinutes(DefaultTimeoutMinutes))
+            {
+                // track at most N mins by default
+                timeout = TimeSpan.FromMinutes(DefaultTimeoutMinutes);
+            }
+
+            var start = DateTime.UtcNow;
+            var markerFile = System.Environment.ExpandEnvironmentVariables(MarkerFilePath);
+            while (start.Add(timeout) >= DateTime.UtcNow)
+            {
+                // create or update marker timestamp
+                OperationManager.SafeExecute(() => File.WriteAllText(markerFile, start.ToString("o")));
+
+                var cancelation = new CancellationTokenSource();
+                var delay = Task.Delay(DefaultUpdateMarkerIntervalMS, cancelation.Token);
+                var completed = await Task.WhenAny(delay, task);
+                if (completed != delay)
+                {
+                    cancelation.Cancel();
+                    break;
+                }
+            }
+
+            // remove marker
+            OperationManager.SafeExecute(() => File.Delete(markerFile));
         }
 
         private static void ExecuteScript(string file)

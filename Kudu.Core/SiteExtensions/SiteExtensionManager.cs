@@ -18,6 +18,7 @@ using Kudu.Contracts.Settings;
 using Kudu.Contracts.SiteExtensions;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Deployment.Generator;
+using Kudu.Core.Helpers;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Settings;
 using Kudu.Core.Tracing;
@@ -210,8 +211,19 @@ namespace Kudu.Core.SiteExtensions
             return info;
         }
 
-        // <inheritdoc />
-        public async Task<SiteExtensionInfo> InstallExtension(string id, string version, string feedUrl, SiteExtensionInfo.SiteExtensionType type, ITracer tracer, string installationArgs = null)
+        public Task<SiteExtensionInfo> InstallExtension(string id, string version, string feedUrl, SiteExtensionInfo.SiteExtensionType type, ITracer tracer, string installationArgs = null)
+        {
+            var installationTask = InstallExtensionCore(id, version, feedUrl, type, tracer, installationArgs);
+
+#pragma warning disable 4014
+            // Track pending task
+            PostDeploymentHelper.TrackPendingOperation(installationTask, TimeSpan.Zero);
+#pragma warning restore 4014
+
+            return installationTask;
+        }
+
+        private async Task<SiteExtensionInfo> InstallExtensionCore(string id, string version, string feedUrl, SiteExtensionInfo.SiteExtensionType type, ITracer tracer, string installationArgs)
         {
             try
             {
