@@ -22,7 +22,12 @@ namespace Kudu.Core.Deployment
             // so there's no call to EnsureRepository
             var path = Path.Combine(_environment.ZipTempPath, Constants.ZipExtractPath);
             return new NullRepository(path, _traceFactory);
-
         }
+
+        public string Author { get; set; }
+
+        public string AuthorEmail { get; set; }
+
+        public string Message { get; set; }
     }
 }
