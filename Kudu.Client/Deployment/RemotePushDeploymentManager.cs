@@ -66,10 +66,10 @@ namespace Kudu.Client.Deployment
 
     public class ZipDeployMetadata
     {
-        public bool IsAsync;
-        public string Author;
-        public string AuthorEmail;
-        public string Deployer;
-        public string Message;
+        public bool IsAsync { get; set; }
+        public string Author { get; set; }
+        public string AuthorEmail { get; set; }
+        public string Deployer { get; set; }
+        public string Message { get; set; }
     }
 }
