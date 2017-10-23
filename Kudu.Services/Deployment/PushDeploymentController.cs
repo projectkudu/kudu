@@ -19,6 +19,9 @@ namespace Kudu.Services.Deployment
 {
     public class PushDeploymentController : ApiController
     {
+        private const string DefaultDeployer = "Zip-Push";
+        private const string DefaultMessage = "Created via zip push deployment";
+
         private readonly IEnvironment _environment;
         private readonly IFetchDeploymentManager _deploymentManager;
         private readonly ITracer _tracer;
@@ -37,7 +40,13 @@ namespace Kudu.Services.Deployment
         }
 
         [HttpPost]
-        public async Task<HttpResponseMessage> ZipPushDeploy(HttpRequestMessage request, [FromUri] bool isAsync = false)
+        public async Task<HttpResponseMessage> ZipPushDeploy(
+            HttpRequestMessage request,
+            [FromUri] bool isAsync = false,
+            [FromUri] string author = null,
+            [FromUri] string authorEmail = null,
+            [FromUri] string deployer = DefaultDeployer,
+            [FromUri] string message = DefaultMessage)
         {
             using (_tracer.Step("ZipPushDeploy"))
             {
@@ -55,7 +64,7 @@ namespace Kudu.Services.Deployment
                 var deploymentInfo = new ZipDeploymentInfo(_environment, _traceFactory)
                 {
                     AllowDeploymentWhileScmDisabled = true,
-                    Deployer = "Zip-Push",
+                    Deployer = deployer,
                     IsContinuous = false,
                     AllowDeferredDeployment = false,
                     IsReusable = false,
@@ -64,7 +73,10 @@ namespace Kudu.Services.Deployment
                     CommitId = null,
                     RepositoryType = RepositoryType.None,
                     Fetch = LocalZipFetch,
-                    DoFullBuildByDefault = false
+                    DoFullBuildByDefault = false,
+                    Author = author,
+                    AuthorEmail = authorEmail,
+                    Message = message
                 };
 
                 var result = await _deploymentManager.FetchDeploy(deploymentInfo, isAsync, UriHelper.GetRequestUri(Request), "HEAD");
@@ -113,8 +125,10 @@ namespace Kudu.Services.Deployment
 
         private async Task LocalZipFetch(IRepository repository, DeploymentInfoBase deploymentInfo, string targetBranch, ILogger logger, ITracer tracer)
         {
+            var zipDeploymentInfo = (ZipDeploymentInfo)deploymentInfo;
+
             // For this kind of deployment, RepositoryUrl is a local path.
-            var sourceZipFile = deploymentInfo.RepositoryUrl;
+            var sourceZipFile = zipDeploymentInfo.RepositoryUrl;
             var extractTargetDirectory = repository.RepositoryPath;
 
             var info = FileSystemHelpers.FileInfoFromFileName(sourceZipFile);
@@ -157,7 +171,7 @@ namespace Kudu.Services.Deployment
 
             // Needed in order for repository.GetChangeSet() to work.
             // Similar to what OneDriveHelper and DropBoxHelper do.
-            repository.Commit("Created via zip push deployment", null, null);
+            repository.Commit(zipDeploymentInfo.Message, zipDeploymentInfo.Author, zipDeploymentInfo.AuthorEmail);
         }
 
         private void DeleteFilesAndDirsExcept(string fileToKeep, string dirToKeep, ITracer tracer)

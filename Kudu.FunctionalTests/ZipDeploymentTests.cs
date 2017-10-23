@@ -11,6 +11,7 @@ using Kudu.Core.Deployment;
 using System.Net.Http;
 using System.Net;
 using Kudu.Contracts.Settings;
+using Kudu.Client.Deployment;
 
 namespace Kudu.FunctionalTests
 {
@@ -23,9 +24,38 @@ namespace Kudu.FunctionalTests
             return ApplicationManager.RunAsync("TestSimpleZipDeployment", async appManager =>
             {
                 var files = CreateRandomFilesForZip(10);
-                var response = await DeployZip(appManager, files, doAsync: false);
+                var response = await DeployZip(appManager, files, new ZipDeployMetadata());
                 response.EnsureSuccessStatusCode();
                 await AssertSuccessfulDeploymentByFilenames(appManager, files.Select(f => f.Filename).ToArray());
+            });
+        }
+
+        [Fact]
+        public Task TestZipDeployWithMetadata()
+        {
+            var author = "testAuthor";
+            var authorEmail = "email@example.com";
+            var deployer = "testDeployer";
+            var message = "Test message for deployment";
+
+            return ApplicationManager.RunAsync("TestSimpleZipDeployment", async appManager =>
+            {
+                var files = CreateRandomFilesForZip(10);
+                var response = await DeployZip(appManager, files, new ZipDeployMetadata
+                {
+                    Author = author,
+                    AuthorEmail = authorEmail,
+                    Deployer = deployer,
+                    Message = message
+                });
+                response.EnsureSuccessStatusCode();
+                await AssertSuccessfulDeploymentByFilenames(appManager, files.Select(f => f.Filename).ToArray());
+                var result = await appManager.DeploymentManager.GetResultAsync("latest");
+
+                Assert.Equal(author, result.Author);
+                Assert.Equal(authorEmail, result.AuthorEmail);
+                Assert.Equal(deployer, result.Deployer);
+                Assert.Equal(message, result.Message);
             });
         }
 
@@ -36,7 +66,7 @@ namespace Kudu.FunctionalTests
             {
                 // Big enough to require at least a couple polls for status until success
                 var files = CreateRandomFilesForZip(1000);
-                var response = await DeployZip(appManager, files, doAsync: true);
+                var response = await DeployZip(appManager, files, new ZipDeployMetadata { IsAsync = true });
                 response.EnsureSuccessStatusCode();
 
                 TestTracer.Trace("Confirming deployment is in progress");
@@ -59,12 +89,12 @@ namespace Kudu.FunctionalTests
             return ApplicationManager.RunAsync("TestEmptyZipClearsWwwroot", async appManager =>
             {
                 var files = CreateRandomFilesForZip(10);
-                var response = await DeployZip(appManager, files, doAsync: false);
+                var response = await DeployZip(appManager, files, new ZipDeployMetadata());
                 response.EnsureSuccessStatusCode();
                 await AssertSuccessfulDeploymentByFilenames(appManager, files.Select(f => f.Filename).ToArray());
 
                 var empty = new FileForZip[0];
-                var response2 = await DeployZip(appManager, empty, doAsync: false);
+                var response2 = await DeployZip(appManager, empty, new ZipDeployMetadata());
                 await AssertSuccessfulDeploymentByFilenames(appManager, new string[0]);
             });
         }
@@ -76,11 +106,11 @@ namespace Kudu.FunctionalTests
             {
                 // Big enough to run for a few seconds
                 var files = CreateRandomFilesForZip(1000);
-                var response = await DeployZip(appManager, files, doAsync: true);
+                var response = await DeployZip(appManager, files, new ZipDeployMetadata { IsAsync = true });
                 response.EnsureSuccessStatusCode();
 
                 // Immediately try another deployment
-                var response2 = await DeployZip(appManager, new FileForZip[0], doAsync: true);
+                var response2 = await DeployZip(appManager, new FileForZip[0], new ZipDeployMetadata { IsAsync = true });
 
                 Assert.Equal(HttpStatusCode.Conflict, response2.StatusCode);
 
@@ -103,11 +133,11 @@ namespace Kudu.FunctionalTests
             {
                 // Big enough to run for a few seconds
                 var files = CreateRandomFilesForZip(1000);
-                var response = await DeployZip(appManager, files, doAsync: true);
+                var response = await DeployZip(appManager, files, new ZipDeployMetadata { IsAsync = true });
                 response.EnsureSuccessStatusCode();
 
                 // Immediately try another deployment
-                var response2 = await DeployZip(appManager, new FileForZip[0], doAsync: false);
+                var response2 = await DeployZip(appManager, new FileForZip[0], new ZipDeployMetadata());
 
                 Assert.Equal(HttpStatusCode.Conflict, response2.StatusCode);
 
@@ -135,7 +165,7 @@ namespace Kudu.FunctionalTests
                     file.ModifiedTime = origTime;
                 }
 
-                var response = await DeployZip(appManager, files, doAsync: false);
+                var response = await DeployZip(appManager, files, new ZipDeployMetadata());
                 response.EnsureSuccessStatusCode();
                 await AssertSuccessfulDeploymentByContent(appManager, files);
 
@@ -145,7 +175,7 @@ namespace Kudu.FunctionalTests
                 var modifiedFile = new FileForZip { Filename = files[1].Filename, Content = "UPDATED", ModifiedTime = DateTime.Now };
                 var files2 = newFiles.Concat(new[] { oldfile, modifiedFile }).ToArray();
 
-                var response2 = await DeployZip(appManager, files2, doAsync: false);
+                var response2 = await DeployZip(appManager, files2, new ZipDeployMetadata());
                 response2.EnsureSuccessStatusCode();
                 await AssertSuccessfulDeploymentByContent(appManager, files2);
 
@@ -164,7 +194,7 @@ namespace Kudu.FunctionalTests
                 var subdirFile = new FileForZip { Filename = "subdir/should-be-deployed", Content = "" };
 
                 var files = new[] { rootFile, subdirFile };
-                var response = await DeployZip(appManager, files, doAsync: false);
+                var response = await DeployZip(appManager, files, new ZipDeployMetadata());
                 response.EnsureSuccessStatusCode();
                 await AssertSuccessfulDeploymentByFilenames(appManager, new[] { "should-be-deployed" });
             });
@@ -181,7 +211,7 @@ namespace Kudu.FunctionalTests
                 };
 
                 // Should do KuduSync copy only, no build (zip deployments are assumed to be complete by default)
-                var response = await DeployZip(appManager, files, doAsync: false);
+                var response = await DeployZip(appManager, files, new ZipDeployMetadata());
                 response.EnsureSuccessStatusCode();
                 await AssertSuccessfulDeploymentByFilenames(appManager, files.Select(f => f.Filename).ToArray());
 
@@ -194,14 +224,14 @@ namespace Kudu.FunctionalTests
 
                 // Still won't build, since the site setting should override the .deployment. Note that we don't
                 // expect .deployment to be copied to the site root.
-                var response2 = await DeployZip(appManager, files2, doAsync: false);
+                var response2 = await DeployZip(appManager, files2, new ZipDeployMetadata());
                 response2.EnsureSuccessStatusCode();
                 await AssertSuccessfulDeploymentByFilenames(appManager, files.Select(f => f.Filename).ToArray());
 
                 await appManager.SettingsManager.Delete("SCM_DO_BUILD_DURING_DEPLOYMENT");
 
                 // Deploy once more, now we expect a node build to occur
-                var response3 = await DeployZip(appManager, files2, doAsync: false);
+                var response3 = await DeployZip(appManager, files2, new ZipDeployMetadata());
                 response3.EnsureSuccessStatusCode();
 
                 var expected = files.Concat(new[] { new FileForZip { Filename = "node_modules" } }).ToArray();
@@ -218,7 +248,7 @@ namespace Kudu.FunctionalTests
                 {
                     // First deploy zip
                     var files = CreateRandomFilesForZip(10);
-                    var response = await DeployZip(appManager, files, doAsync: false);
+                    var response = await DeployZip(appManager, files, new ZipDeployMetadata());
                     response.EnsureSuccessStatusCode();
                     await AssertSuccessfulDeploymentByFilenames(appManager, files.Select(f => f.Filename).ToArray());
 
@@ -233,7 +263,7 @@ namespace Kudu.FunctionalTests
 
                     // Deploy new zip
                     var files2 = CreateRandomFilesForZip(10);
-                    var response2 = await DeployZip(appManager, files2, doAsync: false);
+                    var response2 = await DeployZip(appManager, files2, new ZipDeployMetadata());
                     response2.EnsureSuccessStatusCode();
                     await AssertSuccessfulDeploymentByFilenames(appManager, files2.Select(f => f.Filename).ToArray());
 
@@ -283,18 +313,26 @@ namespace Kudu.FunctionalTests
             Assert.True(filenameSet.SetEquals(entries.Select(e => e.Name)));
         }
 
-        private static async Task<HttpResponseMessage> DeployZip(ApplicationManager appManager, FileForZip[] files, bool doAsync)
+        private static async Task<HttpResponseMessage> DeployZip(
+            ApplicationManager appManager,
+            FileForZip[] files,
+            ZipDeployMetadata metadata)
         {
             using (var zipStream = CreateZipStream(files))
             {
-                return await DeployZip(appManager, zipStream, doAsync);
+                return await DeployZip(appManager, zipStream, metadata);
             }
         }
 
-        private static async Task<HttpResponseMessage> DeployZip(ApplicationManager appManager, Stream zipStream, bool doAsync)
+        private static async Task<HttpResponseMessage> DeployZip(
+            ApplicationManager appManager,
+            Stream zipStream,
+            ZipDeployMetadata metadata)
         {
             TestTracer.Trace("Push-deploying zip");
-            var response = await appManager.PushDeploymentManager.PushDeployFromStream(zipStream, doAsync);
+            var response = await appManager.PushDeploymentManager.PushDeployFromStream(
+                zipStream,
+                metadata);
             return response;
         }
 

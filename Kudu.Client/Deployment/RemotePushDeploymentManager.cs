@@ -4,6 +4,8 @@ using System.Net.Http;
 using Kudu.Client.Infrastructure;
 using System;
 using System.Threading.Tasks;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Kudu.Client.Deployment
 {
@@ -14,13 +16,37 @@ namespace Kudu.Client.Deployment
         {
         }
 
-        public async Task<HttpResponseMessage> PushDeployFromStream(Stream zipFile, bool doAsync = false)
+        public async Task<HttpResponseMessage> PushDeployFromStream(Stream zipFile, ZipDeployMetadata metadata)
         {
             using (var request = new HttpRequestMessage())
             {
-                if (doAsync)
+                var parms = new List<string>();
+
+                if (metadata.IsAsync)
                 {
-                    request.RequestUri = new Uri(Client.BaseAddress + "?isAsync=true");
+                    parms.Add("isAsync=true");
+                }
+
+                var map = new List<KeyValuePair<string, string>>
+                {
+                    new KeyValuePair<string, string>("author", metadata.Author),
+                    new KeyValuePair<string, string>("authorEmail", metadata.AuthorEmail),
+                    new KeyValuePair<string, string>("deployer", metadata.Deployer),
+                    new KeyValuePair<string, string>("message", metadata.Message),
+                };
+
+                foreach (var item in map)
+                {
+                    if (item.Value != null)
+                    {
+                        parms.Add(
+                            String.Format("{0}={1}", item.Key, item.Value));
+                    }
+                }
+
+                if (parms.Any())
+                {
+                    request.RequestUri = new Uri(Client.BaseAddress + "?" + String.Join("&", parms));
                 }
 
                 request.Method = HttpMethod.Post;
@@ -29,12 +55,21 @@ namespace Kudu.Client.Deployment
             }
         }
 
-        public async Task<HttpResponseMessage> PushDeployFromFile(string path, bool doAsync = false)
+        public async Task<HttpResponseMessage> PushDeployFromFile(string path, ZipDeployMetadata metadata)
         {
             using (var stream = File.OpenRead(path))
             {
-                return await PushDeployFromStream(stream, doAsync);
+                return await PushDeployFromStream(stream, metadata);
             }
         }
+    }
+
+    public class ZipDeployMetadata
+    {
+        public bool IsAsync;
+        public string Author;
+        public string AuthorEmail;
+        public string Deployer;
+        public string Message;
     }
 }
