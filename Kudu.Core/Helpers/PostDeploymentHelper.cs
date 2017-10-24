@@ -84,6 +84,12 @@ namespace Kudu.Core.Helpers
             get { return System.Environment.GetEnvironmentVariable(Constants.WebSiteSku); }
         }
 
+        // WEBSITE_INSTANCE_ID not null or empty
+        public static bool IsAzureEnvironment()
+        {
+            return !String.IsNullOrEmpty(System.Environment.GetEnvironmentVariable("WEBSITE_INSTANCE_ID"));
+        }
+
         /// <summary>
         /// This common codes is to invoke post deployment operations.
         /// It is written to require least dependencies but framework assemblies.
@@ -407,7 +413,7 @@ namespace Kudu.Core.Helpers
             const string MarkerFilePath = @"%TEMP%\SCMPendingOperation.txt";
 
             // only applicable to azure env
-            if (!Environment.IsAzureEnvironment())
+            if (!IsAzureEnvironment())
             {
                 return;
             }
