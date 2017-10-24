@@ -433,7 +433,7 @@ namespace Kudu.Core.Helpers
 
                 var cancelation = new CancellationTokenSource();
                 var delay = Task.Delay(DefaultUpdateMarkerIntervalMS, cancelation.Token);
-                var completed = await Task.WhenAny(delay, task);
+                var completed = await Task.WhenAny( new Task[] { task, delay } );
                 if (completed != delay)
                 {
                     cancelation.Cancel();
