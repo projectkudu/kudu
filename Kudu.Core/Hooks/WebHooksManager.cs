@@ -70,7 +70,8 @@ namespace Kudu.Core.Hooks
         {
             using (_tracer.Step("WebHooksManager.AddWebHook"))
             {
-                if (!Uri.IsWellFormedUriString(webHook.HookAddress, UriKind.RelativeOrAbsolute))
+                // must be valid absolute uri.
+                if (!Uri.IsWellFormedUriString(webHook.HookAddress, UriKind.Absolute))
                 {
                     throw new FormatException(Resources.Error_InvalidHookAddress.FormatCurrentCulture(webHook.HookAddress));
                 }
@@ -220,8 +221,12 @@ namespace Kudu.Core.Hooks
 
                 foreach (var webHook in webHooks.Where(h => String.Equals(h.HookEventType, hookType, StringComparison.OrdinalIgnoreCase)))
                 {
-                    Task publishTask = PublishToHookAsync(webHook, jsonString);
-                    publishTasks.Add(publishTask);
+                    // this is to address the bug where we used to relax and allow relative path
+                    if (Uri.IsWellFormedUriString(webHook.HookAddress, UriKind.Absolute))
+                    {
+                        Task publishTask = PublishToHookAsync(webHook, jsonString);
+                        publishTasks.Add(publishTask);
+                    }
                 }
 
                 await Task.WhenAll(publishTasks);
