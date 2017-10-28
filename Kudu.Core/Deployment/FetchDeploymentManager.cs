@@ -370,8 +370,9 @@ namespace Kudu.Core.Deployment
             });
 
 #pragma warning disable 4014
-            // Track pending task
-            PostDeploymentHelper.TrackPendingOperation(deploymentTask, TimeSpan.Zero);
+            // Run on BG task (Task.Run) to avoid ASP.NET Request thread terminated with request completion and
+            // it doesn't get chance to clean up the pending marker.
+            Task.Run(() => PostDeploymentHelper.TrackPendingOperation(deploymentTask, TimeSpan.Zero));
 #pragma warning restore 4014
 
             // When the frontend/ARM calls /deploy with isAsync=true, it starts polling
