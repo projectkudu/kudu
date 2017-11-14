@@ -89,7 +89,7 @@ namespace Kudu.Services.SiteExtensions
                         && string.Equals(Constants.SiteExtensionProvisioningStateSucceeded, armSettings.ProvisioningState, StringComparison.OrdinalIgnoreCase))
                     {
                         tracer.Trace("Package {0} was just installed.", id);
-                        extension = await _manager.GetLocalExtension(id, checkLatest);
+                        extension =  await ThrowsConflictIfIOException(_manager.GetLocalExtension(id, checkLatest));
                         if (extension == null)
                         {
                             using (tracer.Step("Status indicate {0} installed, but not able to find it from local repo.", id))
@@ -168,7 +168,7 @@ namespace Kudu.Services.SiteExtensions
                 {
                     using (tracer.Step("ARM get : {0}", id))
                     {
-                        extension = await _manager.GetLocalExtension(id, checkLatest);
+                        extension = await ThrowsConflictIfIOException(_manager.GetLocalExtension(id, checkLatest));
                     }
 
                     if (extension == null)
@@ -187,7 +187,7 @@ namespace Kudu.Services.SiteExtensions
             {
                 using (tracer.Step("Get: {0}, is not a ARM request.", id))
                 {
-                    extension = await _manager.GetLocalExtension(id, checkLatest);
+                    extension = await ThrowsConflictIfIOException(_manager.GetLocalExtension(id, checkLatest));
                 }
 
                 if (extension == null)
@@ -465,6 +465,25 @@ namespace Kudu.Services.SiteExtensions
                 {
                     installationLock.Release();
                 }
+            }
+        }
+
+        private async Task<T> ThrowsConflictIfIOException<T>(Task<T> task)
+        {
+            try
+            {
+                return await task;
+            }
+            catch (IOException ex)
+            {
+                if (ArmUtils.IsArmRequest(Request))
+                {
+                    // For ARM request, simplify the exception handler by converting any IOException 
+                    // to 409 Conflict instead of 500 InternalServerError (implying server issue).
+                    throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.Conflict, ex));
+                }
+
+                throw;
             }
         }
     }
