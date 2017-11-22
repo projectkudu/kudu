@@ -142,7 +142,7 @@ namespace Kudu.Services.Functions
                 }
                 catch (InvalidOperationException ex)
                 {
-                    return Request.CreateErrorResponse(HttpStatusCode.Conflict, ex);
+                    return ArmUtils.CreateErrorResponse(Request, HttpStatusCode.Conflict, ex);
                 }
             }
         }
