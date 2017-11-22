@@ -57,7 +57,7 @@ namespace Kudu.Core.Deployment.Generator
                 var projectPath = !String.IsNullOrEmpty(targetProjectPath) ? targetProjectPath : repositoryRoot;
                 return new BasicBuilder(_environment, settings, _propertyProvider, repositoryRoot, projectPath);
             }
-                        
+
             if (!String.IsNullOrEmpty(targetProjectPath))
             {
                 // Try to resolve the project
@@ -331,12 +331,25 @@ namespace Kudu.Core.Deployment.Generator
             }
             else if (FunctionAppHelper.LooksLikeFunctionApp())
             {
-                return new FunctionMsbuildBuilder(_environment,
-                                                perDeploymentSettings,
-                                                _propertyProvider,
-                                                repositoryRoot,
-                                                targetPath,
-                                                solutionPath);
+                if (FunctionAppHelper.IsCSharpFunctionFromProjectFile(targetPath))
+                {
+                    return new FunctionMsbuildBuilder(_environment,
+                                                    perDeploymentSettings,
+                                                    _propertyProvider,
+                                                    repositoryRoot,
+                                                    targetPath,
+                                                    solutionPath);
+                }
+                else
+                {
+                    // csx or node function with extensions.csproj
+                    return new FunctionBasicBuilder(_environment,
+                                                    perDeploymentSettings,
+                                                    _propertyProvider,
+                                                    repositoryRoot,
+                                                    Path.GetDirectoryName(targetPath));
+                }
+
             }
 
             throw new InvalidOperationException(String.Format(CultureInfo.CurrentCulture,
