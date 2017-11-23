@@ -476,14 +476,9 @@ namespace Kudu.Services.SiteExtensions
             }
             catch (IOException ex)
             {
-                if (ArmUtils.IsArmRequest(Request))
-                {
-                    // For ARM request, simplify the exception handler by converting any IOException 
-                    // to 409 Conflict instead of 500 InternalServerError (implying server issue).
-                    throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.Conflict, ex));
-                }
-
-                throw;
+                // Simplify the exception handler by converting any IOException 
+                // to 409 Conflict instead of 500 InternalServerError (implying server issue).
+                throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.Conflict, ex));
             }
         }
     }
