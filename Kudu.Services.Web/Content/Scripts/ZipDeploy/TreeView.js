@@ -1,8 +1,4 @@
-﻿//New
-
-
-
-var newNodeArr = [];
+﻿var newNodeArr = [];
 var pendingchildNode = 0;
 var nodeArrEntry = function (dateTime, msg, description, objectId, expanded, logURL) {
     return {
