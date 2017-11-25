@@ -1,5 +1,3 @@
-//NEW
-
 // Custom status bar for Ace (aka Project Wunderbar)
 var statusbar = {
     showFilename:
