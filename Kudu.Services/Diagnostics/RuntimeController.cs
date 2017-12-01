@@ -30,7 +30,15 @@ namespace Kudu.Services.Diagnostics
             {
                 return new RuntimeInfo
                 {
-                    NodeVersions = GetNodeVersions(allVersions)
+                    NodeVersions = GetNodeVersions(allVersions),
+                    System = new
+                    {
+                        os_name = Environment.OSVersion.Version.Major < 10 ? "Windows Server 2012" : "Windows Server 2016",
+                        os_build_lab_ex = Microsoft.Win32.Registry.GetValue(
+                            @"HKEY_LOCAL_MACHINE\Software\Microsoft\Windows NT\CurrentVersion",
+                            "BuildLabEx", null),
+                        cores = Environment.ProcessorCount,
+                    }
                 };
             }
         }
