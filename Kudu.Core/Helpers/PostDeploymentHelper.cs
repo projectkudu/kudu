@@ -60,12 +60,6 @@ namespace Kudu.Core.Helpers
             get { return System.Environment.GetEnvironmentVariable(Constants.FunctionRunTimeVersion); }
         }
 
-        // ROUTING_EXTENSION_VERSION = 1.0
-        private static string RoutingRunTimeVersion
-        {
-            get { return System.Environment.GetEnvironmentVariable(Constants.RoutingRunTimeVersion); }
-        }
-
         // LOGICAPP_URL = [url to PUT logicapp.json to]
         private static string LogicAppUrl
         {
@@ -125,15 +119,15 @@ namespace Kudu.Core.Helpers
             // use framework serializer to avoid dependency requirement on callers
             // though it is not the best serializer, it should do for this specific use.
             var serializer = new JavaScriptSerializer();
-            var funtionsPath = System.Environment.ExpandEnvironmentVariables(@"%HOME%\site\wwwroot");
+            var functionsPath = System.Environment.ExpandEnvironmentVariables(@"%HOME%\site\wwwroot");
             var triggers = Directory
-                    .GetDirectories(funtionsPath)
+                    .GetDirectories(functionsPath)
                     .Select(d => Path.Combine(d, Constants.FunctionsConfigFile))
                     .Where(File.Exists)
                     .SelectMany(f => DeserializeFunctionTrigger(serializer, f))
                     .ToList();
 
-            if (!string.IsNullOrEmpty(RoutingRunTimeVersion))
+            if (File.Exists(Path.Combine(functionsPath, Constants.ProxyConfigFile)))
             {
                 triggers.Add(new Dictionary<string, object> { { "type", "routingTrigger" } });
             }

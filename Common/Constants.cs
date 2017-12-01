@@ -110,12 +110,12 @@ namespace Kudu
         public const string Functions = "functions";
         public const string FunctionsConfigFile = "function.json";
         public const string FunctionsHostConfigFile = "host.json";
+        public const string ProxyConfigFile = "proxies.json";
         public const string Secrets = "secrets";
         public const string SampleData = "sampledata";
         public const string FunctionsPortal = "FunctionsPortal";
         public const string FunctionKeyNewFormat = "~0.7";
         public const string FunctionRunTimeVersion = "FUNCTIONS_EXTENSION_VERSION";
-        public const string RoutingRunTimeVersion = "ROUTING_EXTENSION_VERSION";
         public const string WebSiteSku = "WEBSITE_SKU";
         public const string DynamicSku = "Dynamic";
         public const string AzureWebJobsSecretStorageType = "AzureWebJobsSecretStorageType";
