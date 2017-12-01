@@ -7,5 +7,7 @@ namespace Kudu.Services.Diagnostics
     {
         [JsonProperty(PropertyName = "nodejs")]
         public IEnumerable<Dictionary<string, string>> NodeVersions { get; set; }
+
+        public object System { get; set; }
     }
 }
