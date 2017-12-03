@@ -283,6 +283,8 @@ namespace Kudu.Services.Web.App_Start
 
             kernel.Bind<IDeploymentManager>().To<DeploymentManager>()
                                              .InRequestScope();
+            kernel.Bind<IFetchDeploymentManager>().To<FetchDeploymentManager>()
+                                             .InRequestScope();
             kernel.Bind<ISSHKeyManager>().To<SSHKeyManager>()
                                              .InRequestScope();
 
@@ -441,6 +443,9 @@ namespace Kudu.Services.Web.App_Start
             // Zip file handler
             routes.MapHttpRouteDual("zip-get-files", "zip/{*path}", new { controller = "Zip", action = "GetItem" }, new { verb = new HttpMethodConstraint("GET", "HEAD") });
             routes.MapHttpRouteDual("zip-put-files", "zip/{*path}", new { controller = "Zip", action = "PutItem" }, new { verb = new HttpMethodConstraint("PUT") });
+
+            // Zip push deployment
+            routes.MapHttpRoute("zip-push-deploy", "api/zipdeploy", new { controller = "PushDeployment", action = "ZipPushDeploy" }, new { verb = new HttpMethodConstraint("POST") });
 
             // Live Command Line
             routes.MapHttpRouteDual("execute-command", "command", new { controller = "Command", action = "ExecuteCommand" }, new { verb = new HttpMethodConstraint("POST") });

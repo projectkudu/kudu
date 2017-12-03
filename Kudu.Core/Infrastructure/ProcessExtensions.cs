@@ -398,7 +398,6 @@ namespace Kudu.Core.Infrastructure
                 // we force close all streams
                 if (completed == delay)
                 {
-                    // TODO, suwatch: MDS Kudu SiteExtension
                     using (tracer.Step("Flush stdio and stderr have no activity within given time"))
                     {
                         bool exited = process.HasExited;

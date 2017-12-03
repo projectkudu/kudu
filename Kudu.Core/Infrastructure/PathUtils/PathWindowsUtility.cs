@@ -247,7 +247,7 @@ namespace Kudu.Core.Infrastructure
             return paths;
         }
 
-        internal override bool PathsEquals(string path1, string path2)
+        public override bool PathsEquals(string path1, string path2)
         {
             if (path1 == null)
             {

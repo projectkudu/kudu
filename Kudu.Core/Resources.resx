@@ -228,4 +228,10 @@
   <data name="Log_TriggeringContainerRestart" xml:space="preserve">
     <value>App container will begin restart within 10 seconds.</value>
   </data>
+  <data name="FetchingChanges" xml:space="preserve">
+    <value>Fetching changes.</value>
+  </data>
+  <data name="ReceivingChanges" xml:space="preserve">
+    <value>Receiving changes.</value>
+  </data>
 </root>

@@ -139,7 +139,7 @@ namespace Kudu.TestHarness
         {
             try
             {
-                appManager.VfsWebRootManager.WriteAllText("hostingstart.html", "<h1>This web site has been created</h1>");
+                appManager.VfsWebRootManager.WriteAllText("hostingstart.html", "<h1>This web site is up and running</h1>");
             }
             catch (HttpRequestException ex)
             {

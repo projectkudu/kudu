@@ -22,12 +22,12 @@ namespace Kudu.Core.Deployment.Generator
             _environment = environment;
         }
 
-        public ISiteBuilder CreateBuilder(ITracer tracer, ILogger logger, IDeploymentSettingsManager settings, IFileFinder fileFinder)
+        public ISiteBuilder CreateBuilder(ITracer tracer, ILogger logger, IDeploymentSettingsManager settings, IRepository repository)
         {
-            string repositoryRoot = _environment.RepositoryPath;
+            string repositoryRoot = repository.RepositoryPath;
 
             // Use the cached vs projects file finder for: a. better performance, b. ignoring solutions/projects under node_modules
-            fileFinder = new CachedVsProjectsFileFinder(fileFinder);
+            var fileFinder = new CachedVsProjectsFileFinder(repository);
 
             // If there's a custom deployment file then let that take over.
             var command = settings.GetValue(SettingsKeys.Command);
@@ -49,9 +49,17 @@ namespace Kudu.Core.Deployment.Generator
             if (!String.IsNullOrEmpty(targetProjectPath))
             {
                 tracer.Trace("Specific project was specified: " + targetProjectPath);
-
                 targetProjectPath = Path.GetFullPath(Path.Combine(repositoryRoot, targetProjectPath.TrimStart('/', '\\')));
+            }
 
+            if (!settings.DoBuildDuringDeployment())
+            {
+                var projectPath = !String.IsNullOrEmpty(targetProjectPath) ? targetProjectPath : repositoryRoot;
+                return new BasicBuilder(_environment, settings, _propertyProvider, repositoryRoot, projectPath);
+            }
+
+            if (!String.IsNullOrEmpty(targetProjectPath))
+            {
                 // Try to resolve the project
                 return ResolveProject(repositoryRoot,
                                       targetProjectPath,
@@ -323,12 +331,25 @@ namespace Kudu.Core.Deployment.Generator
             }
             else if (FunctionAppHelper.LooksLikeFunctionApp())
             {
-                return new FunctionMsbuildBuilder(_environment,
-                                                perDeploymentSettings,
-                                                _propertyProvider,
-                                                repositoryRoot,
-                                                targetPath,
-                                                solutionPath);
+                if (FunctionAppHelper.IsCSharpFunctionFromProjectFile(targetPath))
+                {
+                    return new FunctionMsbuildBuilder(_environment,
+                                                    perDeploymentSettings,
+                                                    _propertyProvider,
+                                                    repositoryRoot,
+                                                    targetPath,
+                                                    solutionPath);
+                }
+                else
+                {
+                    // csx or node function with extensions.csproj
+                    return new FunctionBasicBuilder(_environment,
+                                                    perDeploymentSettings,
+                                                    _propertyProvider,
+                                                    repositoryRoot,
+                                                    Path.GetDirectoryName(targetPath));
+                }
+
             }
 
             throw new InvalidOperationException(String.Format(CultureInfo.CurrentCulture,

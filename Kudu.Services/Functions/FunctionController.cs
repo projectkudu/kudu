@@ -116,7 +116,14 @@ namespace Kudu.Services.Functions
             var tracer = _traceFactory.GetTracer();
             using (tracer.Step("FunctionsController.GetMasterKey()"))
             {
-                return Request.CreateResponse(HttpStatusCode.OK, await _manager.GetMasterKeyAsync());
+                try
+                {
+                    return Request.CreateResponse(HttpStatusCode.OK, await _manager.GetMasterKeyAsync());
+                }
+                catch (InvalidOperationException ex)
+                {
+                    return Request.CreateErrorResponse(HttpStatusCode.Conflict, ex);
+                }
             }
         }
 
@@ -129,7 +136,14 @@ namespace Kudu.Services.Functions
             var tracer = _traceFactory.GetTracer();
             using (tracer.Step($"FunctionsController.GetSecrets({name})"))
             {
-                return Request.CreateResponse(HttpStatusCode.OK, await _manager.GetFunctionSecretsAsync(name));
+                try
+                {
+                    return Request.CreateResponse(HttpStatusCode.OK, await _manager.GetFunctionSecretsAsync(name));
+                }
+                catch (InvalidOperationException ex)
+                {
+                    return ArmUtils.CreateErrorResponse(Request, HttpStatusCode.Conflict, ex);
+                }
             }
         }
 

@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Net.Http;
+using System.Threading.Tasks;
 using Kudu.Console.Services;
 using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Settings;
@@ -163,8 +164,16 @@ namespace Kudu.Console
             {
                 try
                 {
-                    deploymentManager.DeployAsync(gitRepository, changeSet: null, deployer: deployer, clean: false)
-                        .Wait();
+                    // although the api is called DeployAsync, most expensive works are done synchronously.
+                    // need to launch separate task to go async explicitly (consistent with FetchDeploymentManager)
+                    var deploymentTask = Task.Run(async () => await deploymentManager.DeployAsync(gitRepository, changeSet: null, deployer: deployer, clean: false));
+
+#pragma warning disable 4014
+                    // Track pending task
+                    PostDeploymentHelper.TrackPendingOperation(deploymentTask, TimeSpan.Zero);
+#pragma warning restore 4014
+
+                    deploymentTask.Wait();
 
                     if (PostDeploymentHelper.IsAutoSwapEnabled())
                     {

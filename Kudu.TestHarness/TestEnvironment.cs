@@ -65,6 +65,12 @@ namespace Kudu.TestHarness
             set;
         }
 
+        public string ZipTempPath
+        {
+            get;
+            set;
+        }
+
         public string ScriptPath
         {
             get;

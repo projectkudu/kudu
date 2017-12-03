@@ -405,12 +405,10 @@ namespace Kudu.Services.Performance
                         {
                             changes.Add(line);
                         }
-
-                        offset += line.Length;
                     }
 
                     // Adjust offset and return changes
-                    _logFiles[e.FullPath] = offset;
+                    _logFiles[e.FullPath] = reader.BaseStream.Position;
 
                     return changes;
                 }
