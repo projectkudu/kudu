@@ -14,16 +14,7 @@ var nodeArrEntry = function (dateTime, msg, description, objectId, expanded, log
 function fetchDeploymentInfo(uri) {
     if ((uri === null) || (uri === undefined) || (uri === "")) {
         uri = "/api/deployments/latest/";
-
     }
-
-
-
-
-
-
-
-
     var request = {
         method: "GET"
     };
@@ -260,7 +251,10 @@ function appendNewChildren(parentNodeDisplayText, parentNodeID, newchildNodes) {
 }
 
 function refreshRecursively(currNode) {
-
+    if (currNode === null || currNode === undefined) {
+        //This was called with an empty tree. Happens when deployment is switching from a tempID to an actual DeploymentID. We can ignore this condition. On next refresh, this will work
+        return true;
+    }
     if (currNode.nodes().length < 1) {
         //This node has no children and can be ignored while processing
         return true;
