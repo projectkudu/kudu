@@ -154,11 +154,13 @@
     <Content Include="Content\Images\Kudu.svg" />
     <Content Include="Content\Images\Windows Azure Web Site.png" />
     <Content Include="Content\Images\paKman.gif" />
+    <Content Include="Content\Scripts\ZipDeploy\FileBrowser.js" />
     <Content Include="Content\Scripts\HelperScript.js" />
     <Content Include="Content\Scripts\jquery.contextMenu.js" />
     <Content Include="Content\Scripts\KuduExec.js" />
     <Content Include="Content\Scripts\ProcessExplorer.js" />
     <Content Include="Content\Scripts\SiteExtensions.js" />
+    <Content Include="Content\Scripts\ZipDeploy\TreeView.js" />
     <Content Include="Content\Scripts\vkbeautify.0.99.00.beta.js" />
     <Content Include="Content\Styles\FileBrowser.css" />
     <Content Include="Content\Scripts\jquery-console\jquery.console.js" />
@@ -170,6 +172,7 @@
     <Content Include="Content\Styles\SiteExtensions.css" />
     <Content Include="Content\Scripts\jquery.signalR-2.1.1.min.js" />
     <Content Include="Content\Scripts\ace-init.js" />
+    <Content Include="Content\Styles\ZipDeployTreeView.css" />
     <Content Include="favicon.ico" />
     <Content Include="Web.config">
       <SubType>Designer</SubType>
@@ -249,6 +252,17 @@
       <SubType>Code</SubType>
     </Content>
     <Content Include="DebugConsole\LinuxConsole.cshtml">
+      <SubType>Code</SubType>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="ZipDeploy\Default.cshtml">
+      <SubType>Code</SubType>
+    </Content>
+    <Content Include="ZipDeploy\WindowsZipDeploy.cshtml">
+      <SubType>Code</SubType>
+    </Content>
+    <Content Include="ZipDeploy\LinuxZipDeploy.cshtml">
       <SubType>Code</SubType>
     </Content>
   </ItemGroup>
