@@ -434,7 +434,7 @@ $.connection.hub.start().done(function () {
 
 
     //Start inside wwwroot since this is where the upload will be made by the ZipDeploy API
-    var root = new node({ name: "/wwwroot", type: "dir", href: appRoot + "api/vfs/site/wwwroot" }),
+    var root = new node({ name: "/wwwroot", type: "dir", path: "D:\\home\\site\\wwwroot", href: appRoot + "api/vfs/site/wwwroot" }),
         ignoreWorkingDirChange = false, // global variables
         viewModel = {
             root: root,
@@ -503,6 +503,9 @@ $.connection.hub.start().done(function () {
 
 
     setupFileSystemWatcher();
+    if (root.path() !== null && root.path() !== "" && root.path !== undefined) {
+        updateFileSystemWatcher(root.path());
+    }
 
     /*
     window.KuduExec.workingDir.subscribe(function (newValue) {
