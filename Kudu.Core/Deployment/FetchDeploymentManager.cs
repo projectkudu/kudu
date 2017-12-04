@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using Kudu.Contracts;
 using Kudu.Contracts.Infrastructure;
@@ -72,7 +73,7 @@ namespace Kudu.Core.Deployment
             // push/clone endpoint and zip deployment.
             if (!(_settings.IsScmEnabled() || deployInfo.AllowDeploymentWhileScmDisabled))
             {
-                return FetchDeploymentRequestResult.ForbiddenScmDisabled;
+                return new FetchDeploymentRequestResult(FetchDeploymentRequestResultStatus.ForbiddenScmDisabled);
             }
 
             // for CI payload, we will return Accepted and do the task in the BG
@@ -93,8 +94,8 @@ namespace Kudu.Core.Deployment
                         waitForTempDeploymentCreation);
 
                     return successfullyRequested
-                    ? FetchDeploymentRequestResult.RunningAynschronously
-                    : FetchDeploymentRequestResult.ConflictDeploymentInProgress;
+                    ? new FetchDeploymentRequestResult(FetchDeploymentRequestResultStatus.RunningAynschronously)
+                    : new FetchDeploymentRequestResult(FetchDeploymentRequestResultStatus.ConflictDeploymentInProgress);
                 }
             }
 
@@ -105,11 +106,13 @@ namespace Kudu.Core.Deployment
                 {
                     if (PostDeploymentHelper.IsAutoSwapOngoing())
                     {
-                        return FetchDeploymentRequestResult.ConflictAutoSwapOngoing;
+                        return new FetchDeploymentRequestResult(FetchDeploymentRequestResultStatus.ConflictAutoSwapOngoing);
                     }
 
-                    await PerformDeployment(deployInfo);
-                    return FetchDeploymentRequestResult.RanSynchronously;
+                    var result = await PerformDeployment(deployInfo);
+                    return result != null && result.Status != DeployStatus.Failed 
+                        ? new FetchDeploymentRequestResult(FetchDeploymentRequestResultStatus.RanSynchronously)
+                        : new FetchDeploymentRequestResult(FetchDeploymentRequestResultStatus.RanSynchronouslyFailed, result?.StatusText);
                 }, "Performing continuous deployment", TimeSpan.Zero);
             }
             catch (LockOperationException)
@@ -125,20 +128,21 @@ namespace Kudu.Core.Deployment
                         FileSystemHelpers.SetLastWriteTimeUtc(_markerFilePath, DateTime.UtcNow);
                     }
 
-                    return FetchDeploymentRequestResult.Pending;
+                    return new FetchDeploymentRequestResult(FetchDeploymentRequestResultStatus.Pending);
                 }
                 else
                 {
-                    return FetchDeploymentRequestResult.ConflictDeploymentInProgress;
+                    return new FetchDeploymentRequestResult(FetchDeploymentRequestResultStatus.ConflictDeploymentInProgress);
                 }
             }
         }
 
-        public async Task PerformDeployment(DeploymentInfoBase deploymentInfo, IDisposable tempDeployment = null, ChangeSet tempChangeSet = null)
+        public async Task<DeployResult> PerformDeployment(DeploymentInfoBase deploymentInfo, IDisposable tempDeployment = null, ChangeSet tempChangeSet = null)
         {
             DateTime currentMarkerFileUTC;
             DateTime nextMarkerFileUTC = FileSystemHelpers.GetLastWriteTimeUtc(_markerFilePath);
             ChangeSet lastChange = null;
+            DeployResult result = null;
 
             do
             {
@@ -201,7 +205,7 @@ namespace Kudu.Core.Deployment
                             // unless for GenericHandler where specific commitId is specified
                             bool deploySpecificCommitId = !String.IsNullOrEmpty(deploymentInfo.CommitId);
 
-                            await _deploymentManager.DeployAsync(
+                            result = await _deploymentManager.DeployAsync(
                                 repository,
                                 changeSet,
                                 deploymentInfo.Deployer,
@@ -249,6 +253,8 @@ namespace Kudu.Core.Deployment
                     await PostDeploymentHelper.PerformAutoSwap(_environment.RequestId, _environment.SiteRestrictedJwt, new PostDeploymentTraceListener(_tracer, _deploymentManager.GetLogger(lastChange.Id)));
                 }
             }
+
+            return result;
         }
 
         // For continuous integration, we will only build/deploy if fetch new changes

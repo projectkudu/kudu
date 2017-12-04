@@ -180,10 +180,10 @@ namespace Kudu.Core.Test
                 throw new NotImplementedException();
             }
 
-            public Task DeployAsync(IRepository repository, ChangeSet changeSet, string deployer, bool clean, DeploymentInfoBase deploymentInfo = null, bool needFileUpdate = true, bool fullBuildByDefault = true)
+            public Task<DeployResult> DeployAsync(IRepository repository, ChangeSet changeSet, string deployer, bool clean, DeploymentInfoBase deploymentInfo = null, bool needFileUpdate = true, bool fullBuildByDefault = true)
             {
                 ++DeployCount;
-                return Task.FromResult(1);
+                return Task.FromResult(new DeployResult());
             }
 
             public IDisposable CreateTemporaryDeployment(string statusText, out ChangeSet tempChangeSet, ChangeSet changeset = null, string deployedBy = null)

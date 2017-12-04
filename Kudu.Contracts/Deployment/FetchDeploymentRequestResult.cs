@@ -1,6 +1,17 @@
 ﻿namespace Kudu.Core.Deployment
 {
-    public enum FetchDeploymentRequestResult
+    public class FetchDeploymentRequestResult
+    {
+        public FetchDeploymentRequestResult(FetchDeploymentRequestResultStatus status, string statusText = null)
+        {
+            Status = status;
+            StatusText = statusText ?? string.Empty;
+        }
+        public FetchDeploymentRequestResultStatus Status { get; }
+        public string StatusText { get; }
+    }
+    
+    public enum FetchDeploymentRequestResultStatus
     {
         Unknown = 0,
         ForbiddenScmDisabled,
@@ -8,6 +19,7 @@
         ConflictAutoSwapOngoing,
         RanSynchronously,
         Pending,
-        ConflictDeploymentInProgress
+        ConflictDeploymentInProgress,
+        RanSynchronouslyFailed
     }
 }

@@ -84,9 +84,9 @@ namespace Kudu.Services
 
                 var response = await _manager.FetchDeploy(deployInfo, asyncRequested, UriHelper.GetRequestUri(context.Request), targetBranch);
 
-                switch (response)
+                switch (response.Status)
                 {
-                    case FetchDeploymentRequestResult.RunningAynschronously:
+                    case FetchDeploymentRequestResultStatus.RunningAynschronously:
                         // to avoid regression, only set location header if isAsync
                         if (asyncRequested)
                         {
@@ -97,27 +97,30 @@ namespace Kudu.Services
                         context.Response.StatusCode = (int)HttpStatusCode.Accepted;
                         context.ApplicationInstance.CompleteRequest();
                         return;
-                    case FetchDeploymentRequestResult.ForbiddenScmDisabled:
+                    case FetchDeploymentRequestResultStatus.ForbiddenScmDisabled:
                         context.Response.StatusCode = (int)HttpStatusCode.Forbidden;
                         context.ApplicationInstance.CompleteRequest();
                         _tracer.Trace("Scm is not enabled, reject all requests.");
                         return;
-                    case FetchDeploymentRequestResult.ConflictAutoSwapOngoing:
+                    case FetchDeploymentRequestResultStatus.ConflictAutoSwapOngoing:
                         context.Response.StatusCode = (int)HttpStatusCode.Conflict;
                         context.Response.Write(Resources.Error_AutoSwapDeploymentOngoing);
                         context.ApplicationInstance.CompleteRequest();
                         return;
-                    case FetchDeploymentRequestResult.Pending:
+                    case FetchDeploymentRequestResultStatus.Pending:
                         // Return a http 202: the request has been accepted for processing, but the processing has not been completed.
                         context.Response.StatusCode = (int)HttpStatusCode.Accepted;
                         context.ApplicationInstance.CompleteRequest();
                         return;
-                    case FetchDeploymentRequestResult.ConflictDeploymentInProgress:
+                    case FetchDeploymentRequestResultStatus.ConflictDeploymentInProgress:
                         context.Response.StatusCode = (int)HttpStatusCode.Conflict;
                         context.Response.Write(Resources.Error_DeploymentInProgress);
                         context.ApplicationInstance.CompleteRequest();
                         break;
-                    case FetchDeploymentRequestResult.RanSynchronously:
+                    case FetchDeploymentRequestResultStatus.RanSynchronously:
+                    case FetchDeploymentRequestResultStatus.RanSynchronouslyFailed:
+                        // This goes to the default case to avoid breaking changes.
+                        // It's mainly for the PushDeploymentController to give feedback.
                     default:
                         break;
                 }

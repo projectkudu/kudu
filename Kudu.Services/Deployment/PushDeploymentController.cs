@@ -121,12 +121,12 @@ namespace Kudu.Services.Deployment
             deploymentInfo.RepositoryUrl = zipFilePath;
 
             var result = await _deploymentManager.FetchDeploy(deploymentInfo, isAsync, UriHelper.GetRequestUri(Request), "HEAD");
-
+            
             var response = Request.CreateResponse();
 
-            switch (result)
+            switch (result.Status)
             {
-                case FetchDeploymentRequestResult.RunningAynschronously:
+                case FetchDeploymentRequestResultStatus.RunningAynschronously:
                     if (isAsync)
                     {
                         // latest deployment keyword reserved to poll till deployment done
@@ -135,23 +135,27 @@ namespace Kudu.Services.Deployment
                     }
                     response.StatusCode = HttpStatusCode.Accepted;
                     break;
-                case FetchDeploymentRequestResult.ForbiddenScmDisabled:
+                case FetchDeploymentRequestResultStatus.ForbiddenScmDisabled:
                     // Should never hit this for zip push deploy
                     response.StatusCode = HttpStatusCode.Forbidden;
                     _tracer.Trace("Scm is not enabled, reject all requests.");
                     break;
-                case FetchDeploymentRequestResult.ConflictAutoSwapOngoing:
+                case FetchDeploymentRequestResultStatus.ConflictAutoSwapOngoing:
                     response.StatusCode = HttpStatusCode.Conflict;
                     response.Content = new StringContent(Resources.Error_AutoSwapDeploymentOngoing);
                     break;
-                case FetchDeploymentRequestResult.Pending:
+                case FetchDeploymentRequestResultStatus.Pending:
                     // Shouldn't happen here, as we disallow deferral for this use case
                     response.StatusCode = HttpStatusCode.Accepted;
                     break;
-                case FetchDeploymentRequestResult.RanSynchronously:
+                case FetchDeploymentRequestResultStatus.RanSynchronously:
                     response.StatusCode = HttpStatusCode.OK;
                     break;
-                case FetchDeploymentRequestResult.ConflictDeploymentInProgress:
+                case FetchDeploymentRequestResultStatus.RanSynchronouslyFailed:
+                    response.StatusCode = HttpStatusCode.InternalServerError;
+                    response.Content = new StringContent(result.StatusText);
+                    break;
+                case FetchDeploymentRequestResultStatus.ConflictDeploymentInProgress:
                     response.StatusCode = HttpStatusCode.Conflict;
                     response.Content = new StringContent(Resources.Error_DeploymentInProgress);
                     break;

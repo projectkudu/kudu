@@ -151,7 +151,7 @@ namespace Kudu.Core.Deployment
             }
         }
 
-        public async Task DeployAsync(
+        public async Task<DeployResult> DeployAsync(
             IRepository repository,
             ChangeSet changeSet,
             string deployer,
@@ -275,6 +275,8 @@ namespace Kudu.Core.Deployment
                 {
                     throw new DeploymentFailedException(exception);
                 }
+
+                return GetResult(id);
             }
         }
 
