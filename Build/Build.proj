@@ -18,9 +18,9 @@
     </PropertyGroup>
     
     <PropertyGroup>
-        <MajorVersion>69</MajorVersion>
-        <!-- Ensure that we come up with a new version every 65535 years -->
-        <VersionStartYear>2012</VersionStartYear>
+        <!-- When bumping up MajorVersion, make sure to update VersionStartYear to current year -->
+        <MajorVersion>70</MajorVersion>
+        <VersionStartYear>2018</VersionStartYear>
         
         <!-- Build number is of the format (CurrentYear - VersionStartYear + 1)(2 digit month)(2 digit day) -->
         <MinorVersion>$([MSBuild]::Add(1, $([MSBuild]::Subtract($([System.DateTime]::UtcNow.Year), $(VersionStartYear)))))$([System.DateTime]::UtcNow.ToString("MMdd"))</MinorVersion>
