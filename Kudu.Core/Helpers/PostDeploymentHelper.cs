@@ -130,7 +130,7 @@ namespace Kudu.Core.Helpers
                 taskHubName = GetTaskHub(serializer, hostJson);
             }
 
-            
+
             var triggers = Directory
                     .GetDirectories(functionsPath)
                     .Select(d => Path.Combine(d, Constants.FunctionsConfigFile))
@@ -142,6 +142,7 @@ namespace Kudu.Core.Helpers
             {
                 triggers.Add(new Dictionary<string, object> { { "type", "routingTrigger" } });
             }
+
             // Add hubName to each Durable Functions trigger
             if (!string.IsNullOrEmpty(taskHubName))
             {
@@ -156,7 +157,7 @@ namespace Kudu.Core.Helpers
                     }
                 }
             }
-            
+
             var content = serializer.Serialize(triggers);
             Exception exception = null;
             try
@@ -304,7 +305,7 @@ namespace Kudu.Core.Helpers
             }
         }
 
-        private static string GetTaskHub (JavaScriptSerializer serializer, string hostConfigPath)
+        private static string GetTaskHub(JavaScriptSerializer serializer, string hostConfigPath)
         {
             string taskHubName = null;
             Dictionary<string, object> json = (Dictionary<string, object>)serializer.DeserializeObject(File.ReadAllText(hostConfigPath));
