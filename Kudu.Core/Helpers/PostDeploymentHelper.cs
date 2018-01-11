@@ -120,6 +120,17 @@ namespace Kudu.Core.Helpers
             // though it is not the best serializer, it should do for this specific use.
             var serializer = new JavaScriptSerializer();
             var functionsPath = System.Environment.ExpandEnvironmentVariables(@"%HOME%\site\wwwroot");
+
+            // Read host.json 
+            // Get HubName property for Durable Functions
+            string hubName = null;
+            if (File.Exists(Path.Combine(functionsPath, Constants.FunctionsHostConfigFile)))
+            {
+                string hostJson = Path.Combine(functionsPath, Constants.FunctionsHostConfigFile);
+                hubName = GetTaskHub(serializer, hostJson);
+            }
+
+            
             var triggers = Directory
                     .GetDirectories(functionsPath)
                     .Select(d => Path.Combine(d, Constants.FunctionsConfigFile))
@@ -131,7 +142,20 @@ namespace Kudu.Core.Helpers
             {
                 triggers.Add(new Dictionary<string, object> { { "type", "routingTrigger" } });
             }
-
+            // Add hubName to each Durable Functions trigger
+            if (!string.IsNullOrEmpty(hubName))
+            {
+                foreach (var trigger in triggers)
+                {
+                    if (trigger.ContainsKey("type")
+                    && (trigger["type"].ToString().Equals("orchestrationTrigger", StringComparison.OrdinalIgnoreCase)
+                    || trigger["type"].ToString().Equals("activityTrigger", StringComparison.OrdinalIgnoreCase)))
+                    {
+                        trigger.Add("hubName", hubName);
+                    }
+                }
+            }
+            
             var content = serializer.Serialize(triggers);
             Exception exception = null;
             try
@@ -277,6 +301,22 @@ namespace Kudu.Core.Helpers
             {
                 throw new InvalidOperationException(String.Format("Missing {0} env!", Constants.HttpHost));
             }
+        }
+
+        private static string GetTaskHub (JavaScriptSerializer serializer, string hostConfigPath)
+        {
+            string taskHubName = null;
+            Dictionary<string, object> json = (Dictionary<string, object>)serializer.DeserializeObject(File.ReadAllText(hostConfigPath));
+            if (json.ContainsKey(Constants.DurableTask))
+            {
+                Dictionary<string, object> kvp = (Dictionary<string, object>)json[Constants.DurableTask];
+                if (kvp.ContainsKey(Constants.HubName))
+                {
+                    taskHubName = kvp[Constants.HubName].ToString();
+                }
+            }
+
+            return taskHubName;
         }
 
         private static IEnumerable<Dictionary<string, object>> DeserializeFunctionTrigger(JavaScriptSerializer serializer, string functionJson)
