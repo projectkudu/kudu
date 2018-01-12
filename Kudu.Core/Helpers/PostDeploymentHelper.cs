@@ -148,7 +148,8 @@ namespace Kudu.Core.Helpers
             {
                 foreach (var trigger in triggers)
                 {
-                    if (trigger.TryGetValue("type", out object typeValue)
+                    object typeValue;
+                    if (trigger.TryGetValue("type", out typeValue)
                     && typeValue != null
                     && (trigger["type"].ToString().Equals("orchestrationTrigger", StringComparison.OrdinalIgnoreCase)
                     || trigger["type"].ToString().Equals("activityTrigger", StringComparison.OrdinalIgnoreCase)))
@@ -309,10 +310,13 @@ namespace Kudu.Core.Helpers
         {
             string taskHubName = null;
             Dictionary<string, object> json = (Dictionary<string, object>)serializer.DeserializeObject(File.ReadAllText(hostConfigPath));
-            if (json.TryGetValue(Constants.DurableTask, out object durableTaskValue) && durableTaskValue != null)
+            object durableTaskValue;
+            if (json.TryGetValue(Constants.DurableTask, out durableTaskValue) && durableTaskValue != null)
             {
                 Dictionary<string, object> kvp = (Dictionary<string, object>)json[Constants.DurableTask];
-                if (kvp.TryGetValue(Constants.HubName, out object hubNameValue) && hubNameValue != null)
+
+                object hubNameValue;
+                if (kvp.TryGetValue(Constants.HubName, out hubNameValue) && hubNameValue != null)
                 {
                     taskHubName = kvp[Constants.HubName].ToString();
                 }
