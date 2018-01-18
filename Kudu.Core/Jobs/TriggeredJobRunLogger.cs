@@ -29,7 +29,7 @@ namespace Kudu.Core.Jobs
             _id = id;
 
             _historyPath = Path.Combine(Environment.JobsDataPath, Constants.TriggeredPath, jobName, _id);
-            FileSystemHelpers.EnsureDirectory(_historyPath);
+            OperationManager.SafeExecute(() => FileSystemHelpers.EnsureDirectory(_historyPath));
 
             _outputFilePath = Path.Combine(_historyPath, OutputLogFileName);
 
