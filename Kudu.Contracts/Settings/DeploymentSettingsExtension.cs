@@ -222,7 +222,7 @@ namespace Kudu.Contracts.Settings
             return settings.GetValue(SettingsKeys.UseLibGit2SharpRepository) != "0";
         }
 
-        public static bool TouchWebConfigAfterDeployment(this IDeploymentSettingsManager settings)
+        public static bool TouchWatchedFileAfterDeployment(this IDeploymentSettingsManager settings)
         {
             return settings.GetValue(SettingsKeys.TouchWebConfigAfterDeployment) != "0";
         }

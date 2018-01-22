@@ -158,7 +158,7 @@ namespace Kudu.Services.Deployment
 
                         try
                         {
-                            await _deploymentManager.DeployAsync(repository, changeSet, username, clean, needFileUpdate);
+                            await _deploymentManager.DeployAsync(repository, changeSet, username, clean, deploymentInfo: null, needFileUpdate: needFileUpdate);
                         }
                         catch (DeploymentFailedException ex)
                         {

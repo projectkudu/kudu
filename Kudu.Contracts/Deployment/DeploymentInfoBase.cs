@@ -28,6 +28,21 @@ namespace Kudu.Core.Deployment
         public FetchDelegate Fetch { get; set; }
         public bool AllowDeploymentWhileScmDisabled { get; set; }
 
+        // Optional.
+        // Path of the directory to be deployed to. The path should be relative to the wwwroot directory.
+        // Example: "webapps/ROOT"
+        public string TargetPath { get; set; }
+
+        // Optional.
+        // Path of the file that is watched for changes by the web server.
+        // The path must be relative to the directory where deployment is performed.
+        //
+        // Example1: If SCM_TARGET_PATH is not defined, WatchedFilePath is "web.config",
+        // file to be touched would refer to "%HOME%\site\wwwroot\web.config".
+        // Example2: If SCM_TARGET_PATH is "dir1", WatchedFilePath is "dir2/web.xml",
+        // file to be touched would refer to "%HOME%\site\wwwroot\dir1\dir2\web.xml".
+        public string WatchedFilePath { get; set; }
+
         // this is only set by GenericHandler
         // the RepositoryUrl can specify specific commitid to deploy
         // for instance, http://github.com/kuduapps/hellokudu.git#<commitid>

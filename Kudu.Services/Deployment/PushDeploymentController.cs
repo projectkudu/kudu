@@ -19,8 +19,8 @@ namespace Kudu.Services.Deployment
 {
     public class PushDeploymentController : ApiController
     {
-        private const string DefaultDeployer = "Zip-Push";
-        private const string DefaultMessage = "Created via zip push deployment";
+        private const string DefaultDeployer = "Push-Deployer";
+        private const string DefaultMessage = "Created via a push deployment";
 
         private readonly IEnvironment _environment;
         private readonly IFetchDeploymentManager _deploymentManager;
@@ -50,17 +50,6 @@ namespace Kudu.Services.Deployment
         {
             using (_tracer.Step("ZipPushDeploy"))
             {
-                var zipFileName = Path.ChangeExtension(Path.GetRandomFileName(), "zip");
-                var zipFilePath = Path.Combine(_environment.ZipTempPath, zipFileName);
-
-                using (_tracer.Step("Writing zip file to {0}", zipFilePath))
-                {
-                    using (var file = FileSystemHelpers.CreateFile(zipFilePath))
-                    {
-                        await request.Content.CopyToAsync(file);
-                    }
-                }
-
                 var deploymentInfo = new ZipDeploymentInfo(_environment, _traceFactory)
                 {
                     AllowDeploymentWhileScmDisabled = true,
@@ -68,7 +57,6 @@ namespace Kudu.Services.Deployment
                     IsContinuous = false,
                     AllowDeferredDeployment = false,
                     IsReusable = false,
-                    RepositoryUrl = zipFilePath,
                     TargetChangeset = DeploymentManager.CreateTemporaryChangeSet(message: "Deploying from pushed zip file"),
                     CommitId = null,
                     RepositoryType = RepositoryType.None,
@@ -79,48 +67,102 @@ namespace Kudu.Services.Deployment
                     Message = message
                 };
 
-                var result = await _deploymentManager.FetchDeploy(deploymentInfo, isAsync, UriHelper.GetRequestUri(Request), "HEAD");
-
-                var response = request.CreateResponse();
-
-                switch (result)
-                {
-                    case FetchDeploymentRequestResult.RunningAynschronously:
-                        if (isAsync)
-                        {
-                            // latest deployment keyword reserved to poll till deployment done
-                            response.Headers.Location = new Uri(UriHelper.GetRequestUri(Request),
-                                String.Format("/api/deployments/{0}?deployer={1}&time={2}", Constants.LatestDeployment, deploymentInfo.Deployer, DateTime.UtcNow.ToString("yyy-MM-dd_HH-mm-ssZ")));
-                        }
-                        response.StatusCode = HttpStatusCode.Accepted;
-                        break;
-                    case FetchDeploymentRequestResult.ForbiddenScmDisabled:
-                        // Should never hit this for zip push deploy
-                        response.StatusCode = HttpStatusCode.Forbidden;
-                        _tracer.Trace("Scm is not enabled, reject all requests.");
-                        break;
-                    case FetchDeploymentRequestResult.ConflictAutoSwapOngoing:
-                        response.StatusCode = HttpStatusCode.Conflict;
-                        response.Content = new StringContent(Resources.Error_AutoSwapDeploymentOngoing);
-                        break;
-                    case FetchDeploymentRequestResult.Pending:
-                        // Shouldn't happen here, as we disallow deferral for this use case
-                        response.StatusCode = HttpStatusCode.Accepted;
-                        break;
-                    case FetchDeploymentRequestResult.RanSynchronously:
-                        response.StatusCode = HttpStatusCode.OK;
-                        break;
-                    case FetchDeploymentRequestResult.ConflictDeploymentInProgress:
-                        response.StatusCode = HttpStatusCode.Conflict;
-                        response.Content = new StringContent(Resources.Error_DeploymentInProgress);
-                        break;
-                    default:
-                        response.StatusCode = HttpStatusCode.BadRequest;
-                        break;
-                }
-
-                return response;
+                return await PushDeployAsync(deploymentInfo, isAsync);
             }
+        }
+
+        [HttpPost]
+        public async Task<HttpResponseMessage> WarPushDeploy(
+            HttpRequestMessage request,
+            [FromUri] bool isAsync = false,
+            [FromUri] string author = null,
+            [FromUri] string authorEmail = null,
+            [FromUri] string deployer = DefaultDeployer,
+            [FromUri] string message = DefaultMessage)
+        {
+            using (_tracer.Step("WarPushDeploy"))
+            {
+                var deploymentInfo = new ZipDeploymentInfo(_environment, _traceFactory)
+                {
+                    AllowDeploymentWhileScmDisabled = true,
+                    Deployer = deployer,
+                    TargetPath = @"webapps\ROOT",
+                    WatchedFilePath = @"WEB-INF\web.xml",
+                    IsContinuous = false,
+                    AllowDeferredDeployment = false,
+                    IsReusable = false,
+                    TargetChangeset = DeploymentManager.CreateTemporaryChangeSet(message: "Deploying from pushed war file"),
+                    CommitId = null,
+                    RepositoryType = RepositoryType.None,
+                    Fetch = LocalZipFetch,
+                    DoFullBuildByDefault = false,
+                    Author = author,
+                    AuthorEmail = authorEmail,
+                    Message = message
+                };
+
+                return await PushDeployAsync(deploymentInfo, isAsync);
+            }
+        }
+
+        private async Task<HttpResponseMessage> PushDeployAsync(
+            ZipDeploymentInfo deploymentInfo,
+            bool isAsync)
+        {
+            var zipFileName = Path.ChangeExtension(Path.GetRandomFileName(), "zip");
+            var zipFilePath = Path.Combine(_environment.ZipTempPath, zipFileName);
+
+            using (_tracer.Step("Writing content to {0}", zipFilePath))
+            {
+                using (var file = FileSystemHelpers.CreateFile(zipFilePath))
+                {
+                    await Request.Content.CopyToAsync(file);
+                }
+            }
+
+            deploymentInfo.RepositoryUrl = zipFilePath;
+
+            var result = await _deploymentManager.FetchDeploy(deploymentInfo, isAsync, UriHelper.GetRequestUri(Request), "HEAD");
+
+            var response = Request.CreateResponse();
+
+            switch (result)
+            {
+                case FetchDeploymentRequestResult.RunningAynschronously:
+                    if (isAsync)
+                    {
+                        // latest deployment keyword reserved to poll till deployment done
+                        response.Headers.Location = new Uri(UriHelper.GetRequestUri(Request),
+                            String.Format("/api/deployments/{0}?deployer={1}&time={2}", Constants.LatestDeployment, deploymentInfo.Deployer, DateTime.UtcNow.ToString("yyy-MM-dd_HH-mm-ssZ")));
+                    }
+                    response.StatusCode = HttpStatusCode.Accepted;
+                    break;
+                case FetchDeploymentRequestResult.ForbiddenScmDisabled:
+                    // Should never hit this for zip push deploy
+                    response.StatusCode = HttpStatusCode.Forbidden;
+                    _tracer.Trace("Scm is not enabled, reject all requests.");
+                    break;
+                case FetchDeploymentRequestResult.ConflictAutoSwapOngoing:
+                    response.StatusCode = HttpStatusCode.Conflict;
+                    response.Content = new StringContent(Resources.Error_AutoSwapDeploymentOngoing);
+                    break;
+                case FetchDeploymentRequestResult.Pending:
+                    // Shouldn't happen here, as we disallow deferral for this use case
+                    response.StatusCode = HttpStatusCode.Accepted;
+                    break;
+                case FetchDeploymentRequestResult.RanSynchronously:
+                    response.StatusCode = HttpStatusCode.OK;
+                    break;
+                case FetchDeploymentRequestResult.ConflictDeploymentInProgress:
+                    response.StatusCode = HttpStatusCode.Conflict;
+                    response.Content = new StringContent(Resources.Error_DeploymentInProgress);
+                    break;
+                default:
+                    response.StatusCode = HttpStatusCode.BadRequest;
+                    break;
+            }
+
+            return response;
         }
 
         private async Task LocalZipFetch(IRepository repository, DeploymentInfoBase deploymentInfo, string targetBranch, ILogger logger, ITracer tracer)
