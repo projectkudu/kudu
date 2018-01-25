@@ -738,7 +738,7 @@ namespace Kudu.Core.Deployment
             deploymentAnalytics.Error = ex.ToString();
         }
 
-        private string GetOutputPath(DeploymentInfoBase deploymentInfo, IEnvironment environment, IDeploymentSettingsManager perDeploymentSettings)
+        private static string GetOutputPath(DeploymentInfoBase deploymentInfo, IEnvironment environment, IDeploymentSettingsManager perDeploymentSettings)
         {
             string targetPath = perDeploymentSettings.GetTargetPath();
 

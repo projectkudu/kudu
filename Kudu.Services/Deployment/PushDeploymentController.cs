@@ -41,7 +41,6 @@ namespace Kudu.Services.Deployment
 
         [HttpPost]
         public async Task<HttpResponseMessage> ZipPushDeploy(
-            HttpRequestMessage request,
             [FromUri] bool isAsync = false,
             [FromUri] string author = null,
             [FromUri] string authorEmail = null,
@@ -73,7 +72,6 @@ namespace Kudu.Services.Deployment
 
         [HttpPost]
         public async Task<HttpResponseMessage> WarPushDeploy(
-            HttpRequestMessage request,
             [FromUri] bool isAsync = false,
             [FromUri] string author = null,
             [FromUri] string authorEmail = null,
@@ -86,8 +84,8 @@ namespace Kudu.Services.Deployment
                 {
                     AllowDeploymentWhileScmDisabled = true,
                     Deployer = deployer,
-                    TargetPath = @"webapps\ROOT",
-                    WatchedFilePath = @"WEB-INF\web.xml",
+                    TargetPath = Path.Combine("webapps", "ROOT"),
+                    WatchedFilePath = Path.Combine("WEB-INF", "web.xml"),
                     IsContinuous = false,
                     AllowDeferredDeployment = false,
                     IsReusable = false,
