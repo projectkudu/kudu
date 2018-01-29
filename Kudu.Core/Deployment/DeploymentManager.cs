@@ -920,7 +920,16 @@ namespace Kudu.Core.Deployment
                 return null;
             }
 
-            return GetDeploymentManifestPath(id);
+            string manifestPath = GetDeploymentManifestPath(id);
+
+            // If the manifest file doesn't exist, don't return it as it could confuse kudusync.
+            // This can happen if the deployment was created with just metadata but no actualy deployment took place.
+            if (!FileSystemHelpers.FileExists(manifestPath))
+            {
+                return null;
+            }
+
+            return manifestPath;
         }
 
         private string GetDeploymentManifestPath(string id)
