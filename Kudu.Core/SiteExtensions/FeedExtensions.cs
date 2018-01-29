@@ -147,7 +147,8 @@ namespace Kudu.Core.SiteExtensions
                     IEnumerable<ZipEntry> contentEntries = zipFile.Entries.Where(e => e.FileName.StartsWith(@"content/", StringComparison.InvariantCultureIgnoreCase));
                     foreach (var entry in contentEntries)
                     {
-                        string fullPath = Path.Combine(destinationFolder, entry.FileName.Substring(substringStartIndex));
+                        string entryFileName = Uri.UnescapeDataString(entry.FileName);
+                        string fullPath = Path.Combine(destinationFolder, entryFileName.Substring(substringStartIndex));
 
                         if (entry.IsDirectory)
                         {
@@ -226,7 +227,8 @@ namespace Kudu.Core.SiteExtensions
 
                     foreach (var entry in filesNeedToUpdate)
                     {
-                        string fullPath = Path.Combine(destinationFolder, entry.FileName.Substring(substringStartIndex));
+                        string entryFileName = Uri.UnescapeDataString(entry.FileName);
+                        string fullPath = Path.Combine(destinationFolder, entryFileName.Substring(substringStartIndex));
 
                         if (entry.IsDirectory)
                         {
@@ -254,13 +256,14 @@ namespace Kudu.Core.SiteExtensions
 
                     foreach (var entry in indexedOldFiles.Values)
                     {
-                        string fullPath = Path.Combine(destinationFolder, entry.FileName.Substring(substringStartIndex));
+                        string entryFileName = Uri.UnescapeDataString(entry.FileName);
+                        string fullPath = Path.Combine(destinationFolder, entryFileName.Substring(substringStartIndex));
 
                         if (entry.IsDirectory)
                         {
                             // in case the two zip file was created from different tool. some tool will include folder as seperate entry, some don`t.
                             // to be sure that foder is meant to be deleted, double check there is no files under it
-                            var entryNameInLower = entry.FileName.ToLower();
+                            var entryNameInLower = entryFileName.ToLower();
                             if (!string.Equals(destinationFolder, fullPath, StringComparison.OrdinalIgnoreCase)
                                 && newContentEntries.FirstOrDefault(e => e.FileName.ToLowerInvariant().StartsWith(entryNameInLower)) == null)
                             {
