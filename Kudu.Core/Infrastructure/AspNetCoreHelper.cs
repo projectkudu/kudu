@@ -46,6 +46,8 @@ namespace Kudu.Core.Infrastructure
             if (projectPath.EndsWith(".csproj", StringComparison.OrdinalIgnoreCase))
             {
                 // for csproj, need to 1st make sure its dotnet core ==> !projectTypeGuids.Any()
+                // Common Project System-style no longer has projectTypeGuid
+
                 // 2ndly, look for sign of web project
                 // either <PackageReference Include="Microsoft.AspNetCore" Version="..." />
                 // for dotnet core project created with 2.0 toolings look for "Microsoft.AspNetCore.All"
