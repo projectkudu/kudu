@@ -4,6 +4,7 @@ using System.Net;
 using System.Threading.Tasks;
 using Kudu.Client.Deployment;
 using Kudu.Client.Infrastructure;
+using Kudu.SiteManagement;
 using Kudu.Web.Infrastructure;
 
 namespace Kudu.Web.Models
@@ -12,18 +13,21 @@ namespace Kudu.Web.Models
     {
         private readonly IApplicationService _applicationService;
         private readonly ICredentialProvider _credentialProvider;
+        private readonly ISiteManager _siteManager;
 
-        public SettingsService(IApplicationService applicationService, ICredentialProvider credentialProvider)
+        public SettingsService(IApplicationService applicationService, ICredentialProvider credentialProvider, ISiteManager siteManager)
         {
             _applicationService = applicationService;
             _credentialProvider = credentialProvider;
+            _siteManager = siteManager;
         }
 
         public async Task<ISettings> GetSettings(string siteName)
         {
             var settingsManager = GetSettingsManager(siteName);
             NameValueCollection values = await settingsManager.GetValues();
-            return new Settings { KuduSettings = values };
+            var appSettings = _siteManager.GetAppSettings(siteName);
+            return new Settings { KuduSettings = values, AppSettings = appSettings };
         }
 
         public void SetConnectionString(string siteName, string name, string connectionString)
@@ -38,12 +42,12 @@ namespace Kudu.Web.Models
 
         public void RemoveAppSetting(string siteName, string key)
         {
-            // Not supported 
+            _siteManager.RemoveAppSetting(siteName, key);
         }
 
         public void SetAppSetting(string siteName, string key, string value)
         {
-            // Not supported
+            _siteManager.SetAppSetting(siteName, key, value);
         }
 
         public Task SetKuduSetting(string siteName, string key, string value)
