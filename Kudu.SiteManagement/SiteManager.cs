@@ -604,47 +604,63 @@ namespace Kudu.SiteManagement
 
         public NameValueCollection GetAppSettings(string applicationName)
         {
-            var settingsCollection = new NameValueCollection();
-            using(var iis = GetServerManager())
+            try
             {
-                var appPool = iis.ApplicationPools[GetAppPool(applicationName)];
-                foreach(var element in appPool.GetCollection("environmentVariables"))
+                var settingsCollection = new NameValueCollection();
+                using (var iis = GetServerManager())
                 {
-                    settingsCollection.Add((string)element["name"], (string)element["value"]);
+                    var appPool = iis.ApplicationPools[GetAppPool(applicationName)];
+                    foreach (var element in appPool.GetCollection("environmentVariables"))
+                    {
+                        settingsCollection.Add((string)element["name"], (string)element["value"]);
+                    }
                 }
+                return settingsCollection;
             }
-            return settingsCollection;
+            catch (Exception)
+            {
+                return null;
+            }
         }
 
         public void RemoveAppSetting(string applicationName, string key)
         {
-            using (var iis = GetServerManager())
+            try
             {
-                var appPool = iis.ApplicationPools[GetAppPool(applicationName)];
-                var collection = appPool.GetCollection("environmentVariables");
-                foreach (var element in collection)
+                using (var iis = GetServerManager())
                 {
-                    if((string)element["name"] == key){
-                        collection.Remove(element);
-                        break;
+                    var appPool = iis.ApplicationPools[GetAppPool(applicationName)];
+                    var collection = appPool.GetCollection("environmentVariables");
+                    foreach (var element in collection)
+                    {
+                        if ((string)element["name"] == key)
+                        {
+                            collection.Remove(element);
+                            break;
+                        }
                     }
+                    iis.CommitChanges();
                 }
-                iis.CommitChanges();
             }
+            catch { }
         }
 
         public void SetAppSetting(string applicationName, string key, string value)
         {
-            using (var iis = GetServerManager())
+            try
             {
-                var appPool = iis.ApplicationPools[GetAppPool(applicationName)];
-                var collection = appPool.GetCollection("environmentVariables");
-                var addElement = collection.CreateElement("add");
-                addElement["name"] = key;
-                addElement["value"] = value;
-                collection.Add(addElement);
-                iis.CommitChanges();
+                using (var iis = GetServerManager())
+                {
+                    var appPool = iis.ApplicationPools[GetAppPool(applicationName)];
+                    var collection = appPool.GetCollection("environmentVariables");
+                    var addElement = collection.CreateElement("add");
+                    addElement["name"] = key;
+                    addElement["value"] = value;
+                    collection.Add(addElement);
+                    iis.CommitChanges();
+                }
             }
+            catch { }
         }
     }
 }
