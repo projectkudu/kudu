@@ -411,10 +411,10 @@ var Process = (function () {
             $(profilingButton).addClass("btn-danger");
         }
 
-        if (Process.prototype.WebSiteSku === "Free" || Process.prototype.WebSiteSku === "Shared") {
+        if (Process.prototype.WebSiteSku === "Free" || Process.prototype.WebSiteSku === "Shared" || Process.prototype.WebSiteSku === "Dynamic") {
             $(profilingButton).css("opacity", "0.5");
             $(profilingButton).off("click");
-            $(profilingButton).attr("title", "Profiling is not supported for Free/Shared sites.");
+            $(profilingButton).attr("title", "Profiling is not supported for Free/Shared sites or Function apps in consumption plan.");
             $(profilingButton).tooltip().show();
 
             var iisProfilingCheckboxControl = iisProfilingCheckbox.childNodes.item(this._json.id + "-iisProfilingCheck");           
