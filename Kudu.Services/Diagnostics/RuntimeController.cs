@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Web.Http;
 using Kudu.Contracts.Tracing;
+using Kudu.Core.Helpers;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Tracing;
 
@@ -28,12 +29,21 @@ namespace Kudu.Services.Diagnostics
         {
             using (_tracer.Step("RuntimeController.GetRuntimeVersions"))
             {
+                string osName = string.Empty;
+                if(OSDetector.IsOnWindows())
+                {
+                    osName = Environment.OSVersion.Version.Major < 10 ? "Windows Server 2012" : "Windows Server 2016";
+                }
+                else
+                {
+                    osName = Environment.OSVersion.VersionString;
+                }
                 return new RuntimeInfo
                 {
                     NodeVersions = GetNodeVersions(allVersions),
                     System = new
                     {
-                        os_name = Environment.OSVersion.Version.Major < 10 ? "Windows Server 2012" : "Windows Server 2016",
+                        os_name = osName,
                         os_build_lab_ex = Microsoft.Win32.Registry.GetValue(
                             @"HKEY_LOCAL_MACHINE\Software\Microsoft\Windows NT\CurrentVersion",
                             "BuildLabEx", null),
