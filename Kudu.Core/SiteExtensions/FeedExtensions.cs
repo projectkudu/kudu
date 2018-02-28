@@ -52,9 +52,9 @@ namespace Kudu.Core.SiteExtensions
                 }
                 else
                 {
-                    // User provided simple string: treat it as a id. This is not ideal behavior, but
+                    // User provided simple string: treat it as a title. This is not ideal behavior, but
                     // is the best we can do based on how nuget.org works
-                    searchTerm = $"tags:AzureSiteExtension id:\"{searchTerm}\"";
+                    searchTerm = $"tags:AzureSiteExtension title:\"{searchTerm}\"";
                 }
             }
 
