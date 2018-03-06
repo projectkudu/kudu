@@ -62,9 +62,9 @@
                try {
                    OutputFilename = Path.GetFullPath(OutputFilename);
 
-                   Log.LogMessage("Downloading NuGet.exe version 4.3...");
+                   Log.LogMessage("Downloading NuGet.exe version 4.6...");
                    WebClient webClient = new WebClient();
-                   webClient.DownloadFile("https://dist.nuget.org/win-x86-commandline/v4.3.0/NuGet.exe", OutputFilename);
+                   webClient.DownloadFile("https://dist.nuget.org/win-x86-commandline/v4.6.0/nuget.exe", OutputFilename);
 
                    return true;
                }
