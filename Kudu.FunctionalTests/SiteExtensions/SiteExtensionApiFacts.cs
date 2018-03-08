@@ -31,9 +31,9 @@ namespace Kudu.FunctionalTests.SiteExtensions
         };
 
         [Theory]
-        [InlineData(null, "sitereplicator")]    // default site extension endpoint (v2)
-        [InlineData("https://api.nuget.org/v3/index.json", "filecounter")]    // v3 endpoint
-        public async Task SiteExtensionV2AndV3FeedTests(string feedEndpoint, string testPackageId)
+        [InlineData(null, "sitereplicator", "site replicator")]    // default site extension endpoint (v2)
+        [InlineData("https://api.nuget.org/v3/index.json", "filecounter", "file counter")]    // v3 endpoint
+        public async Task SiteExtensionV2AndV3FeedTests(string feedEndpoint, string testPackageId, string searchString)
         {
             TestTracer.Trace("Testing against feed: '{0}'", feedEndpoint);
 
@@ -45,7 +45,7 @@ namespace Kudu.FunctionalTests.SiteExtensions
 
                 // list package
                 TestTracer.Trace("Search extensions by id: '{0}'", testPackageId);
-                HttpResponseMessage responseMessage = await manager.GetRemoteExtensions(filter: testPackageId, feedUrl: feedEndpoint);
+                HttpResponseMessage responseMessage = await manager.GetRemoteExtensions(filter: searchString, feedUrl: feedEndpoint);
                 IEnumerable<SiteExtensionInfo> results = await responseMessage.Content.ReadAsAsync<IEnumerable<SiteExtensionInfo>>();
                 Assert.True(results.Count() > 0, string.Format("GetRemoteExtensions for '{0}' package result should > 0", testPackageId));
 
@@ -308,6 +308,7 @@ namespace Kudu.FunctionalTests.SiteExtensions
         public async Task SiteExtensionGetArmTest()
         {
             const string appName = "SiteExtensionGetAsyncTest";
+            const string searchString = "file counter";
             const string externalPackageId = "filecounter";
             const string externalFeed = "https://api.nuget.org/v3/index.json";
             const string installationArgument = "arg0";
@@ -319,7 +320,7 @@ namespace Kudu.FunctionalTests.SiteExtensions
 
                 UpdateHeaderIfGoingToBeArmRequest(manager.Client, true);
                 TestTracer.Trace("GetRemoteExtensions with Arm header, expecting site extension info will be wrap inside Arm envelop");
-                HttpResponseMessage responseMessage = await manager.GetRemoteExtensions(externalPackageId, true, externalFeed);
+                HttpResponseMessage responseMessage = await manager.GetRemoteExtensions(searchString, true, externalFeed);
                 ArmListEntry<SiteExtensionInfo> armResultList = await responseMessage.Content.ReadAsAsync<ArmListEntry<SiteExtensionInfo>>();
                 Assert.Equal(HttpStatusCode.OK, responseMessage.StatusCode);
                 Assert.NotNull(armResultList);

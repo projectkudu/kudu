@@ -476,9 +476,9 @@ namespace Kudu.Core.Functions
         /// <param name="projectName">the {projectName}.csproj</param>
         private static ZipArchiveEntry AddCsprojFile(ZipArchive zip, IEnumerable<ZipArchiveEntry> files, string projectName)
         {
-            const string microsoftAzureWebJobsVersion = "2.1.0-beta1";
-            const string microsoftAzureWebJobsExtensionsHttpVersion = "1.0.0-beta1";
-            const string microsoftNETSdkFunctionsVersion = "1.0.0-alpha6";
+            // TODO different template for functionv2
+            // TODO download git repository when read only
+            const string microsoftNETSdkFunctionsVersion = "1.0.8";
 
             var csprojFile = new StringBuilder();
             csprojFile.AppendLine(
@@ -487,8 +487,6 @@ namespace Kudu.Core.Functions
     <TargetFramework>net461</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include=""Microsoft.Azure.WebJobs"" Version=""{microsoftAzureWebJobsVersion}"" />
-    <PackageReference Include=""Microsoft.Azure.WebJobs.Extensions.Http"" Version=""{microsoftAzureWebJobsExtensionsHttpVersion}"" />
     <PackageReference Include=""Microsoft.NET.Sdk.Functions"" Version=""{microsoftNETSdkFunctionsVersion}"" />
   </ItemGroup>
   <ItemGroup>
