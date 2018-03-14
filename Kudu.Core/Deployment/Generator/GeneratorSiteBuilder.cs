@@ -37,7 +37,7 @@ namespace Kudu.Core.Deployment.Generator
             {
                 GenerateScript(context, buildLogger);
                 string deploymentScriptPath = String.Format("\"{0}\"", DeploymentManager.GetCachedDeploymentScriptPath(Environment));
-                RunCommand(context, deploymentScriptPath);
+                RunCommand(context, deploymentScriptPath, context.IgnoreManifest);
                 tcs.SetResult(null);
             }
             catch (Exception ex)

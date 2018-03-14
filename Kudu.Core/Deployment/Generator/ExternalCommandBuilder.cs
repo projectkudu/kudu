@@ -69,11 +69,11 @@ namespace Kudu.Core.Deployment.Generator
                 {
                     scriptFilePath = string.Format(CultureInfo.InvariantCulture, "\"{0}\"", file);
                 }
-                RunCommand(context, scriptFilePath, Path.GetFileNameWithoutExtension(file));
+                RunCommand(context, scriptFilePath, false, Path.GetFileNameWithoutExtension(file));
             }
         }
 
-        protected void RunCommand(DeploymentContext context, string command, string message = "Running deployment command...")
+        protected void RunCommand(DeploymentContext context, string command, bool ignoreManifest, string message = "Running deployment command...")
         {
             ILogger customLogger = context.Logger.Log(message);
             customLogger.Log("Command: " + command);
@@ -84,6 +84,7 @@ namespace Kudu.Core.Deployment.Generator
 
             exe.EnvironmentVariables[WellKnownEnvironmentVariables.PreviousManifestPath] = context.PreviousManifestFilePath ?? String.Empty;
             exe.EnvironmentVariables[WellKnownEnvironmentVariables.NextManifestPath] = context.NextManifestFilePath;
+            exe.EnvironmentVariables[WellKnownEnvironmentVariables.IgnoreManifest] = ignoreManifest ? "1" : "0";
 
             exe.EnvironmentVariables[WellKnownEnvironmentVariables.BuildTempPath] = context.BuildTempPath;
 

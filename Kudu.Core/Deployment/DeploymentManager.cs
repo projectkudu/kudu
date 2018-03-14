@@ -624,6 +624,7 @@ namespace Kudu.Core.Deployment
                 {
                     NextManifestFilePath = GetDeploymentManifestPath(id),
                     PreviousManifestFilePath = GetActiveDeploymentManifestPath(),
+                    IgnoreManifest = deploymentInfo.CleanupTargetDirectory,
                     Tracer = tracer,
                     Logger = logger,
                     GlobalLogger = _globalLogger,

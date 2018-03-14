@@ -295,7 +295,7 @@ namespace Kudu.FunctionalTests
         {
             return ApplicationManager.RunAsync("TestWarDeploymentUpdatesWebXmlTimestamp", async appManager =>
             {
-                var files = new[] { new FileForZip {Filename = "WEB-INF/web.xml"} };
+                var files = new[] { new FileForZip { Filename = "WEB-INF/web.xml" } };
 
                 // STEP 1: Deploy WAR and get web.xml timestamp
 
@@ -342,6 +342,39 @@ namespace Kudu.FunctionalTests
                 // Check creation time hasn't changed, but modification time has been updated
                 Assert.Equal(creationTime, deployedFiles[0].CRTime);
                 Assert.NotEqual(modifiedTime, deployedFiles[0].MTime);
+            });
+        }
+
+        [Fact]
+        public Task TestSimpleWarDeploymentPerformsCleanDeployment()
+        {
+            return ApplicationManager.RunAsync("TestSimpleWarDeploymentPerformsCleanDeployment", async appManager =>
+            {
+                // STEP 1: create a file before doing a wardeploy. We expect wardeploy to remove this file
+                var fileName = "file-before-wardeployment-" + Guid.NewGuid().ToString("N");
+                appManager.VfsWebRootManager.WriteAllText("webapps/ROOT/" + fileName, "some content");
+                var deployedFiles = appManager.VfsWebRootManager.ListAsync("webapps/ROOT/").Result.ToList();
+                Assert.Equal(1, deployedFiles.Count);
+                Assert.Equal(fileName, deployedFiles[0].Name);
+
+                // STEP 2: Perform wardeploy and check files deployed by wardeploy are the only ones that exist now
+                // (in other words, check that the file created in step 1 is removed by wardeploy)
+                var files = CreateRandomFilesForZip(10);
+                var response = await DeployWar(appManager, files, new ZipDeployMetadata());
+                response.EnsureSuccessStatusCode();
+                await AssertSuccessfulDeploymentByFilenames(appManager, files.Select(f => f.Filename).ToArray(), "webapps/ROOT");
+            });
+        }
+
+        [Fact]
+        public Task TestSimpleWarDeploymentWithCustomAppName()
+        {
+            return ApplicationManager.RunAsync("TestSimpleWarDeploymentPerformsCleanDeployment", async appManager =>
+            {
+                var files = CreateRandomFilesForZip(10);
+                var response = await DeployWar(appManager, files, new ZipDeployMetadata(), "testappname");
+                response.EnsureSuccessStatusCode();
+                await AssertSuccessfulDeploymentByFilenames(appManager, files.Select(f => f.Filename).ToArray(), "webapps/testappname");
             });
         }
 
@@ -399,14 +432,22 @@ namespace Kudu.FunctionalTests
         private static async Task<HttpResponseMessage> DeployWar(
             ApplicationManager appManager,
             FileForZip[] files,
-            ZipDeployMetadata metadata)
+            ZipDeployMetadata metadata,
+            string appName = null)
         {
             TestTracer.Trace("Push-deploying war");
             using (var zipStream = CreateZipStream(files))
             {
+                IList<KeyValuePair<string, string>> queryParams = null;
+                if (!string.IsNullOrWhiteSpace(appName))
+                {
+                    queryParams = new List<KeyValuePair<string, string>>(){ new KeyValuePair<string, string>( "name", appName ) };
+                }
+
                 return await appManager.WarDeploymentManager.PushDeployFromStream(
                     zipStream,
-                    metadata);
+                    metadata,
+                    queryParams);
             }
         }
 

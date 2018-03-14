@@ -21,7 +21,7 @@ namespace Kudu.Core.Deployment.Generator
 
             try
             {
-                RunCommand(context, _command);
+                RunCommand(context, _command, ignoreManifest: false);
 
                 tcs.SetResult(null);
             }
