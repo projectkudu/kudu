@@ -48,6 +48,8 @@ namespace Kudu.Core.Deployment
         // for instance, http://github.com/kuduapps/hellokudu.git#<commitid>
         public string CommitId { get; set; }
 
+        public bool CleanupTargetDirectory { get; set; }
+
         // Can set to false for deployments where we assume that the repository contains the entire
         // built site, meaning we can skip app stack detection and simply use BasicBuilder
         // (KuduSync only)

@@ -16,7 +16,7 @@ namespace Kudu.Client.Deployment
         {
         }
 
-        public async Task<HttpResponseMessage> PushDeployFromStream(Stream zipFile, ZipDeployMetadata metadata)
+        public async Task<HttpResponseMessage> PushDeployFromStream(Stream zipFile, ZipDeployMetadata metadata, IList<KeyValuePair<string, string>> queryParams = null)
         {
             using (var request = new HttpRequestMessage())
             {
@@ -34,6 +34,11 @@ namespace Kudu.Client.Deployment
                     new KeyValuePair<string, string>("deployer", metadata.Deployer),
                     new KeyValuePair<string, string>("message", metadata.Message),
                 };
+
+                if (queryParams != null)
+                {
+                    map.AddRange(queryParams);
+                }
 
                 foreach (var item in map)
                 {
