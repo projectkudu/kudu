@@ -624,7 +624,8 @@ namespace Kudu.Core.Deployment
                 {
                     NextManifestFilePath = GetDeploymentManifestPath(id),
                     PreviousManifestFilePath = GetActiveDeploymentManifestPath(),
-                    IgnoreManifest = deploymentInfo.CleanupTargetDirectory, // Ignoring the manifest will cause kudusync to delete sub-directories / files
+                    IgnoreManifest = deploymentInfo != null && deploymentInfo.CleanupTargetDirectory,
+                                                                            // Ignoring the manifest will cause kudusync to delete sub-directories / files
                                                                             // in the destination directory that are not present in the source directory,
                                                                             // without checking the manifest to see if the file was copied over to the destination
                                                                             // during a previous kudusync operation. This effectively performs a clean deployment
