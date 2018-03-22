@@ -311,12 +311,15 @@ namespace Kudu.Core.Helpers
             string taskHubName = null;
             var json = JObject.Parse(File.ReadAllText(hostConfigPath));
             JToken durableTaskValue;
-            if (json.TryGetValue(Constants.DurableTask, out durableTaskValue) && durableTaskValue != null)
+
+            // we will allow case insensitivity given it is likely user hand edited
+            // see https://github.com/Azure/azure-functions-durable-extension/issues/111
+            if (json.TryGetValue(Constants.DurableTask, StringComparison.OrdinalIgnoreCase, out durableTaskValue) && durableTaskValue != null)
             {
                 var kvp = (JObject)durableTaskValue;
 
                 JToken hubNameValue;
-                if (kvp.TryGetValue(Constants.HubName, out hubNameValue) && hubNameValue != null)
+                if (kvp.TryGetValue(Constants.HubName, StringComparison.OrdinalIgnoreCase, out hubNameValue) && hubNameValue != null)
                 {
                     taskHubName = hubNameValue.ToString();
                 }
