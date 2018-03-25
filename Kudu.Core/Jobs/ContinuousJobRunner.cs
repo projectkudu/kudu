@@ -29,7 +29,7 @@ namespace Kudu.Core.Jobs
         private bool? _isSingleton;
 
         public ContinuousJobRunner(ContinuousJob continuousJob, IEnvironment environment, IDeploymentSettingsManager settings, ITraceFactory traceFactory, IAnalytics analytics)
-            : base(continuousJob.Name, Constants.ContinuousPath, environment, settings, traceFactory, analytics)
+            : base(continuousJob, Constants.ContinuousPath, environment, settings, traceFactory, analytics)
         {
             _analytics = analytics;
             _continuousJobLogger = new ContinuousJobLogger(continuousJob.Name, Environment, TraceFactory);
