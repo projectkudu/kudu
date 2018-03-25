@@ -90,16 +90,16 @@ namespace Kudu.Core.Helpers
         /// It is written to require least dependencies but framework assemblies.
         /// Caller is responsible for synchronization.
         /// </summary>
-        public static async Task Run(string requestId, string siteRestrictedJwt, TraceListener tracer)
+        public static async Task Run(string requestId, TraceListener tracer)
         {
             RunPostDeploymentScripts(tracer);
 
-            await SyncFunctionsTriggers(requestId, siteRestrictedJwt, tracer);
+            await SyncFunctionsTriggers(requestId, tracer);
 
-            await PerformAutoSwap(requestId, siteRestrictedJwt, tracer);
+            await PerformAutoSwap(requestId, tracer);
         }
 
-        public static async Task SyncFunctionsTriggers(string requestId, string siteRestrictedJwt, TraceListener tracer)
+        public static async Task SyncFunctionsTriggers(string requestId, TraceListener tracer)
         {
             _tracer = tracer;
 
@@ -163,7 +163,7 @@ namespace Kudu.Core.Helpers
             Exception exception = null;
             try
             {
-                await PostAsync("/operations/settriggers", requestId, siteRestrictedJwt, content);
+                await PostAsync("/operations/settriggers", requestId, content);
             }
             catch (Exception ex)
             {
@@ -262,7 +262,7 @@ namespace Kudu.Core.Helpers
             return !string.IsNullOrEmpty(WebSiteSwapSlotName);
         }
 
-        public static async Task PerformAutoSwap(string requestId, string siteRestrictedJwt, TraceListener tracer)
+        public static async Task PerformAutoSwap(string requestId, TraceListener tracer)
         {
             _tracer = tracer;
 
@@ -279,7 +279,7 @@ namespace Kudu.Core.Helpers
             Exception exception = null;
             try
             {
-                await PostAsync(string.Format("/operations/autoswap?slot={0}&operationId={1}", slotSwapName, operationId), requestId, siteRestrictedJwt);
+                await PostAsync(string.Format("/operations/autoswap?slot={0}&operationId={1}", slotSwapName, operationId), requestId);
 
                 WriteAutoSwapOngoing();
             }
@@ -406,7 +406,7 @@ namespace Kudu.Core.Helpers
             }
         }
 
-        private static async Task PostAsync(string path, string requestId, string siteRestrictedJwt, string content = null)
+        private static async Task PostAsync(string path, string requestId, string content = null)
         {
             var host = HttpHost;
             var statusCode = default(HttpStatusCode);
@@ -417,7 +417,7 @@ namespace Kudu.Core.Helpers
                 {
                     client.BaseAddress = new Uri(string.Format("https://{0}", host));
                     client.DefaultRequestHeaders.UserAgent.Add(_userAgent.Value);
-                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", siteRestrictedJwt);
+                    client.DefaultRequestHeaders.Add(Constants.SiteRestrictedToken, SimpleWebTokenHelper.CreateToken(DateTime.UtcNow.AddMinutes(2)));
                     client.DefaultRequestHeaders.Add(Constants.RequestIdHeader, requestId);
 
                     var payload = new StringContent(content ?? string.Empty, Encoding.UTF8, "application/json");

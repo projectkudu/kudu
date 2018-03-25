@@ -27,6 +27,5 @@
         string FunctionsPath { get; }           // e.g. /site/wwwroot
         string AppBaseUrlPrefix { get; }        // e.g. siteName.azurewebsites.net
         string RequestId { get; }               // e.g. x-arr-log-id or x-ms-request-id header value
-        string SiteRestrictedJwt { get; }       // e.g. x-ms-site-restricted-jwt header value
     }
 }

@@ -246,7 +246,7 @@ namespace Kudu.Core.Deployment
                 {
                     // if last change is not null and finish successfully, mean there was at least one deployoment happened
                     // since deployment is now done, trigger swap if enabled
-                    await PostDeploymentHelper.PerformAutoSwap(_environment.RequestId, _environment.SiteRestrictedJwt, new PostDeploymentTraceListener(_tracer, _deploymentManager.GetLogger(lastChange.Id)));
+                    await PostDeploymentHelper.PerformAutoSwap(_environment.RequestId, new PostDeploymentTraceListener(_tracer, _deploymentManager.GetLogger(lastChange.Id)));
                 }
             }
         }
