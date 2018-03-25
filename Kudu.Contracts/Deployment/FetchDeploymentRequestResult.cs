@@ -8,6 +8,7 @@
         ConflictAutoSwapOngoing,
         RanSynchronously,
         Pending,
-        ConflictDeploymentInProgress
+        ConflictDeploymentInProgress,
+        ConflictRunFromRemoteZipConfigured
     }
 }

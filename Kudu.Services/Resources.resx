@@ -312,4 +312,7 @@
   <data name="Error_DeploymentInProgress" xml:space="preserve">
     <value>There is a deployment currently in progress. Please try again when it completes.</value>
   </data>
+  <data name="Error_RunFromRemoteZipConfigured" xml:space="preserve">
+    <value>Run-From-Zip is set to a remote URL using WEBSITE_USE_ZIP app setting. Deployment is not supported in this configuration.</value>
+  </data>
 </root>

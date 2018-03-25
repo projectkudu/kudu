@@ -11,6 +11,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Kudu.Contracts.Settings;
+using Kudu.Core.Deployment;
 using Kudu.Core.Infrastructure;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -99,7 +100,7 @@ namespace Kudu.Core.Helpers
             await PerformAutoSwap(requestId, siteRestrictedJwt, tracer);
         }
 
-        public static async Task SyncFunctionsTriggers(string requestId, string siteRestrictedJwt, TraceListener tracer)
+        public static async Task SyncFunctionsTriggers(string requestId, string siteRestrictedJwt, TraceListener tracer, string functionsPath = null)
         {
             _tracer = tracer;
 
@@ -117,7 +118,9 @@ namespace Kudu.Core.Helpers
 
             VerifyEnvironments();
 
-            var functionsPath = System.Environment.ExpandEnvironmentVariables(@"%HOME%\site\wwwroot");
+            functionsPath = !string.IsNullOrEmpty(functionsPath)
+                ? functionsPath
+                : System.Environment.ExpandEnvironmentVariables(@"%HOME%\site\wwwroot");
 
             // Read host.json 
             // Get HubName property for Durable Functions
@@ -604,6 +607,13 @@ namespace Kudu.Core.Helpers
             {
                 tracer.TraceEvent(null, "PostDeployment", eventType, (int)eventType, format, args);
             }
+        }
+
+        public static async Task UpdateSiteVersion(ZipDeploymentInfo deploymentInfo, IEnvironment environment, ILogger logger)
+        {
+            var siteVersionPath = Path.Combine(environment.SitePackagesPath, Constants.SiteVersionTxt);
+            logger.Log($"Updating {siteVersionPath} with deployment {deploymentInfo.ZipName}");
+            await FileSystemHelpers.WriteAllTextToFileAsync(siteVersionPath, deploymentInfo.ZipName);
         }
     }
 }

@@ -61,5 +61,12 @@ namespace Kudu.Core.Deployment
         }
 
         public abstract IRepository GetRepository();
+
+        // If this is not set, sync triggers will look under d:\home\site\wwwroot
+        // for functionsRoot. Otherwise it'll use this path for that
+        // This is used in Run-From-Zip deployments where the content of wwwroot
+        // won't update until after a process restart. Therefore, we copy the needed
+        // files into a separate folders and run sync triggers from there.
+        public string SyncFunctionsTriggersPath { get; set; } = null;
     }
 }

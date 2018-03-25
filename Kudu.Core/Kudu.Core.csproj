@@ -222,6 +222,7 @@
     <Compile Include="Deployment\Generator\GoSiteBuilder.cs" />
     <Compile Include="Deployment\Generator\GoSiteEnabler.cs" />
     <Compile Include="Deployment\Generator\MicrosoftSiteBuilder.cs" />
+    <Compile Include="Deployment\Generator\RunFromZipSiteBuilder.cs" />
     <Compile Include="Deployment\Generator\PHPSiteBuilder.cs" />
     <Compile Include="Deployment\Generator\PHPSiteEnabler.cs" />
     <Compile Include="Deployment\Generator\PythonSiteEnabler.cs" />

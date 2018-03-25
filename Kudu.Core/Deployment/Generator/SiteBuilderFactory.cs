@@ -52,6 +52,11 @@ namespace Kudu.Core.Deployment.Generator
                 targetProjectPath = Path.GetFullPath(Path.Combine(repositoryRoot, targetProjectPath.TrimStart('/', '\\')));
             }
 
+            if (settings.RunFromLocalZip())
+            {
+                return new RunFromZipSiteBuilder();
+            }
+
             if (!settings.DoBuildDuringDeployment())
             {
                 var projectPath = !String.IsNullOrEmpty(targetProjectPath) ? targetProjectPath : repositoryRoot;
