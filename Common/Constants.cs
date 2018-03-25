@@ -101,8 +101,8 @@ namespace Kudu
         //Setting for VC++ for node builds
         public const string VCVersion = "2015";
 
-        // Enviroment variable for site retricted jwt token
-        public const string SiteRestrictedJWT = "X-MS-SITE-RESTRICTED-JWT";
+        public const string SiteRestrictedToken = "x-ms-site-restricted-token";
+        public const string SiteAuthEncryptionKey = "WEBSITE_AUTH_ENCRYPTION_KEY";
         public const string HttpHost = "HTTP_HOST";
         public const string WebSiteSwapSlotName = "WEBSITE_SWAP_SLOTNAME";
 

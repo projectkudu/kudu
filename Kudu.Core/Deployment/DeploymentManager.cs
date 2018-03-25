@@ -625,11 +625,11 @@ namespace Kudu.Core.Deployment
                     NextManifestFilePath = GetDeploymentManifestPath(id),
                     PreviousManifestFilePath = GetActiveDeploymentManifestPath(),
                     IgnoreManifest = deploymentInfo != null && deploymentInfo.CleanupTargetDirectory,
-                                                                            // Ignoring the manifest will cause kudusync to delete sub-directories / files
-                                                                            // in the destination directory that are not present in the source directory,
-                                                                            // without checking the manifest to see if the file was copied over to the destination
-                                                                            // during a previous kudusync operation. This effectively performs a clean deployment
-                                                                            // from the source to the destination directory.
+                    // Ignoring the manifest will cause kudusync to delete sub-directories / files
+                    // in the destination directory that are not present in the source directory,
+                    // without checking the manifest to see if the file was copied over to the destination
+                    // during a previous kudusync operation. This effectively performs a clean deployment
+                    // from the source to the destination directory.
                     Tracer = tracer,
                     Logger = logger,
                     GlobalLogger = _globalLogger,
@@ -661,7 +661,7 @@ namespace Kudu.Core.Deployment
                         await builder.Build(context);
                         builder.PostBuild(context);
 
-                        await PostDeploymentHelper.SyncFunctionsTriggers(_environment.RequestId, _environment.SiteRestrictedJwt, new PostDeploymentTraceListener(tracer, logger), deploymentInfo?.SyncFunctionsTriggersPath);
+                        await PostDeploymentHelper.SyncFunctionsTriggers(_environment.RequestId, new PostDeploymentTraceListener(tracer, logger), deploymentInfo?.SyncFunctionsTriggersPath);
 
                         if (_settings.TouchWatchedFileAfterDeployment())
                         {
@@ -701,7 +701,7 @@ namespace Kudu.Core.Deployment
 
         private void PreDeployment(ITracer tracer)
         {
-            if (Environment.IsAzureEnvironment() 
+            if (Environment.IsAzureEnvironment()
                 && FileSystemHelpers.DirectoryExists(_environment.SSHKeyPath)
                 && OSDetector.IsOnWindows())
             {
@@ -710,7 +710,7 @@ namespace Kudu.Core.Deployment
 
                 if (!String.Equals(src, dst, StringComparison.OrdinalIgnoreCase))
                 {
-                    // copy %HOME%\.ssh to %USERPROFILE%\.ssh key to workaround 
+                    // copy %HOME%\.ssh to %USERPROFILE%\.ssh key to workaround
                     // npm with private ssh git dependency
                     using (tracer.Step("Copying SSH keys"))
                     {

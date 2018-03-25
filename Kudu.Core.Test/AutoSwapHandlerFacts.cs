@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Security.Cryptography;
 using System.Threading.Tasks;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Deployment;
@@ -75,52 +76,62 @@ namespace Kudu.Core.Test
                 var traceListener = new PostDeploymentTraceListener(tracerMock.Object, Mock.Of<ILogger>());
                 
                 TestTracer.Trace("Autoswap will not happen, since it is not enabled.");
-                await PostDeploymentHelper.PerformAutoSwap(string.Empty, string.Empty, traceListener);
+                await PostDeploymentHelper.PerformAutoSwap(string.Empty, traceListener);
                 tracerMock.Verify(l => l.Trace("AutoSwap is not enabled", It.IsAny<IDictionary<string, string>>()), Times.Once);
 
                 TestTracer.Trace("Autoswap will not happen, since there is no HTTP_HOST env.");
                 System.Environment.SetEnvironmentVariable(Constants.WebSiteSwapSlotName, "someslot");
                 string jwtToken = Guid.NewGuid().ToString();
-                var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => PostDeploymentHelper.PerformAutoSwap(string.Empty, jwtToken, traceListener));
+                var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => PostDeploymentHelper.PerformAutoSwap(string.Empty, traceListener));
                 Assert.Equal("Missing HTTP_HOST env!", exception.Message);
 
                 string hostName = "foo.scm.bar";
                 System.Environment.SetEnvironmentVariable(Constants.HttpHost, hostName);
+                System.Environment.SetEnvironmentVariable(Constants.SiteAuthEncryptionKey, GenerateKey());
 
                 TestTracer.Trace("Autoswap will be triggered");
                 string newDeploymentId = Guid.NewGuid().ToString();
 
                 string autoSwapRequestUrl = null;
-                string bearerToken = null;
+                string swtToken = null;
                 PostDeploymentHelper.HttpClientFactory = () => new HttpClient(new TestMessageHandler((HttpRequestMessage requestMessage) =>
                 {
                     autoSwapRequestUrl = requestMessage.RequestUri.AbsoluteUri;
-                    bearerToken = requestMessage.Headers.GetValues("Authorization").First();
+                    swtToken = requestMessage.Headers.GetValues(Constants.SiteRestrictedToken).First();
                     return new HttpResponseMessage(HttpStatusCode.OK);
                 }));
 
                 Assert.True(!File.Exists(autoSwapLockFile), string.Format("File {0} should not exist.", autoSwapLockFile));
 
-                await PostDeploymentHelper.PerformAutoSwap(string.Empty, jwtToken, traceListener);
+                await PostDeploymentHelper.PerformAutoSwap(string.Empty, traceListener);
 
                 Assert.True(File.Exists(autoSwapLockFile), string.Format("File {0} should exist.", autoSwapLockFile));
 
                 Assert.NotNull(autoSwapRequestUrl);
                 Assert.True(autoSwapRequestUrl.StartsWith("https://foo.scm.bar/operations/autoswap?slot=someslot&operationId=AUTOSWAP"));
 
-                Assert.NotNull(bearerToken);
-                Assert.Equal("Bearer " + jwtToken, bearerToken);
+                Assert.NotNull(swtToken);
             }
             finally
             {
                 System.Environment.SetEnvironmentVariable(Constants.HttpHost, null);
                 System.Environment.SetEnvironmentVariable("HOME", homePath);
                 System.Environment.SetEnvironmentVariable(Constants.WebSiteSwapSlotName, null);
+                System.Environment.SetEnvironmentVariable(Constants.SiteAuthEncryptionKey, null);
                 PostDeploymentHelper.HttpClientFactory = null;
                 if (Directory.Exists(tempPath))
                 {
                     Directory.Delete(tempPath, recursive: true);
                 }
+            }
+        }
+
+        private static string GenerateKey()
+        {
+            using (var aes = new AesManaged())
+            {
+                aes.GenerateKey();
+                return BitConverter.ToString(aes.Key).Replace("-", string.Empty);
             }
         }
     }

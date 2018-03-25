@@ -97,7 +97,6 @@ namespace Kudu.Services.GitServer
                         {
                             // to pass to kudu.exe post receive hook
                             System.Environment.SetEnvironmentVariable(Constants.RequestIdHeader, _environment.RequestId);
-                            System.Environment.SetEnvironmentVariable(Constants.SiteRestrictedJWT, _environment.SiteRestrictedJwt);
                             try
                             {
                                 GitServer.Receive(context.Request.GetInputStream(), context.Response.OutputStream);
@@ -105,7 +104,6 @@ namespace Kudu.Services.GitServer
                             finally
                             {
                                 System.Environment.SetEnvironmentVariable(Constants.RequestIdHeader, null);
-                                System.Environment.SetEnvironmentVariable(Constants.SiteRestrictedJWT, null);
                             }
                         }
                     }, "Handling git receive pack", TimeSpan.Zero);
