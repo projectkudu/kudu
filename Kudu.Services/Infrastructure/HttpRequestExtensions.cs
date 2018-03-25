@@ -14,10 +14,5 @@ namespace Kudu.Services.Infrastructure
         {
             return httpRequest.UserAgent ?? string.Empty;
         }
-
-        public static string GetSiteRetrictedJwt(this HttpRequest httpRequest)
-        {
-            return httpRequest.Headers[Constants.SiteRestrictedJWT];
-        }
     }
 }
