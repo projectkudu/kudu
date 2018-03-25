@@ -249,5 +249,17 @@ namespace Kudu.Contracts.Settings
             // returning true by default here as an indicator of generally expected behavior
             return value == null || StringUtils.IsTrueLike(value);
         }
+
+        public static bool RunFromLocalZip(this IDeploymentSettingsManager settings)
+        {
+            return settings.GetValue(SettingsKeys.RunFromZip) == "1";
+        }
+
+        public static bool RunFromRemoteZip(this IDeploymentSettingsManager settings)
+        {
+            var value = settings.GetValue(SettingsKeys.RunFromZip);
+
+            return value != null && value.StartsWith("http", StringComparison.OrdinalIgnoreCase);
+        }
     }
 }

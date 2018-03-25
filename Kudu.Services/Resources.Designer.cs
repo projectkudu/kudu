@@ -19,7 +19,7 @@ namespace Kudu.Services {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "4.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "15.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class Resources {
@@ -327,6 +327,15 @@ namespace Kudu.Services {
         internal static string Error_RepositoryNotFound {
             get {
                 return ResourceManager.GetString("Error_RepositoryNotFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Run-From-Zip is set to a remote URL using WEBSITE_USE_ZIP app setting. Deployment is not supported in this configuration..
+        /// </summary>
+        internal static string Error_RunFromRemoteZipConfigured {
+            get {
+                return ResourceManager.GetString("Error_RunFromRemoteZipConfigured", resourceCulture);
             }
         }
         

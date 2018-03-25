@@ -3,10 +3,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
-using Kudu.Contracts;
 using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Settings;
-using Kudu.Contracts.SourceControl;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Deployment.Generator;
 using Kudu.Core.Helpers;
@@ -73,6 +71,12 @@ namespace Kudu.Core.Deployment
             if (!(_settings.IsScmEnabled() || deployInfo.AllowDeploymentWhileScmDisabled))
             {
                 return FetchDeploymentRequestResult.ForbiddenScmDisabled;
+            }
+            // Else if this app is configured with a url in WEBSITE_USE_ZIP, then fail the deployment
+            // since this is a RunFromZip site and the deployment has no chance of succeeding.
+            else if (_settings.RunFromRemoteZip())
+            {
+                return FetchDeploymentRequestResult.ConflictRunFromRemoteZipConfigured;
             }
 
             // for CI payload, we will return Accepted and do the task in the BG

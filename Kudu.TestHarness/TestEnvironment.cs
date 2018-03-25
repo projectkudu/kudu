@@ -149,6 +149,12 @@ namespace Kudu.TestHarness
             set;
         }
 
+        public string SitePackagesPath
+        {
+            get;
+            set;
+        }
+
         public string RequestId
         {
             get;

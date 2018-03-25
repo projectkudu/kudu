@@ -661,11 +661,16 @@ namespace Kudu.Core.Deployment
                         await builder.Build(context);
                         builder.PostBuild(context);
 
-                        await PostDeploymentHelper.SyncFunctionsTriggers(_environment.RequestId, _environment.SiteRestrictedJwt, new PostDeploymentTraceListener(tracer, logger));
+                        await PostDeploymentHelper.SyncFunctionsTriggers(_environment.RequestId, _environment.SiteRestrictedJwt, new PostDeploymentTraceListener(tracer, logger), deploymentInfo.SyncFunctionsTriggersPath);
 
                         if (_settings.TouchWatchedFileAfterDeployment())
                         {
                             TryTouchWatchedFile(context, deploymentInfo);
+                        }
+
+                        if (_settings.RunFromLocalZip() && deploymentInfo is ZipDeploymentInfo zipDeploymentInfo)
+                        {
+                            await PostDeploymentHelper.UpdateSiteVersion(zipDeploymentInfo, _environment, logger);
                         }
 
                         FinishDeployment(id, deployStep);

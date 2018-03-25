@@ -117,6 +117,11 @@ namespace Kudu.Services
                         context.Response.Write(Resources.Error_DeploymentInProgress);
                         context.ApplicationInstance.CompleteRequest();
                         break;
+                    case FetchDeploymentRequestResult.ConflictRunFromRemoteZipConfigured:
+                        context.Response.StatusCode = (int)HttpStatusCode.Conflict;
+                        context.Response.Write(Resources.Error_RunFromRemoteZipConfigured);
+                        context.ApplicationInstance.CompleteRequest();
+                        break;
                     case FetchDeploymentRequestResult.RanSynchronously:
                     default:
                         break;
