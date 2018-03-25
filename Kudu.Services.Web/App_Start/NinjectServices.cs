@@ -788,8 +788,7 @@ namespace Kudu.Services.Web.App_Start
             string repositoryPath = Path.Combine(siteRoot, settings == null ? Constants.RepositoryPath : settings.GetRepositoryPath());
             string binPath = HttpRuntime.BinDirectory;
             string requestId = httpContext?.Request.GetRequestId();
-            string siteRetrictedJwt = httpContext?.Request.GetSiteRetrictedJwt();
-            return new Core.Environment(root, EnvironmentHelper.NormalizeBinPath(binPath), repositoryPath, requestId, siteRetrictedJwt);
+            return new Core.Environment(root, EnvironmentHelper.NormalizeBinPath(binPath), repositoryPath, requestId);
         }
 
         private static void EnsureDotNetCoreEnvironmentVariable(IEnvironment environment)
