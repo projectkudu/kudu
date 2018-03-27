@@ -193,11 +193,11 @@ namespace Kudu.Services.Deployment
 
         private async Task LocalZipHandler(IRepository repository, DeploymentInfoBase deploymentInfo, string targetBranch, ILogger logger, ITracer tracer)
         {
-            if (_settings.RunFromLocalZip() && deploymentInfo is ZipDeploymentInfo zipDeploymentInfo)
+            if (_settings.RunFromLocalZip() && deploymentInfo is ZipDeploymentInfo)
             {
                 // If this is a Run-From-Zip deployment, then we need to extract function.json
                 // from the zip file into path zipDeploymentInfo.SyncFunctionsTrigersPath
-                ExtractTriggers(repository, zipDeploymentInfo);
+                ExtractTriggers(repository, deploymentInfo as ZipDeploymentInfo);
             }
             else
             {

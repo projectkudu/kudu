@@ -668,9 +668,9 @@ namespace Kudu.Core.Deployment
                             TryTouchWatchedFile(context, deploymentInfo);
                         }
 
-                        if (_settings.RunFromLocalZip() && deploymentInfo is ZipDeploymentInfo zipDeploymentInfo)
+                        if (_settings.RunFromLocalZip() && deploymentInfo is ZipDeploymentInfo)
                         {
-                            await PostDeploymentHelper.UpdateSiteVersion(zipDeploymentInfo, _environment, logger);
+                            await PostDeploymentHelper.UpdateSiteVersion(deploymentInfo as ZipDeploymentInfo, _environment, logger);
                         }
 
                         FinishDeployment(id, deployStep);
