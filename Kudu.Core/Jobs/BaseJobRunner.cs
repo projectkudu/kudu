@@ -29,18 +29,18 @@ namespace Kudu.Core.Jobs
         private string _inPlaceWorkingDirectory;
         private Dictionary<string, FileInfoBase> _cachedSourceDirectoryFileMap;
 
-        protected BaseJobRunner(string jobName, string jobsTypePath, IEnvironment environment,
+        protected BaseJobRunner(JobBase job, string jobsTypePath, IEnvironment environment,
             IDeploymentSettingsManager settings, ITraceFactory traceFactory, IAnalytics analytics)
         {
             TraceFactory = traceFactory;
             Environment = environment;
             Settings = settings;
-            JobName = jobName;
+            JobName = job.Name;
             _analytics = analytics;
 
-            JobBinariesPath = Path.Combine(Environment.JobsBinariesPath, jobsTypePath, jobName);
-            JobTempPath = Path.Combine(Environment.TempPath, Constants.JobsPath, jobsTypePath, jobName);
-            JobDataPath = Path.Combine(Environment.DataPath, Constants.JobsPath, jobsTypePath, jobName);
+            JobBinariesPath = job.JobBinariesRootPath;
+            JobTempPath = Path.Combine(Environment.TempPath, Constants.JobsPath, jobsTypePath, JobName);
+            JobDataPath = Path.Combine(Environment.DataPath, Constants.JobsPath, jobsTypePath, JobName);
 
             _externalCommandFactory = new ExternalCommandFactory(Environment, Settings, Environment.RepositoryPath);
         }
