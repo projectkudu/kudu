@@ -20,11 +20,18 @@ namespace Kudu.FunctionalTests
     {
         public const string DefaultPushDeployer = "Push-Deployer";
 
-        [Fact]
-        public Task TestSimpleZipDeployment()
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public Task TestSimpleZipDeployment(bool runFromZip)
         {
             return ApplicationManager.RunAsync("TestSimpleZipDeployment", async appManager =>
             {
+                if (!await TrySetRunFromZip(appManager, runFromZip))
+                {
+                    return;
+                }
+
                 var files = CreateRandomFilesForZip(10);
                 var response = await DeployZip(appManager, files, new ZipDeployMetadata());
                 response.EnsureSuccessStatusCode();
@@ -32,8 +39,10 @@ namespace Kudu.FunctionalTests
             });
         }
 
-        [Fact]
-        public Task TestZipDeployWithMetadata()
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public Task TestZipDeployWithMetadata(bool runFromZip)
         {
             var author = "testAuthor";
             var authorEmail = "email@example.com";
@@ -42,6 +51,11 @@ namespace Kudu.FunctionalTests
 
             return ApplicationManager.RunAsync("TestSimpleZipDeployment", async appManager =>
             {
+                if (!await TrySetRunFromZip(appManager, runFromZip))
+                {
+                    return;
+                }
+
                 var files = CreateRandomFilesForZip(10);
                 var response = await DeployZip(appManager, files, new ZipDeployMetadata
                 {
@@ -61,11 +75,18 @@ namespace Kudu.FunctionalTests
             });
         }
 
-        [Fact]
-        public Task TestAsyncZipDeployment()
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public Task TestAsyncZipDeployment(bool runFromZip)
         {
             return ApplicationManager.RunAsync("TestAsyncZipDeployment", async appManager =>
             {
+                if (!await TrySetRunFromZip(appManager, runFromZip))
+                {
+                    return;
+                }
+
                 // Big enough to require at least a couple polls for status until success
                 var files = CreateRandomFilesForZip(1000);
                 var response = await DeployZip(appManager, files, new ZipDeployMetadata { IsAsync = true });
@@ -85,11 +106,18 @@ namespace Kudu.FunctionalTests
             });
         }
 
-        [Fact]
-        public Task TestEmptyZipClearsWwwroot()
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public Task TestEmptyZipClearsWwwroot(bool runFromZip)
         {
             return ApplicationManager.RunAsync("TestEmptyZipClearsWwwroot", async appManager =>
             {
+                if (!await TrySetRunFromZip(appManager, runFromZip))
+                {
+                    return;
+                }
+
                 var files = CreateRandomFilesForZip(10);
                 var response = await DeployZip(appManager, files, new ZipDeployMetadata());
                 response.EnsureSuccessStatusCode();
@@ -101,11 +129,18 @@ namespace Kudu.FunctionalTests
             });
         }
 
-        [Fact]
-        public Task EnsureConflictResultOnSimultaneousAsyncRequest()
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public Task EnsureConflictResultOnSimultaneousAsyncRequest(bool runFromZip)
         {
             return ApplicationManager.RunAsync("EnsureConflictResultOnSimultaneousAsyncRequest", async appManager =>
             {
+                if (!await TrySetRunFromZip(appManager, runFromZip))
+                {
+                    return;
+                }
+
                 // Big enough to run for a few seconds
                 var files = CreateRandomFilesForZip(1000);
                 var response = await DeployZip(appManager, files, new ZipDeployMetadata { IsAsync = true });
@@ -128,11 +163,18 @@ namespace Kudu.FunctionalTests
             });
         }
 
-        [Fact]
-        public Task EnsureConflictResultOnSimultaneousSyncRequest()
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public Task EnsureConflictResultOnSimultaneousSyncRequest(bool runFromZip)
         {
             return ApplicationManager.RunAsync("EnsureConflictResultOnSimultaneousSyncRequest", async appManager =>
             {
+                if (!await TrySetRunFromZip(appManager, runFromZip))
+                {
+                    return;
+                }
+
                 // Big enough to run for a few seconds
                 var files = CreateRandomFilesForZip(1000);
                 var response = await DeployZip(appManager, files, new ZipDeployMetadata { IsAsync = true });
@@ -155,11 +197,18 @@ namespace Kudu.FunctionalTests
             });
         }
 
-        [Fact]
-        public Task EnsureExpectedKudusyncBehavior()
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public Task EnsureExpectedKudusyncBehavior(bool runFromZip)
         {
             return ApplicationManager.RunAsync("EnsureExpectedKudusyncBehavior", async appManager =>
             {
+                if (!await TrySetRunFromZip(appManager, runFromZip))
+                {
+                    return;
+                }
+
                 var origTime = DateTime.Now;
                 var files = CreateRandomFilesForZip(10);
                 foreach (var file in files)
@@ -376,6 +425,21 @@ namespace Kudu.FunctionalTests
                 response.EnsureSuccessStatusCode();
                 await AssertSuccessfulDeploymentByFilenames(appManager, files.Select(f => f.Filename).ToArray(), "webapps/testappname");
             });
+        }
+
+        private async Task<bool> TrySetRunFromZip(ApplicationManager appManager, bool runFromZip)
+        {
+            if (appManager.IsAzure && runFromZip)
+            {
+                await appManager.SettingsManager.SetValue("WEBSITE_USE_ZIP", "1");
+                return true;
+            }
+            else if (!appManager.IsAzure && runFromZip)
+            {
+                return false;
+            }
+
+            return true;
         }
 
         private static async Task AssertSuccessfulDeploymentByContent(ApplicationManager appManager, FileForZip[] files)

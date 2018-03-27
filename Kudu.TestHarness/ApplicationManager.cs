@@ -210,6 +210,8 @@ namespace Kudu.TestHarness
             set;
         }
 
+        public bool IsAzure { get; } = false;
+
         public string GetCustomGitUrl(string path)
         {
             // Return a custom git url, e.g. http://kuduservice/git/foo/bar
