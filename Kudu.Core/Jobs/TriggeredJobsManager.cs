@@ -240,7 +240,7 @@ namespace Kudu.Core.Jobs
             TriggeredJobRunner triggeredJobRunner =
                 _triggeredJobRunners.GetOrAdd(
                     jobName,
-                    _ => new TriggeredJobRunner(triggeredJob, Environment, Settings, TraceFactory, Analytics));
+                    _ => new TriggeredJobRunner(triggeredJob.Name, Environment, Settings, TraceFactory, Analytics));
 
             JobSettings jobSettings = triggeredJob.Settings;
 
