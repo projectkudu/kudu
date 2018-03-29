@@ -64,8 +64,11 @@ namespace Kudu.Core.Jobs
 
         protected IAnalytics Analytics { get; private set; }
 
+        private readonly IEnumerable<string> _excludedJobsNames;
+
         protected JobsFileWatcher JobsWatcher { get; set; }
-        internal static IEnumerable<TJob> JobListCache { get; set; }
+
+        internal static IDictionary<string, IEnumerable<TJob>> CacheMap { get; } = new Dictionary<string, IEnumerable<TJob>>();
 
         private DateTime _jobListCacheExpiryDate;
 
@@ -73,16 +76,16 @@ namespace Kudu.Core.Jobs
 
         List<Action<string>> FileWatcherExtraEventHandlers;
 
-        protected JobsManagerBase(ITraceFactory traceFactory, IEnvironment environment, IDeploymentSettingsManager settings, IAnalytics analytics, string jobsTypePath)
+        protected JobsManagerBase(ITraceFactory traceFactory, IEnvironment environment, IDeploymentSettingsManager settings, IAnalytics analytics, string jobsTypePath, string basePath, IEnumerable<string> excludedJobsNames)
         {
             TraceFactory = traceFactory;
             Environment = environment;
             Settings = settings;
             Analytics = analytics;
 
+            _excludedJobsNames = excludedJobsNames ?? Enumerable.Empty<string>();
             _jobsTypePath = jobsTypePath;
-
-            JobsBinariesPath = Path.Combine(Environment.JobsBinariesPath, jobsTypePath);
+            JobsBinariesPath = Path.Combine(basePath, jobsTypePath);
             JobsDataPath = Path.Combine(Environment.JobsDataPath, jobsTypePath);
             JobsWatcher = new JobsFileWatcher(JobsBinariesPath, OnJobChanged, null, ListJobNames, traceFactory, analytics, jobsTypePath);
             HostingEnvironment.RegisterObject(this);
@@ -130,12 +133,29 @@ namespace Kudu.Core.Jobs
             return jobList;
         }
 
+        internal IEnumerable<TJob> JobListCache
+        {
+            get
+            {
+                return CacheMap.ContainsKey(JobsBinariesPath)
+                    ? CacheMap[JobsBinariesPath]
+                    : null;
+            }
+
+            set
+            {
+                CacheMap[JobsBinariesPath] = value;
+            }
+        }
+
         internal static void ClearJobListCache()
         {
-            JobListCache = null;
+            CacheMap.Clear();
         }
 
         public abstract TJob GetJob(string jobName);
+
+        public bool HasJob(string jobName) => FileSystemHelpers.DirectoryExists(Path.Combine(JobsBinariesPath, jobName));
 
         public TJob CreateOrReplaceJobFromZipStream(Stream zipStream, string jobName)
         {
@@ -245,7 +265,8 @@ namespace Kudu.Core.Jobs
         {
             var jobs = new List<TJob>();
 
-            IEnumerable<DirectoryInfoBase> jobDirectories = ListJobDirectories(JobsBinariesPath);
+            IEnumerable<DirectoryInfoBase> jobDirectories = ListJobDirectories(JobsBinariesPath)
+                .Where(d => !_excludedJobsNames.Any(e => d.Name.Equals(e, StringComparison.OrdinalIgnoreCase)));
             foreach (DirectoryInfoBase jobDirectory in jobDirectories)
             {
                 TJob job = BuildJob(jobDirectory);

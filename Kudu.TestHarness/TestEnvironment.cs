@@ -131,6 +131,12 @@ namespace Kudu.TestHarness
             set;
         }
 
+        public string SecondaryJobsBinariesPath
+        {
+            get;
+            set;
+        }
+
         public string SiteExtensionSettingsPath
         {
             get;

@@ -267,6 +267,9 @@
     <Compile Include="Infrastructure\ServerConfiguration.cs" />
     <Compile Include="Infrastructure\SettingsProcessor.cs" />
     <Compile Include="Infrastructure\ZipArchiveExtensions.cs" />
+    <Compile Include="Jobs\AggregrateContinuousJobsManager.cs" />
+    <Compile Include="Jobs\AggregrateJobsManagerBase.cs" />
+    <Compile Include="Jobs\AggregrateTriggeredJobsManager.cs" />
     <Compile Include="Jobs\ContinuousJobLogger.cs" />
     <Compile Include="Jobs\ContinuousJobRunner.cs" />
     <Compile Include="Jobs\DnxScriptHost.cs" />
@@ -459,6 +462,7 @@
       <SubType>Designer</SubType>
     </EmbeddedResource>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="BeforeBuild">
     <!-- Ensure NuGet.exe exists in the Build directory prior to building this project. -->
