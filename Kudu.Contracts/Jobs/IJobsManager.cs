@@ -8,6 +8,8 @@ namespace Kudu.Contracts.Jobs
     {
         IEnumerable<TJob> ListJobs(bool forceRefreshCache);
 
+        bool HasJob(string jobName);
+
         TJob GetJob(string jobName);
 
         TJob CreateOrReplaceJobFromZipStream(Stream zipStream, string jobName);

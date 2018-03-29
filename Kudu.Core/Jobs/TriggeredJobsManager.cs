@@ -23,8 +23,8 @@ namespace Kudu.Core.Jobs
 
         private readonly IWebHooksManager _hooksManager;
 
-        public TriggeredJobsManager(ITraceFactory traceFactory, IEnvironment environment, IDeploymentSettingsManager settings, IAnalytics analytics, IWebHooksManager hooksManager)
-            : base(traceFactory, environment, settings, analytics, Constants.TriggeredPath)
+        public TriggeredJobsManager(string basePath, ITraceFactory traceFactory, IEnvironment environment, IDeploymentSettingsManager settings, IAnalytics analytics, IWebHooksManager hooksManager, IEnumerable<string> excludedJobsNames = null)
+            : base(traceFactory, environment, settings, analytics, Constants.TriggeredPath, basePath, excludedJobsNames)
         {
             _hooksManager = hooksManager;
         }
@@ -240,7 +240,7 @@ namespace Kudu.Core.Jobs
             TriggeredJobRunner triggeredJobRunner =
                 _triggeredJobRunners.GetOrAdd(
                     jobName,
-                    _ => new TriggeredJobRunner(triggeredJob.Name, Environment, Settings, TraceFactory, Analytics));
+                    _ => new TriggeredJobRunner(triggeredJob.Name, JobsBinariesPath, Environment, Settings, TraceFactory, Analytics));
 
             JobSettings jobSettings = triggeredJob.Settings;
 

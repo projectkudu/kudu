@@ -50,7 +50,7 @@ namespace Kudu.Core.Test.Jobs
             mockTracer.Setup(p => p.Trace(It.IsAny<string>(), It.IsAny<IDictionary<string, string>>()));
             mockTraceFactory.Setup(p => p.GetTracer()).Returns(mockTracer.Object);
 
-            _runner = new ContinuousJobRunner(_job, _environment, mockSettingsManager, mockTraceFactory.Object, mockAnalytics.Object);
+            _runner = new ContinuousJobRunner(_job, _environment.JobsBinariesPath, _environment, mockSettingsManager, mockTraceFactory.Object, mockAnalytics.Object);
 
             FileSystemHelpers.DeleteFileSafe(_logFilePath);
         }

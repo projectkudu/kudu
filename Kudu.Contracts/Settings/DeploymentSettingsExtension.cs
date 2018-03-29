@@ -261,5 +261,8 @@ namespace Kudu.Contracts.Settings
 
             return value != null && value.StartsWith("http", StringComparison.OrdinalIgnoreCase);
         }
+
+        public static bool RunFromZip(this IDeploymentSettingsManager settings)
+            => settings.RunFromLocalZip() || settings.RunFromRemoteZip();
     }
 }

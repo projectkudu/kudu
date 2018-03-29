@@ -22,8 +22,8 @@ namespace Kudu.Core.Jobs
 
         private readonly Dictionary<string, ContinuousJobRunner> _continuousJobRunners = new Dictionary<string, ContinuousJobRunner>(StringComparer.OrdinalIgnoreCase);
 
-        public ContinuousJobsManager(ITraceFactory traceFactory, IEnvironment environment, IDeploymentSettingsManager settings, IAnalytics analytics)
-            : base(traceFactory, environment, settings, analytics, Constants.ContinuousPath)
+        public ContinuousJobsManager(string basePath, ITraceFactory traceFactory, IEnvironment environment, IDeploymentSettingsManager settings, IAnalytics analytics, IEnumerable<string> excludedJobsNames = null)
+            : base(traceFactory, environment, settings, analytics, Constants.ContinuousPath, basePath, excludedJobsNames)
         {
             RegisterExtraEventHandlerForFileChange(OnJobChanged);
         }
@@ -216,7 +216,7 @@ namespace Kudu.Core.Jobs
             ContinuousJobRunner continuousJobRunner;
             if (!_continuousJobRunners.TryGetValue(continuousJob.Name, out continuousJobRunner))
             {
-                continuousJobRunner = new ContinuousJobRunner(continuousJob, Environment, Settings, TraceFactory, Analytics);
+                continuousJobRunner = new ContinuousJobRunner(continuousJob, JobsBinariesPath, Environment, Settings, TraceFactory, Analytics);
                 _continuousJobRunners.Add(continuousJob.Name, continuousJobRunner);
             }
 
