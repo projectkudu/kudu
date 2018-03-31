@@ -7,13 +7,13 @@ using Kudu.Contracts.Settings;
 
 namespace Kudu.Core.Jobs
 {
-    public abstract class AggregrateJobsManagerBase<TJob> where TJob : JobBase, new()
+    public abstract class AggregateJobsManagerBase<TJob> where TJob : JobBase, new()
     {
         protected JobsManagerBase<TJob> PrimaryJobManager { get; private set; }
         protected JobsManagerBase<TJob> SecondaryJobManager { get; private set; }
         private readonly IDeploymentSettingsManager _settings;
 
-        protected AggregrateJobsManagerBase(JobsManagerBase<TJob> primaryManager, Func<IEnumerable<string>, JobsManagerBase<TJob>> secondaryManagerFactory, IDeploymentSettingsManager settings)
+        protected AggregateJobsManagerBase(JobsManagerBase<TJob> primaryManager, Func<IEnumerable<string>, JobsManagerBase<TJob>> secondaryManagerFactory, IDeploymentSettingsManager settings)
         {
             PrimaryJobManager = primaryManager;
             // pass the list of primary job names so the second manager can excluded them

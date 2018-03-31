@@ -231,7 +231,7 @@ namespace Kudu.Core.Jobs
         public void CleanupDeletedJobs()
         {
             IEnumerable<TJob> jobs = ListJobs(forceRefreshCache: true);
-            IEnumerable<string> jobNames = jobs.Select(j => j.Name);
+            IEnumerable<string> jobNames = jobs.Select(j => j.Name).Concat(_excludedJobsNames);
             DirectoryInfoBase jobsDataDirectory = FileSystemHelpers.DirectoryInfoFromDirectoryName(JobsDataPath);
             if (jobsDataDirectory.Exists)
             {
