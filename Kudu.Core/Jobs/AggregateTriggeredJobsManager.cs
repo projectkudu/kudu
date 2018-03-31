@@ -6,9 +6,9 @@ using Kudu.Core.Tracing;
 
 namespace Kudu.Core.Jobs
 {
-    public class AggregrateTriggeredJobsManager : AggregrateJobsManagerBase<TriggeredJob>, ITriggeredJobsManager
+    public class AggregateTriggeredJobsManager : AggregateJobsManagerBase<TriggeredJob>, ITriggeredJobsManager
     {
-        public AggregrateTriggeredJobsManager(ITraceFactory traceFactory, IEnvironment environment, IDeploymentSettingsManager settings, IAnalytics analytics, IWebHooksManager hooksManager)
+        public AggregateTriggeredJobsManager(ITraceFactory traceFactory, IEnvironment environment, IDeploymentSettingsManager settings, IAnalytics analytics, IWebHooksManager hooksManager)
             : base(new TriggeredJobsManager(environment.JobsBinariesPath, traceFactory, environment, settings, analytics, hooksManager),
                   excludedList => new TriggeredJobsManager(environment.SecondaryJobsBinariesPath, traceFactory, environment, settings, analytics, hooksManager, excludedList),
                   settings)

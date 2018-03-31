@@ -248,7 +248,7 @@ namespace Kudu.Services.Web.App_Start
             kernel.Bind<IWebHooksManager>().To<WebHooksManager>()
                                              .InRequestScope();
 
-            ITriggeredJobsManager triggeredJobsManager = new AggregrateTriggeredJobsManager(
+            ITriggeredJobsManager triggeredJobsManager = new AggregateTriggeredJobsManager(
                 etwTraceFactory,
                 kernel.Get<IEnvironment>(),
                 kernel.Get<IDeploymentSettingsManager>(),
@@ -266,7 +266,7 @@ namespace Kudu.Services.Web.App_Start
             kernel.Bind<TriggeredJobsScheduler>().ToConstant(triggeredJobsScheduler)
                                              .InTransientScope();
 
-            IContinuousJobsManager continuousJobManager = new AggregrateContinuousJobsManager(
+            IContinuousJobsManager continuousJobManager = new AggregateContinuousJobsManager(
                 etwTraceFactory,
                 kernel.Get<IEnvironment>(),
                 kernel.Get<IDeploymentSettingsManager>(),

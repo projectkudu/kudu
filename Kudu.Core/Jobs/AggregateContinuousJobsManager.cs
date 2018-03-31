@@ -7,9 +7,9 @@ using Kudu.Core.Tracing;
 
 namespace Kudu.Core.Jobs
 {
-    public class AggregrateContinuousJobsManager : AggregrateJobsManagerBase<ContinuousJob>, IContinuousJobsManager
+    public class AggregateContinuousJobsManager : AggregateJobsManagerBase<ContinuousJob>, IContinuousJobsManager
     {
-        public AggregrateContinuousJobsManager(ITraceFactory traceFactory, IEnvironment environment, IDeploymentSettingsManager settings, IAnalytics analytics)
+        public AggregateContinuousJobsManager(ITraceFactory traceFactory, IEnvironment environment, IDeploymentSettingsManager settings, IAnalytics analytics)
             : base(new ContinuousJobsManager(environment.JobsBinariesPath, traceFactory, environment, settings, analytics),
                   excludedList => new ContinuousJobsManager(environment.SecondaryJobsBinariesPath, traceFactory, environment, settings, analytics, excludedList),
                   settings)
