@@ -1,5 +1,4 @@
-﻿using System;
-using System.Net.Http;
+﻿using System.Net.Http;
 using System.Threading.Tasks;
 using Kudu.Contracts.Jobs;
 using Kudu.Contracts.Settings;
@@ -12,7 +11,7 @@ namespace Kudu.Core.Jobs
         public AggregateContinuousJobsManager(ITraceFactory traceFactory, IEnvironment environment, IDeploymentSettingsManager settings, IAnalytics analytics)
             : base(new ContinuousJobsManager(environment.JobsBinariesPath, traceFactory, environment, settings, analytics),
                   excludedList => new ContinuousJobsManager(environment.SecondaryJobsBinariesPath, traceFactory, environment, settings, analytics, excludedList),
-                  settings)
+                  settings, environment, traceFactory, Constants.ContinuousPath)
         {
         }
 

@@ -8,6 +8,7 @@ using System.Web;
 using System.Web.Hosting;
 using Kudu.Contracts.Jobs;
 using Kudu.Contracts.Settings;
+using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Tracing;
 using Newtonsoft.Json;
@@ -38,6 +39,25 @@ namespace Kudu.Core.Jobs
             catch
             {
                 return false;
+            }
+        }
+
+        public static void CleanupDeletedJobs(IEnumerable<string> existingJobs, string jobsDataPath, ITracer tracer)
+        {
+            DirectoryInfoBase jobsDataDirectory = FileSystemHelpers.DirectoryInfoFromDirectoryName(jobsDataPath);
+            if (jobsDataDirectory.Exists)
+            {
+                DirectoryInfoBase[] jobDataDirectories = jobsDataDirectory.GetDirectories("*", SearchOption.TopDirectoryOnly);
+                IEnumerable<string> allJobDataDirectories = jobDataDirectories.Select(j => j.Name);
+                IEnumerable<string> directoriesToRemove = allJobDataDirectories.Except(existingJobs, StringComparer.OrdinalIgnoreCase);
+                foreach (string directoryToRemove in directoriesToRemove)
+                {
+                    using (tracer.Step("CleanupDeletedJobs"))
+                    {
+                        tracer.Trace("Removed job data path as the job was already deleted: " + directoryToRemove);
+                        FileSystemHelpers.DeleteDirectorySafe(Path.Combine(jobsDataPath, directoryToRemove));
+                    }
+                }
             }
         }
     }
@@ -230,24 +250,8 @@ namespace Kudu.Core.Jobs
 
         public void CleanupDeletedJobs()
         {
-            IEnumerable<TJob> jobs = ListJobs(forceRefreshCache: true);
-            IEnumerable<string> jobNames = jobs.Select(j => j.Name).Concat(_excludedJobsNames);
-            DirectoryInfoBase jobsDataDirectory = FileSystemHelpers.DirectoryInfoFromDirectoryName(JobsDataPath);
-            if (jobsDataDirectory.Exists)
-            {
-                DirectoryInfoBase[] jobDataDirectories = jobsDataDirectory.GetDirectories("*", SearchOption.TopDirectoryOnly);
-                IEnumerable<string> allJobDataDirectories = jobDataDirectories.Select(j => j.Name);
-                IEnumerable<string> directoriesToRemove = allJobDataDirectories.Except(jobNames, StringComparer.OrdinalIgnoreCase);
-                foreach (string directoryToRemove in directoriesToRemove)
-                {
-                    var tracer = TraceFactory.GetTracer();
-                    using (tracer.Step("CleanupDeletedJobs"))
-                    {
-                        tracer.Trace("Removed job data path as the job was already deleted: " + directoryToRemove);
-                        FileSystemHelpers.DeleteDirectorySafe(Path.Combine(JobsDataPath, directoryToRemove));
-                    }
-                }
-            }
+            var jobs = ListJobs(forceRefreshCache: true).Select(j => j.Name);
+            CleanupDeletedJobs(jobs, JobsDataPath, TraceFactory.GetTracer());
         }
 
         private string GetSpecificJobDataPath(string jobName)
