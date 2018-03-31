@@ -11,7 +11,7 @@ namespace Kudu.Core.Jobs
         public AggregateTriggeredJobsManager(ITraceFactory traceFactory, IEnvironment environment, IDeploymentSettingsManager settings, IAnalytics analytics, IWebHooksManager hooksManager)
             : base(new TriggeredJobsManager(environment.JobsBinariesPath, traceFactory, environment, settings, analytics, hooksManager),
                   excludedList => new TriggeredJobsManager(environment.SecondaryJobsBinariesPath, traceFactory, environment, settings, analytics, hooksManager, excludedList),
-                  settings)
+                  settings, environment, traceFactory, Constants.TriggeredPath)
         {
         }
 
