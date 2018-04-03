@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
+using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -55,20 +56,22 @@ namespace Kudu.Core.Helpers
 
         private static byte[] GetWebSiteAuthEncryptionKey()
         {
-            var key = System.Environment.GetEnvironmentVariable(Constants.SiteAuthEncryptionKey);
-            if (string.IsNullOrEmpty(key))
+            var hexOrBase64 = System.Environment.GetEnvironmentVariable(Constants.SiteAuthEncryptionKey);
+            if (string.IsNullOrEmpty(hexOrBase64))
             {
                 throw new InvalidOperationException($"No {Constants.SiteAuthEncryptionKey} defined in the environment");
             }
 
-            // The key is in a hex string format
-            var bytes = new List<byte>(key.Length / 2);
-            for (var i = 0; i < key.Length; i += 2)
+            // only support 32 bytes (256 bits) key length
+            if (hexOrBase64.Length == 64)
             {
-                bytes.Add(Convert.ToByte(key.Substring(i, 2), 16));
+                return Enumerable.Range(0, hexOrBase64.Length)
+                                 .Where(x => x % 2 == 0)
+                                 .Select(x => Convert.ToByte(hexOrBase64.Substring(x, 2), 16))
+                                 .ToArray();
             }
 
-            return bytes.ToArray();
+            return Convert.FromBase64String(hexOrBase64);
         }
     }
 }
