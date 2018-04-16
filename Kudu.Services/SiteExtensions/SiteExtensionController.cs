@@ -30,6 +30,23 @@ namespace Kudu.Services.SiteExtensions
         private readonly IAnalytics _analytics;
         private readonly string _siteExtensionRoot;
 
+        // List of packages that had to be renamed when moving to nuget.org because the siteextension.org id conflicted
+        // with an existing nuget.org id
+        static Dictionary<string, string> _packageIdRedirects = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase)
+        {
+            { "python2714x64", "azureappservice-python2714x64" },
+            { "python2714x86", "azureappservice-python2714x86" },
+            { "python353x64", "azureappservice-python353x64" },
+            { "python353x86", "azureappservice-python353x86" },
+            { "python354x64", "azureappservice-python354x64" },
+            { "python354x86", "azureappservice-python354x86" },
+            { "python362x64", "azureappservice-python362x64" },
+            { "python362x86", "azureappservice-python362x86" },
+            { "python364x64", "azureappservice-python364x64" },
+            { "python364x86", "azureappservice-python364x86" },
+            { "NewRelic.Azure.WebSites", "NewRelic.Azure.WebSites.Extension"}
+        };
+
         public SiteExtensionController(ISiteExtensionManager manager, IEnvironment environment, ITraceFactory traceFactory, IAnalytics analytics)
         {
             _manager = manager;
@@ -218,6 +235,13 @@ namespace Kudu.Services.SiteExtensions
         {
             var startTime = DateTime.UtcNow;
             var tracer = _traceFactory.GetTracer();
+
+            // If there is an id redirect for it, switch to the new id
+            if (_packageIdRedirects.TryGetValue(id, out string newId))
+            {
+                tracer.Trace($"Package id '{id}' was redirected to id '{newId}.");
+                id = newId;
+            }
 
             if (IsInstallationLockHeldSafeCheck(id))
             {
