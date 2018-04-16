@@ -33,13 +33,15 @@ namespace Kudu.Core.Infrastructure
         {
             // as of git 2.8.1, various unix tools are installed in multiple paths.
             // add them to %path%.
-            // As of git 2.14.1 curl no longer exists in usr/bin. Use the one from mingw32/bin instead
+            // As of git 2.14.1 curl no longer exists in usr/bin. Use the one from mingw32/bin (mingw64/bin) instead
+            // We add both mingw32 and mingw64, but it will only end up adding those that actually exist to the PATH
             string gitPath = ResolveGitInstallDirPath();
             return new[]
             {
                 Path.Combine(gitPath, "bin"),
                 Path.Combine(gitPath, "usr", "bin"),
-                Path.Combine(gitPath, "mingw32", "bin")
+                Path.Combine(gitPath, "mingw32", "bin"),
+                Path.Combine(gitPath, "mingw64", "bin")
             };
         }
 

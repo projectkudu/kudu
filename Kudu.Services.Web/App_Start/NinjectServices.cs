@@ -4,6 +4,7 @@ using System.Configuration;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Http.Formatting;
 using System.Web;
@@ -757,7 +758,9 @@ namespace Kudu.Services.Web.App_Start
             List<string> folders = PathUtilityFactory.Instance.GetPathFolders(environment);
 
             string path = System.Environment.GetEnvironmentVariable("PATH");
-            string additionalPaths = String.Join(Path.PathSeparator.ToString(), folders);
+
+            // Ignore any folder that doesn't actually exist
+            string additionalPaths = String.Join(Path.PathSeparator.ToString(), folders.Where(dir => Directory.Exists(dir)));
 
             // Make sure we haven't already added them. This can happen if the Kudu appdomain restart (since it's still same process)
             if (!path.Contains(additionalPaths))
