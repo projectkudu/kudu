@@ -252,14 +252,26 @@ namespace Kudu.Contracts.Settings
 
         public static bool RunFromLocalZip(this IDeploymentSettingsManager settings)
         {
-            return settings.GetValue(SettingsKeys.RunFromZip) == "1";
+            return settings.GetFromFromZipAppSettingValue() == "1";
         }
 
         public static bool RunFromRemoteZip(this IDeploymentSettingsManager settings)
         {
-            var value = settings.GetValue(SettingsKeys.RunFromZip);
+            var value = settings.GetFromFromZipAppSettingValue();
 
             return value != null && value.StartsWith("http", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static string GetFromFromZipAppSettingValue(this IDeploymentSettingsManager settings)
+        {
+            // Try both the old and new app setting names
+            string runFromZip = settings.GetValue(SettingsKeys.RunFromZip);
+            if (String.IsNullOrEmpty(runFromZip))
+            {
+                runFromZip = settings.GetValue(SettingsKeys.RunFromZipOld);
+            }
+
+            return runFromZip;
         }
 
         public static bool RunFromZip(this IDeploymentSettingsManager settings)
