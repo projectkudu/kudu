@@ -32,7 +32,7 @@ namespace Kudu.Services.SiteExtensions
 
         // List of packages that had to be renamed when moving to nuget.org because the siteextension.org id conflicted
         // with an existing nuget.org id
-        static Dictionary<string, string> _packageIdRedirects = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase)
+        static Dictionary<string, string> _packageIdRedirects = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
             { "python2714x64", "azureappservice-python2714x64" },
             { "python2714x86", "azureappservice-python2714x86" },
