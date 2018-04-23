@@ -87,6 +87,12 @@ namespace Kudu.Core.Helpers
             return !String.IsNullOrEmpty(System.Environment.GetEnvironmentVariable("WEBSITE_INSTANCE_ID"));
         }
 
+        // WEBSITE_HOME_STAMPNAME = waws-prod-bay-001
+        private static string HomeStamp
+        {
+            get { return System.Environment.GetEnvironmentVariable("WEBSITE_HOME_STAMPNAME"); }
+        }
+
         /// <summary>
         /// This common codes is to invoke post deployment operations.
         /// It is written to require least dependencies but framework assemblies.
@@ -425,13 +431,24 @@ namespace Kudu.Core.Helpers
         private static async Task PostAsync(string path, string requestId, string content = null)
         {
             var host = HttpHost;
+            var ipAddress = await GetAlternativeIPAddress(host);
             var statusCode = default(HttpStatusCode);
-            Trace(TraceEventType.Verbose, "Begin HttpPost https://{0}{1}, x-ms-request-id: {2}", host, path, requestId);
             try
             {
                 using (var client = HttpClientFactory())
                 {
-                    client.BaseAddress = new Uri(string.Format("https://{0}", host));
+                    if (ipAddress == null)
+                    {
+                        Trace(TraceEventType.Verbose, "Begin HttpPost https://{0}{1}, x-ms-request-id: {2}", host, path, requestId);
+                        client.BaseAddress = new Uri(string.Format("https://{0}", host));
+                    }
+                    else
+                    {
+                        Trace(TraceEventType.Verbose, "Begin HttpPost https://{0}{1}, host: {2}, x-ms-request-id: {3}", ipAddress, path, host, requestId);
+                        client.BaseAddress = new Uri(string.Format("https://{0}", ipAddress));
+                        client.DefaultRequestHeaders.Host = host;
+                    }
+
                     client.DefaultRequestHeaders.UserAgent.Add(_userAgent.Value);
                     client.DefaultRequestHeaders.Add(Constants.SiteRestrictedToken, SimpleWebTokenHelper.CreateToken(DateTime.UtcNow.AddMinutes(5)));
                     client.DefaultRequestHeaders.Add(Constants.RequestIdHeader, requestId);
@@ -448,6 +465,64 @@ namespace Kudu.Core.Helpers
             {
                 Trace(TraceEventType.Verbose, "End HttpPost, status: {0}", statusCode);
             }
+        }
+
+        /// <summary>
+        /// This works around the hostname dns resolution issue for recently created site.
+        /// If dns failed, we will use the home hosted service as alternative IP address.
+        /// </summary>
+        /// <returns></returns>
+        private static async Task<IPAddress> GetAlternativeIPAddress(string host)
+        {
+            try
+            {
+                // if resolved successfully, return null to not use alternative ipAddress
+                await Dns.GetHostEntryAsync(host);
+                return null;
+            }
+            catch (Exception ex)
+            {
+                Trace(TraceEventType.Verbose, "Unable to dns resolve {0}.  {1}", host, ex);
+            }
+
+            return await GetHomeStampAddress(host);
+        }
+
+        private static async Task<IPAddress> GetHomeStampAddress(string host)
+        {
+            var homeStamp = HomeStamp;
+            if (string.IsNullOrEmpty(homeStamp))
+            {
+                return null;
+            }
+
+            // cloudapp.net is the default to make it easy for private stamp testing.
+            var homeStampHostName = string.Format("{0}.cloudapp.net", homeStamp);
+            if (host.EndsWith(".scm.azurewebsites.us", StringComparison.OrdinalIgnoreCase))
+            {
+                homeStampHostName = string.Format("{0}.usgovcloudapp.net", homeStamp);
+            }
+            else if (host.EndsWith(".scm.chinacloudsites.cn", StringComparison.OrdinalIgnoreCase))
+            {
+                homeStampHostName = string.Format("{0}.chinacloudapp.cn", homeStamp);
+            }
+            else if (host.EndsWith(".scm.azurewebsites.de", StringComparison.OrdinalIgnoreCase))
+            {
+                homeStampHostName = string.Format("{0}.azurecloudapp.de", homeStamp);
+            }
+
+            try
+            {
+                Trace(TraceEventType.Verbose, "Try to dns resolve stamp {0}.", homeStampHostName);
+                var entry = await Dns.GetHostEntryAsync(homeStampHostName);
+                return entry.AddressList.First();
+            }
+            catch (Exception ex)
+            {
+                Trace(TraceEventType.Verbose, "Unable to dns resolve stamp {0}.  {1}", homeStampHostName, ex);
+            }
+
+            return null;
         }
 
         public static void RunPostDeploymentScripts(TraceListener tracer)
