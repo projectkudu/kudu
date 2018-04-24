@@ -29,6 +29,7 @@ namespace Kudu.Core.Deployment
 
         public string Message { get; set; }
 
+        // This is used if the deployment is Run-From-Zip
         public string ZipName { get; set; }
     }
 }

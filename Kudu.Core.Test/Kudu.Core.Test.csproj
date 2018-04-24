@@ -92,6 +92,7 @@
     <Compile Include="Deployment\FetchDeploymentManagerFacts.cs" />
     <Compile Include="Deployment\Generator\ExternalCommandBuilderFacts.cs" />
     <Compile Include="Deployment\Generator\SiteBuilderFactoryFacts.cs" />
+    <Compile Include="Deployment\PushDeploymentControllerFacts.cs" />
     <Compile Include="Deployment\PythonSiteEnablerTests.cs" />
     <Compile Include="Deployment\NodeSiteEnablerTests.cs" />
     <Compile Include="Deployment\DeploymentManagerFacts.cs" />
