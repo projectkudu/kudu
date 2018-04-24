@@ -67,15 +67,20 @@ namespace Kudu.Services.Deployment
                     DoFullBuildByDefault = false,
                     Author = author,
                     AuthorEmail = authorEmail,
-                    Message = message,
+                    Message = message
+                };
+
+                if (_settings.RunFromLocalZip())
+                {
                     // This is used if the deployment is Run-From-Zip
                     // the name of the deployed file in D:\home\data\SitePackages\{name}.zip is the 
                     // timestamp in the format yyyMMddHHmmss. 
-                    ZipName = $"{DateTime.UtcNow.ToString("yyyyMMddHHmmss")}.zip",
+                    deploymentInfo.ZipName = $"{DateTime.UtcNow.ToString("yyyyMMddHHmmss")}.zip";
+
                     // This is also for Run-From-Zip where we need to extract the triggers
                     // for post deployment sync triggers.
-                    SyncFunctionsTriggersPath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName())
-                };
+                    deploymentInfo.SyncFunctionsTriggersPath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+                }
 
                 return await PushDeployAsync(deploymentInfo, isAsync);
             }
