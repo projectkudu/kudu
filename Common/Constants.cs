@@ -120,6 +120,7 @@ namespace Kudu
         public const string DynamicSku = "Dynamic";
         public const string AzureWebJobsSecretStorageType = "AzureWebJobsSecretStorageType";
         public const string HubName = "HubName";
+        public const string DurableTaskStorageConnection = "connection";
         public const string DurableTask = "durableTask";
         public const string SitePackages = "SitePackages";
         public const string SiteVersionTxt = "siteversion.txt";
