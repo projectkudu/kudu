@@ -354,7 +354,7 @@ namespace Kudu.Core.Helpers
                     config.Add(Constants.HubName, nameValue.ToString());
                 }
 
-                if (kvp.TryGetValue(Constants.DurableTaskStorageConnection, StringComparison.OrdinalIgnoreCase, out nameValue) && nameValue != null)
+                if (kvp.TryGetValue(Constants.DurableTaskStorageConnectionName, StringComparison.OrdinalIgnoreCase, out nameValue) && nameValue != null)
                 {
                     config.Add(Constants.DurableTaskStorageConnection, nameValue.ToString());
                 }
