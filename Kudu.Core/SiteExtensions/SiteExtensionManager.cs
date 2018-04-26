@@ -758,8 +758,15 @@ namespace Kudu.Core.SiteExtensions
             }
             else
             {
-                repos.Add(GetSourceRepository(DeploymentSettingsExtension.NuGetSiteExtensionFeedUrl));
-                repos.Add(GetSourceRepository(_settings.GetSiteExtensionRemoteUrl()));
+                // The remote feed URL can either be the default siteextensions.net, or some user override via
+                // SCM_SITEEXTENSIONS_FEED_URL. We only want to add nuget.org to the list if the user
+                // is *not* overriding the feed URL
+                string remoteUrl = _settings.GetSiteExtensionRemoteUrl(out bool isDefault);
+                if (isDefault)
+                {
+                    repos.Add(GetSourceRepository(DeploymentSettingsExtension.NuGetSiteExtensionFeedUrl));
+                }
+                repos.Add(GetSourceRepository(remoteUrl));
             }
             return repos;
         }

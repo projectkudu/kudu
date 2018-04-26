@@ -211,9 +211,10 @@ namespace Kudu.Contracts.Settings
             return defaultValue;
         }
 
-        public static string GetSiteExtensionRemoteUrl(this IDeploymentSettingsManager settings)
+        public static string GetSiteExtensionRemoteUrl(this IDeploymentSettingsManager settings, out bool isDefault)
         {
             string value = settings.GetValue(SettingsKeys.SiteExtensionsFeedUrl);
+            isDefault = String.IsNullOrEmpty(value);
             return !String.IsNullOrEmpty(value) ? value : DefaultSiteExtensionFeedUrl;
         }
 
