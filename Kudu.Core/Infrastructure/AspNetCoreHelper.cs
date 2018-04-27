@@ -55,6 +55,7 @@ namespace Kudu.Core.Infrastructure
                 return !projectTypeGuids.Any() &&
                        (VsHelper.IncludesReferencePackage(projectPath, "Microsoft.AspNetCore") ||
                         VsHelper.IncludesReferencePackage(projectPath, "Microsoft.AspNetCore.All") ||
+                        VsHelper.IncludesReferencePackage(projectPath, "Microsoft.AspNetCore.App") ||
                         IsWebAppFromFolderStruct(projectPath));
             }
             else if (projectPath.EndsWith(".xproj", StringComparison.OrdinalIgnoreCase))
