@@ -51,11 +51,14 @@ namespace Kudu.Core.Infrastructure
                 // 2ndly, look for sign of web project
                 // either <PackageReference Include="Microsoft.AspNetCore" Version="..." />
                 // for dotnet core project created with 2.0 toolings look for "Microsoft.AspNetCore.All"
+                // for dotnet core project created with 2.1 toolings look for "Microsoft.AspNetCore.App"
                 // for preview3 its web.config file
                 return !projectTypeGuids.Any() &&
-                       (VsHelper.IncludesReferencePackage(projectPath, "Microsoft.AspNetCore") ||
-                        VsHelper.IncludesReferencePackage(projectPath, "Microsoft.AspNetCore.All") ||
-                        IsWebAppFromFolderStruct(projectPath));
+                       (VsHelper.IncludesAnyReferencePackage(projectPath,
+                       "Microsoft.AspNetCore",
+                       "Microsoft.AspNetCore.All",
+                       "Microsoft.AspNetCore.App") ||
+                       IsWebAppFromFolderStruct(projectPath));
             }
             else if (projectPath.EndsWith(".xproj", StringComparison.OrdinalIgnoreCase))
             {
