@@ -16,6 +16,7 @@ namespace Kudu.Contracts.Settings
         public const int DefaultMaxJobRunsHistoryCount = 50;
 
         public static readonly string DefaultSiteExtensionFeedUrl = "https://www.siteextensions.net/api/v2/";
+        public static readonly string NuGetSiteExtensionFeedUrl = "https://www.nuget.org/api/v2/";
 
         public static string GetValue(this IDeploymentSettingsManager settings, string key)
         {
@@ -102,6 +103,20 @@ namespace Kudu.Contracts.Settings
             return StringUtils.IsTrueLike(value);
         }
 
+        public static bool IsWebJobsScheduleDisabled(this IDeploymentSettingsManager settings)
+        {
+            string value = settings.GetValue(SettingsKeys.WebJobsDisableSchedule);
+
+            return StringUtils.IsTrueLike(value);
+        }
+
+        public static bool LogTriggeredJobsToAppLogs(this IDeploymentSettingsManager settings)
+        {
+            string value = settings.GetValue(SettingsKeys.WebJobsLogTriggeredJobsToAppLogs);
+
+            return StringUtils.IsTrueLike(value);
+        }
+
         public static string GetBranch(this IDeploymentSettingsManager settings)
         {
             string value = settings.GetValue(SettingsKeys.Branch, onlyPerSite: true);
@@ -144,7 +159,7 @@ namespace Kudu.Contracts.Settings
             }
 
             // in case of no repository, we will default to webroot (preferring inplace).
-            if (settings.IsNullRepository())
+            if (settings.NoRepository())
             {
                 return Constants.WebRoot;
             }
@@ -163,7 +178,7 @@ namespace Kudu.Contracts.Settings
             return null;
         }
 
-        public static bool IsNullRepository(this IDeploymentSettingsManager settings)
+        public static bool NoRepository(this IDeploymentSettingsManager settings)
         {
             return settings.GetValue(SettingsKeys.NoRepository) == "1";
         }
@@ -196,9 +211,10 @@ namespace Kudu.Contracts.Settings
             return defaultValue;
         }
 
-        public static string GetSiteExtensionRemoteUrl(this IDeploymentSettingsManager settings)
+        public static string GetSiteExtensionRemoteUrl(this IDeploymentSettingsManager settings, out bool isDefault)
         {
             string value = settings.GetValue(SettingsKeys.SiteExtensionsFeedUrl);
+            isDefault = String.IsNullOrEmpty(value);
             return !String.IsNullOrEmpty(value) ? value : DefaultSiteExtensionFeedUrl;
         }
 
@@ -207,9 +223,59 @@ namespace Kudu.Contracts.Settings
             return settings.GetValue(SettingsKeys.UseLibGit2SharpRepository) != "0";
         }
 
-        public static bool TouchWebConfigAfterDeployment(this IDeploymentSettingsManager settings)
+        public static bool TouchWatchedFileAfterDeployment(this IDeploymentSettingsManager settings)
         {
             return settings.GetValue(SettingsKeys.TouchWebConfigAfterDeployment) != "0";
         }
+
+        public static bool IsDockerCiEnabled(this IDeploymentSettingsManager settings)
+        {
+            string value = settings.GetValue(SettingsKeys.DockerCiEnabled);
+            return StringUtils.IsTrueLike(value);
+        }
+
+        public static bool RestartAppContainerOnGitDeploy(this IDeploymentSettingsManager settings)
+        {
+            string value = settings.GetValue(SettingsKeys.LinuxRestartAppContainerAfterDeployment);
+
+            // Default is true
+            return value == null || StringUtils.IsTrueLike(value);
+        }
+
+        public static bool DoBuildDuringDeployment(this IDeploymentSettingsManager settings)
+        {
+            string value = settings.GetValue(SettingsKeys.DoBuildDuringDeployment);
+
+            // A default value should be set on a per-deployment basis depending on the context, but
+            // returning true by default here as an indicator of generally expected behavior
+            return value == null || StringUtils.IsTrueLike(value);
+        }
+
+        public static bool RunFromLocalZip(this IDeploymentSettingsManager settings)
+        {
+            return settings.GetFromFromZipAppSettingValue() == "1";
+        }
+
+        public static bool RunFromRemoteZip(this IDeploymentSettingsManager settings)
+        {
+            var value = settings.GetFromFromZipAppSettingValue();
+
+            return value != null && value.StartsWith("http", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static string GetFromFromZipAppSettingValue(this IDeploymentSettingsManager settings)
+        {
+            // Try both the old and new app setting names
+            string runFromZip = settings.GetValue(SettingsKeys.RunFromZip);
+            if (String.IsNullOrEmpty(runFromZip))
+            {
+                runFromZip = settings.GetValue(SettingsKeys.RunFromZipOld);
+            }
+
+            return runFromZip;
+        }
+
+        public static bool RunFromZip(this IDeploymentSettingsManager settings)
+            => settings.RunFromLocalZip() || settings.RunFromRemoteZip();
     }
 }

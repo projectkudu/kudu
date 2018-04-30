@@ -70,7 +70,8 @@ namespace Kudu.Core.Hooks
         {
             using (_tracer.Step("WebHooksManager.AddWebHook"))
             {
-                if (!Uri.IsWellFormedUriString(webHook.HookAddress, UriKind.RelativeOrAbsolute))
+                // must be valid absolute uri.
+                if (!Uri.IsWellFormedUriString(webHook.HookAddress, UriKind.Absolute))
                 {
                     throw new FormatException(Resources.Error_InvalidHookAddress.FormatCurrentCulture(webHook.HookAddress));
                 }
@@ -137,11 +138,6 @@ namespace Kudu.Core.Hooks
                     await PublishToHooksAsync(jsonString, hookEventType);
                 }, "Publishing WebHook event", LockTimeout);
             }
-        }
-
-        private IEnumerable<WebHook> GetWebHooks(string hookEventType)
-        {
-            return ReadWebHooksFromFile().Where(h => String.Equals(h.HookEventType, hookEventType, StringComparison.OrdinalIgnoreCase));
         }
 
         private void RemoveWebHookNotUnderLock(string hookId)
@@ -217,16 +213,20 @@ namespace Kudu.Core.Hooks
 
         private async Task PublishToHooksAsync(string jsonString, string hookType)
         {
-            IEnumerable<WebHook> webHooks = GetWebHooks(hookType);
+            IEnumerable<WebHook> webHooks = ReadWebHooksFromFile();
 
             if (webHooks.Any())
             {
                 var publishTasks = new List<Task>();
 
-                foreach (var webHook in webHooks)
+                foreach (var webHook in webHooks.Where(h => String.Equals(h.HookEventType, hookType, StringComparison.OrdinalIgnoreCase)))
                 {
-                    Task publishTask = PublishToHookAsync(webHook, jsonString);
-                    publishTasks.Add(publishTask);
+                    // this is to address the bug where we used to relax and allow relative path
+                    if (Uri.IsWellFormedUriString(webHook.HookAddress, UriKind.Absolute))
+                    {
+                        Task publishTask = PublishToHookAsync(webHook, jsonString);
+                        publishTasks.Add(publishTask);
+                    }
                 }
 
                 await Task.WhenAll(publishTasks);
@@ -250,7 +250,8 @@ namespace Kudu.Core.Hooks
             {
                 try
                 {
-                    return JsonConvert.DeserializeObject<IEnumerable<WebHook>>(fileContent, JsonSerializerSettings);
+                    // It is possible for Deserialize to not throw and return null.
+                    return JsonConvert.DeserializeObject<IEnumerable<WebHook>>(fileContent, JsonSerializerSettings) ?? Enumerable.Empty<WebHook>();
                 }
                 catch (JsonSerializationException ex)
                 {

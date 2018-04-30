@@ -1,54 +1,39 @@
 ﻿using System;
 using System.Web;
 using Newtonsoft.Json.Linq;
+using Kudu.Contracts.SourceControl;
 
 namespace Kudu.Services.ServiceHookHandlers
 {
     public class CodebaseHqHandler : GitHubCompatHandler
     {
-        public override DeployAction TryParseDeploymentInfo(HttpRequestBase request, JObject payload, string targetBranch, out DeploymentInfo deploymentInfo)
+        public CodebaseHqHandler(IRepositoryFactory repositoryFactory)
+            : base(repositoryFactory)
         {
-            deploymentInfo = null;
-            if (request.UserAgent != null &&
-                request.UserAgent.StartsWith("Codebasehq", StringComparison.OrdinalIgnoreCase))
-            {
-                GitDeploymentInfo gitDeploymentInfo = GetDeploymentInfo(request, payload, targetBranch);
-                deploymentInfo = gitDeploymentInfo;
-                return deploymentInfo == null || IsDeleteCommit(gitDeploymentInfo.NewRef) ? DeployAction.NoOp : DeployAction.ProcessDeployment;
-            }
-
-            return DeployAction.UnknownPayload;
         }
 
-        protected override GitDeploymentInfo GetDeploymentInfo(HttpRequestBase request, JObject payload, string targetBranch)
+        protected override bool ParserMatches(HttpRequestBase request, JObject payload, string targetBranch)
         {
-            var info = base.GetDeploymentInfo(request, payload, targetBranch);
+            return (request.UserAgent != null && request.UserAgent.StartsWith("Codebasehq", StringComparison.OrdinalIgnoreCase));
+        }
 
-            if (info == null)
-            {
-                return null;
-            }
+        protected override bool IsNoop(HttpRequestBase request, JObject payload, string targetBranch)
+        {
+            // FIXME if githubcompathandler failed to parse the body => NOOP
+            return !(base.ParserMatches(request, payload, targetBranch)) || base.IsNoop(request, payload, targetBranch);
+        }
 
+        protected override string DetermineSecurityProtocol(JObject payload)
+        {
             // CodebaseHq format, see http://support.codebasehq.com/kb/howtos/repository-push-commit-notifications
             var repository = payload.Value<JObject>("repository");
             var urls = repository.Value<JObject>("clone_urls");
             var isPrivate = repository.Value<bool>("private");
-            info.NewRef = payload.Value<string>("after");
 
-            if (isPrivate)
-            {
-                info.RepositoryUrl = urls.Value<string>("ssh");
-            }
-            else
-            {
-                // use http clone url if it's a public repo
-                info.RepositoryUrl = urls.Value<string>("http");                
-            }
-
-            return info;
+            return isPrivate ? urls.Value<string>("ssh") : urls.Value<string>("http");
         }
 
-        protected override string GetDeployer(HttpRequestBase request)
+        protected override string GetDeployer()
         {
             return "CodebaseHQ";
         }

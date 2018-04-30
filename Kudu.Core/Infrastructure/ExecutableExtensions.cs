@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Kudu.Contracts.Settings;
+using System.IO;
 
 namespace Kudu.Core.Infrastructure
 {
@@ -21,7 +22,7 @@ namespace Kudu.Core.Infrastructure
                 paths = paths.Concat(new[] { pathEnv });
             }
 
-            exe.EnvironmentVariables["PATH"] = String.Join(";", paths);
+            exe.EnvironmentVariables["PATH"] = String.Join(Path.PathSeparator.ToString(), paths);
         }
 
         public static void AddDeploymentSettingsAsEnvironmentVariables(this Executable exe, IDeploymentSettingsManager deploymentSettingsManager)

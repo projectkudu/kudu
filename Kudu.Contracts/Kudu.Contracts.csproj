@@ -15,9 +15,9 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\Microsoft.Web.Xdt.2.1.1\lib\net40\Microsoft.Web.XmlTransform.dll</HintPath>
     </Reference>
-    <Reference Include="Newtonsoft.Json, Version=6.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\Newtonsoft.Json.6.0.6\lib\net45\Newtonsoft.Json.dll</HintPath>
+    <Reference Include="Newtonsoft.Json, Version=9.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.9.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="NuGet.Client, Version=3.0.0.0, Culture=neutral, PublicKeyToken=2e465378e3b1a8dd, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -78,6 +78,7 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.IO.Compression" />
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Net.Http.Extensions">
       <HintPath>..\packages\Microsoft.Net.Http.2.2.29\lib\net45\System.Net.Http.Extensions.dll</HintPath>
@@ -99,14 +100,17 @@
     <Compile Include="Commands\CommandResult.cs" />
     <Compile Include="Commands\ICommandExecutor.cs" />
     <Compile Include="Deployment\DeploymentFailedException.cs" />
+    <Compile Include="Deployment\DeploymentInfoBase.cs" />
     <Compile Include="Deployment\DeployResult.cs" />
     <Compile Include="Deployment\DeployStatus.cs" />
+    <Compile Include="Deployment\FetchDeploymentRequestResult.cs" />
     <Compile Include="Deployment\IDeploymentEnvironment.cs" />
     <Compile Include="Deployment\IDeploymentManager.cs" />
     <Compile Include="Deployment\IDeploymentManagerFactory.cs" />
     <Compile Include="Deployment\IDeploymentStatusManager.cs" />
     <Compile Include="Deployment\IDeploymentStatusFile.cs" />
     <Compile Include="Deployment\IDetailedLogger.cs" />
+    <Compile Include="Deployment\IFetchDeploymentManager.cs" />
     <Compile Include="Deployment\ILogger.cs" />
     <Compile Include="Deployment\LogEntry.cs" />
     <Compile Include="Deployment\LogEntryType.cs" />
@@ -118,7 +122,12 @@
     <Compile Include="Editor\VfsStatEntry.cs" />
     <Compile Include="Functions\FunctionSecrets.cs" />
     <Compile Include="Functions\FunctionEnvelope.cs" />
+    <Compile Include="Functions\FunctionSecretsJsonOps.cs" />
+    <Compile Include="Functions\FunctionTestData.cs" />
     <Compile Include="Functions\IFunctionManager.cs" />
+    <Compile Include="Functions\IKeyJsonOps.cs" />
+    <Compile Include="Functions\MasterKey.cs" />
+    <Compile Include="Functions\MasterKeyJsonOps.cs" />
     <Compile Include="HashHelpers.cs" />
     <Compile Include="Hooks\ConflictException.cs" />
     <Compile Include="Hooks\WebHook.cs" />
@@ -176,6 +185,7 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
+    <None Include="app.config" />
     <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(SolutionDir)\Build\Kudu.imports" Condition="$(KeyFile) != ''" />

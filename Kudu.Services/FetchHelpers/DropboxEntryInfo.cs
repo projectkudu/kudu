@@ -21,34 +21,24 @@ namespace Kudu.Services
             set;
         }
 
-        public static DropboxEntryInfo ParseFrom(JArray json)
+        public static DropboxEntryInfo ParseFrom(JObject json)
         {
+            // This preserves casing
+            var correctlyCasedPath = json.Value<string>("path_display");
             var deltaInfo = new DropboxEntryInfo
             {
-                Path = (string)json[0]
+                Path = correctlyCasedPath
             };
 
-            JObject metadata = json[1] as JObject;
-            if (metadata != null)
+            var tag = json.Value<string>(".tag");
+            if (tag == null || String.Equals(tag, "deleted", StringComparison.OrdinalIgnoreCase))
             {
-                string correctlyCasedPath = metadata.Value<string>("path");
-                if (!String.IsNullOrEmpty(correctlyCasedPath))
-                {
-                    // This preserves casing
-                    deltaInfo.Path = correctlyCasedPath;
-                }
-
-                deltaInfo.IsDirectory = metadata.Value<bool>("is_dir");
-                deltaInfo.IsDeleted = String.IsNullOrEmpty(correctlyCasedPath) || metadata.Value<bool>("is_deleted");
-
-                if (!deltaInfo.IsDirectory && !deltaInfo.IsDeleted)
-                {
-                    deltaInfo.Modified = (string)metadata["modified"];
-                }
+                deltaInfo.IsDeleted = true;
             }
             else
             {
-                deltaInfo.IsDeleted = true;
+                deltaInfo.IsDirectory = String.Equals(tag, "folder", StringComparison.OrdinalIgnoreCase);
+                deltaInfo.Modified = json.Value<string>("server_modified");
             }
 
             return deltaInfo;

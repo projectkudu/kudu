@@ -9,10 +9,12 @@ using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using System.Web.Http;
 using Kudu.Contracts.Infrastructure;
+using Kudu.Contracts.Settings;
 using Kudu.Contracts.SourceControl;
 using Kudu.Contracts.Tracing;
 using Kudu.Core;
 using Kudu.Core.Deployment;
+using Kudu.Core.Helpers;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Settings;
 using Kudu.Core.SourceControl;
@@ -31,28 +33,28 @@ namespace Kudu.Services.Deployment
         private readonly IAnalytics _analytics;
         private readonly IDeploymentManager _deploymentManager;
         private readonly IDeploymentStatusManager _status;
+        private readonly IDeploymentSettingsManager _settings;
         private readonly ITracer _tracer;
         private readonly IOperationLock _deploymentLock;
         private readonly IRepositoryFactory _repositoryFactory;
-        private readonly IAutoSwapHandler _autoSwapHandler;
 
         public DeploymentController(ITracer tracer,
                                     IEnvironment environment,
                                     IAnalytics analytics,
                                     IDeploymentManager deploymentManager,
                                     IDeploymentStatusManager status,
+                                    IDeploymentSettingsManager settings,
                                     IOperationLock deploymentLock,
-                                    IRepositoryFactory repositoryFactory,
-                                    IAutoSwapHandler autoSwapHandler)
+                                    IRepositoryFactory repositoryFactory)
         {
             _tracer = tracer;
             _environment = environment;
             _analytics = analytics;
             _deploymentManager = deploymentManager;
             _status = status;
+            _settings = settings;
             _deploymentLock = deploymentLock;
             _repositoryFactory = repositoryFactory;
-            _autoSwapHandler = autoSwapHandler;
         }
 
         /// <summary>
@@ -99,7 +101,7 @@ namespace Kudu.Services.Deployment
                 {
                     try
                     {
-                        if (_autoSwapHandler.IsAutoSwapOngoing())
+                        if (PostDeploymentHelper.IsAutoSwapOngoing())
                         {
                             throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.Conflict, Resources.Error_AutoSwapDeploymentOngoing));
                         }
@@ -130,7 +132,9 @@ namespace Kudu.Services.Deployment
                             clean = result.Value<bool>("clean");
                             JToken needFileUpdateToken;
                             if (result.TryGetValue("needFileUpdate", out needFileUpdateToken))
+                            {
                                 needFileUpdate = needFileUpdateToken.Value<bool>();
+                            }
                         }
 
                         string username = null;
@@ -152,7 +156,36 @@ namespace Kudu.Services.Deployment
                             }
                         }
 
-                        await _deploymentManager.DeployAsync(repository, changeSet, username, clean, needFileUpdate);
+                        try
+                        {
+                            await _deploymentManager.DeployAsync(repository, changeSet, username, clean, deploymentInfo: null, needFileUpdate: needFileUpdate);
+                        }
+                        catch (DeploymentFailedException ex)
+                        {
+                            if (!ArmUtils.IsArmRequest(Request))
+                            {
+                                throw;
+                            }
+
+                            // if requests comes thru ARM, we adjust the error code from 500 -> 400
+                            throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.BadRequest, ex.ToString()));
+                        }
+
+                        // auto-swap
+                        if (PostDeploymentHelper.IsAutoSwapEnabled())
+                        {
+                            if (changeSet == null)
+                            {
+                                var targetBranch = _settings.GetBranch();
+                                changeSet = repository.GetChangeSet(targetBranch);
+                            }
+
+                            IDeploymentStatusFile statusFile = _status.Open(changeSet.Id);
+                            if (statusFile != null && statusFile.Status == DeployStatus.Success)
+                            {
+                                await PostDeploymentHelper.PerformAutoSwap(_environment.RequestId, new PostDeploymentTraceListener(_tracer, _deploymentManager.GetLogger(changeSet.Id)));
+                            }
+                        }
                     }
                     catch (FileNotFoundException ex)
                     {

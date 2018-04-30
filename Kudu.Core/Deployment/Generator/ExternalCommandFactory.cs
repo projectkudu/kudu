@@ -12,7 +12,7 @@ namespace Kudu.Core.Deployment.Generator
     {
         public const string KuduSyncCommand = "kudusync";
 
-        internal const string StarterScriptName = "starter.cmd";
+        internal static string StarterScriptName = OSDetector.IsOnWindows() ? "starter.cmd" : "starter.sh";
 
         private IEnvironment _environment;
         private IDeploymentSettingsManager _deploymentSettings;
@@ -72,6 +72,7 @@ namespace Kudu.Core.Deployment.Generator
             exe.AddDeploymentSettingsAsEnvironmentVariables(_deploymentSettings);
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.WebRootPath, _environment.WebRootPath, logger);
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.MSBuildPath, PathUtilityFactory.Instance.ResolveMSBuildPath(), logger);
+            UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.MSBuild15Dir, PathUtilityFactory.Instance.ResolveMSBuild15Dir(), logger);
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.KuduSyncCommandKey, KuduSyncCommand, logger);
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.NuGetExeCommandKey, NuGetExeCommand, logger);
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.NpmJsPathKey, PathUtilityFactory.Instance.ResolveNpmJsPath(), logger);
@@ -122,16 +123,7 @@ namespace Kudu.Core.Deployment.Generator
         {
             get
             {
-                if (OSDetector.IsOnWindows())
-                {
-                    return Path.Combine(_environment.ScriptPath, StarterScriptName);
-                }
-                else
-                {
-                    // Content in StarterScript is "@%*", means to be less verbose when execute an external script, since by default cmd will print out content of each step.
-                    // Linux doesn`t print out the content of the step when execute a command, so simply use "/bin/bash" here.
-                    return "/bin/bash";
-                }
+                return Path.Combine(_environment.ScriptPath, StarterScriptName);
             }
         }
 

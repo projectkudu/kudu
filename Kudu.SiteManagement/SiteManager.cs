@@ -28,14 +28,14 @@ namespace Kudu.SiteManagement
         private const string HostingStartHtml = "hostingstart.html";
         private const string HostingStartHtmlContents = @"<html>
 <head>
-<title>This web site has been successfully created</title>
+<title>This web site is up and running</title>
 <style type=""text/css"">
     BODY { color: #444444; background-color: #E5F2FF; font-family: verdana; margin: 0px; text-align: center; margin-top: 100px; }
     H1 { font-size: 16pt; margin-bottom: 4px; }
 </style>
 </head>
 <body>
-<h1>This web site has been successfully created</h1><br/>
+<h1>This web site is up and running</h1><br/>
 </body> 
 </html>";
 
@@ -375,6 +375,7 @@ namespace Kudu.SiteManagement
                 kuduAppPool.ManagedRuntimeVersion = "v4.0";
                 kuduAppPool.AutoStart = true;
                 kuduAppPool.ProcessModel.LoadUserProfile = true;
+                kuduAppPool.Failure.RapidFailProtection = false;
 
                 // We've seen strange errors after switching to VS 2015 msbuild when using App Pool Identity.
                 // The errors look like:

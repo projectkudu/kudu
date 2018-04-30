@@ -21,6 +21,7 @@
         public const string Project = "PROJECT";
         public const string WorkerCommand = "WORKER_COMMAND";
         public const string TargetPath = "SCM_TARGET_PATH";
+        public const string WebJobsRootPath = "WEBJOBS_ROOT_PATH";
         public const string RepositoryPath = "SCM_REPOSITORY_PATH";
         public const string NoRepository = "SCM_NO_REPOSITORY";
         public const string UseLibGit2SharpRepository = "SCM_USE_LIBGIT2SHARP_REPOSITORY";
@@ -31,10 +32,18 @@
         public const string WebJobsIdleTimeoutInSeconds = "WEBJOBS_IDLE_TIMEOUT";
         public const string WebJobsHistorySize = "WEBJOBS_HISTORY_SIZE";
         public const string WebJobsStopped = "WEBJOBS_STOPPED";
+        public const string WebJobsDisableSchedule = "WEBJOBS_DISABLE_SCHEDULE";
+        public const string WebJobsLogTriggeredJobsToAppLogs = "WEBJOBS_LOG_TRIGGERED_JOBS_TO_APP_LOGS";
         public const string PostDeploymentActionsDirectory = "SCM_POST_DEPLOYMENT_ACTIONS_PATH";
         public const string DisableSubmodules = "SCM_DISABLE_SUBMODULES";
         public const string SiteExtensionsFeedUrl = "SCM_SITEEXTENSIONS_FEED_URL";
         public const string DisableDeploymentOnPush = "SCM_DISABLE_DEPLOY_ON_PUSH";
         public const string TouchWebConfigAfterDeployment = "SCM_TOUCH_WEBCONFIG_AFTER_DEPLOYMENT";
+        public const string MaxRandomDelayInSec = "SCM_MAX_RANDOM_START_DELAY";
+        public const string DockerCiEnabled = "DOCKER_ENABLE_CI";
+        public const string LinuxRestartAppContainerAfterDeployment = "SCM_RESTART_APP_CONTAINER_AFTER_DEPLOYMENT";
+        public const string DoBuildDuringDeployment = "SCM_DO_BUILD_DURING_DEPLOYMENT";
+        public const string RunFromZipOld = "WEBSITE_USE_ZIP";  // Old name, will eventually go away
+        public const string RunFromZip = "WEBSITE_RUN_FROM_ZIP";
     }
 }

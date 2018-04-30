@@ -8,6 +8,8 @@ namespace Kudu
         public const string WebRoot = "wwwroot";
         public const string MappedSite = "/_app";
         public const string RepositoryPath = "repository";
+        public const string ZipTempPath = "zipdeploy";
+        public const string ZipExtractPath = "extracted";
 
         public const string LockPath = "locks";
         public const string DeploymentLockFile = "deployments.lock";
@@ -69,11 +71,18 @@ namespace Kudu
         }
 
         public const string ApplicationHostXdtFileName = "applicationHost.xdt";
+        public const string ScmApplicationHostXdtFileName = "scmApplicationHost.xdt";
 
+        public const string ArrLogIdHeader = "x-arr-log-id";
         public const string RequestIdHeader = "x-ms-request-id";
+        public const string ClientRequestIdHeader = "x-ms-client-request-id";
+        public const string RequestDateTimeUtc = "RequestDateTimeUtc";
 
         public const string SiteOperationHeaderKey = "X-MS-SITE-OPERATION";
         public const string SiteOperationRestart = "restart";
+
+        public const string LogicAppJson = "logicapp.json";
+        public const string LogicAppUrlKey = "LOGICAPP_URL";
 
         public const string SiteExtensionProvisioningStateCreated = "Created";
         public const string SiteExtensionProvisioningStateAccepted = "Accepted";
@@ -92,16 +101,29 @@ namespace Kudu
         //Setting for VC++ for node builds
         public const string VCVersion = "2015";
 
-        // Enviroment variable for site retricted jwt token
-        public const string SiteRestrictedJWT = "X-MS-SITE-RESTRICTED-JWT";
+        public const string SiteRestrictedToken = "x-ms-site-restricted-token";
+        public const string SiteAuthEncryptionKey = "WEBSITE_AUTH_ENCRYPTION_KEY";
         public const string HttpHost = "HTTP_HOST";
+        public const string WebSiteSwapSlotName = "WEBSITE_SWAP_SLOTNAME";
 
         public const string Function = "function";
         public const string Functions = "functions";
         public const string FunctionsConfigFile = "function.json";
         public const string FunctionsHostConfigFile = "host.json";
+        public const string ProxyConfigFile = "proxies.json";
         public const string Secrets = "secrets";
         public const string SampleData = "sampledata";
         public const string FunctionsPortal = "FunctionsPortal";
+        public const string FunctionKeyNewFormat = "~0.7";
+        public const string FunctionRunTimeVersion = "FUNCTIONS_EXTENSION_VERSION";
+        public const string WebSiteSku = "WEBSITE_SKU";
+        public const string DynamicSku = "Dynamic";
+        public const string AzureWebJobsSecretStorageType = "AzureWebJobsSecretStorageType";
+        public const string HubName = "HubName";
+        public const string DurableTaskStorageConnection = "connection";
+        public const string DurableTaskStorageConnectionName = "azureStorageConnectionStringName";
+        public const string DurableTask = "durableTask";
+        public const string SitePackages = "SitePackages";
+        public const string SiteVersionTxt = "siteversion.txt";
     }
 }

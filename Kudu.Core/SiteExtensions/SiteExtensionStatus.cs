@@ -179,11 +179,14 @@ namespace Kudu.Core.SiteExtensions
                 }
                 else
                 {
-                    // if it is intalled to webroot, restart site ONLY if there is an applicationHost.xdt file under site extension folder
+                    // if it is intalled to webroot, restart site ONLY if there is an applicationHost.xdt/scmApplicationHost.xdt file under site extension folder
                     DirectoryInfo dirInfo = new DirectoryInfo(Path.GetDirectoryName(_filePath));
                     // folder name is the id of the package
                     string xdtFilePath = Path.Combine(siteExtensionRoot, dirInfo.Name, Constants.ApplicationHostXdtFileName);
-                    return File.Exists(xdtFilePath);
+                    // technically if it's "applicationHost.xdt", we should restart only the main site
+                    // but for backwards compatability, if either one is detected, we tell the GEO master to restart the SCM SITE
+                    string scmXdtFilePath = Path.Combine(siteExtensionRoot, dirInfo.Name, Constants.ScmApplicationHostXdtFileName);
+                    return FileSystemHelpers.FileExists(xdtFilePath) || FileSystemHelpers.FileExists(scmXdtFilePath);
                 }
             }
 

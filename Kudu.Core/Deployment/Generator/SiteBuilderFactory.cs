@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
-using System.IO.Abstractions;
 using System.Linq;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
@@ -23,12 +22,12 @@ namespace Kudu.Core.Deployment.Generator
             _environment = environment;
         }
 
-        public ISiteBuilder CreateBuilder(ITracer tracer, ILogger logger, IDeploymentSettingsManager settings, IFileFinder fileFinder)
+        public ISiteBuilder CreateBuilder(ITracer tracer, ILogger logger, IDeploymentSettingsManager settings, IRepository repository)
         {
-            string repositoryRoot = _environment.RepositoryPath;
+            string repositoryRoot = repository.RepositoryPath;
 
             // Use the cached vs projects file finder for: a. better performance, b. ignoring solutions/projects under node_modules
-            fileFinder = new CachedVsProjectsFileFinder(fileFinder);
+            var fileFinder = new CachedVsProjectsFileFinder(repository);
 
             // If there's a custom deployment file then let that take over.
             var command = settings.GetValue(SettingsKeys.Command);
@@ -50,9 +49,22 @@ namespace Kudu.Core.Deployment.Generator
             if (!String.IsNullOrEmpty(targetProjectPath))
             {
                 tracer.Trace("Specific project was specified: " + targetProjectPath);
-
                 targetProjectPath = Path.GetFullPath(Path.Combine(repositoryRoot, targetProjectPath.TrimStart('/', '\\')));
+            }
 
+            if (settings.RunFromLocalZip())
+            {
+                return new RunFromZipSiteBuilder();
+            }
+
+            if (!settings.DoBuildDuringDeployment())
+            {
+                var projectPath = !String.IsNullOrEmpty(targetProjectPath) ? targetProjectPath : repositoryRoot;
+                return new BasicBuilder(_environment, settings, _propertyProvider, repositoryRoot, projectPath);
+            }
+
+            if (!String.IsNullOrEmpty(targetProjectPath))
+            {
                 // Try to resolve the project
                 return ResolveProject(repositoryRoot,
                                       targetProjectPath,
@@ -87,7 +99,8 @@ namespace Kudu.Core.Deployment.Generator
             // figure out with some heuristic, which one to deploy.
 
             // TODO: Pick only 1 and throw if there's more than one
-            VsSolutionProject project = solution.Projects.Where(p => p.IsWap || p.IsWebSite || p.IsAspNetCore).FirstOrDefault();
+            // shunTODO need to implement this
+            VsSolutionProject project = solution.Projects.Where(p => p.IsWap || p.IsWebSite || p.IsAspNetCore || p.IsFunctionApp).FirstOrDefault();
 
             if (project == null)
             {
@@ -105,6 +118,8 @@ namespace Kudu.Core.Deployment.Generator
 
                 logger.Log(Resources.Log_NoDeployableProjects, solution.Path);
 
+                // we have a solution file, but no deployable project
+                // shunTODO how often do we run into this
                 return ResolveNonAspProject(repositoryRoot, null, settings);
             }
 
@@ -128,18 +143,32 @@ namespace Kudu.Core.Deployment.Generator
                                       solution.Path);
             }
 
-            return new WebSiteBuilder(_environment,
+            if (project.IsWebSite)
+            {
+                return new WebSiteBuilder(_environment,
                                       settings,
                                       _propertyProvider,
                                       repositoryRoot,
                                       project.AbsolutePath,
                                       solution.Path);
+            }
+
+            return new FunctionMsbuildBuilder(_environment,
+                                            settings,
+                                            _propertyProvider,
+                                            repositoryRoot,
+                                            project.AbsolutePath,
+                                            solution.Path);
         }
 
         private ISiteBuilder ResolveNonAspProject(string repositoryRoot, string projectPath, IDeploymentSettingsManager perDeploymentSettings)
         {
             string sourceProjectPath = projectPath ?? repositoryRoot;
-            if (IsNodeSite(sourceProjectPath))
+            if (FunctionAppHelper.LooksLikeFunctionApp())
+            {
+                return new FunctionBasicBuilder(_environment, perDeploymentSettings, _propertyProvider, repositoryRoot, projectPath);
+            }
+            else if (IsNodeSite(sourceProjectPath))
             {
                 return new NodeSiteBuilder(_environment, perDeploymentSettings, _propertyProvider, repositoryRoot, projectPath);
             }
@@ -150,6 +179,14 @@ namespace Kudu.Core.Deployment.Generator
             else if (IsGoSite(sourceProjectPath))
             {
                 return new GoSiteBuilder(_environment, perDeploymentSettings, _propertyProvider, repositoryRoot, projectPath);
+            }
+            else if (IsRubySite(sourceProjectPath))
+            {
+                return new RubySiteBuilder(_environment, perDeploymentSettings, _propertyProvider, repositoryRoot, projectPath);
+            }
+            else if (IsPHPSite(sourceProjectPath))
+            {
+                return new PHPSiteBuilder(_environment, perDeploymentSettings, _propertyProvider, repositoryRoot, projectPath);
             }
 
             return new BasicBuilder(_environment, perDeploymentSettings, _propertyProvider, repositoryRoot, projectPath);
@@ -170,20 +207,38 @@ namespace Kudu.Core.Deployment.Generator
             return PythonSiteEnabler.LooksLikePython(projectPath);
         }
 
+        private static bool IsRubySite(string projectPath)
+        {
+            return RubySiteEnabler.LooksLikeRuby(projectPath);
+        }
+
+        private static bool IsPHPSite(string projectPath)
+        {
+            return PHPSiteEnabler.LooksLikePHP(projectPath);
+        }
+
         private ISiteBuilder ResolveProject(string repositoryRoot, IDeploymentSettingsManager perDeploymentSettings, IFileFinder fileFinder, bool tryWebSiteProject = false, SearchOption searchOption = SearchOption.AllDirectories)
         {
             return ResolveProject(repositoryRoot, repositoryRoot, perDeploymentSettings, fileFinder, tryWebSiteProject, searchOption, specificConfiguration: false);
         }
 
+        // unless user specifies which project to deploy, targetPath == repositoryRoot
         private ISiteBuilder ResolveProject(string repositoryRoot, string targetPath, IDeploymentSettingsManager perDeploymentSettings, IFileFinder fileFinder, bool tryWebSiteProject, SearchOption searchOption = SearchOption.AllDirectories, bool specificConfiguration = true)
         {
-            if (DeploymentHelper.IsProject(targetPath))
+            if (DeploymentHelper.IsMsBuildProject(targetPath))
             {
+                // needs to check for project file existence
+                if (!File.Exists(targetPath))
+                {
+                    throw new InvalidOperationException(String.Format(CultureInfo.CurrentCulture,
+                                                                  Resources.Error_ProjectDoesNotExist,
+                                                                  targetPath));
+                }
                 return DetermineProject(repositoryRoot, targetPath, perDeploymentSettings, fileFinder);
             }
 
             // Check for loose projects
-            var projects = DeploymentHelper.GetProjects(targetPath, fileFinder, searchOption);
+            var projects = DeploymentHelper.GetMsBuildProjects(targetPath, fileFinder, searchOption);
             if (projects.Count > 1)
             {
                 // Can't determine which project to build
@@ -195,8 +250,9 @@ namespace Kudu.Core.Deployment.Generator
             {
                 return DetermineProject(repositoryRoot, projects[0], perDeploymentSettings, fileFinder);
             }
-            
+
             // Check for ASP.NET Core project without VS solution or project
+            // for ASP.NET Core project which only has project.json, but not xproj ie: dotnet preview2 cli project
             string projectJson;
             if (AspNetCoreHelper.TryAspNetCoreWebProject(targetPath, fileFinder, out projectJson))
             {
@@ -204,7 +260,8 @@ namespace Kudu.Core.Deployment.Generator
                                            perDeploymentSettings,
                                            _propertyProvider,
                                            repositoryRoot,
-                                           projectJson);
+                                           projectJson,
+                                           null);
             }
 
             if (tryWebSiteProject)
@@ -243,43 +300,66 @@ namespace Kudu.Core.Deployment.Generator
             return ResolveNonAspProject(repositoryRoot, targetPath, perDeploymentSettings);
         }
 
+        // used when we have a project file
         private ISiteBuilder DetermineProject(string repositoryRoot, string targetPath, IDeploymentSettingsManager perDeploymentSettings, IFileFinder fileFinder)
         {
-            if (!DeploymentHelper.IsDeployableProject(targetPath))
+            var solution = VsHelper.FindContainingSolution(repositoryRoot, targetPath, fileFinder);
+            string solutionPath = solution?.Path;
+            var projectTypeGuids = VsHelper.GetProjectTypeGuids(targetPath);
+            if (VsHelper.IsWap(projectTypeGuids))
             {
-                throw new InvalidOperationException(String.Format(CultureInfo.CurrentCulture,
-                                                                  Resources.Error_ProjectNotDeployable,
-                                                                  targetPath));
+                return new WapBuilder(_environment,
+                                      perDeploymentSettings,
+                                      _propertyProvider,
+                                      repositoryRoot,
+                                      targetPath,
+                                      solutionPath);
             }
-            else if (File.Exists(targetPath)) // TODO: what is this if about?
+            else if (AspNetCoreHelper.IsDotnetCoreFromProjectFile(targetPath, projectTypeGuids))
             {
-                var solution = VsHelper.FindContainingSolution(repositoryRoot, targetPath, fileFinder);
-                string solutionPath = solution != null ? solution.Path : null;
-
-                if (VsHelper.IsWap(targetPath))
+                return new AspNetCoreBuilder(_environment,
+                                            perDeploymentSettings,
+                                            _propertyProvider,
+                                            repositoryRoot,
+                                            targetPath,
+                                            solutionPath);
+            }
+            else if (VsHelper.IsExecutableProject(targetPath))
+            {
+                // This is a console app
+                return new DotNetConsoleBuilder(_environment,
+                                      perDeploymentSettings,
+                                      _propertyProvider,
+                                      repositoryRoot,
+                                      targetPath,
+                                      solutionPath);
+            }
+            else if (FunctionAppHelper.LooksLikeFunctionApp())
+            {
+                if (FunctionAppHelper.IsCSharpFunctionFromProjectFile(targetPath))
                 {
-                    return new WapBuilder(_environment,
-                                          perDeploymentSettings,
-                                          _propertyProvider,
-                                          repositoryRoot,
-                                          targetPath,
-                                          solutionPath);
+                    return new FunctionMsbuildBuilder(_environment,
+                                                    perDeploymentSettings,
+                                                    _propertyProvider,
+                                                    repositoryRoot,
+                                                    targetPath,
+                                                    solutionPath);
                 }
                 else
                 {
-                    // This is a console app
-                    return new DotNetConsoleBuilder(_environment,
-                                          perDeploymentSettings,
-                                          _propertyProvider,
-                                          repositoryRoot,
-                                          targetPath,
-                                          solutionPath);
+                    // csx or node function with extensions.csproj
+                    return new FunctionBasicBuilder(_environment,
+                                                    perDeploymentSettings,
+                                                    _propertyProvider,
+                                                    repositoryRoot,
+                                                    Path.GetDirectoryName(targetPath));
                 }
+
             }
 
             throw new InvalidOperationException(String.Format(CultureInfo.CurrentCulture,
-                                                                  Resources.Error_ProjectDoesNotExist,
-                                                                  targetPath));
+                                                             Resources.Error_ProjectNotDeployable,
+                                                             targetPath));
         }
 
         private static void ThrowAmbiguousSolutionsError(IList<VsSolution> solutions)

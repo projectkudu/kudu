@@ -19,7 +19,7 @@ namespace Kudu.Services {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "4.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "15.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class Resources {
@@ -214,6 +214,15 @@ namespace Kudu.Services {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to There is a deployment currently in progress. Please try again when it completes..
+        /// </summary>
+        internal static string Error_DeploymentInProgress {
+            get {
+                return ResourceManager.GetString("Error_DeploymentInProgress", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Deployment &apos;{0}&apos; not found..
         /// </summary>
         internal static string Error_DeploymentNotFound {
@@ -322,6 +331,15 @@ namespace Kudu.Services {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Run-From-Zip is set to a remote URL using WEBSITE_USE_ZIP app setting. Deployment is not supported in this configuration..
+        /// </summary>
+        internal static string Error_RunFromRemoteZipConfigured {
+            get {
+                return ResourceManager.GetString("Error_RunFromRemoteZipConfigured", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The json payload is unsupported..
         /// </summary>
         internal static string Error_UnsupportedFormat {
@@ -354,15 +372,6 @@ namespace Kudu.Services {
         internal static string Error_WebJobsStopped {
             get {
                 return ResourceManager.GetString("Error_WebJobsStopped", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Fetching changes..
-        /// </summary>
-        internal static string FetchingChanges {
-            get {
-                return ResourceManager.GetString("FetchingChanges", resourceCulture);
             }
         }
         

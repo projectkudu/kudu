@@ -1,95 +1,95 @@
 // Custom status bar for Ace (aka Project Wunderbar)
 var statusbar = {
     showFilename:
-        function () {
-            var filename;
-            try {
-                filename = viewModel.fileEdit.peek().name();
-            }
-            catch(e) {
-                filename = 'Can not get filename. See console for details.';
-                if (typeof console == 'object') {
-                    console.error('Can not get filename: %s', e);
-                }
-            }
-            finally {
-                $('#statusbar').text(filename);
-            }
-        },
-    reset:
-        function () {
-            $('#statusbar').text('');
-            $('#statusbar').removeClass('statusbar-red');
-            $('#statusbar').removeClass('statusbar-saved');
-            $('#statusbar').css('background', 'none');
-            // Clear editor window
-            editor.setValue('');
-            // Flag from ace-init.js
-            contentHasChanged = false;
-            // Clear search box
-            if (editor.searchBox) {
-                editor.searchBox.activeInput.value = '';
-                editor.searchBox.hide();
-            }
-        },
-    savingChanges:
-        function () {
-            $('#statusbar').text('Saving changes...');
-            $('#statusbar').prepend('<i class="glyphicon glyphicon-cloud-upload" style="margin-right: 6px"></i>');
-        },
-    fetchingContents:
-        function () {
-            $('#statusbar').text('Fetching contents...');
-            $('#statusbar').prepend('<i class="glyphicon glyphicon-cloud-download" style="margin-right: 6px"></i>');
-        },
-    acknowledgeSave:
-        function () {
-            this.errorState.remove();
-            $('#statusbar').addClass('statusbar-saved');
-            contentHasChanged = false;
-            this.showFilename();
-        },
-    errorState:
-        {
-            set: function () {
-                     // We could not save the file
-                     // Mild panic attack, turn statusbar red
-                     statusbar.showFilename();
-                     $('#statusbar').css('background', '#ffdddd');
-                 },
-            remove: function () {
-                        $('#statusbar').css('background', 'none');
-                        $('#statusbar').removeClass('statusbar-red');
-                 }
+    function () {
+        var filename;
+        try {
+            filename = viewModel.fileEdit.peek().name();
         }
+        catch (e) {
+            filename = 'Can not get filename. See console for details.';
+            if (typeof console == 'object') {
+                console.error('Can not get filename: %s', e);
+            }
+        }
+        finally {
+            $('#statusbar').text(filename);
+        }
+    },
+    reset:
+    function () {
+        $('#statusbar').text('');
+        $('#statusbar').removeClass('statusbar-red');
+        $('#statusbar').removeClass('statusbar-saved');
+        $('#statusbar').css('background', 'none');
+        // Clear editor window
+        editor.setValue('');
+        // Flag from ace-init.js
+        contentHasChanged = false;
+        // Clear search box
+        if (editor.searchBox) {
+            editor.searchBox.activeInput.value = '';
+            editor.searchBox.hide();
+        }
+    },
+    savingChanges:
+    function () {
+        $('#statusbar').text('Saving changes...');
+        $('#statusbar').prepend('<i class="glyphicon glyphicon-cloud-upload" style="margin-right: 6px"></i>');
+    },
+    fetchingContents:
+    function () {
+        $('#statusbar').text('Fetching contents...');
+        $('#statusbar').prepend('<i class="glyphicon glyphicon-cloud-download" style="margin-right: 6px"></i>');
+    },
+    acknowledgeSave:
+    function () {
+        this.errorState.remove();
+        $('#statusbar').addClass('statusbar-saved');
+        contentHasChanged = false;
+        this.showFilename();
+    },
+    errorState:
+    {
+        set: function () {
+            // We could not save the file
+            // Mild panic attack, turn statusbar red
+            statusbar.showFilename();
+            $('#statusbar').css('background', '#ffdddd');
+        },
+        remove: function () {
+            $('#statusbar').css('background', 'none');
+            $('#statusbar').removeClass('statusbar-red');
+        }
+    }
 };
 
 function showAceHelpModal() {
     $('#ace-help-modal').modal();
     $('#ace-help-modal .modal-body').load('/DebugConsole/AceHelp.html',
-        function(response, status, xhr) {
+        function (response, status, xhr) {
             if (status == 'error') {
                 $(this).html('<div class="alert alert-warning" role="alert">' +
-                             'Yikes! Can not load help page:<br>' +
-                             'Error Code ' + xhr.status + ' ' + xhr.statusText + '</div>');
+                    'Yikes! Can not load help page:<br>' +
+                    'Error Code ' + xhr.status + ' ' + xhr.statusText + '</div>');
                 if (typeof console == 'object') {
                     console.error('Can not load help page: ' + 'xhr.status = ' +
-                                  xhr.status + ' ' + xhr.statusText);
+                        xhr.status + ' ' + xhr.statusText);
                 }
             }
-    });
+        });
 }
 
 
 var copyObjectsManager = {
-    init: function() {
+    init: function () {
         this._copyProgressObjects = {};
         this.infoMessage = '';
     },
-    getInfoMessage: function() {
+    getInfoMessage: function () {
         return this._infoMessage;
     },
-    setInfoMessage: function(message) {
+    setInfoMessage: function (message) {
         this._infoMessage = message;
     },
     addCopyStats: function (uri, loadedData, totalData) {
@@ -124,7 +124,7 @@ var copyObjectsManager = {
 
         for (var key in this._copyProgressObjects) {
             var co = this._copyProgressObjects[key];
-            if(co.copyPackEnded === false) {
+            if (co.copyPackEnded === false) {
                 foundItem = true;
                 currentTransfered += co.loadedData;
                 finalTransfered += co.totalData;
@@ -146,7 +146,7 @@ var copyObjectsManager = {
 
         return perc;
     },
-    removeAtIndex: function(index) {
+    removeAtIndex: function (index) {
         delete this._copyProgressObjects[index];
     },
     clearData: function () {
@@ -200,8 +200,28 @@ $.connection.hub.start().done(function () {
 
         createFolder: function (folder) {
             return $.ajax({
+                // Add trailing slash for new folder when calling VFS
+                // https://github.com/projectkudu/kudu/wiki/REST-API
                 url: folder.href.replace(/#/g, encodeURIComponent("#")) + "/",
-                method: "PUT"
+                method: "PUT",
+                error: function (xhr, status, error) {
+                    if (xhr.statusText === 'error') {
+                        showErrorAsToast('Error when calling virtual file system REST backend. Check F12 Console for more.');
+                    }
+                    else {
+                        showErrorAsToast(xhr);
+                    }
+                }
+            });
+        },
+
+        createFile: function (file) {
+            return $.ajax({
+                // No trailing slash for new file when calling VFS
+                // https://github.com/projectkudu/kudu/wiki/REST-API
+                url: file.href.replace(/#/g, encodeURIComponent("#")),
+                method: "PUT",
+                error: function (xhr, status, error) { showErrorAsToast(xhr); }
             });
         },
 
@@ -233,7 +253,7 @@ $.connection.hub.start().done(function () {
         }
     };
 
-    var MAX_VIEW_ITEMS = 200;
+    var MAX_VIEW_ITEMS = 300;
 
     var node = function (data, parent) {
         this.parent = parent;
@@ -258,35 +278,35 @@ $.connection.hub.start().done(function () {
                 viewModel.processing(true);
 
                 return Vfs.getChildren(that)
-                .done(function (data) {
-                    viewModel.processing(false);
-                    var children = that.children;
-                    children.removeAll();
+                    .done(function (data) {
+                        viewModel.processing(false);
+                        var children = that.children;
+                        children.removeAll();
 
-                    // maxViewItems overridable by localStorage setting.
-                    var maxViewItems = getLocalStorageSetting("maxViewItems", MAX_VIEW_ITEMS);
-                    var folders = [];
-                    var files = $.map(data, function (elem) {
-                        if (elem.mime === "inode/shortcut") {
-                            viewModel.specialDirs.push(new node(elem));
-                        } else if (--maxViewItems > 0) {
-                            if (elem.mime === "inode/directory") {
-                                // track folders explicitly to avoid additional sort
-                                folders.push(new node(elem, that));
-                            } else {
-                                return new node(elem, that);
+                        // maxViewItems overridable by localStorage setting.
+                        var maxViewItems = getLocalStorageSetting("maxViewItems", MAX_VIEW_ITEMS);
+                        var folders = [];
+                        var files = $.map(data, function (elem) {
+                            if (elem.mime === "inode/shortcut") {
+                                viewModel.specialDirs.push(new node(elem));
+                            } else if (--maxViewItems > 0) {
+                                if (elem.mime === "inode/directory") {
+                                    // track folders explicitly to avoid additional sort
+                                    folders.push(new node(elem, that));
+                                } else {
+                                    return new node(elem, that);
+                                }
                             }
-                        }
-                    });
+                        });
 
-                    // view display folders then files
-                    children.push.apply(children, folders);
-                    children.push.apply(children, files);
+                        // view display folders then files
+                        children.push.apply(children, folders);
+                        children.push.apply(children, files);
 
-                    that._fetchStatus = 2;
-                }).fail(showError).promise();
+                        that._fetchStatus = 2;
+                    }).fail(showError);
             } else {
-                return $.Deferred().resolve().promise();
+                return $.Deferred().resolve();
             }
         }
         this.deleteItem = function () {
@@ -296,47 +316,41 @@ $.connection.hub.start().done(function () {
                 Vfs.deleteItems(this).done(function () {
                     that.parent.children.remove(that);
                     if (viewModel.selected() === this) {
-                        viewModel.selected(this.parent);
+                        updateSelectedAndNotifyCommandLine(this.parent);
                     }
                     viewModel.processing(false);
-                }).fail(showError);
+                }).fail(function (error) {
+                    showErrorAsToast(error);
+                });
             }
         }
+
         this.selectNode = function () {
-            var that = this;
-            return this.fetchChildren().pipe(function () {
-                stashCurrentSelection(viewModel.selected());
-                viewModel.selected(that);
-
-                return $.Deferred().resolve();
-            });
+            stashCurrentSelection(viewModel.selected());
+            updateSelectedAndNotifyCommandLine(this);
         };
-        this.selectChild = function (descendantPath) {
-            var that = this;
-            return this.fetchChildren().pipe(function () {
-                var childName = descendantPath.split(/\/|\\/)[0].toLowerCase(),
-                    matches = $.grep(that.children(), function (elm) {
-                        return elm.name().toLowerCase() === childName;
-                    }),
-                    deferred;
-                if (matches && matches.length) {
-                    var selectedChild = matches[0];
-                    viewModel.selected(selectedChild);
-                    if (descendantPath.length > childName.length) {
-                        deferred = selectedChild.selectChild(descendantPath.substring(childName.length + 1));
-                    }
-                    selectedChild.fetchChildren();
-                }
 
-                return deferred || $.Deferred().resolve();
-            });
+        this.selectChild = function (descendantPath) {
+            var childName = descendantPath.split(/\/|\\/)[0].toLowerCase(),
+                matches = $.grep(this.children(), function (elm) {
+                    return elm.name().toLowerCase() === childName;
+                });
+
+            if (matches && matches.length) {
+                var selectedChild = matches[0];
+                updateSelectedOnly(selectedChild).done(function () {
+                    if (descendantPath.length > childName.length) {
+                        selectedChild.selectChild(descendantPath.substring(childName.length + 1));
+                    }
+                });
+            }
         }
 
         this.selectParent = function () {
             var that = viewModel.selected();
             if (that.parent) {
                 stashCurrentSelection(that);
-                viewModel.selected(that.parent);
+                updateSelectedAndNotifyCommandLine(that.parent);
             }
         }
 
@@ -346,24 +360,23 @@ $.connection.hub.start().done(function () {
             viewModel.editText('');
             statusbar.fetchingContents();
             viewModel.fileEdit(this);
-            if(this.mime === "text/xml")
-            {
+            if (this.mime === "text/xml") {
                 Vfs.getContent(this)
-                   .done(function (data) {
-                       viewModel.editText(vkbeautify.xml(data));
-                       statusbar.showFilename();
-                       // Editor h-scroll workaround
-                       editor.session.setScrollLeft(-1);
-                   }).fail(showError);
+                    .done(function (data) {
+                        viewModel.editText(vkbeautify.xml(data));
+                        statusbar.showFilename();
+                        // Editor h-scroll workaround
+                        editor.session.setScrollLeft(-1);
+                    }).fail(showError);
             }
             else {
                 Vfs.getContent(this)
-                   .done(function (data) {
-                       viewModel.editText(data);
-                       statusbar.showFilename();
-                       // Editor h-scroll workaround
-                       editor.session.setScrollLeft(-1);
-                   }).fail(showError);
+                    .done(function (data) {
+                        viewModel.editText(data);
+                        statusbar.showFilename();
+                        // Editor h-scroll workaround
+                        editor.session.setScrollLeft(-1);
+                    }).fail(showError);
             }
         }
 
@@ -374,7 +387,8 @@ $.connection.hub.start().done(function () {
                 .done(function () {
                     statusbar.acknowledgeSave();
                 }).fail(function (error) {
-                    showErrorAsAlert(error);
+                    removeAllToasts();
+                    showErrorAsToast(error);
                     statusbar.errorState.set();
                 });
         }
@@ -387,15 +401,15 @@ $.connection.hub.start().done(function () {
                     viewModel.fileEdit(null);
                     statusbar.reset();
                 }).fail(function (error) {
-                    showErrorAsAlert(error);
-                    statusbar.errorState.set()
+                    removeAllToasts();
+                    showErrorAsToast(error);
+                    statusbar.errorState.set();
                 });
         }
     }
 
     var root = new node({ name: "/", type: "dir", href: appRoot + "api/vfs/" }),
-        ignoreWorkingDirChange = false,
-        workingDirChanging = false,
+        ignoreWorkingDirChange = false, // global variables
         viewModel = {
             root: root,
             copyProgStats: ko.observable(),
@@ -408,6 +422,7 @@ $.connection.hub.start().done(function () {
             cancelEdit: function () {
                 viewModel.fileEdit(null);
                 statusbar.reset();
+                removeAllToasts();
             },
             selectSpecialDir: function (name) {
                 var item = viewModel.specialDirsIndex()[name];
@@ -415,19 +430,19 @@ $.connection.hub.start().done(function () {
                     item.selectNode();
                 }
             },
-            showCopyProgressModal: function() {
+            showCopyProgressModal: function () {
                 $('#files-transfered-modal').modal();
-                copyProgressHandlingFunction(null,null,true);
+                copyProgressHandlingFunction(null, null, true);
             },
-            clearCopyProgressCache: function() {
+            clearCopyProgressCache: function () {
                 copyObjectsManager.clearData();
                 viewModel.copyProgStats("");
             },
-            getCopyPercentage: function(item) {
+            getCopyPercentage: function (item) {
                 return (item.loadedData * 100 / item.totalData).toFixed(1);
             },
             getCopyPercentageDisplay: function (item) {
-               return formatHandler.fileSize(item.loadedData, true) + " / " + formatHandler.fileSize(item.totalData, true);
+                return formatHandler.fileSize(item.loadedData, true) + " / " + formatHandler.fileSize(item.totalData, true);
             },
             errorText: ko.observable(),
             inprocessing: 0,
@@ -450,18 +465,12 @@ $.connection.hub.start().done(function () {
         return result;
     }, viewModel),
 
-    viewModel.koprocessing.subscribe(function (newValue) {
-        if (newValue) {
-            viewModel.errorText("");
-        }
-    });
-
-    viewModel.showSiteRoot = ko.computed(function () {
-        if ($.isEmptyObject(viewModel.specialDirsIndex())) {
-            return true;
-        }
-        return viewModel.specialDirsIndex()['LocalSiteRoot'] !== undefined;
-    }, viewModel);
+        viewModel.showSiteRoot = ko.computed(function () {
+            if ($.isEmptyObject(viewModel.specialDirsIndex())) {
+                return true;
+            }
+            return viewModel.specialDirsIndex()['LocalSiteRoot'] !== undefined;
+        }, viewModel);
 
     root.fetchChildren();
     ko.applyBindings(viewModel, document.getElementById("#main"));
@@ -480,33 +489,33 @@ $.connection.hub.start().done(function () {
             }
         }
 
-        workingDirChanging = true;
         var relativeDir = getRelativePath(viewModel.root, newValue) ||
             getRelativePath(viewModel.specialDirsIndex()["LocalSiteRoot"], newValue) ||
-            getRelativePath(viewModel.specialDirsIndex()["SystemDrive"], newValue),
-            deferred;
+            getRelativePath(viewModel.specialDirsIndex()["SystemDrive"], newValue)
 
+        stashCurrentSelection(viewModel.selected());
         if (!relativeDir || !relativeDir.relativePath) {
-            deferred = ((relativeDir && relativeDir.parent) || viewModel.root).selectNode();
+            updateSelectedOnly((relativeDir && relativeDir.parent) || viewModel.root)
         } else {
-            stashCurrentSelection(viewModel.selected());
-            deferred = relativeDir.parent.selectChild(relativeDir.relativePath);
-        }
-        deferred.done(function () {
-            workingDirChanging = false;
-        });
-    });
-
-    viewModel.selected.subscribe(function (newValue) {
-        if (!workingDirChanging) {
-            // Mark it so that no-op the subscribe callback.
-            ignoreWorkingDirChange = true;
-            updateFileSystemWatcher(newValue.path());
-            window.KuduExec.changeDir(newValue.path());
-
-            newValue.fetchChildren(/* force */ true);
+            relativeDir.parent.selectChild(relativeDir.relativePath);
         }
     });
+
+    updateSelectedAndNotifyCommandLine = function (newValue) {
+        updateSelectedOnly(newValue);
+
+        // notify command line 
+        ignoreWorkingDirChange = true;
+        window.KuduExec.changeDir(newValue.path());
+    }
+
+    // updateSelectedOnly return a promise since it also update its children
+    updateSelectedOnly = function (newValue) {
+        viewModel.selected(newValue); // update selected
+        updateFileSystemWatcher(newValue.path()); // update the filesystem watcher, always accompany selected(newValue)
+        // in old code, children are ONLY FORCE update if navigate using File Explorer, in NEW CODE, we standardize them
+        return newValue.fetchChildren(/* force */ true); // update children of selected
+    }
 
     window.KuduExec.completePath = function (value, dirOnly) {
         var subDirs = value.toLowerCase().split(/\/|\\/),
@@ -543,8 +552,8 @@ $.connection.hub.start().done(function () {
         }
     };
 
-    //monitor file upload progress 
-    function copyProgressHandlingFunction(e,uniqueUrl,forceUpdateModal) {
+    //monitor file upload progress
+    function copyProgressHandlingFunction(e, uniqueUrl, forceUpdateModal) {
         if (e && uniqueUrl && e.lengthComputable) {
             copyObjectsManager.addCopyStats(uniqueUrl, e.loaded, e.total); //add/update stats
         }
@@ -552,12 +561,12 @@ $.connection.hub.start().done(function () {
         var copyObjs = copyObjectsManager.getCopyStats();
 
         $('#copy-percentage').text(perc + "%");
-        
-        if(perc != 100 && perc != 0)  {
+
+        if (perc != 100 && perc != 0) {
             viewModel.isTransferInProgress(true);
         }
 
-        //handler for clearing out cache once it gets too large 
+        //handler for clearing out cache once it gets too large
         var currentObjCount = Object.keys(copyObjs).length;
         if (currentObjCount > 2000) {
             for (var i = 0; i < 1000; i++) { //delete oldest 1000 copy prog objects
@@ -568,18 +577,18 @@ $.connection.hub.start().done(function () {
         }
 
         if ($('#files-transfered-modal').is(':visible') || forceUpdateModal) { // update if modal visible
-                viewModel.copyProgStats(copyObjs); // update viewmodel
+            viewModel.copyProgStats(copyObjs); // update viewmodel
 
-                var modalHeaderText = '';
-                if (perc < 100) {
-                    modalHeaderText = 'Transfered Files (<b>' + perc + '%</b>).';
-                } else {
-                    modalHeaderText = '<b style =\' color:green\'> Transfered Files (' + perc + '%).</b>';
-                }
-                    modalHeaderText += ' ' +((_temp = copyObjectsManager.getInfoMessage()) ? _temp : "");
-                $('#files-transfered-modal .modal-header').html(modalHeaderText);
+            var modalHeaderText = '';
+            if (perc < 100) {
+                modalHeaderText = 'Transferred Files (<b>' + perc + '%</b>).';
+            } else {
+                modalHeaderText = '<b style =\' color:green\'> Transferred Files (' + perc + '%).</b>';
             }
-        
+            modalHeaderText += ' ' + ((_temp = copyObjectsManager.getInfoMessage()) ? _temp : "");
+            $('#files-transfered-modal .modal-header').html(modalHeaderText);
+        }
+
     }
 
     function setupFileSystemWatcher() {
@@ -595,6 +604,7 @@ $.connection.hub.start().done(function () {
 
     function stashCurrentSelection(selected) {
         if (window.history && window.history.pushState) {
+            // shunTODO, onpopstate does not care about this value
             window.history.pushState(selected.path(), selected.name());
         }
     }
@@ -625,7 +635,7 @@ $.connection.hub.start().done(function () {
         } else {
             var selected = viewModel.selected();
             if (selected.parent) {
-                viewModel.selected(selected.parent);
+                updateSelectedAndNotifyCommandLine(selected.parent);
             }
         }
     };
@@ -659,6 +669,25 @@ $.connection.hub.start().done(function () {
         });
     });
 
+    $("#createFile").click(function (evt) {
+        evt.preventDefault();
+
+        var newFile = new node({ name: "", type: "", href: "", editing: true }, viewModel.selected());
+        $(this).prop("disabled", true);
+        viewModel.selected().children.unshift(newFile);
+        $("#fileList input[type='text']").focus();
+
+        newFile.name.subscribe(function (value) {
+            newFile.href = trimTrailingSlash(newFile.parent.href) + "/" + value;
+            newFile._href(newFile.href);
+            newFile.editing(false);
+            Vfs.createFile(newFile).fail(function () {
+                viewModel.selected().children.remove(newFile);
+            });
+            $("#createFile").prop("disabled", false);
+        });
+    });
+
     // Drag and drop
     $("#fileList")
         .on("dragenter dragover", function (e) {
@@ -689,23 +718,23 @@ $.connection.hub.start().done(function () {
         });
 
     $("#upload-unzip")
-        .on("dragenter dragover", function(e) {
+        .on("dragenter dragover", function (e) {
             $(".show-on-hover").addClass('upload-unzip-hover');
         })
-        .on("drop", function(evt) {
-        evt.preventDefault();
-        evt.stopPropagation();
+        .on("drop", function (evt) {
+            evt.preventDefault();
+            evt.stopPropagation();
 
-        $(".show-on-hover").removeClass('upload-unzip-show');
-        $(".show-on-hover").removeClass('upload-unzip-hover');
-        var dir = viewModel.selected();
-        viewModel.processing(true);
-        _getInputFiles(evt).done(function(files) {
-            Vfs.addFiles(files, _isZipFile(evt)).always(function() {
-                dir.fetchChildren( /* force */ true);
-                viewModel.processing(false);
+            $(".show-on-hover").removeClass('upload-unzip-show');
+            $(".show-on-hover").removeClass('upload-unzip-hover');
+            var dir = viewModel.selected();
+            viewModel.processing(true);
+            _getInputFiles(evt).done(function (files) {
+                Vfs.addFiles(files, _isZipFile(evt)).always(function () {
+                    dir.fetchChildren( /* force */ true);
+                    viewModel.processing(false);
+                });
             });
-        });
         }).on("dragleave", function (e) {
             $(".show-on-hover").removeClass('upload-unzip-hover');
         });
@@ -770,9 +799,13 @@ $.connection.hub.start().done(function () {
     }
 
     function _isZipFile(evt) {
+        if (evt.originalEvent.dataTransfer === null) {
+            //dataTransfer is null in Edge / IE. Assume a zip file. Unzip will no-op 
+            return true;
+        }
         var items = evt.originalEvent.dataTransfer.items || evt.originalEvent.dataTransfer.files;
         if (items) {
-            var filesArray = $.map(items, function(item) {
+            var filesArray = $.map(items, function (item) {
                 if (item.type === 'application/x-zip-compressed' || item.type === 'application/zip' || item.type === '')
                     return item;
             });
@@ -797,14 +830,24 @@ $.connection.hub.start().done(function () {
                 deferred.resolveWith(null, [{ name: parentPath + '/' + entry.name, contents: file }]);
             });
         } else {
-            entry.createReader().readEntries(function (entries) {
-                var directoryPath = parentPath + '/' + entry.name;
-                whenArray($.map(entries, function (e) {
-                    return _processEntry(e, directoryPath);
-                })).done(function () {
-                    deferred.resolveWith(null, [Array.prototype.concat.apply([], arguments)]);
-                });;
-            });
+            var dirReader = entry.createReader();
+            var totalEntriesInDir = [];
+            var directoryCallback = function (entries) {
+                if (entries.length) {
+                    totalEntriesInDir = totalEntriesInDir.concat(entries);
+                    // keep reading
+                    dirReader.readEntries(directoryCallback);
+                } else {
+                    // finished reading, process totalEntriesInDir
+                    var directoryPath = parentPath + '/' + entry.name;
+                    whenArray($.map(totalEntriesInDir, function (e) {
+                        return _processEntry(e, directoryPath);
+                    })).done(function () {
+                        deferred.resolveWith(null, [Array.prototype.concat.apply([], arguments)]);
+                    });
+                }
+            }
+            dirReader.readEntries(directoryCallback);
         }
         return deferred.promise();
     }
@@ -822,13 +865,61 @@ $.connection.hub.start().done(function () {
             $('#403-error-modal').modal();
         }
         viewModel.processing(false);
-        viewModel.errorText(JSON.parse(error.responseText).Message);
+        // Should we also display a '403 Forbidden' toast? It's probably too much.
+        // showErrorAsToast(error);
     }
 
-    function showErrorAsAlert(error) {
+    function showErrorAsToast(error) {
         viewModel.processing(false);
-        var msg = JSON.parse(error.responseText).Message;
-        alert(msg);
+        // Check if 'error' has a status property.
+        // If true, treat as xhr response, otherwise string.
+        if (error.status) {
+            try {
+                var message = JSON.parse(error.responseText).Message;
+            }
+            catch (e) {
+                // error.responseText may be poisoned with HTML
+                // (i.e. session expires and the 403 Forbidden response from App Service contains tons of markup)
+                // Let's just ignore it if that's the case. We would need Cortana or something to parse that and
+                // extract a meaningful message.
+                if (!(/\<html\>/i.test(error.responseText))) {
+                    var message = error.responseText;
+                }
+            }
+            var status = error.status;
+            var statusText = error.statusText;
+            var textToRender = status + ' ' + statusText + (typeof message !== 'undefined' ? ': ' + message : '');
+            toast(textToRender);
+        }
+        // 'error' is a string
+        else toast(error);
     }
 
 });
+
+// Toast notifications for backend errors
+function toast(errorMsg) {
+    var scaffold = '\
+        <div class="row row-eq-height error notification">\
+            <div id="toast-close" class="col-md-1">\
+                <i class="glyphicon glyphicon-remove" aria-hidden="true"></i>\
+            </div>\
+            <div id="toast-msg" class="col-md-10">\
+                <p><strong>ERROR</strong></p>' +
+        errorMsg +
+        '</div>\
+        </div>';
+    var item = $(scaffold);
+    $('#toast').append($(item));
+    $(item).animate({ 'right': '12px' }, 'fast');
+    $('#toast').on('click', '#toast-close', function () {
+        var notification = $(this).parent();
+        notification.animate({ 'right': '-400px' }, function () {
+            notification.remove();
+        });
+    });
+}
+
+function removeAllToasts() {
+    $('.notification').remove();
+}

@@ -17,7 +17,7 @@ namespace Kudu.Core.Infrastructure
         private static IFileSystem _instance;
 
         public static IFileSystem Instance
-        { 
+        {
             get { return _instance ?? _default; }
             set { _instance = value; }
         }
@@ -79,8 +79,8 @@ namespace Kudu.Core.Infrastructure
         public static bool IsSubfolder(string parent, string child)
         {
             // normalize
-            string parentPath = Path.GetFullPath(parent).TrimEnd('\\') + '\\';
-            string childPath = Path.GetFullPath(child).TrimEnd('\\') + '\\';
+            string parentPath = Path.GetFullPath(parent).TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
+            string childPath = Path.GetFullPath(child).TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
             return childPath.StartsWith(parentPath, StringComparison.OrdinalIgnoreCase);
         }
 
@@ -118,7 +118,7 @@ namespace Kudu.Core.Infrastructure
         }
 
         /// <summary>
-        /// Async version of ReadAllTestFromFile,
+        /// Async version of ReadAllTextFromFile,
         /// </summary>
         public static async Task<string> ReadAllTextFromFileAsync(string path)
         {

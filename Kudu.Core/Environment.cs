@@ -4,10 +4,11 @@ using System.Globalization;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Security;
-using System.Text.RegularExpressions;
 using System.Web;
+using Kudu.Contracts.Settings;
 using Kudu.Core.Helpers;
 using Kudu.Core.Infrastructure;
+using Microsoft.Win32;
 
 namespace Kudu.Core
 {
@@ -21,6 +22,7 @@ namespace Kudu.Core
         private readonly string _locksPath;
         private readonly string _sshKeyPath;
         private readonly string _tempPath;
+        private readonly string _zipTempPath;
         private readonly string _scriptPath;
         private readonly string _nodeModulesPath;
         private string _repositoryPath;
@@ -32,12 +34,15 @@ namespace Kudu.Core
         private readonly string _dataPath;
         private readonly string _jobsDataPath;
         private readonly string _jobsBinariesPath;
+        private readonly string _sitePackagesPath;
+        private readonly string _secondaryJobsBinariesPath;
 
         // This ctor is used only in unit tests
         public Environment(
                 string rootPath,
                 string siteRootPath,
                 string tempPath,
+                string zipTempPath,
                 string repositoryPath,
                 string webRootPath,
                 string deploymentsPath,
@@ -47,7 +52,9 @@ namespace Kudu.Core
                 string scriptPath,
                 string nodeModulesPath,
                 string dataPath,
-                string siteExtensionSettingsPath)
+                string siteExtensionSettingsPath,
+                string sitePackagesPath,
+                string requestId)
         {
             if (repositoryPath == null)
             {
@@ -58,6 +65,7 @@ namespace Kudu.Core
             SiteRootPath = siteRootPath;
             _tempPath = tempPath;
             _repositoryPath = repositoryPath;
+            _zipTempPath = zipTempPath;
             _webRootPath = webRootPath;
             _deploymentsPath = deploymentsPath;
             _deploymentToolsPath = Path.Combine(_deploymentsPath, Constants.DeploymentToolsPath);
@@ -72,18 +80,23 @@ namespace Kudu.Core
 
             _jobsDataPath = Path.Combine(_dataPath, Constants.JobsPath);
             _jobsBinariesPath = _jobsDataPath;
+            _secondaryJobsBinariesPath = _jobsDataPath;
 
             _logFilesPath = Path.Combine(rootPath, Constants.LogFilesPath);
             _applicationLogFilesPath = Path.Combine(_logFilesPath, Constants.ApplicationLogFilesDirectory);
             _tracePath = Path.Combine(rootPath, Constants.TracePath);
             _analyticsPath = Path.Combine(tempPath ?? _logFilesPath, Constants.SiteExtensionLogsDirectory);
             _deploymentTracePath = Path.Combine(rootPath, Constants.DeploymentTracePath);
+            _sitePackagesPath = sitePackagesPath;
+
+            RequestId = !string.IsNullOrEmpty(requestId) ? requestId : Guid.Empty.ToString();
         }
 
         public Environment(
                 string rootPath,
                 string binPath,
-                string repositoryPath)
+                string repositoryPath,
+                string requestId)
         {
             RootPath = rootPath;
 
@@ -91,24 +104,22 @@ namespace Kudu.Core
 
             _tempPath = Path.GetTempPath();
             _repositoryPath = repositoryPath;
+            _zipTempPath = Path.Combine(_tempPath, Constants.ZipTempPath);
             _webRootPath = Path.Combine(SiteRootPath, Constants.WebRoot);
             _deploymentsPath = Path.Combine(SiteRootPath, Constants.DeploymentCachePath);
             _deploymentToolsPath = Path.Combine(_deploymentsPath, Constants.DeploymentToolsPath);
             _siteExtensionSettingsPath = Path.Combine(SiteRootPath, Constants.SiteExtensionsCachePath);
             _diagnosticsPath = Path.Combine(SiteRootPath, Constants.DiagnosticsPath);
             _locksPath = Path.Combine(SiteRootPath, Constants.LocksPath);
-            
+
             if (OSDetector.IsOnWindows())
             {
                 _sshKeyPath = Path.Combine(rootPath, Constants.SSHKeyPath);
             }
             else
             {
-                // in linux, rootPath is "/home", while .ssh folder need to under "/home/{user}", 
-                // and username and site name is always the same in actual deployment
-                string siteName = System.Environment.GetEnvironmentVariable("WEBSITE_SITE_NAME");
-                siteName = NormalizeSiteName(siteName);
-                _sshKeyPath = Path.Combine(rootPath, siteName, Constants.SSHKeyPath);
+                // in linux, rootPath is "/home", while .ssh folder need to under "/home/{user}"
+                _sshKeyPath = Path.Combine(rootPath, System.Environment.GetEnvironmentVariable("KUDU_RUN_USER"), Constants.SSHKeyPath);
             }
             _scriptPath = Path.Combine(binPath, Constants.ScriptsPath);
             _nodeModulesPath = Path.Combine(binPath, Constants.NodeModulesPath);
@@ -120,6 +131,20 @@ namespace Kudu.Core
             _dataPath = Path.Combine(rootPath, Constants.DataPath);
             _jobsDataPath = Path.Combine(_dataPath, Constants.JobsPath);
             _jobsBinariesPath = Path.Combine(_webRootPath, Constants.AppDataPath, Constants.JobsPath);
+            _secondaryJobsBinariesPath = Path.Combine(SiteRootPath, Constants.JobsPath);
+            string userDefinedWebJobRoot = System.Environment.GetEnvironmentVariable(SettingsKeys.WebJobsRootPath);
+            if (!String.IsNullOrEmpty(userDefinedWebJobRoot))
+            {
+                userDefinedWebJobRoot = System.Environment.ExpandEnvironmentVariables(userDefinedWebJobRoot).Trim('\\', '/');
+                // Path.Combine(p1,p2) returns p2 if p2 is an absolute path
+                // default _jobsBinariesPath = "D:/home/site/wwwroot/App_Data/jobs"
+                // if userDefinedWebJobRoot = "myfunctions", _jobsBinariesPath = "D:/home/site/wwwroot/myfunctions"
+                // if userDefinedWebJobRoot = "D:/home/functionfolder", _jobsBinariesPath = "D:/home/functionfolder"
+                _jobsBinariesPath = Path.Combine(_webRootPath, userDefinedWebJobRoot);
+            }
+            _sitePackagesPath = Path.Combine(_dataPath, Constants.SitePackages);
+
+            RequestId = !string.IsNullOrEmpty(requestId) ? requestId : Guid.Empty.ToString();
         }
 
         public string RepositoryPath
@@ -203,6 +228,14 @@ namespace Kudu.Core
             }
         }
 
+        public string ZipTempPath
+        {
+            get
+            {
+                return FileSystemHelpers.EnsureDirectory(_zipTempPath);
+            }
+        }
+
         public string ScriptPath
         {
             get
@@ -280,6 +313,11 @@ namespace Kudu.Core
             get { return _jobsBinariesPath; }
         }
 
+        public string SecondaryJobsBinariesPath
+        {
+            get { return _secondaryJobsBinariesPath; }
+        }
+
         public string SiteExtensionSettingsPath
         {
             get { return _siteExtensionSettingsPath; }
@@ -290,6 +328,14 @@ namespace Kudu.Core
             get
             {
                 return this.WebRootPath;
+            }
+        }
+
+        public string SitePackagesPath
+        {
+            get
+            {
+                return _sitePackagesPath;
             }
         }
 
@@ -314,9 +360,43 @@ namespace Kudu.Core
             }
         }
 
+        public string RequestId
+        {
+            get;
+            private set;
+        }
+
         public static bool IsAzureEnvironment()
         {
             return !String.IsNullOrEmpty(System.Environment.GetEnvironmentVariable("WEBSITE_INSTANCE_ID"));
+        }
+
+        public static bool SkipSslValidation
+        {
+            get
+            {
+                var skipSslValidation = System.Environment.GetEnvironmentVariable(SettingsKeys.SkipSslValidation);
+                if (skipSslValidation == null)
+                {
+                    if (IsAzureEnvironment())
+                    {
+                        using (var key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\IIS Extensions\DwasMod"))
+                        {
+                            var value = key != null ? key.GetValue("ValidateCertificates") : null;
+                            skipSslValidation = (value is int && (int)value == 0) ? "1" : "0";
+                        }
+                    }
+                    else
+                    {
+                        skipSslValidation = "0";
+                    }
+
+                    // use env as persist setting as well as propagate to child process (ie. kudu.exe).
+                    System.Environment.SetEnvironmentVariable(SettingsKeys.SkipSslValidation, skipSslValidation);
+                }
+
+                return skipSslValidation == "1";
+            }
         }
 
         public static string GetFreeSpaceHtml(string path)
@@ -352,25 +432,6 @@ namespace Kudu.Core
             [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
             [return: MarshalAs(UnmanagedType.Bool)]
             public static extern bool GetDiskFreeSpaceEx(string path, out ulong freeBytes, out ulong totalBytes, out ulong diskFreeBytes);
-        }
-
-        /// <summary>
-        /// Site name could be:
-        ///     ~1{actual name}__f0do
-        ///     mobile${actual name}
-        /// 
-        /// We only interested in the {actual name}
-        /// </summary>
-        private static string NormalizeSiteName(string siteName)
-        {
-            var normalizedSiteName = siteName;
-            if (normalizedSiteName.StartsWith("~1", StringComparison.Ordinal))
-            {
-                normalizedSiteName = normalizedSiteName.Substring(2);
-            }
-
-            normalizedSiteName = Regex.Replace(normalizedSiteName, "__[0-9a-f]{4}$", string.Empty).Replace("mobile$", string.Empty);
-            return normalizedSiteName;
         }
     }
 }

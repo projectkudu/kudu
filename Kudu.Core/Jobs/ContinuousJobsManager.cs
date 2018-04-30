@@ -22,8 +22,8 @@ namespace Kudu.Core.Jobs
 
         private readonly Dictionary<string, ContinuousJobRunner> _continuousJobRunners = new Dictionary<string, ContinuousJobRunner>(StringComparer.OrdinalIgnoreCase);
 
-        public ContinuousJobsManager(ITraceFactory traceFactory, IEnvironment environment, IDeploymentSettingsManager settings, IAnalytics analytics)
-            : base(traceFactory, environment, settings, analytics, Constants.ContinuousPath)
+        public ContinuousJobsManager(string basePath, ITraceFactory traceFactory, IEnvironment environment, IDeploymentSettingsManager settings, IAnalytics analytics, IEnumerable<string> excludedJobsNames = null)
+            : base(traceFactory, environment, settings, analytics, Constants.ContinuousPath, basePath, excludedJobsNames)
         {
             RegisterExtraEventHandlerForFileChange(OnJobChanged);
         }
@@ -44,13 +44,13 @@ namespace Kudu.Core.Jobs
             ContinuousJob continuousJob = GetJob(jobName);
             if (continuousJob == null)
             {
-                throw new JobNotFoundException();
+                throw new JobNotFoundException($"Cannot find '{jobName}' continuous job");
             }
 
             ContinuousJobRunner continuousJobRunner;
             if (!_continuousJobRunners.TryGetValue(continuousJob.Name, out continuousJobRunner))
             {
-                throw new InvalidOperationException("Missing job runner for an existing job - " + jobName);
+                throw new JobNotFoundException($"Missing job runner for '{jobName}' continuous job");
             }
 
             continuousJobRunner.EnableJob();
@@ -100,7 +100,7 @@ namespace Kudu.Core.Jobs
             ContinuousJobRunner continuousJobRunner;
             if (!_continuousJobRunners.TryGetValue(jobName, out continuousJobRunner))
             {
-                throw new JobNotFoundException();
+                throw new JobNotFoundException($"Missing job runner for '{jobName}' continuous job");
             }
             return continuousJobRunner;
         }
@@ -184,7 +184,7 @@ namespace Kudu.Core.Jobs
         {
             try
             {
-                FileSystemHelpers.DeleteFileSafe(statusFile);
+                FileSystemHelpers.DeleteFile(statusFile);
                 return true;
             }
             catch
@@ -216,7 +216,7 @@ namespace Kudu.Core.Jobs
             ContinuousJobRunner continuousJobRunner;
             if (!_continuousJobRunners.TryGetValue(continuousJob.Name, out continuousJobRunner))
             {
-                continuousJobRunner = new ContinuousJobRunner(continuousJob, Environment, Settings, TraceFactory, Analytics);
+                continuousJobRunner = new ContinuousJobRunner(continuousJob, JobsBinariesPath, Environment, Settings, TraceFactory, Analytics);
                 _continuousJobRunners.Add(continuousJob.Name, continuousJobRunner);
             }
 

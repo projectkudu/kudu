@@ -62,7 +62,7 @@ namespace Kudu.Core.SourceControl.Git
         public RepositoryType RepositoryType
         {
             get { return RepositoryType.Git; }
-        }
+        } 
 
         public bool SkipPostReceiveHookCheck
         {
@@ -122,7 +122,7 @@ namespace Kudu.Core.SourceControl.Git
             {
                 Execute(tracer, "init");
 
-                Execute(tracer, "config core.autocrlf true");
+                Execute(tracer, "config core.autocrlf {0}", OSDetector.IsOnWindows() ? "true" : "false");
 
                 // This speeds up git operations like 'git checkout', especially on slow drives like in Azure
                 Execute(tracer, "config core.preloadindex true");
@@ -345,7 +345,7 @@ fi" + "\n";
                 // git submodule sync will update related git/config to reflect that change
                 Execute("submodule sync");
 
-                ExecuteGenericGitCommandWithRetryAndCatchingWellKnownGitErrors(() => Execute("submodule update --init --recursive"));
+                ExecuteGenericGitCommandWithRetryAndCatchingWellKnownGitErrors(() => Execute("submodule update --init --recursive --force"));
             }
         }
 
@@ -439,13 +439,13 @@ fi" + "\n";
                     IEnumerable<string> lines = output.Split(new char[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
 
                     lines = lines
-                        .Select(line => Path.Combine(RepositoryPath, line.Trim().Trim('"').Replace('/', '\\')))
+                        .Select(line => Path.Combine(RepositoryPath, line.Trim().Trim('"').Replace('/', Path.DirectorySeparatorChar)))
                         .Where(p => p.StartsWith(path, StringComparison.OrdinalIgnoreCase));
 
                     switch (searchOption)
                     {
                         case SearchOption.TopDirectoryOnly:
-                            lines = lines.Where(line => !line.Substring(path.Length).TrimStart('\\').Contains('\\'));
+                            lines = lines.Where(line => !line.Substring(path.Length).TrimStart(Path.DirectorySeparatorChar).Contains(Path.DirectorySeparatorChar));
                             break;
 
                         case SearchOption.AllDirectories:

@@ -66,11 +66,6 @@ namespace Kudu.Core.Infrastructure
             return solutions[0];
         }
 
-        public static bool IsWap(string projectPath)
-        {
-            return IsWap(GetProjectTypeGuids(projectPath));
-        }
-
         public static bool IsWap(IEnumerable<Guid> projectTypeGuids)
         {
             return projectTypeGuids.Contains(_wapGuid);
@@ -88,6 +83,17 @@ namespace Kudu.Core.Infrastructure
             return guids;
         }
 
+        // takes mulitple package names, return true if at least one is presented
+        public static bool IncludesAnyReferencePackage(string path, params string[] packageNames)
+        {
+            var packages = from packageReferences in XDocument.Load(path).Descendants("PackageReference")
+                           let packageReferenceName = packageReferences.Attribute("Include")
+                           where packageReferenceName != null && packageNames.Contains(packageReferenceName.Value, StringComparer.OrdinalIgnoreCase)
+                           select packageReferenceName.Value;
+
+            return packages.Any();
+        }
+
         public static bool IsExecutableProject(string projectPath)
         {
             var document = XDocument.Parse(File.ReadAllText(projectPath));
@@ -102,6 +108,15 @@ namespace Kudu.Core.Infrastructure
                               let outputType = propertyGroup.Element(GetName("OutputType"))
                               where outputType != null && String.Equals(outputType.Value, "exe", StringComparison.OrdinalIgnoreCase)
                               select outputType.Value;
+
+            if (!outputTypes.Any())
+            {
+                // new csproj does not have a namespace:http://schemas.microsoft.com/developer/msbuild/2003
+                outputTypes = from propertyGroup in root.Elements(XName.Get("PropertyGroup"))
+                              let outputType = propertyGroup.Element(XName.Get("OutputType"))
+                              where outputType != null && String.Equals(outputType.Value, "exe", StringComparison.OrdinalIgnoreCase)
+                              select outputType.Value;
+            }
 
             return outputTypes.Any();
         }

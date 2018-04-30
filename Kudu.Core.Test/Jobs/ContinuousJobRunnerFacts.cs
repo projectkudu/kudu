@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.IO.Abstractions;
 using System.Linq;
 using Kudu.Contracts.Jobs;
 using Kudu.Contracts.Tracing;
@@ -20,9 +19,13 @@ namespace Kudu.Core.Test.Jobs
         private ContinuousJobRunner _runner;
         private TestEnvironment _environment;
         private string _logFilePath;
+        private string _jobsDataPath;
 
         public ContinuousJobRunnerFacts()
         {
+            _jobsDataPath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+            Directory.CreateDirectory(_jobsDataPath);
+
             _job = new ContinuousJob
             {
                 Name = "testjob",
@@ -32,7 +35,7 @@ namespace Kudu.Core.Test.Jobs
             {
                 TempPath = @"c:\temp",
                 JobsBinariesPath = @"c:\test\data\continuous\testjob",
-                JobsDataPath = Path.GetTempPath(),
+                JobsDataPath = _jobsDataPath,
                 DataPath = @"c:\test\data"
             };
 
@@ -41,13 +44,13 @@ namespace Kudu.Core.Test.Jobs
 
             MockDeploymentSettingsManager mockSettingsManager = new MockDeploymentSettingsManager();
             Mock<ITraceFactory> mockTraceFactory = new Mock<ITraceFactory>(MockBehavior.Strict);
-            Mock<IAnalytics> mockAnalytics = new Mock<IAnalytics>(MockBehavior.Strict);
+            Mock<IAnalytics> mockAnalytics = new Mock<IAnalytics>();
 
             Mock<ITracer> mockTracer = new Mock<ITracer>(MockBehavior.Strict);
             mockTracer.Setup(p => p.Trace(It.IsAny<string>(), It.IsAny<IDictionary<string, string>>()));
             mockTraceFactory.Setup(p => p.GetTracer()).Returns(mockTracer.Object);
 
-            _runner = new ContinuousJobRunner(_job, _environment, mockSettingsManager, mockTraceFactory.Object, mockAnalytics.Object);
+            _runner = new ContinuousJobRunner(_job, _environment.JobsBinariesPath, _environment, mockSettingsManager, mockTraceFactory.Object, mockAnalytics.Object);
 
             FileSystemHelpers.DeleteFileSafe(_logFilePath);
         }
@@ -140,6 +143,11 @@ namespace Kudu.Core.Test.Jobs
             if (_runner != null)
             {
                 _runner.Dispose();
+            }
+
+            if (Directory.Exists(_jobsDataPath))
+            {
+                Directory.Delete(_jobsDataPath, recursive: true);
             }
         }
     }

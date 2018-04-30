@@ -46,18 +46,20 @@ function getCustomMode(filename) {
     var _csproj = (/.(cs|vb)proj$/i);
     var _xdt = (/.xdt$/i);
     var _aspnet = (/.(cshtml|asp|aspx)$/i);
+    var _csx = (/.csx$/i);
     var syntax_mode = 'ace/mode/text';
-    if (
-        filename.match(_config) ||
+    if (filename.match(_config) ||
         filename.match(_csproj) ||
-        filename.match(_xdt)
-       )
+        filename.match(_xdt))
     {
         syntax_mode = 'ace/mode/xml';
     }
-    if (filename.match(_aspnet)) {
+    if (filename.match(_aspnet) ||
+        filename.match(_csx))
+    {
         syntax_mode = 'ace/mode/csharp';
     }
+
     return syntax_mode;
 }
 

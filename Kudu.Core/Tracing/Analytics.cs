@@ -56,26 +56,44 @@ namespace Kudu.Core.Tracing
                 NullToEmptyString(error));
         }
 
-        public void UnexpectedException(Exception exception, bool trace = true)
+        public void UnexpectedException(Exception exception, bool trace = true, string memberName = null, string sourceFilePath = null, int sourceLineNumber = 0)
         {
-            KuduEventSource.Log.KuduException(
-                _serverConfiguration.ApplicationName,
-                string.Empty,
-                string.Empty,
-                string.Empty,
-                string.Empty,
-                GetExceptionContent(exception, trace));
+            // this happen during unexpected situation and should not throw (masking the original exception)
+            OperationManager.SafeExecute(() =>
+            {
+                if (exception.AbortedByKudu())
+                {
+                    return;
+                }
+
+                KuduEventSource.Log.KuduException(
+                    _serverConfiguration.ApplicationName,
+                    string.Empty,
+                    string.Empty,
+                    string.Empty,
+                    string.Empty,
+                    GetExceptionContent(exception, trace, memberName, sourceFilePath, sourceLineNumber));
+            });
         }
 
         public void UnexpectedException(Exception ex, string method, string path, string result, string message, bool trace = true)
         {
-            KuduEventSource.Log.KuduException(
-                _serverConfiguration.ApplicationName,
-                NullToEmptyString(method),
-                NullToEmptyString(path),
-                NullToEmptyString(result),
-                NullToEmptyString(message),
-                GetExceptionContent(ex, trace));
+            // this happen during unexpected situation and should not throw (masking the original exception)
+            OperationManager.SafeExecute(() =>
+            {
+                if (ex.AbortedByKudu())
+                {
+                    return;
+                }
+
+                KuduEventSource.Log.KuduException(
+                    _serverConfiguration.ApplicationName,
+                    NullToEmptyString(method),
+                    NullToEmptyString(path),
+                    NullToEmptyString(result),
+                    NullToEmptyString(message),
+                    GetExceptionContent(ex, trace));
+            });
         }
 
         public void DeprecatedApiUsed(string route, string userAgent, string method, string path)
@@ -114,14 +132,25 @@ namespace Kudu.Core.Tracing
             return s ?? String.Empty;
         }
 
-        private string GetExceptionContent(Exception exception, bool trace)
+        private string GetExceptionContent(Exception exception, bool trace, string memberName = null, string sourceFilePath = null, int sourceLineNumber = 0)
         {
+            string methodInfo = null;
+            if (!String.IsNullOrEmpty(memberName))
+            {
+                methodInfo = String.Format("{0}() at {1}:{2}", memberName, sourceFilePath, sourceLineNumber);
+            }
+
             if (trace)
             {
-                _traceFactory.GetTracer().TraceError(exception);
+                // best effort to handle file system failure.
+                OperationManager.SafeExecute(() => _traceFactory.GetTracer().TraceError(exception, "{0}", methodInfo));
             }
 
             var strb = new StringBuilder();
+            if (!String.IsNullOrEmpty(methodInfo))
+            {
+                strb.AppendLine(methodInfo);
+            }
             strb.AppendLine(exception.ToString());
 
             var aggregate = exception as AggregateException;
@@ -134,12 +163,6 @@ namespace Kudu.Core.Tracing
             }
 
             return strb.ToString();
-        }
-
-        public static void UnexpectedException(Exception ex, ITraceFactory traceFactory)
-        {
-            var analytic = new Analytics(null, new ServerConfiguration(), traceFactory);
-            analytic.UnexpectedException(ex, trace: true);
         }
     }
 }

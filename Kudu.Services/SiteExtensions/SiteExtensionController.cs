@@ -30,6 +30,23 @@ namespace Kudu.Services.SiteExtensions
         private readonly IAnalytics _analytics;
         private readonly string _siteExtensionRoot;
 
+        // List of packages that had to be renamed when moving to nuget.org because the siteextension.org id conflicted
+        // with an existing nuget.org id
+        static Dictionary<string, string> _packageIdRedirects = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            { "python2714x64", "azureappservice-python2714x64" },
+            { "python2714x86", "azureappservice-python2714x86" },
+            { "python353x64", "azureappservice-python353x64" },
+            { "python353x86", "azureappservice-python353x86" },
+            { "python354x64", "azureappservice-python354x64" },
+            { "python354x86", "azureappservice-python354x86" },
+            { "python362x64", "azureappservice-python362x64" },
+            { "python362x86", "azureappservice-python362x86" },
+            { "python364x64", "azureappservice-python364x64" },
+            { "python364x86", "azureappservice-python364x86" },
+            { "NewRelic.Azure.WebSites", "NewRelic.Azure.WebSites.Extension"}
+        };
+
         public SiteExtensionController(ISiteExtensionManager manager, IEnvironment environment, ITraceFactory traceFactory, IAnalytics analytics)
         {
             _manager = manager;
@@ -89,7 +106,7 @@ namespace Kudu.Services.SiteExtensions
                         && string.Equals(Constants.SiteExtensionProvisioningStateSucceeded, armSettings.ProvisioningState, StringComparison.OrdinalIgnoreCase))
                     {
                         tracer.Trace("Package {0} was just installed.", id);
-                        extension = await _manager.GetLocalExtension(id, checkLatest);
+                        extension =  await ThrowsConflictIfIOException(_manager.GetLocalExtension(id, checkLatest));
                         if (extension == null)
                         {
                             using (tracer.Step("Status indicate {0} installed, but not able to find it from local repo.", id))
@@ -168,7 +185,7 @@ namespace Kudu.Services.SiteExtensions
                 {
                     using (tracer.Step("ARM get : {0}", id))
                     {
-                        extension = await _manager.GetLocalExtension(id, checkLatest);
+                        extension = await ThrowsConflictIfIOException(_manager.GetLocalExtension(id, checkLatest));
                     }
 
                     if (extension == null)
@@ -187,7 +204,7 @@ namespace Kudu.Services.SiteExtensions
             {
                 using (tracer.Step("Get: {0}, is not a ARM request.", id))
                 {
-                    extension = await _manager.GetLocalExtension(id, checkLatest);
+                    extension = await ThrowsConflictIfIOException(_manager.GetLocalExtension(id, checkLatest));
                 }
 
                 if (extension == null)
@@ -204,6 +221,12 @@ namespace Kudu.Services.SiteExtensions
         [HttpPut]
         public async Task<HttpResponseMessage> InstallExtensionArm(string id, ArmEntry<SiteExtensionInfo> requestInfo)
         {
+            if (requestInfo == null)
+            {
+                // Body should not be empty
+                return Request.CreateResponse(HttpStatusCode.BadRequest);
+            }
+
             return await InstallExtension(id, requestInfo.Properties);
         }
 
@@ -212,6 +235,13 @@ namespace Kudu.Services.SiteExtensions
         {
             var startTime = DateTime.UtcNow;
             var tracer = _traceFactory.GetTracer();
+
+            // If there is an id redirect for it, switch to the new id
+            if (_packageIdRedirects.TryGetValue(id, out string newId))
+            {
+                tracer.Trace($"Package id '{id}' was redirected to id '{newId}.");
+                id = newId;
+            }
 
             if (IsInstallationLockHeldSafeCheck(id))
             {
@@ -233,14 +263,9 @@ namespace Kudu.Services.SiteExtensions
                 ITracer backgroundTracer = NullTracer.Instance;
                 IDictionary<string, string> traceAttributes = new Dictionary<string, string>();
 
-                if (tracer.TraceLevel == TraceLevel.Off)
-                {
-                    backgroundTracer = NullTracer.Instance;
-                }
-
                 if (tracer.TraceLevel > TraceLevel.Off)
                 {
-                    backgroundTracer = new XmlTracer(_environment.TracePath, tracer.TraceLevel);
+                    backgroundTracer = new CascadeTracer(new XmlTracer(_environment.TracePath, tracer.TraceLevel), new ETWTracer(_environment.RequestId, "PUT"));
                     traceAttributes = new Dictionary<string, string>()
                     {
                         {"url", Request.RequestUri.AbsolutePath},
@@ -267,7 +292,7 @@ namespace Kudu.Services.SiteExtensions
                         {
                             using (backgroundTracer.Step("Background thread started for {0} installation", id))
                             {
-                                _manager.InstallExtension(id, requestInfo.Version, requestInfo.FeedUrl, requestInfo.Type, backgroundTracer).Wait();
+                                _manager.InstallExtension(id, requestInfo.Version, requestInfo.FeedUrl, requestInfo.Type, backgroundTracer, requestInfo.InstallationArgs).Wait();
                             }
                         }
                         finally
@@ -297,7 +322,7 @@ namespace Kudu.Services.SiteExtensions
             }
             else
             {
-                result = await _manager.InstallExtension(id, requestInfo.Version, requestInfo.FeedUrl, requestInfo.Type, tracer);
+                result = await _manager.InstallExtension(id, requestInfo.Version, requestInfo.FeedUrl, requestInfo.Type, tracer, requestInfo.InstallationArgs);
 
                 if (string.Equals(Constants.SiteExtensionProvisioningStateFailed, result.ProvisioningState, StringComparison.OrdinalIgnoreCase))
                 {
@@ -464,6 +489,20 @@ namespace Kudu.Services.SiteExtensions
                 {
                     installationLock.Release();
                 }
+            }
+        }
+
+        private async Task<T> ThrowsConflictIfIOException<T>(Task<T> task)
+        {
+            try
+            {
+                return await task;
+            }
+            catch (IOException ex)
+            {
+                // Simplify the exception handler by converting any IOException 
+                // to 409 Conflict instead of 500 InternalServerError (implying server issue).
+                throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.Conflict, ex));
             }
         }
     }

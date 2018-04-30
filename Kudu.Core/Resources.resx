@@ -186,6 +186,9 @@
   <data name="Log_PreparingDeployment" xml:space="preserve">
     <value>Preparing deployment for commit id '{0}'.</value>
   </data>
+  <data name="Log_DelayingBeforeDeployment" xml:space="preserve">
+    <value>Delaying deployment for {0}s.</value>
+  </data>
   <data name="Log_UnexpectedError" xml:space="preserve">
     <value>An unknown error has occurred. Check the diagnostic log for details.</value>
   </data>
@@ -221,5 +224,14 @@
   </data>
   <data name="Error_FailedToLocateBash" xml:space="preserve">
     <value>Unable to locate 'bash.exe'. Make sure it is installed.</value>
+  </data>
+  <data name="Log_TriggeringContainerRestart" xml:space="preserve">
+    <value>App container will begin restart within 10 seconds.</value>
+  </data>
+  <data name="FetchingChanges" xml:space="preserve">
+    <value>Fetching changes.</value>
+  </data>
+  <data name="ReceivingChanges" xml:space="preserve">
+    <value>Receiving changes.</value>
   </data>
 </root>

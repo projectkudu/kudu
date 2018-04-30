@@ -4,15 +4,21 @@ using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Web.Http;
+using Kudu.Contracts.Functions;
 using Kudu.Contracts.Tracing;
 using Kudu.Core;
 using Kudu.Core.Functions;
+using Kudu.Core.Helpers;
+using Kudu.Core.Infrastructure;
 using Kudu.Core.Tracing;
 using Kudu.Services.Arm;
 using Kudu.Services.Filters;
+using Kudu.Services.Infrastructure;
 using Newtonsoft.Json.Linq;
+
 using Environment = System.Environment;
 
 namespace Kudu.Services.Functions
@@ -24,6 +30,7 @@ namespace Kudu.Services.Functions
         private readonly IFunctionManager _manager;
         private readonly ITraceFactory _traceFactory;
         private readonly IEnvironment _environment;
+        private static readonly Regex FunctionNameValidationRegex = new Regex(@"^[a-z][a-z0-9_\-]{0,127}$(?<!^host$)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         public FunctionController(IFunctionManager manager, ITraceFactory traceFactory, IEnvironment environment)
         {
@@ -46,6 +53,12 @@ namespace Kudu.Services.Functions
 
         private async Task<HttpResponseMessage> CreateOrUpdateHelper(string name, Task<FunctionEnvelope> functionEnvelopeBuilder)
         {
+            if (!FunctionNameValidationRegex.IsMatch(name))
+            {
+                // it returns the same error object if the PUT request does not come from Arm
+                return ArmUtils.CreateErrorResponse(Request, HttpStatusCode.BadRequest, new ArgumentException($"{name} is not a valid function name"));
+            }
+
             var tracer = _traceFactory.GetTracer();
             using (tracer.Step($"FunctionsController.CreateOrUpdate({name})"))
             {
@@ -70,7 +83,7 @@ namespace Kudu.Services.Functions
             var tracer = _traceFactory.GetTracer();
             using (tracer.Step("FunctionsController.list()"))
             {
-                var functions = (await _manager.ListFunctionsConfigAsync()).Select(f => AddFunctionAppIdToEnvelope(f));
+                var functions = (await _manager.ListFunctionsConfigAsync(ArmUtils.IsArmRequest(Request) ? new FunctionTestData() : null)).Select(f => AddFunctionAppIdToEnvelope(f));
                 return Request.CreateResponse(HttpStatusCode.OK, ArmUtils.AddEnvelopeOnArmRequest(functions, Request));
             }
         }
@@ -83,17 +96,54 @@ namespace Kudu.Services.Functions
             {
                 return Request.CreateResponse(HttpStatusCode.OK,
                     ArmUtils.AddEnvelopeOnArmRequest(
-                        AddFunctionAppIdToEnvelope(await _manager.GetFunctionConfigAsync(name)), Request));
+                        AddFunctionAppIdToEnvelope(await _manager.GetFunctionConfigAsync(name, ArmUtils.IsArmRequest(Request) ? new FunctionTestData() : null)), Request));
+            }
+        }
+
+        [HttpGet]
+        public HttpResponseMessage GetAdminToken()
+        {
+            var tracer = _traceFactory.GetTracer();
+            using (tracer.Step("FunctionsController.GetAdminToken()"))
+            {
+                return Request.CreateResponse(HttpStatusCode.OK, _manager.GetAdminToken());
+            }
+        }
+
+        [HttpGet]
+        public async Task<HttpResponseMessage> GetMasterKey()
+        {
+            var tracer = _traceFactory.GetTracer();
+            using (tracer.Step("FunctionsController.GetMasterKey()"))
+            {
+                try
+                {
+                    return Request.CreateResponse(HttpStatusCode.OK, await _manager.GetMasterKeyAsync());
+                }
+                catch (InvalidOperationException ex)
+                {
+                    return Request.CreateErrorResponse(HttpStatusCode.Conflict, ex);
+                }
             }
         }
 
         [HttpPost]
         public async Task<HttpResponseMessage> GetSecrets(string name)
         {
+            // "name".json will be created as function keys, (runtime will always have lowercase "name")
+            // kudu REST api does not care, "name" can be camelcase (ex: function portal)
+            // windows file system is case insensitive, but this might not work in linux
             var tracer = _traceFactory.GetTracer();
             using (tracer.Step($"FunctionsController.GetSecrets({name})"))
             {
-                return Request.CreateResponse(HttpStatusCode.OK, await _manager.GetFunctionSecretsAsync(name));
+                try
+                {
+                    return Request.CreateResponse(HttpStatusCode.OK, await _manager.GetFunctionSecretsAsync(name));
+                }
+                catch (InvalidOperationException ex)
+                {
+                    return ArmUtils.CreateErrorResponse(Request, HttpStatusCode.Conflict, ex);
+                }
             }
         }
 
@@ -103,7 +153,7 @@ namespace Kudu.Services.Functions
             var tracer = _traceFactory.GetTracer();
             using (tracer.Step($"FunctionsController.Delete({name})"))
             {
-                _manager.DeleteFunction(name);
+                _manager.DeleteFunction(name, ignoreErrors: false);
 
                 // Fire and forget SyncTrigger request.
                 FireSyncTriggers(tracer);
@@ -138,8 +188,25 @@ namespace Kudu.Services.Functions
             var tracer = _traceFactory.GetTracer();
             using (tracer.Step("FunctionController.SyncTriggers"))
             {
-                await _manager.SyncTriggersAsync();
-                return Request.CreateResponse(HttpStatusCode.OK);
+                await PostDeploymentHelper.SyncFunctionsTriggers(_environment.RequestId, new PostDeploymentTraceListener(tracer));
+
+                // Return a dummy body to make it valid in ARM template action evaluation
+                return Request.CreateResponse(HttpStatusCode.OK, new { status = "success" });
+            }
+        }
+
+        [HttpGet]
+        public HttpResponseMessage DownloadFunctions(bool includeCsproj = true, bool includeAppSettings = false)
+        {
+            var tracer = _traceFactory.GetTracer();
+            using (tracer.Step($"{nameof(FunctionController)}.{nameof(DownloadFunctions)}({includeCsproj}, {includeAppSettings})"))
+            {
+                var appName = ServerConfiguration.GetApplicationName();
+                var fileName = $"{appName}.zip";
+                return new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = ZipStreamContent.Create(fileName, tracer, zip => _manager.CreateArchive(zip, includeAppSettings, includeCsproj, appName))
+                };
             }
         }
 
@@ -195,7 +262,7 @@ namespace Kudu.Services.Functions
                 {
                     try
                     {
-                        await _manager.SyncTriggersAsync(bgTracer);
+                        await PostDeploymentHelper.SyncFunctionsTriggers(_environment.RequestId, new PostDeploymentTraceListener(bgTracer));
                     }
                     catch (Exception ex)
                     {

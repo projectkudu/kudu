@@ -2,7 +2,6 @@
 using System;
 using System.IO;
 using System.Net;
-using System.Net.Http;
 using System.Web.Http.Filters;
 
 namespace Kudu.Services.Filters
@@ -26,8 +25,12 @@ namespace Kudu.Services.Filters
             {
                 statusCode = HttpStatusCode.BadRequest;
             }
+            else if (context.Exception is FormatException)
+            {
+                statusCode = HttpStatusCode.BadRequest;
+            }
 
-            context.Response =  ArmUtils.CreateErrorResponse(context.Request, statusCode, context.Exception);
+            context.Response = ArmUtils.CreateErrorResponse(context.Request, statusCode, context.Exception);
         }
     }
 }

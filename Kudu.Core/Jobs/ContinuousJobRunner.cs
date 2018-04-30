@@ -24,17 +24,20 @@ namespace Kudu.Core.Jobs
         private Thread _continuousJobThread;
         private ContinuousJobLogger _continuousJobLogger;
         private readonly string _disableFilePath;
+        private readonly IAnalytics _analytics;
         private bool _alwaysOnWarningLogged;
+        private bool? _isSingleton;
 
-        public ContinuousJobRunner(ContinuousJob continuousJob, IEnvironment environment, IDeploymentSettingsManager settings, ITraceFactory traceFactory, IAnalytics analytics)
-            : base(continuousJob.Name, Constants.ContinuousPath, environment, settings, traceFactory, analytics)
+        public ContinuousJobRunner(ContinuousJob continuousJob, string basePath, IEnvironment environment, IDeploymentSettingsManager settings, ITraceFactory traceFactory, IAnalytics analytics)
+            : base(continuousJob.Name, Constants.ContinuousPath, basePath, environment, settings, traceFactory, analytics)
         {
+            _analytics = analytics;
             _continuousJobLogger = new ContinuousJobLogger(continuousJob.Name, Environment, TraceFactory);
             _continuousJobLogger.RolledLogFile += OnLogFileRolled;
 
             _disableFilePath = Path.Combine(continuousJob.JobBinariesRootPath, "disable.job");
 
-            _singletonLock = new LockFile(Path.Combine(JobDataPath, "singleton.job.lock"), TraceFactory);
+            _singletonLock = new LockFile(Path.Combine(JobDataPath, "singleton.job.lock"), TraceFactory, ensureLock: true);
         }
 
         private void UpdateStatusIfChanged(ContinuousJobStatus continuousJobStatus)
@@ -78,56 +81,73 @@ namespace Kudu.Core.Jobs
 
             _continuousJobThread = new Thread(() =>
             {
-                try
+                var threadAborted = false;
+                while (!threadAborted && _started == 1 && !IsDisabled)
                 {
-                    while (_started == 1 && !IsDisabled)
+                    try
                     {
                         // Try getting the singleton lock if single is enabled
-                        if (!TryGetLockIfSingleton())
+                        bool acquired;
+                        if (!TryGetLockIfSingleton(out acquired))
                         {
                             // Wait 5 seconds and retry to take the lock
                             WaitForTimeOrStop(TimeSpan.FromSeconds(5));
                             continue;
                         }
 
-                        Stopwatch liveStopwatch = Stopwatch.StartNew();
-
-                        _continuousJobLogger.StartingNewRun();
-
-                        var tracer = TraceFactory.GetTracer();
-                        using (tracer.Step("Run {0} {1}", continuousJob.JobType, continuousJob.Name))
-                        using (new Timer(LogStillRunning, null, TimeSpan.FromHours(1), TimeSpan.FromHours(12)))
+                        try
                         {
-                            InitializeJobInstance(continuousJob, _continuousJobLogger);
-                            WebJobPort = GetAvailableJobPort();
-                            RunJobInstance(continuousJob, _continuousJobLogger, String.Empty, String.Empty, tracer, WebJobPort);
-                        }
+                            Stopwatch liveStopwatch = Stopwatch.StartNew();
 
-                        if (_started == 1 && !IsDisabled)
+                            _continuousJobLogger.StartingNewRun();
+
+                            var tracer = TraceFactory.GetTracer();
+                            using (tracer.Step("Run {0} {1}", continuousJob.JobType, continuousJob.Name))
+                            using (new Timer(LogStillRunning, null, TimeSpan.FromHours(1), TimeSpan.FromHours(12)))
+                            {
+                                InitializeJobInstance(continuousJob, _continuousJobLogger);
+                                WebJobPort = GetAvailableJobPort();
+                                RunJobInstance(continuousJob, _continuousJobLogger, String.Empty, String.Empty, tracer, WebJobPort);
+                            }
+
+                            if (_started == 1 && !IsDisabled)
+                            {
+                                // The wait time between WebJob invocations is either WebJobsRestartTime (60 seconds by default) or if the WebJob
+                                // Was running for at least 2 minutes there is no wait time.
+                                TimeSpan webJobsRestartTime = liveStopwatch.Elapsed < WarmupTimeSpan ? Settings.GetWebJobsRestartTime() : TimeSpan.Zero;
+                                _continuousJobLogger.LogInformation("Process went down, waiting for {0} seconds".FormatInvariant(webJobsRestartTime.TotalSeconds));
+                                _continuousJobLogger.ReportStatus(ContinuousJobStatus.PendingRestart);
+                                WaitForTimeOrStop(webJobsRestartTime);
+                            }
+                        }
+                        finally
                         {
-                            // The wait time between WebJob invocations is either WebJobsRestartTime (60 seconds by default) or if the WebJob
-                            // Was running for at least 2 minutes there is no wait time.
-                            TimeSpan webJobsRestartTime = liveStopwatch.Elapsed < WarmupTimeSpan ? Settings.GetWebJobsRestartTime() : TimeSpan.Zero;
-                            _continuousJobLogger.LogInformation("Process went down, waiting for {0} seconds".FormatInvariant(webJobsRestartTime.TotalSeconds));
-                            _continuousJobLogger.ReportStatus(ContinuousJobStatus.PendingRestart);
-                            WaitForTimeOrStop(webJobsRestartTime);
+                            if (acquired)
+                            {
+                                // Make sure lock is released before re-iterating and trying to get the lock again
+                                ReleaseSingletonLock();
+                            }
                         }
-
-                        // Make sure lock is released before re-iterating and trying to get the lock again
-                        ReleaseSingletonLock();
                     }
-                }
-                catch (ThreadAbortException)
-                {
-                    TraceFactory.GetTracer().TraceWarning("Thread was aborted, make sure WebJob was about to stop.");
-                }
-                catch (Exception ex)
-                {
-                    TraceFactory.GetTracer().TraceError(ex);
-                }
-                finally
-                {
-                    ReleaseSingletonLock();
+                    catch (ThreadAbortException ex)
+                    {
+                        // by nature, ThreadAbortException will be rethrown at the end of this catch block and
+                        // this bool may not be neccessary since while loop will be exited anyway.  we added
+                        // it to be explicit.
+                        threadAborted = true;
+
+                        if (!ex.AbortedByKudu())
+                        {
+                            TraceFactory.GetTracer().TraceWarning("Thread was aborted, make sure WebJob was about to stop.");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _analytics.UnexpectedException(ex, trace: true);
+
+                        // sleep to avoid tight exception loop
+                        WaitForTimeOrStop(TimeSpan.FromSeconds(60));
+                    }
                 }
             });
 
@@ -177,7 +197,7 @@ namespace Kudu.Core.Jobs
         {
             try
             {
-                _continuousJobLogger.LogInformation("WebJob is still running");
+                LogInformation("WebJob is still running");
             }
             catch
             {
@@ -185,9 +205,24 @@ namespace Kudu.Core.Jobs
             }
         }
 
-        private bool TryGetLockIfSingleton()
+        private bool TryGetLockIfSingleton(out bool acquired)
         {
+            acquired = false;
+
             bool isSingleton = JobSettings.IsSingleton;
+            if (_isSingleton == null || _isSingleton.Value != isSingleton)
+            {
+                if (_isSingleton == null)
+                {
+                    LogInformation("WebJob singleton setting is {0}", isSingleton);
+                }
+                else
+                {
+                    LogInformation("WebJob singleton setting changed from {0} to {1}", _isSingleton.Value, isSingleton);
+                }
+                _isSingleton = isSingleton;
+            }
+
             if (!isSingleton)
             {
                 return true;
@@ -195,6 +230,8 @@ namespace Kudu.Core.Jobs
 
             if (_singletonLock.Lock("Acquiring continuous WebJob singleton lock"))
             {
+                acquired = true;
+                LogInformation("WebJob singleton lock is acquired");
                 return true;
             }
 
@@ -215,7 +252,7 @@ namespace Kudu.Core.Jobs
 
                 if (isShutdown)
                 {
-                    _continuousJobLogger.LogInformation("WebJob is stopping due to website shutting down");
+                    LogInformation("WebJob is stopping due to website shutting down");
                 }
 
                 _continuousJobLogger.ReportStatus(ContinuousJobStatus.Stopping);
@@ -225,7 +262,7 @@ namespace Kudu.Core.Jobs
                 // By default give the continuous job 5 seconds before killing it (after notifying the continuous job)
                 if (!_continuousJobThread.Join(JobSettings.GetStoppingWaitTime(DefaultContinuousJobStoppingWaitTimeInSeconds)))
                 {
-                    _continuousJobThread.Abort();
+                    _continuousJobThread.KuduAbort(String.Format("Stopping {0} {1} job", JobName, Constants.ContinuousPath));
                 }
 
                 _continuousJobThread = null;
@@ -267,6 +304,13 @@ namespace Kudu.Core.Jobs
             logger.ReportStatus(new ContinuousJobStatus() { Status = status });
         }
 
+        private void LogInformation(string format, params object[] args)
+        {
+            var message = string.Format(format, args);
+            _analytics.JobEvent(JobName, message, Constants.ContinuousPath, string.Empty);
+            _continuousJobLogger.LogInformation(message);
+        }
+
         private void WaitForTimeOrStop(TimeSpan timeSpan)
         {
             var stopwatch = Stopwatch.StartNew();
@@ -279,12 +323,14 @@ namespace Kudu.Core.Jobs
 
         private bool IsDisabled
         {
-            get { return FileSystemHelpers.FileExists(_disableFilePath) || Settings.IsWebJobsStopped(); }
+            get { return OperationManager.Attempt(() => FileSystemHelpers.FileExists(_disableFilePath) || Settings.IsWebJobsStopped()); }
         }
 
         private void ReleaseSingletonLock()
         {
             _singletonLock.Release();
+
+            LogInformation("WebJob singleton lock is released");
         }
 
         public void Dispose()
@@ -297,6 +343,12 @@ namespace Kudu.Core.Jobs
         {
             if (disposing)
             {
+                if (_continuousJobThread != null)
+                {
+                    _continuousJobThread.KuduAbort(String.Format("Dispoing {0} {1} job", JobName, Constants.ContinuousPath));
+                    _continuousJobThread = null;
+                }
+
                 if (_continuousJobLogger != null)
                 {
                     _continuousJobLogger.Dispose();

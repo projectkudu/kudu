@@ -22,6 +22,11 @@ namespace Kudu.Core.Infrastructure
         private readonly string _path;
         private readonly ITraceFactory _traceFactory;
 
+        // lock must be acquired without any error
+        // default is false - meaning allow lock to be acquired during
+        // file system readonly or disk full period.
+        private readonly bool _ensureLock;
+
         private ConcurrentQueue<QueueItem> _lockRequestQueue;
         private FileSystemWatcher _lockFileWatcher;
 
@@ -32,10 +37,11 @@ namespace Kudu.Core.Infrastructure
         {
         }
 
-        public LockFile(string path, ITraceFactory traceFactory)
+        public LockFile(string path, ITraceFactory traceFactory, bool ensureLock = false)
         {
             _path = Path.GetFullPath(path);
             _traceFactory = traceFactory;
+            _ensureLock = ensureLock;
         }
 
         public OperationLockInfo LockInfo
@@ -150,19 +156,25 @@ namespace Kudu.Core.Infrastructure
             }
             catch (UnauthorizedAccessException)
             {
-                // if it is ReadOnly file system, we will skip the lock
-                // which will enable all read action
-                // for write action, it will fail with UnauthorizedAccessException when perform actual write operation
-                //      There is one drawback, previously for write action, even acquire lock will fail with UnauthorizedAccessException,
-                //      there will be retry within given timeout. so if exception is temporary, previous`s implementation will still go thru.
-                //      While right now will end up failure. But it is a extreem edge case, should be ok to ignore.
-                return FileSystemHelpers.IsFileSystemReadOnly();
+                if (!_ensureLock)
+                {
+                    // if it is ReadOnly file system, we will skip the lock
+                    // which will enable all read action
+                    // for write action, it will fail with UnauthorizedAccessException when perform actual write operation
+                    //      There is one drawback, previously for write action, even acquire lock will fail with UnauthorizedAccessException,
+                    //      there will be retry within given timeout. so if exception is temporary, previous`s implementation will still go thru.
+                    //      While right now will end up failure. But it is a extreem edge case, should be ok to ignore.
+                    return FileSystemHelpers.IsFileSystemReadOnly();
+                }
             }
             catch (IOException ex)
             {
-                // if not enough disk space, no one has the lock.
-                // let the operation thru and fail where it would try to get the file
-                return ex.Message.Contains(NotEnoughSpaceText);
+                if (!_ensureLock)
+                {
+                    // if not enough disk space, no one has the lock.
+                    // let the operation thru and fail where it would try to get the file
+                    return ex.Message.Contains(NotEnoughSpaceText);
+                }
             }
             catch (Exception ex)
             {
@@ -196,7 +208,8 @@ namespace Kudu.Core.Infrastructure
             var json = JObject.FromObject(new OperationLockInfo
             {
                 OperationName = operationName,
-                StackTrace = System.Environment.StackTrace
+                StackTrace = System.Environment.StackTrace,
+                InstanceId = InstanceIdUtility.GetShortInstanceId()
             });
 
             var bytes = Encoding.UTF8.GetBytes(json.ToString());

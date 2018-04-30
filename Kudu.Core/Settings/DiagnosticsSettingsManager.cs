@@ -69,7 +69,14 @@ namespace Kudu.Core.Settings
                 {
                     string fileContent = null;
                     OperationManager.Attempt(() => fileContent = FileSystemHelpers.ReadAllTextFromFile(_path));
-                    return JsonConvert.DeserializeObject<DiagnosticsSettings>(fileContent);
+
+                    var settings = JsonConvert.DeserializeObject<DiagnosticsSettings>(fileContent);
+                    if (settings == null)
+                    {
+                        throw new InvalidOperationException($"File '{_path}' content is empty or contains only white spaces.");
+                    }
+
+                    return settings;
                 }
                 catch (Exception ex)
                 {

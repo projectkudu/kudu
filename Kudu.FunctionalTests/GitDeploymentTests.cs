@@ -120,15 +120,24 @@ namespace Kudu.FunctionalTests
     [KuduXunitTestClass]
     public class NodeAppExpressTests : GitDeploymentTests
     {
-        // Node apps
-
         [Fact]
+        // Ensure node is installed. --> PrivateOnly
+        [KuduXunitTest(PrivateOnly = true)]
         public void PushAndDeployNodeAppExpress()
         {
-            // Ensure node is installed.
-            Assert.Contains("nodejs", System.Environment.GetEnvironmentVariable("Path"), StringComparison.OrdinalIgnoreCase);
-
             PushAndDeployApps("Express-Template", "master", "Modify this template to jump-start your Node.JS Express Web Pages application", HttpStatusCode.OK, "");
+        }
+    }
+
+    [KuduXunitTestClass]
+    public class NodeJsVS2017Tests : GitDeploymentTests
+    {
+        [Fact]
+        // Ensure node is installed. --> PrivateOnly
+        [KuduXunitTest(PrivateOnly = true)]
+        public void PushAndDeployNodeJsVS2017()
+        {
+            PushAndDeployApps("NodeJSVS17project", "master", "Hello World", HttpStatusCode.OK, "Deployment successful");
         }
     }
 
@@ -367,44 +376,77 @@ namespace Kudu.FunctionalTests
     }
 
     [KuduXunitTestClass]
-    public class AspNetCoreRC2Yeoman2ProjectsTests : GitDeploymentTests
+    public class AspNetCore2VS17WithLibTests : GitDeploymentTests
     {
         [Fact]
         [KuduXunitTest(PrivateOnly = true)]
-        public void PushAndDeployAspNetCoreRC2Yeoman2Projects()
+        public void PushAndDeployAspNetCore2VS17WithLib()
         {
-            PushAndDeployApps("AspNetCoreRC2Yeoman2Projects", "master", "AspNetCoreRC2Yeoman2Projects", HttpStatusCode.OK, "Deployment successful");
+            PushAndDeployApps("AspNetCore2.0.0VS17WithLib", "master", "DotNetCore200", HttpStatusCode.OK, "Deployment successful");
         }
     }
 
     [KuduXunitTestClass]
-    public class AspNetCoreRC2YeomanProjectTests : GitDeploymentTests
+    public class AspNetCore10VS17WithLibTests : GitDeploymentTests
     {
         [Fact]
         [KuduXunitTest(PrivateOnly = true)]
-        public void PushAndDeployAspNetCoreRC2YeomanProject()
+        public void PushAndDeployAspNetCore10VS17WithLib()
         {
-            PushAndDeployApps("AspNetCoreRC2YeomanProject", "master", "AspNetCoreRC2YeomanProject", HttpStatusCode.OK, "Deployment successful");
+            PushAndDeployApps("AspNetCore1.0.0VS17WithLib", "master", "DotNetCore100", HttpStatusCode.OK, "Deployment successful");
         }
     }
 
     [KuduXunitTestClass]
-    public class AspNetCoreRC2VisualStudioSlnTests : GitDeploymentTests
+    public class AspNetCore11VS17WithLibTests : GitDeploymentTests
     {
         [Fact]
         [KuduXunitTest(PrivateOnly = true)]
-        public void PushAndDeployAspNetCoreRC2VisualStudioSln()
+        public void PushAndDeployAspNetCore11VS17WithLib()
         {
-            PushAndDeployApps("AspNetCoreRC2VisualStudioSln", "master", "AspNetCoreRC2", HttpStatusCode.OK, "Deployment successful");
+            PushAndDeployApps("AspNetCore1.1.0VS17WithLib", "master", "DotNetCore110", HttpStatusCode.OK, "Deployment successful");
+        }
+    }
+
+    [KuduXunitTestClass]
+    public class AspNetCore2CliWithLibTests : GitDeploymentTests
+    {
+        [Fact]
+        [KuduXunitTest(PrivateOnly = true)]
+        public void PushAndDeployAspNetCore2CliWithLib()
+        {
+            PushAndDeployApps("AspNetCore2.0CliWithLib", "master", "lib success", HttpStatusCode.OK, "Deployment successful");
+        }
+    }
+
+    [KuduXunitTestClass]
+    public class AspNetCore2CliTests : GitDeploymentTests
+    {
+        [Fact]
+        [KuduXunitTest(PrivateOnly = true)]
+        public void PushAndDeployAspNetCore2Cli()
+        {
+            PushAndDeployApps("AspNetCore2.0.0Cli", "master", "Hello World!", HttpStatusCode.OK, "Deployment successful");
+        }
+    }
+
+    [KuduXunitTestClass]
+    public class AspNetCoreRC4WebApiVsSlnTests : GitDeploymentTests
+    {
+        [Fact]
+        [KuduXunitTest(PrivateOnly = true)]
+        public void PushAndDeployAspNetCoreRC4WebApiVsSln()
+        {
+            PushAndDeployApps("AspNetCoreRC4WebApiVsSln", "master", "[\"classlibrary\",\"netstandard\"]", HttpStatusCode.OK, "Deployment successful", resourcePath: "/api/values");
         }
     }
 
     public abstract class GitDeploymentTests
     {
         //Common code
-        internal static void PushAndDeployApps(string repoCloneUrl, string defaultBranchName, string verificationText, 
-                                              HttpStatusCode expectedResponseCode, string verificationLogText, 
-                                              DeployStatus expectedStatus = DeployStatus.Success, string resourcePath = "", 
+        internal static void PushAndDeployApps(string repoCloneUrl, string defaultBranchName, string verificationText,
+                                              HttpStatusCode expectedResponseCode, string verificationLogText,
+                                              DeployStatus expectedStatus = DeployStatus.Success, string resourcePath = "",
                                               string httpMethod = "GET", string jsonPayload = "", bool deleteSCM = false)
         {
             using (new LatencyLogger("PushAndDeployApps - " + repoCloneUrl))

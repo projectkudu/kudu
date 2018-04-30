@@ -1,13 +1,19 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Configuration;
 using System.IO;
+using System.IO.Compression;
+using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
+using Kudu.Contracts.Functions;
 using Kudu.Contracts.Tracing;
+using Kudu.Core.Helpers;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Tracing;
-using Newtonsoft.Json.Linq;
-using System.Linq;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Kudu.Core.Functions
 {
@@ -27,88 +33,16 @@ namespace Kudu.Core.Functions
             tracer = tracer ?? _traceFactory.GetTracer();
             using (tracer.Step("FunctionManager.SyncTriggers"))
             {
-                if (!IsFunctionsSiteExtensionEnabled)
-                {
-                    tracer.Trace("Functions are not enabled for this site.");
-                    return; 
-                }
-
-                var jwt = System.Environment.GetEnvironmentVariable(Constants.SiteRestrictedJWT);
-                if (String.IsNullOrEmpty(jwt))
-                {
-                    // If there is no token, do nothing. This can happen on non-dynamic stamps
-                    tracer.Trace("Ignoring operation as we don't have a token");
-                    return;
-                }
-
-                var functions = await ListFunctionsConfigAsync();
-                var triggers = GetTriggers(functions, tracer);
-                if (Environment.IsAzureEnvironment())
-                {
-                    var client = new OperationClient(tracer);
-                    await client.PostAsync("/operations/settriggers", triggers);
-                }
+                await PostDeploymentHelper.SyncFunctionsTriggers(_environment.RequestId, new PostDeploymentTraceListener(tracer));
             }
         }
 
-        private static bool IsFunctionsSiteExtensionEnabled
+        private static string FunctionSiteExtensionVersion
         {
-            get 
+            get
             {
-                var functionVersion = System.Environment.GetEnvironmentVariable("FUNCTIONS_EXTENSION_VERSION");
-                return !String.IsNullOrEmpty(functionVersion) &&
-                       !String.Equals("disabled", functionVersion, StringComparison.OrdinalIgnoreCase);
+                return System.Environment.GetEnvironmentVariable(Constants.FunctionRunTimeVersion);
             }
-        }
-
-        internal static bool FunctionIsDisabled(JObject functionConfig)
-        {
-            // Inspect the per function config values that are used to disable a function
-            JToken value;
-            if ((functionConfig.TryGetValue("disabled", out value) ||
-                 functionConfig.TryGetValue("excluded", out value)) && (bool)value)
-            {
-                return true;
-            }
-
-            return false;
-        }
-
-        internal static JArray GetTriggers(IEnumerable<FunctionEnvelope> functions, ITracer tracer)
-        {
-            JArray triggers = new JArray();
-            foreach (var function in functions)
-            {
-                try
-                {
-                    if (FunctionIsDisabled(function.Config))
-                    {
-                        tracer.Trace(String.Format("{0} is disabled", function));
-                        continue;
-                    }
-
-                    foreach (JObject binding in function.Config.Value<JArray>("bindings"))
-                    {
-                        var type = binding.Value<string>("type");
-                        if (type.EndsWith("Trigger", StringComparison.OrdinalIgnoreCase))
-                        {
-                            binding.Add("functionName", function.Name);
-                            tracer.Trace(String.Format("Syncing {0} of {1}", type, function.Name));
-                            triggers.Add(binding);
-                        }
-                        else
-                        {
-                            tracer.Trace(String.Format("Skipping {0} of {1}", type, function.Name));
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    tracer.Trace(String.Format("{0} is invalid. {1}", function.Name, ex.Message));
-                }
-            }
-
-            return triggers;
         }
 
         public async Task<FunctionEnvelope> CreateOrUpdateAsync(string name, FunctionEnvelope functionEnvelope, Action setConfigChanged)
@@ -116,7 +50,12 @@ namespace Kudu.Core.Functions
             var functionDir = Path.Combine(_environment.FunctionsPath, name);
 
             // Make sure the function folder exists
-            FileSystemHelpers.EnsureDirectory(functionDir);
+            if (!FileSystemHelpers.DirectoryExists(functionDir))
+            {
+                // Cleanup any leftover artifacts from a function with the same name before.
+                DeleteFunctionArtifacts(name);
+                FileSystemHelpers.EnsureDirectory(functionDir);
+            }
 
             string newConfig = null;
             string configPath = Path.Combine(functionDir, Constants.FunctionsConfigFile);
@@ -157,28 +96,27 @@ namespace Kudu.Core.Functions
                 setConfigChanged();
             }
 
-            if (functionEnvelope.TestData != null)
+            if (functionEnvelope?.TestData != null)
             {
                 await FileSystemHelpers.WriteAllTextToFileAsync(dataFilePath, functionEnvelope.TestData);
             }
 
-            return await GetFunctionConfigAsync(name);
+            return await GetFunctionConfigAsync(name); // test_data took from incoming request, it will not exceed the limit
         }
 
-        public async Task<IEnumerable<FunctionEnvelope>> ListFunctionsConfigAsync()
+        public async Task<IEnumerable<FunctionEnvelope>> ListFunctionsConfigAsync(FunctionTestData packageLimit = null) // null means no limit
         {
             var configList = await Task.WhenAll(
                     FileSystemHelpers
                     .GetDirectories(_environment.FunctionsPath)
-                    .Select(d => Path.Combine(d, Constants.FunctionsConfigFile))
-                    .Where(FileSystemHelpers.FileExists)
-                    .Select(f => TryGetFunctionConfigAsync(Path.GetFileName(Path.GetDirectoryName(f)))));
+                    .Select(d => TryGetFunctionConfigAsync(Path.GetFileName(d), packageLimit)));
+            // TryGetFunctionConfigAsync checks the existence of function.json
             return configList.Where(c => c != null);
         }
 
-        public async Task<FunctionEnvelope> GetFunctionConfigAsync(string name)
+        public async Task<FunctionEnvelope> GetFunctionConfigAsync(string name, FunctionTestData packageLimit = null) // null means no limit
         {
-            var config = await TryGetFunctionConfigAsync(name);
+            var config = await TryGetFunctionConfigAsync(name, packageLimit);
             if (config == null)
             {
                 throw new FileNotFoundException($"Function ({name}) config does not exist or is invalid");
@@ -186,34 +124,91 @@ namespace Kudu.Core.Functions
             return config;
         }
 
+        private async Task<T> GetKeyObjectFromFile<T>(string name, IKeyJsonOps<T> keyOp)
+        {
+            var secretStorageType = System.Environment.GetEnvironmentVariable(Constants.AzureWebJobsSecretStorageType);
+            if (!string.IsNullOrEmpty(secretStorageType) &&
+                secretStorageType.Equals("Blob", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException("Runtime keys are stored on blob storage. This API doesn't support this configuration.");
+            }
+
+            string keyPath = GetFunctionSecretsFilePath(name);
+            string key = null;
+            if (!FileSystemHelpers.FileExists(keyPath) || FileSystemHelpers.FileInfoFromFileName(keyPath).Length == 0)
+            {
+                FileSystemHelpers.EnsureDirectory(Path.GetDirectoryName(keyPath));
+                try
+                {
+                    using (var fileStream = FileSystemHelpers.OpenFile(keyPath, FileMode.Create, FileAccess.Write, FileShare.None))
+                    // getting the lock early (instead of acquire the lock at "new StreamWriter(fileStream)")
+                    // so no redundant work is being done (generate secrets)
+                    {
+                        string jsonContent = keyOp.GenerateKeyJson(SecurityUtility.GenerateSecretStringsKeyPair(keyOp.NumberOfKeysInDefaultFormat), FunctionSiteExtensionVersion, out key);
+                        using (var sw = new StringWriter())
+                        using (var sr = new System.IO.StringReader(jsonContent))
+                        {
+                            // write json to memory
+                            // since JsonConvert has no method to format a json string
+                            new JsonTextWriter(sw) { Formatting = Formatting.Indented }.WriteToken(new JsonTextReader(sr));
+                            using (var streamWriter = new StreamWriter(fileStream))
+                            {
+                                await streamWriter.WriteAsync(sw.ToString());
+                                await streamWriter.FlushAsync();
+                            }
+                        }
+                    }
+                    return keyOp.GenerateKeyObject(key, name);
+                }
+                catch (IOException)
+                {
+                    // failed to open file => function runtime has the handler
+                    // fallback to read key files
+                }
+            }
+
+            string jsonStr = null;
+            int timeOut = 5;
+            while (true)
+            {
+                try
+                {
+                    jsonStr = await FileSystemHelpers.ReadAllTextFromFileAsync(keyPath);
+                    break;
+                }
+                catch (Exception)
+                {
+                    if (timeOut == 0)
+                    {
+                        throw new TimeoutException($"Fail to read {keyPath}, the file is being held by another process");
+                    }
+                    timeOut--;
+                    await Task.Delay(250);
+                }
+            }
+
+            bool isEncrypted;
+            key = keyOp.GetKeyValueFromJson(jsonStr, out isEncrypted);
+            if (isEncrypted)
+            {
+                key = SecurityUtility.DecryptSecretString(key);
+            }
+            return keyOp.GenerateKeyObject(key, name);
+
+        }
+
+        public string GetAdminToken() => SecurityUtility.GenerateFunctionToken();
+
+        public async Task<MasterKey> GetMasterKeyAsync()
+        {
+            return await GetKeyObjectFromFile<MasterKey>("host", new MasterKeyJsonOps());
+        }
+
         public async Task<FunctionSecrets> GetFunctionSecretsAsync(string functionName)
         {
-            FunctionSecrets secrets;
-            string secretFilePath = GetFunctionSecretsFilePath(functionName);
-            if (FileSystemHelpers.FileExists(secretFilePath))
-            {
-                // load the secrets file
-                string secretsJson = await FileSystemHelpers.ReadAllTextFromFileAsync(secretFilePath);
-                secrets = JsonConvert.DeserializeObject<FunctionSecrets>(secretsJson);
-            }
-            else
-            {
-                // initialize with new secrets and save it
-                secrets = new FunctionSecrets
-                {
-                    Key = SecurityUtility.GenerateSecretString()
-                };
-
-                FileSystemHelpers.EnsureDirectory(Path.GetDirectoryName(secretFilePath));
-                await FileSystemHelpers.WriteAllTextToFileAsync(secretFilePath, JsonConvert.SerializeObject(secrets, Formatting.Indented));
-            }
-
-            secrets.TriggerUrl = String.Format(@"https://{0}/api/{1}?code={2}",
-                System.Environment.GetEnvironmentVariable("WEBSITE_HOSTNAME") ?? "localhost",
-                functionName,
-                secrets.Key);
-
-            return secrets;
+            // check to see if the function folder exists
+            GetFuncPathAndCheckExistence(functionName);
+            return await GetKeyObjectFromFile<FunctionSecrets>(functionName, new FunctionSecretsJsonOps());
         }
 
         public async Task<JObject> GetHostConfigAsync()
@@ -248,22 +243,27 @@ namespace Kudu.Core.Functions
             return await GetHostConfigAsync();
         }
 
-        public void DeleteFunction(string name)
+        public void DeleteFunction(string name, bool ignoreErrors)
         {
-            FileSystemHelpers.DeleteDirectorySafe(GetFunctionPath(name), ignoreErrors: false);
+            FileSystemHelpers.DeleteDirectorySafe(GetFuncPathAndCheckExistence(name), ignoreErrors);
+            DeleteFunctionArtifacts(name);
+        }
+
+        private void DeleteFunctionArtifacts(string name)
+        {
             FileSystemHelpers.DeleteFileSafe(GetFunctionTestDataFilePath(name));
             FileSystemHelpers.DeleteFileSafe(GetFunctionSecretsFilePath(name));
             FileSystemHelpers.DeleteFileSafe(GetFunctionLogPath(name));
         }
 
-        private async Task<FunctionEnvelope> TryGetFunctionConfigAsync(string name)
+        private async Task<FunctionEnvelope> TryGetFunctionConfigAsync(string name, FunctionTestData packageLimit)
         {
             try
             {
                 var path = GetFunctionConfigPath(name);
                 if (FileSystemHelpers.FileExists(path))
                 {
-                    return CreateFunctionConfig(await FileSystemHelpers.ReadAllTextFromFileAsync(path), name);
+                    return await CreateFunctionConfig(await FileSystemHelpers.ReadAllTextFromFileAsync(path), name, packageLimit);
                 }
             }
             catch
@@ -273,64 +273,89 @@ namespace Kudu.Core.Functions
             return null;
         }
 
-        private FunctionEnvelope CreateFunctionConfig(string configContent, string functionName)
+        private async Task<FunctionEnvelope> CreateFunctionConfig(string configContent, string functionName, FunctionTestData packageLimit)
         {
             var functionConfig = JObject.Parse(configContent);
+            var functionPath = GetFuncPathAndCheckExistence(functionName);
 
             return new FunctionEnvelope
             {
                 Name = functionName,
-                ScriptRootPathHref = FilePathToVfsUri(GetFunctionPath(functionName), isDirectory: true),
-                ScriptHref = FilePathToVfsUri(GetFunctionScriptPath(functionName, functionConfig)),
+                ScriptRootPathHref = FilePathToVfsUri(functionPath, isDirectory: true),
+                ScriptHref = FilePathToVfsUri(DeterminePrimaryScriptFile(functionConfig, functionPath)),
                 ConfigHref = FilePathToVfsUri(GetFunctionConfigPath(functionName)),
                 SecretsFileHref = FilePathToVfsUri(GetFunctionSecretsFilePath(functionName)),
                 Href = GetFunctionHref(functionName),
                 Config = functionConfig,
-                TestData = GetFunctionTestData(functionName)
+                TestData = await GetFunctionTestData(functionName, packageLimit)
             };
         }
 
-        private string GetFunctionScriptPath(string functionName, JObject functionConfig)
+        private void TraceAndThrowError(Exception e)
         {
-            var functionPath = GetFunctionPath(functionName);
-            var functionFiles = FileSystemHelpers.GetFiles(functionPath, "*.*", SearchOption.TopDirectoryOnly)
-                .Where(p => Path.GetFileName(p).ToLowerInvariant() != "function.json").ToArray();
-
-            return DeterminePrimaryScriptFile(functionConfig, functionFiles);
+            var tracer = _traceFactory.GetTracer();
+            tracer.TraceError(e);
+            throw e;
         }
 
         // Logic for this function is copied from here:
         // https://github.com/Azure/azure-webjobs-sdk-script/blob/dev/src/WebJobs.Script/Host/ScriptHost.cs
         // These two implementations must stay in sync!
-        internal static string DeterminePrimaryScriptFile(JObject functionConfig, string[] functionFiles)
+
+        /// <summary>
+        /// Determines which script should be considered the "primary" entry point script.
+        /// </summary>
+        /// <exception cref="ConfigurationErrorsException">Thrown if the function metadata points to an invalid script file, or no script files are present.</exception>
+        internal string DeterminePrimaryScriptFile(JObject functionConfig, string scriptDirectory)
         {
-            if (functionFiles.Length == 1)
+            // First see if there is an explicit primary file indicated
+            // in config. If so use that.
+            string functionPrimary = null;
+            string scriptFile = (string)functionConfig["scriptFile"];
+
+            if (!string.IsNullOrEmpty(scriptFile))
             {
-                // if there is only a single file, that file is primary
-                return functionFiles[0];
+                string scriptPath = Path.Combine(scriptDirectory, scriptFile);
+                if (!FileSystemHelpers.FileExists(scriptPath))
+                {
+                    TraceAndThrowError(new ConfigurationErrorsException("Invalid script file name configuration. The 'scriptFile' property is set to a file that does not exist."));
+                }
+
+                functionPrimary = scriptPath;
             }
             else
             {
-                // First see if there is an explicit primary file indicated
-                // in config. If so use that.
-                string functionPrimary = null;
-                string scriptFileName = (string)functionConfig["scriptFile"];
-                if (!string.IsNullOrEmpty(scriptFileName))
+                string[] functionFiles = FileSystemHelpers.GetFiles(scriptDirectory, "*.*", SearchOption.TopDirectoryOnly)
+                    .Where(p => !String.Equals(Path.GetFileName(p), "function.json", StringComparison.OrdinalIgnoreCase))
+                    .ToArray();
+
+                if (functionFiles.Length == 0)
                 {
-                    functionPrimary = functionFiles.FirstOrDefault(p =>
-                        string.Compare(Path.GetFileName(p), scriptFileName, StringComparison.OrdinalIgnoreCase) == 0);
+                    TraceAndThrowError(new ConfigurationErrorsException("No function script files present."));
+                }
+
+                if (functionFiles.Length == 1)
+                {
+                    // if there is only a single file, that file is primary
+                    functionPrimary = functionFiles[0];
                 }
                 else
                 {
                     // if there is a "run" file, that file is primary,
                     // for Node, any index.js file is primary
                     functionPrimary = functionFiles.FirstOrDefault(p =>
-                        Path.GetFileNameWithoutExtension(p).ToLowerInvariant() == "run" ||
-                        Path.GetFileName(p).ToLowerInvariant() == "index.js");
+                        String.Equals(Path.GetFileNameWithoutExtension(p), "run", StringComparison.OrdinalIgnoreCase) ||
+                        String.Equals(Path.GetFileName(p), "index.js", StringComparison.OrdinalIgnoreCase));
                 }
-
-                return functionPrimary;
             }
+
+            if (string.IsNullOrEmpty(functionPrimary))
+            {
+                TraceAndThrowError(new ConfigurationErrorsException("Unable to determine the primary function script. Try renaming your entry point script to 'run' (or 'index' in the case of Node), " +
+                    "or alternatively you can specify the name of the entry point script explicitly by adding a 'scriptFile' property to your function metadata."));
+            }
+
+            return Path.GetFullPath(functionPrimary);
         }
 
         private Uri FilePathToVfsUri(string filePath, bool isDirectory = false)
@@ -352,7 +377,7 @@ namespace Kudu.Core.Functions
             }
         }
 
-        private string GetFunctionPath(string name)
+        private string GetFuncPathAndCheckExistence(string name)
         {
             var path = Path.Combine(_environment.FunctionsPath, name);
             if (FileSystemHelpers.DirectoryExists(path))
@@ -365,7 +390,7 @@ namespace Kudu.Core.Functions
 
         private string GetFunctionConfigPath(string name)
         {
-            return Path.Combine(GetFunctionPath(name), Constants.FunctionsConfigFile);
+            return Path.Combine(GetFuncPathAndCheckExistence(name), Constants.FunctionsConfigFile);
         }
 
         private string GetFunctionLogPath(string name)
@@ -373,7 +398,7 @@ namespace Kudu.Core.Functions
             return Path.Combine(_environment.ApplicationLogFilesPath, Constants.Functions, Constants.Function, name);
         }
 
-        private string GetFunctionTestData(string functionName)
+        private async Task<string> GetFunctionTestData(string functionName, FunctionTestData packageLimit)
         {
             string testDataFilePath = GetFunctionTestDataFilePath(functionName);
 
@@ -383,7 +408,17 @@ namespace Kudu.Core.Functions
                 FileSystemHelpers.WriteAllText(testDataFilePath, String.Empty);
             }
 
-            return FileSystemHelpers.ReadAllText(testDataFilePath);
+            if (packageLimit != null)
+            {
+                var fileSize = FileSystemHelpers.FileInfoFromFileName(testDataFilePath).Length;
+                if (!packageLimit.DeductFromBytesLeftInPackage(fileSize))
+                {
+                    return $"Test_Data is of size {fileSize} bytes, but there's only {packageLimit.BytesLeftInPackage} bytes left in ARM response";
+                }
+            }
+
+            return await FileSystemHelpers.ReadAllTextFromFileAsync(testDataFilePath);
+
         }
 
         private string GetFunctionTestDataFilePath(string functionName)
@@ -396,6 +431,110 @@ namespace Kudu.Core.Functions
         private string GetFunctionSecretsFilePath(string functionName)
         {
             return Path.Combine(_environment.DataPath, Constants.Functions, Constants.Secrets, $"{functionName}.json");
+        }
+
+        /// <summary>
+        /// Populates a <see cref="ZipArchive"/> with the content of the function app.
+        /// It can also include local.settings.json and .csproj files for a full Visual Studio project.
+        /// sln file is not included since it changes between VS versions and VS can auto-generate it from the csproj.
+        /// All existing functions are added as content with "Always" copy to output.
+        /// </summary>
+        /// <param name="zip">the <see cref="ZipArchive"/> to be populated with function app content.</param>
+        /// <param name="includeAppSettings">Optional: indicates whether to add local.settings.json or not to the archive. Default is false.</param>
+        /// <param name="includeCsproj">Optional: indicates whether to add a .csproj to the archive. Default is false.</param>
+        /// <param name="projectName">Optional: the name for *.csproj file if <paramref name="includeCsproj"/> is true. Default is appName.</param>
+        public void CreateArchive(ZipArchive zip, bool includeAppSettings = false, bool includeCsproj = false, string projectName = null)
+        {
+            var tracer = _traceFactory.GetTracer();
+            var directoryInfo = FileSystemHelpers.DirectoryInfoFromDirectoryName(_environment.FunctionsPath);
+
+            // First add the entire wwwroot folder at the root of the zip.
+            IList<ZipArchiveEntry> files;
+            zip.AddDirectory(directoryInfo, tracer, string.Empty, out files);
+
+            if (includeAppSettings)
+            {
+                // include local.settings.json if needed.
+                files.Add(AddAppSettingsFile(zip));
+            }
+
+            if (includeCsproj)
+            {
+                // include .csproj for Visual Studio if needed.
+                projectName = projectName ?? ServerConfiguration.GetApplicationName();
+                AddCsprojFile(zip, files, projectName);
+            }
+        }
+
+        /// <summary>
+        /// Creates a csproj file and adds it to the passed in ZipArchive
+        /// The csproj contain references to the core SDK, Http trigger, and build task
+        /// it also contain 'Always' copy entries for all the files that are in wwwroot.
+        /// </summary>
+        /// <param name="zip"><see cref="ZipArchive"/> to add csproj file to.</param>
+        /// <param name="files"><see cref="IEnumerable{ZipArchiveEntry}"/> of entries in the zip file to include in the csproj.</param>
+        /// <param name="projectName">the {projectName}.csproj</param>
+        private static ZipArchiveEntry AddCsprojFile(ZipArchive zip, IEnumerable<ZipArchiveEntry> files, string projectName)
+        {
+            // TODO different template for functionv2
+            // TODO download git repository when read only
+            const string microsoftNETSdkFunctionsVersion = "1.0.8";
+
+            var csprojFile = new StringBuilder();
+            csprojFile.AppendLine(
+                $@"<Project Sdk=""Microsoft.NET.Sdk"">
+  <PropertyGroup>
+    <TargetFramework>net461</TargetFramework>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include=""Microsoft.NET.Sdk.Functions"" Version=""{microsoftNETSdkFunctionsVersion}"" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include=""Microsoft.CSharp"" />
+  </ItemGroup>");
+
+            csprojFile.AppendLine("  <ItemGroup>");
+            foreach (var entry in files)
+            {
+                csprojFile.AppendLine(
+                    $@"    <None Update=""{entry.FullName}"">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>");
+            }
+            csprojFile.AppendLine("  </ItemGroup>");
+            csprojFile.AppendLine("</Project>");
+
+            return zip.AddFile($"{projectName}.csproj", csprojFile.ToString());
+        }
+
+        /// <summary>
+        /// creates a local.settings.json file and populates it with the values in AppSettings
+        /// The AppSettings are read from EnvVars with prefix APPSETTING_.
+        /// local.settings.json looks like:
+        /// {
+        ///   "IsEncrypted": true|false,
+        ///   "Values": {
+        ///     "Name": "Value"
+        ///   }
+        /// }
+        /// This method doesn't include Connection Strings. Unlike AppSettings, connection strings
+        /// have 10 different prefixes depending on the type.
+        /// </summary>
+        /// <param name="zip"><see cref="ZipArchive"/> to add local.settings.json file to.</param>
+        /// <returns></returns>
+        private static ZipArchiveEntry AddAppSettingsFile(ZipArchive zip)
+        {
+            const string appSettingsPrefix = "APPSETTING_";
+            const string localAppSettingsFileName = "local.settings.json";
+
+            var appSettings = System.Environment.GetEnvironmentVariables()
+                .Cast<DictionaryEntry>()
+                .Where(p => p.Key.ToString().StartsWith(appSettingsPrefix, StringComparison.OrdinalIgnoreCase))
+                .ToDictionary(k => k.Key.ToString().Substring(appSettingsPrefix.Length), v => v.Value);
+
+            var localSettings = JsonConvert.SerializeObject(new { IsEncrypted = false, Values = appSettings }, Formatting.Indented);
+
+            return zip.AddFile(localAppSettingsFileName, localSettings);
         }
     }
 }

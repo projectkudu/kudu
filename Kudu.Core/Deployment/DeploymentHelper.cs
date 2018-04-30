@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.IO.Abstractions;
 using System.Linq;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.SourceControl;
@@ -10,25 +9,21 @@ namespace Kudu.Core.Deployment
 {
     public static class DeploymentHelper
     {
-        private static readonly string[] _projectFileExtensions = new[] { ".csproj", ".vbproj", ".fsproj" };
+        // build using msbuild in Azure
+        // does not include njsproj(node), pyproj(python), they are built differently
+        private static readonly string[] _projectFileExtensions = new[] { ".csproj", ".vbproj", ".fsproj", ".xproj" };
 
         public static readonly string[] ProjectFileLookup = _projectFileExtensions.Select(p => "*" + p).ToArray();
 
-        public static IList<string> GetProjects(string path, IFileFinder fileFinder, SearchOption searchOption = SearchOption.AllDirectories)
+        public static IList<string> GetMsBuildProjects(string path, IFileFinder fileFinder, SearchOption searchOption = SearchOption.AllDirectories)
         {
             IEnumerable<string> filesList = fileFinder.ListFiles(path, searchOption, ProjectFileLookup);
             return filesList.ToList();
         }
 
-        public static bool IsProject(string path)
+        public static bool IsMsBuildProject(string path)
         {
             return _projectFileExtensions.Any(extension => path.EndsWith(extension, StringComparison.OrdinalIgnoreCase));
-        }
-
-        public static bool IsDeployableProject(string path)
-        {
-            return IsProject(path) &&
-                   (VsHelper.IsWap(path) || VsHelper.IsExecutableProject(path));
         }
 
         public static bool IsDefaultWebRootContent(string webroot)

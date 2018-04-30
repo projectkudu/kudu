@@ -40,11 +40,11 @@ if NOT EXIST "%_CURLEXE%" (
 )
 
 @echo.
-@echo "%_CURLEXE%" -k -v -T "%_KUDUZIP%" "%_SCMURI%/zip"
+@echo "%_CURLEXE%" -k -v -T "%_KUDUZIP%" "%_SCMURI%/api/zip"
 @echo.
-@call "%_CURLEXE%" -k -v -T "%_KUDUZIP%" "%_SCMURI%/zip"
+@call "%_CURLEXE%" -k -v -T "%_KUDUZIP%" "%_SCMURI%/api/zip"
 @echo.
-@call "%_CURLEXE%" -k -X DELETE "%_SCMURI%/diagnostics/processes/0" >nul 2>&1
+@call "%_CURLEXE%" -k -X DELETE "%_SCMURI%/api/processes/0" >nul 2>&1
 if "%ERRORLEVEL%" equ "0" (
   @echo - w3wp.exe restarted 
 )

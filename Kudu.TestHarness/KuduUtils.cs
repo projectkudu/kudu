@@ -19,7 +19,7 @@ namespace Kudu.TestHarness
 
                 var clientHandler = HttpClientHelper.CreateClientHandler(serviceUrl, credentials);
                 var client = new HttpClient(clientHandler);
-                var result = client.GetAsync(serviceUrl + "dump").Result;
+                var result = client.GetAsync(serviceUrl + "api/dump").Result;
                 if (result.IsSuccessStatusCode)
                 {
                     using (Stream stream = result.Content.ReadAsStreamAsync().Result)
@@ -34,6 +34,20 @@ namespace Kudu.TestHarness
             catch (Exception ex)
             {
                 TestTracer.Trace("Failed to download dump - {0}", ex.GetBaseException().Message);
+            }
+        }
+
+        public static void KillKuduProcess(string serviceUrl, NetworkCredential credentials = null)
+        {
+            try
+            {
+                var clientHandler = HttpClientHelper.CreateClientHandler(serviceUrl, credentials);
+                var client = new HttpClient(clientHandler);
+                client.DeleteAsync(serviceUrl + "api/processes/0").Wait();
+            }
+            catch (Exception)
+            {
+                // no-op
             }
         }
 

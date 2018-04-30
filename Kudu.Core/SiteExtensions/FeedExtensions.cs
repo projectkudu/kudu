@@ -35,17 +35,55 @@ namespace Kudu.Core.SiteExtensions
 
             filterOptions.IncludePrerelease = true; // keep the good old behavior
             var searchResource = await srcRepo.GetResourceAndValidateAsync<SearchLatestResource>();
+
+            // When using nuget.org, we only look at packages that have our tag. Later, we should switch to filtering
+            // by PackageType once nuget.org starts supporting that
+            if (IsNuGetRepo(srcRepo.PackageSource.Source))
+            {
+                if (String.IsNullOrWhiteSpace(searchTerm))
+                {
+                    // No user provided search string: just search by tag
+                    searchTerm = "tags:AzureSiteExtension";
+                }
+                else if (searchTerm.Contains(":"))
+                {
+                    // User provided complex query with fields: add it as is to the tag field query
+                    searchTerm = $"tags:AzureSiteExtension {searchTerm}";
+                }
+                else
+                {
+                    // User provided simple string: treat it as a title. This is not ideal behavior, but
+                    // is the best we can do based on how nuget.org works
+                    searchTerm = $"tags:AzureSiteExtension title:\"{searchTerm}\"";
+                }
+            }
+
             return await searchResource.Search(searchTerm, filterOptions, skip, take, CancellationToken.None);
         }
 
         /// <summary>
         /// Query source repository for latest package base given package id
         /// </summary>
-        public static async Task<UIPackageMetadata> GetLatestPackageById(this SourceRepository srcRepo, string packageId, bool includePrerelease = true, bool includeUnlisted = false)
+        internal static async Task<UIPackageMetadata> GetLatestPackageByIdFromSrcRepo(this SourceRepository srcRepo, string packageId)
+        {
+            // 7 references none of which uses bool includePrerelease = true, bool includeUnlisted = false
+            var metadataResource = await srcRepo.GetResourceAndValidateAsync<UIMetadataResource>();
+            return await metadataResource.GetLatestPackageByIdFromMetaRes(packageId,
+                explicitTag: IsNuGetRepo(srcRepo.PackageSource.Source));
+        }
+
+        // can be called concurrently if metaDataResource is provided
+        internal static async Task<UIPackageMetadata> GetLatestPackageByIdFromMetaRes(this UIMetadataResource metadataResource, string packageId, bool includePrerelease = true, bool includeUnlisted = false, bool explicitTag = false)
         {
             UIPackageMetadata latestPackage = null;
-            var metadataResource = await srcRepo.GetResourceAndValidateAsync<UIMetadataResource>();
             IEnumerable<UIPackageMetadata> packages = await metadataResource.GetMetadata(packageId, includePrerelease, includeUnlisted, token: CancellationToken.None);
+
+            // When using nuget.org, we only look at packages that have our tag.
+            if (explicitTag)
+            {
+                packages = packages.Where(item => item.Tags.IndexOf("azuresiteextension", StringComparison.OrdinalIgnoreCase) >= 0);
+            }
+
             foreach (var p in packages)
             {
                 if (latestPackage == null ||
@@ -53,6 +91,14 @@ namespace Kudu.Core.SiteExtensions
                 {
                     latestPackage = p;
                 }
+            }
+
+            // If we couldn't find any listed version, fall back to looking for unlisted versions, to avoid failing completely.
+            // Reasoning is that if all the versions have been unlisted, it should still be possible to install it by
+            // explicit id, even without specifying a version
+            if (latestPackage == null && !includeUnlisted)
+            {
+                latestPackage = await GetLatestPackageByIdFromMetaRes(metadataResource, packageId, includePrerelease, includeUnlisted: true, explicitTag: explicitTag);
             }
 
             return latestPackage;
@@ -70,7 +116,16 @@ namespace Kudu.Core.SiteExtensions
             var metadataResource = await srcRepo.GetResourceAndValidateAsync<UIMetadataResource>();
             NuGetVersion expectedVersion = NuGetVersion.Parse(version);
             var identity = new PackageIdentity(packageId, expectedVersion);
-            return await metadataResource.GetMetadata(identity, CancellationToken.None);
+            UIPackageMetadata ret = await metadataResource.GetMetadata(identity, CancellationToken.None);
+
+            // When using nuget.org, we only look at packages that have our tag.
+            if (ret != null &&
+                IsNuGetRepo(srcRepo.PackageSource.Source) &&
+                (ret.Tags.IndexOf("azuresiteextension", StringComparison.OrdinalIgnoreCase) < 0))
+            {
+                ret = null;
+            }
+            return ret;
         }
 
         /// <summary>
@@ -92,7 +147,8 @@ namespace Kudu.Core.SiteExtensions
                     IEnumerable<ZipEntry> contentEntries = zipFile.Entries.Where(e => e.FileName.StartsWith(@"content/", StringComparison.InvariantCultureIgnoreCase));
                     foreach (var entry in contentEntries)
                     {
-                        string fullPath = Path.Combine(destinationFolder, entry.FileName.Substring(substringStartIndex));
+                        string entryFileName = Uri.UnescapeDataString(entry.FileName);
+                        string fullPath = Path.Combine(destinationFolder, entryFileName.Substring(substringStartIndex));
 
                         if (entry.IsDirectory)
                         {
@@ -126,7 +182,7 @@ namespace Kudu.Core.SiteExtensions
             using (Stream newPackageStream = await srcRepo.GetPackageStream(identity))
             {
                 // update file
-                var localPackage = await localRepo.GetLatestPackageById(identity.Id);
+                var localPackage = await localRepo.GetLatestPackageByIdFromSrcRepo(identity.Id);
                 if (localPackage == null)
                 {
                     throw new FileNotFoundException(string.Format(CultureInfo.InvariantCulture, "Package {0} not found from local repo.", identity.Id));
@@ -171,7 +227,8 @@ namespace Kudu.Core.SiteExtensions
 
                     foreach (var entry in filesNeedToUpdate)
                     {
-                        string fullPath = Path.Combine(destinationFolder, entry.FileName.Substring(substringStartIndex));
+                        string entryFileName = Uri.UnescapeDataString(entry.FileName);
+                        string fullPath = Path.Combine(destinationFolder, entryFileName.Substring(substringStartIndex));
 
                         if (entry.IsDirectory)
                         {
@@ -199,13 +256,14 @@ namespace Kudu.Core.SiteExtensions
 
                     foreach (var entry in indexedOldFiles.Values)
                     {
-                        string fullPath = Path.Combine(destinationFolder, entry.FileName.Substring(substringStartIndex));
+                        string entryFileName = Uri.UnescapeDataString(entry.FileName);
+                        string fullPath = Path.Combine(destinationFolder, entryFileName.Substring(substringStartIndex));
 
                         if (entry.IsDirectory)
                         {
                             // in case the two zip file was created from different tool. some tool will include folder as seperate entry, some don`t.
                             // to be sure that foder is meant to be deleted, double check there is no files under it
-                            var entryNameInLower = entry.FileName.ToLower();
+                            var entryNameInLower = entryFileName.ToLower();
                             if (!string.Equals(destinationFolder, fullPath, StringComparison.OrdinalIgnoreCase)
                                 && newContentEntries.FirstOrDefault(e => e.FileName.ToLowerInvariant().StartsWith(entryNameInLower)) == null)
                             {
@@ -245,7 +303,7 @@ namespace Kudu.Core.SiteExtensions
             }
         }
 
-        private static async Task<T> GetResourceAndValidateAsync<T>(this SourceRepository srcRepo) where T : class, INuGetResource
+        internal static async Task<T> GetResourceAndValidateAsync<T>(this SourceRepository srcRepo) where T : class, INuGetResource
         {
             var resource = await srcRepo.GetResourceAsync<T>();
             if (resource == null)
@@ -346,6 +404,14 @@ namespace Kudu.Core.SiteExtensions
                     sourceStream.Dispose();
                 }
             }
+        }
+
+        internal static bool IsNuGetRepo(string repoUrl)
+        {
+            return System.Text.RegularExpressions.Regex.IsMatch(
+                repoUrl,
+                @"https://.*\.nuget\.org/.*",
+                System.Text.RegularExpressions.RegexOptions.IgnoreCase);
         }
     }
 }

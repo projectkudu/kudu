@@ -16,13 +16,11 @@ var curWorkingDir = ko.observable("");
 window.KuduExec = { workingDir: curWorkingDir };
 
 function LoadConsoleV2() {
-
-    var fileExplorerChanged = false;
     //diretory change callback from FileBrowser.js
     function _changeDir(value) {
         //for the very first time, value is empty but we know that the file explorer root is appRoot
         value = value || window.KuduExec.appRoot;
-        curWorkingDir(value);
+        // curWorkingDir(value); since _sendCommand will update the current working directory
         if (getShell().toUpperCase() === "POWERSHELL") {
             //PowerShell doesn't return a new line after CD, so let's add a new line in the UI 
             DisplayAndUpdate({ Error: "", Output: "\n" });
@@ -32,8 +30,6 @@ function LoadConsoleV2() {
             _sendCommand("cd /d \"" + value + "\"\n");
         }
         //the change notification goes both ways (console <--> file explorer)
-        //the console uses this flag to break the loop
-        fileExplorerChanged = true;
     };
 
     window.KuduExec.changeDir = _changeDir;
@@ -48,10 +44,10 @@ function LoadConsoleV2() {
     var heightOffset = height / 10;
     var controller = kuduExecConsole.console({
         continuedPrompt: true,
-        promptLabel: function() {
+        promptLabel: function () {
             return getJSONValue(lastLine);
         },
-        commandValidate: function() {
+        commandValidate: function () {
             return true;
         },
         commandHandle: function (line, reportFn) {
@@ -78,7 +74,6 @@ function LoadConsoleV2() {
                     Error: ""
                 };
                 DisplayAndUpdate(lastLine);
-                fileExplorerChanged = false;
                 if (line.trim().toUpperCase() == "EXIT") {
                     controller.enableInput();
                 }
@@ -120,7 +115,7 @@ function LoadConsoleV2() {
                         }
                         elm = prefix + elm;
                     }
-                     return elm;
+                    return elm;
                 });
                 var fullLength = result.length;
                 currentMatchIndex = (currentMatchIndex + (reverse ? -1 : 1)) % fullLength;
@@ -180,7 +175,7 @@ function LoadConsoleV2() {
     }
 
     function getJSONValue(input) {
-        return input? (input.Output || input.Error || "").toString() : "";
+        return input ? (input.Output || input.Error || "").toString() : "";
     }
 
     function getShell() {
@@ -193,7 +188,11 @@ function LoadConsoleV2() {
         var prompt = getJSONValue(data);
         var lastLinestr = getJSONValue(lastLine);
         //this means the last command should be cleared and the next one will be written over it.
-        if (endsWith(prompt, "\r") && !endsWith(lastLinestr, "\n")) {
+        // case 1. lastLine = "progress 10%", prompt = "\r" ==> lastLine is not written into HTML (curl)
+        // case 2. lastLine = "progress 10%\r", prompt = "progress 20%\r" ==> lastLine is not written into HTML (youtube-dl)
+        //         lastLine = "version 123\r", prompt = "\r\n" ==> lastLine IS WRITTEN into HTML (dotnet tsc)
+        if ((endsWith(prompt, "\r") && !endsWith(lastLinestr, "\n")) ||
+            (endsWith(lastLinestr, "\r") && prompt !== "\r\n" && prompt !== "\n")) {
             lastLinestr = "";
             lastLine = null;
         }
@@ -214,7 +213,7 @@ function LoadConsoleV2() {
             return;
         }
 
-
+        // display output, but not updating the HTML
         $(".jquery-console-inner").append($(".jquery-console-prompt-box").last().css("display", "inline"));
         if (data.Error) {
             $(".jquery-console-prompt-label").last().text(prompt).css("color", "red");
@@ -223,11 +222,6 @@ function LoadConsoleV2() {
         }
 
         controller.promptText("");
-
-        if (endsWith(prompt, "\r")) {
-            return;
-        }
-
 
         //Now create the div for the new line that will be printed the next time with the correct class
         if (data.Error) {
@@ -241,7 +235,7 @@ function LoadConsoleV2() {
         //save last line for next time.
         lastLine = data;
         prompt = prompt.trim();
-        if (!endsWith(prompt, "\n") && endsWith(prompt, ">") && !fileExplorerChanged) {
+        if (!endsWith(prompt, "\n") && endsWith(prompt, ">")) {
             var windowsPath = prompt.replace("\n", "").replace(">", "");
             if (startsWith(windowsPath, "PS ")) {
                 windowsPath = windowsPath.substr(3);
@@ -251,8 +245,6 @@ function LoadConsoleV2() {
                     window.KuduExec.appRoot = windowsPath;
                 }
                 curWorkingDir(windowsPath);
-                if (window.KuduExec.updateFileSystemWatcher)
-                    window.KuduExec.updateFileSystemWatcher(windowsPath);
             }
         }
     }

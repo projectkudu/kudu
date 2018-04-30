@@ -8,10 +8,12 @@ using System.Runtime.InteropServices;
 using System.Security;
 using System.Security.Principal;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Deployment;
+using Kudu.Core.Helpers;
 using Kudu.Core.Tracing;
 using Microsoft.Win32.SafeHandles;
 
@@ -109,6 +111,11 @@ namespace Kudu.Core.Infrastructure
         /// </summary>
         public static Process GetParentProcess(this Process process, ITracer tracer)
         {
+            if (!OSDetector.IsOnWindows())
+            {
+                return process.GetParentProcessLinux(tracer);
+            }
+
             IntPtr processHandle;
             if (!process.TryGetProcessHandle(out processHandle))
             {
@@ -129,12 +136,41 @@ namespace Kudu.Core.Infrastructure
             }
             catch (Exception ex)
             {
-                if (!process.ProcessName.Equals("w3wp", StringComparison.OrdinalIgnoreCase))
+                var processName = process.SafeGetProcessName() ?? "(null)";
+                if (!processName.Equals("w3wp", StringComparison.OrdinalIgnoreCase))
                 {
-                    tracer.Trace("GetParentProcess of {0}({1}) failed with {2}", process.ProcessName, process.Id, ex);
+                    tracer.TraceError(ex, "GetParentProcess of {0}({1}) failed.", processName, process.Id);
                 }
                 return null;
             }
+        }
+
+        // http://stackoverflow.com/questions/2509406/c-mono-get-list-of-child-processes-on-windows-and-linux
+        public static Process GetParentProcessLinux(this Process process, ITracer tracer)
+        {
+            try
+            {
+                var procPath = "/proc/" + process.Id + "/stat";
+
+                var lines = File.ReadLines("/proc/" + process.Id + "/stat");
+                var match = Regex.Match(lines.First(), @"\d+\s+\((.*?)\)\s+\w+\s+(\d+)\s");
+
+                if (match.Success)
+                {
+                    var ppid = Int32.Parse(match.Groups[2].Value);
+                    return ppid < 1 ? null : Process.GetProcessById(ppid);
+                }
+                tracer.TraceError("GetParentProcessLinux: Invalid proc stat format: " + procPath);
+            }
+            catch(FileNotFoundException)
+            {
+                tracer.TraceError("Could not find process with PID=" + process.Id);
+            }
+            catch(Exception ex)
+            {
+                tracer.TraceError(ex, "GetParentProcessLinux ({0}) failed.", process.Id);
+            }
+            return null;
         }
 
         /// <summary>
@@ -295,6 +331,19 @@ namespace Kudu.Core.Infrastructure
             return processHandle != IntPtr.Zero;
         }
 
+        private static string SafeGetProcessName(this Process process)
+        {
+            try
+            {
+                return process.ProcessName;
+            }
+            catch(InvalidOperationException)
+            {
+                // The process has already exited
+                return null;
+            }
+        }
+
         private static async Task CopyStreamAsync(Stream from, Stream to, IdleManager idleManager, CancellationToken cancellationToken, bool closeAfterCopy = false)
         {
             try
@@ -349,7 +398,6 @@ namespace Kudu.Core.Infrastructure
                 // we force close all streams
                 if (completed == delay)
                 {
-                    // TODO, suwatch: MDS Kudu SiteExtension
                     using (tracer.Step("Flush stdio and stderr have no activity within given time"))
                     {
                         bool exited = process.HasExited;
@@ -445,7 +493,8 @@ namespace Kudu.Core.Infrastructure
                 throw new Win32Exception("Unable to read environment block.");
             }
 
-            const int maxEnvSize = 32767;
+            // Limit env size to 10 MB to be defensive
+            const int maxEnvSize = 10 * 1000 * 1000;
             if (dataSize > maxEnvSize)
             {
                 dataSize = maxEnvSize;
@@ -549,37 +598,17 @@ namespace Kudu.Core.Infrastructure
                 }
             }
 
-            char[] environmentCharArray = Encoding.Unicode.GetChars(env, 0, len);
-
-            for (int i = 0; i < environmentCharArray.Length; i++)
+            // envs are key=value pair separated by '\0'
+            var envs = Encoding.Unicode.GetString(env, 0, len).Split('\0');
+            var separators = new[] { '=' };
+            for (int i = 0; i < envs.Length; i++)
             {
-                int startIndex = i;
-                while ((environmentCharArray[i] != '=') && (environmentCharArray[i] != '\0'))
+                var pair = envs[i].Split(separators, 2);
+                if (pair.Length != 2)
                 {
-                    i++;
+                    continue;
                 }
-                if (environmentCharArray[i] != '\0')
-                {
-                    if ((i - startIndex) == 0)
-                    {
-                        while (environmentCharArray[i] != '\0')
-                        {
-                            i++;
-                        }
-                    }
-                    else
-                    {
-                        string str = new string(environmentCharArray, startIndex, i - startIndex);
-                        i++;
-                        int num3 = i;
-                        while (environmentCharArray[i] != '\0')
-                        {
-                            i++;
-                        }
-                        string str2 = new string(environmentCharArray, num3, i - num3);
-                        result[str] = str2;
-                    }
-                }
+                result[pair[0]] = pair[1];
             }
 
             return result;

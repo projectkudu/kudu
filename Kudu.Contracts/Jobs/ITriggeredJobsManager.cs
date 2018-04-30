@@ -9,7 +9,5 @@
         TriggeredJobRun GetJobRun(string jobName, string runId);
 
         TriggeredJobRun GetLatestJobRun(string jobName);
-
-        string JobsBinariesPath { get; }
     }
 }

@@ -2,12 +2,11 @@ using System;
 using System.Collections.Specialized;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
-using Kudu.Client.Infrastructure;
 using Kudu.SiteManagement.Configuration;
 using Kudu.SiteManagement.Configuration.Section;
-using Kudu.SiteManagement.Configuration.Section.Cert;
 using Kudu.SiteManagement.Test.Configuration.Fakes;
 using Xunit;
 
@@ -16,22 +15,28 @@ namespace Kudu.SiteManagement.Test.Configuration
     public class KuduConfigurationFacts
     {
         [Fact]
-        public void BasicAuthCredential_NoConfiguration_ReturnDefaultCredential( ) {
-            var appSettingsFake = new NameValueCollection( );
+        public void BasicAuthCredential_NoConfiguration_ReturnDefaultCredential()
+        {
+            var appSettingsFake = new NameValueCollection();
 
-            IKuduConfiguration config = CreateConfiguration( null , appSettingsFake );
-            var defaultCredential = new System.Net.NetworkCredential( "admin" , "kudu" );
-            Assert.Equal( defaultCredential , config.BasicAuthCredential.GetCredentials( ) );
+            IKuduConfiguration config = CreateConfiguration(null, appSettingsFake);
+            var defaultCredential = new NetworkCredential("admin", "kudu");
+            var configCredentials = (NetworkCredential)config.BasicAuthCredential.GetCredentials();
+            Assert.Equal(defaultCredential.UserName, configCredentials.UserName);
+            Assert.Equal(defaultCredential.Password, configCredentials.Password);
         }
-        
-        [Fact]
-        public void BasicAuthCredential_WithConfigurationSection_ReturnBasicAuthCredentialProvider( ) {
-            var configFake = new KuduConfigurationSectionFake( );
-            configFake.SetFake( "basicAuth" , BasicAuthConfigurationElementFake.Fake( "testingUser" , "testingPw" ) );
 
-            IKuduConfiguration config = CreateConfiguration( configFake , new NameValueCollection( ) );
-            var testingCredential = new System.Net.NetworkCredential( "testingUser" , "testingPw" );
-            Assert.Equal( testingCredential , config.BasicAuthCredential.GetCredentials( ) );
+        [Fact]
+        public void BasicAuthCredential_WithConfigurationSection_ReturnBasicAuthCredentialProvider()
+        {
+            var configFake = new KuduConfigurationSectionFake();
+            configFake.SetFake("basicAuth", BasicAuthConfigurationElementFake.Fake("testingUser", "testingPw"));
+
+            IKuduConfiguration config = CreateConfiguration(configFake, new NameValueCollection());
+            var testingCredential = new NetworkCredential("testingUser", "testingPw");
+            var configCredentials = (NetworkCredential)config.BasicAuthCredential.GetCredentials();
+            Assert.Equal(testingCredential.UserName, configCredentials.UserName);
+            Assert.Equal(testingCredential.Password, configCredentials.Password);
         }
 
         [Fact]

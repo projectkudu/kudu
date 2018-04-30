@@ -1,12 +1,17 @@
 ﻿using System;
 using System.Web;
-using Kudu.Core.SourceControl;
 using Newtonsoft.Json.Linq;
+using Kudu.Contracts.SourceControl;
 
 namespace Kudu.Services.ServiceHookHandlers
 {
     public class GitlabHqHandler : GitHubCompatHandler
     {
+        public GitlabHqHandler(IRepositoryFactory repositoryFactory)
+            : base(repositoryFactory)
+        {
+        }
+
         //{
         //  "before": "2370e44c850e732d71edd2db36920482558e3fe0",
         //  "after": "2370e44c850e732d71edd2db36920482558e3fe0",
@@ -41,13 +46,13 @@ namespace Kudu.Services.ServiceHookHandlers
 
         private const int PublicVisibilityLevel = 20;
 
-        protected override GitDeploymentInfo GetDeploymentInfo(HttpRequestBase request, JObject payload, string targetBranch)
+        protected override bool ParserMatches(HttpRequestBase request, JObject payload, string targetBranch)
         {
             var repository = payload.Value<JObject>("repository");
             if (repository == null)
             {
                 // doesn't look like GitlabHQ
-                return null;
+                return false;
             }
 
             var userid = payload.Value<int?>("user_id");
@@ -56,7 +61,7 @@ namespace Kudu.Services.ServiceHookHandlers
             if (userid == null || username == null || url == null)
             {
                 // doesn't look like GitlabHQ
-                return null;
+                return false;
             }
 
             // The format of ref is refs/something/something else
@@ -64,25 +69,30 @@ namespace Kudu.Services.ServiceHookHandlers
             string @ref = payload.Value<string>("ref");
             if (String.IsNullOrEmpty(@ref))
             {
-                return null;
+                return false;
             }
-
+            
+            // FIXME deletecommit is considered as unknowpackage instead of noop
+            // could be removed
             string newRef = payload.Value<string>("after");
             if (IsDeleteCommit(newRef))
             {
-                return null;
+                return false;
             }
 
-            var commits = payload.Value<JArray>("commits");
-            var info = new GitDeploymentInfo { RepositoryType = RepositoryType.Git };
-            info.NewRef = payload.Value<string>("after");
-            info.TargetChangeset = ParseChangeSet(info.NewRef, commits);
+            return true;
+        }
 
+        protected override string DetermineSecurityProtocol(JObject payload)
+        {
+            JObject repository = payload.Value<JObject>("repository");
             var isPrivate = repository.Value<int>("visibility_level") != PublicVisibilityLevel;
-            info.RepositoryUrl = isPrivate ? repository.Value<string>("git_ssh_url") : repository.Value<string>("git_http_url");            
-            info.Deployer = "GitlabHQ";
+            return isPrivate ? repository.Value<string>("git_ssh_url") : repository.Value<string>("git_http_url");
+        }
 
-            return info;
+        protected override string GetDeployer()
+        {
+            return "GitlabHQ";
         }
     }
 }

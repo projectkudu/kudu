@@ -29,7 +29,7 @@ namespace Kudu.Core.Jobs
         private string _inPlaceWorkingDirectory;
         private Dictionary<string, FileInfoBase> _cachedSourceDirectoryFileMap;
 
-        protected BaseJobRunner(string jobName, string jobsTypePath, IEnvironment environment,
+        protected BaseJobRunner(string jobName, string jobsTypePath, string basePath, IEnvironment environment,
             IDeploymentSettingsManager settings, ITraceFactory traceFactory, IAnalytics analytics)
         {
             TraceFactory = traceFactory;
@@ -38,7 +38,8 @@ namespace Kudu.Core.Jobs
             JobName = jobName;
             _analytics = analytics;
 
-            JobBinariesPath = Path.Combine(Environment.JobsBinariesPath, jobsTypePath, jobName);
+            JobBinariesPath = Path.Combine(basePath, jobName);
+
             JobTempPath = Path.Combine(Environment.TempPath, Constants.JobsPath, jobsTypePath, jobName);
             JobDataPath = Path.Combine(Environment.DataPath, Constants.JobsPath, jobsTypePath, jobName);
 
@@ -135,7 +136,6 @@ namespace Kudu.Core.Jobs
             {
                 _inPlaceWorkingDirectory = JobBinariesPath;
                 SafeKillAllRunningJobInstances(logger);
-                UpdateAppConfigs(WorkingDirectory, _analytics);
                 return;
             }
 
@@ -181,6 +181,10 @@ namespace Kudu.Core.Jobs
                     var tempJobInstancePath = Path.Combine(JobTempPath, Path.GetRandomFileName());
 
                     FileSystemHelpers.CopyDirectoryRecursive(JobBinariesPath, tempJobInstancePath);
+
+                    // this only applies to non-inplace job.   the reason is inplace is 
+                    // mostly applicable with nodejs and not reliable with dotnet.  
+                    // UpdateAppConfigs only applies to dotnet.
                     UpdateAppConfigs(tempJobInstancePath, _analytics);
 
                     _workingDirectory = tempJobInstancePath;
@@ -548,7 +552,7 @@ namespace Kudu.Core.Jobs
                         jobType += "/SDK";
                     }
 
-                    _analytics.JobStarted(_job.Name.Fuzz(), scriptFileExtension, jobType, _siteMode, Error, _trigger);
+                    _analytics.JobStarted(_job.Name, scriptFileExtension, jobType, _siteMode, Error, _trigger);
                 }
             }
 

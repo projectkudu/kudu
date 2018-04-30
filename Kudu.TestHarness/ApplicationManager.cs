@@ -55,6 +55,8 @@ namespace Kudu.TestHarness
             JobsManager = new RemoteJobsManager(site.ServiceUrl + "api", credentials);
             LogFilesManager = new RemoteLogFilesManager(site.ServiceUrl + "api/logs", credentials);
             SiteExtensionManager = new RemoteSiteExtensionManager(site.ServiceUrl + "api", credentials);
+            ZipDeploymentManager = new RemotePushDeploymentManager(site.ServiceUrl + "api/zipdeploy", credentials);
+            WarDeploymentManager = new RemotePushDeploymentManager(site.ServiceUrl + "api/wardeploy", credentials);
 
             var repositoryInfo = RepositoryManager.GetRepositoryInfo().Result;
             GitUrl = repositoryInfo.GitUrl.OriginalString;
@@ -184,6 +186,18 @@ namespace Kudu.TestHarness
             private set;
         }
 
+        public RemotePushDeploymentManager ZipDeploymentManager
+        {
+            get;
+            private set;
+        }
+
+        public RemotePushDeploymentManager WarDeploymentManager
+        {
+            get;
+            private set;
+        }
+
         public string GitUrl
         {
             get;
@@ -273,6 +287,14 @@ namespace Kudu.TestHarness
             catch (Exception ex)
             {
                 KuduUtils.DownloadDump(appManager.ServiceUrl, dumpPath);
+
+                // if not stop on failure, kill w3wp before reusing this site
+                if (!KuduUtils.StopAfterFirstTestFailure)
+                {
+                    TestTracer.Trace("Killing kudu site - {0}", appManager.SiteUrl);
+
+                    KuduUtils.KillKuduProcess(appManager.ServiceUrl);
+                }
 
                 TestTracer.Trace("Run failed with exception\n{0}", ex);
 

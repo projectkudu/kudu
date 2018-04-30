@@ -22,12 +22,13 @@
 
 using System;
 using System.Net;
-using System.Threading.Tasks;
 using System.Web;
 using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.SourceControl;
 using Kudu.Contracts.Tracing;
+using Kudu.Core;
 using Kudu.Core.Deployment;
+using Kudu.Core.Helpers;
 using Kudu.Core.SourceControl;
 using Kudu.Core.SourceControl.Git;
 using Kudu.Core.Tracing;
@@ -38,18 +39,18 @@ namespace Kudu.Services.GitServer
     public class ReceivePackHandler : GitServerHttpHandler
     {
         private readonly IRepositoryFactory _repositoryFactory;
-        private readonly IAutoSwapHandler _autoSwapHandler;
+        private readonly IEnvironment _environment;
 
         public ReceivePackHandler(ITracer tracer,
                                   IGitServer gitServer,
                                   IOperationLock deploymentLock,
                                   IDeploymentManager deploymentManager,
                                   IRepositoryFactory repositoryFactory,
-                                  IAutoSwapHandler autoSwapHandler)
+                                  IEnvironment environment)
             : base(tracer, gitServer, deploymentLock, deploymentManager)
         {
             _repositoryFactory = repositoryFactory;
-            _autoSwapHandler = autoSwapHandler;
+            _environment = environment;
         }
 
         public override void ProcessRequestBase(HttpContextBase context)
@@ -74,7 +75,7 @@ namespace Kudu.Services.GitServer
                     {
                         context.Response.ContentType = "application/x-git-receive-pack-result";
 
-                        if (_autoSwapHandler.IsAutoSwapOngoing())
+                        if (PostDeploymentHelper.IsAutoSwapOngoing())
                         {
                             context.Response.StatusCode = (int)HttpStatusCode.Conflict;
                             context.Response.Write(Resources.Error_AutoSwapDeploymentOngoing);
@@ -90,11 +91,20 @@ namespace Kudu.Services.GitServer
 
                         UpdateNoCacheForResponse(context.Response);
 
-                    // This temporary deployment is for ui purposes only, it will always be deleted via finally.
-                    ChangeSet tempChangeSet;
+                        // This temporary deployment is for ui purposes only, it will always be deleted via finally.
+                        ChangeSet tempChangeSet;
                         using (DeploymentManager.CreateTemporaryDeployment(Resources.ReceivingChanges, out tempChangeSet))
                         {
-                            GitServer.Receive(context.Request.GetInputStream(), context.Response.OutputStream);
+                            // to pass to kudu.exe post receive hook
+                            System.Environment.SetEnvironmentVariable(Constants.RequestIdHeader, _environment.RequestId);
+                            try
+                            {
+                                GitServer.Receive(context.Request.GetInputStream(), context.Response.OutputStream);
+                            }
+                            finally
+                            {
+                                System.Environment.SetEnvironmentVariable(Constants.RequestIdHeader, null);
+                            }
                         }
                     }, "Handling git receive pack", TimeSpan.Zero);
                 }

@@ -37,7 +37,7 @@ namespace Kudu.Core.Deployment.Generator
             {
                 GenerateScript(context, buildLogger);
                 string deploymentScriptPath = String.Format("\"{0}\"", DeploymentManager.GetCachedDeploymentScriptPath(Environment));
-                RunCommand(context, deploymentScriptPath);
+                RunCommand(context, deploymentScriptPath, context.IgnoreManifest);
                 tcs.SetResult(null);
             }
             catch (Exception ex)
@@ -79,6 +79,13 @@ namespace Kudu.Core.Deployment.Generator
                         buildLogger.Log(Resources.Log_DeploymentScriptGeneratorCommand, scriptGeneratorCommandArguments);
 
                         scriptGenerator.ExecuteWithProgressWriter(buildLogger, context.Tracer, scriptGeneratorCommand);
+
+                        if (!OSDetector.IsOnWindows())
+                        {
+                            // Kuduscript output is typically not given execute permission, so add it
+                            var deploymentScriptPath = DeploymentManager.GetCachedDeploymentScriptPath(Environment);
+                            PermissionHelper.Chmod("ugo+x", deploymentScriptPath, Environment, DeploymentSettings, buildLogger);
+                        }
 
                         CacheDeploymentScript(scriptGeneratorCommandArguments, context);
                     }

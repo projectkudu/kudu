@@ -7,6 +7,7 @@
         public const string TargetPath = "DEPLOYMENT_TARGET";
         public const string WebRootPath = "WEBROOT_PATH";
         public const string MSBuildPath = "MSBUILD_PATH";
+        public const string MSBuild15Dir = "MSBUILD_15_DIR";
         public const string KuduSyncCommandKey = "KUDU_SYNC_CMD";
         public const string NuGetExeCommandKey = "NUGET_EXE";
         public const string SelectNodeVersionCommandKey = "KUDU_SELECT_NODE_VERSION_CMD";
@@ -15,6 +16,7 @@
         public const string BuildTempPath = "DEPLOYMENT_TEMP";
         public const string PreviousManifestPath = "PREVIOUS_MANIFEST_PATH";
         public const string NextManifestPath = "NEXT_MANIFEST_PATH";
+        public const string IgnoreManifest = "IGNORE_MANIFEST";
         public const string InPlaceDeployment = "IN_PLACE_DEPLOYMENT";
         public const string ApplicationPoolId = "APP_POOL_ID";
 

@@ -75,6 +75,10 @@ namespace Kudu.Services.Jobs
             {
                 return Request.CreateResponse(HttpStatusCode.NotFound);
             }
+            catch (IOException ex)
+            {
+                return Request.CreateErrorResponse(HttpStatusCode.Conflict, ex);
+            }
         }
 
         [HttpPost]
@@ -88,6 +92,10 @@ namespace Kudu.Services.Jobs
             catch (JobNotFoundException)
             {
                 return Request.CreateResponse(HttpStatusCode.NotFound);
+            }
+            catch (IOException ex)
+            {
+                return Request.CreateErrorResponse(HttpStatusCode.Conflict, ex);
             }
         }
 
@@ -192,6 +200,10 @@ namespace Kudu.Services.Jobs
             catch (JobNotFoundException)
             {
                 return Request.CreateResponse(HttpStatusCode.NotFound);
+            }
+            catch (IOException ex)
+            {
+                return Request.CreateErrorResponse(HttpStatusCode.Conflict, ex);
             }
             catch (ConflictException)
             {

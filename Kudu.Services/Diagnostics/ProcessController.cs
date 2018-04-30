@@ -111,7 +111,7 @@ namespace Kudu.Services.Performance
             {
                 var currentUser = Process.GetCurrentProcess().GetUserName();
                 var results = Process.GetProcesses()
-                    .Where(p => allUsers || String.Equals(currentUser, SafeGetValue(p.GetUserName, null), StringComparison.OrdinalIgnoreCase))
+                    .Where(p => allUsers || Kudu.Core.Environment.IsAzureEnvironment() || String.Equals(currentUser, SafeGetValue(p.GetUserName, null), StringComparison.OrdinalIgnoreCase))
                     .Select(p => GetProcessInfo(p, Request.RequestUri.GetLeftPart(UriPartial.Path).TrimEnd('/') + '/' + p.Id)).OrderBy(p => p.Name.ToLowerInvariant())
                     .ToList();
                 return Request.CreateResponse(HttpStatusCode.OK, ArmUtils.AddEnvelopeOnArmRequest(results, Request));
@@ -225,14 +225,14 @@ namespace Kudu.Services.Performance
         }
 
         [HttpPost]
-        public async Task<HttpResponseMessage> StartProfileAsync(int id)
+        public async Task<HttpResponseMessage> StartProfileAsync(int id, bool iisProfiling = false)
         {
             using (_tracer.Step("ProcessController.StartProfileAsync"))
             {
                 // check if the process Ids exists in the sandbox. If it doesn't, this method returns a 404 and we are done.
                 var process = GetProcessById(id);
 
-                var result = await ProfileManager.StartProfileAsync(process.Id, _tracer);
+                var result = await ProfileManager.StartProfileAsync(process.Id, _tracer, iisProfiling);
 
                 if(result.StatusCode != HttpStatusCode.OK)
                 {
@@ -253,7 +253,9 @@ namespace Kudu.Services.Performance
                 // check if the process Ids exists in the sandbox. If it doesn't, this method returns a 404 and we are done.
                 var process = GetProcessById(id);
 
-                var result = await ProfileManager.StopProfileAsync(process.Id, _tracer);
+                bool iisProfiling = ProfileManager.IsIisProfileRunning(process.Id);
+
+                var result = await ProfileManager.StopProfileAsync(process.Id, _tracer, iisProfiling);
 
                 if (result.StatusCode != HttpStatusCode.OK)
                 {
@@ -261,7 +263,8 @@ namespace Kudu.Services.Performance
                 }
                 else
                 {
-                    string profileFileFullPath = ProfileManager.GetProfilePath(process.Id);
+                    string profileFileFullPath = ProfileManager.GetProfilePath(process.Id, iisProfiling);
+
                     string profileFileName = Path.GetFileName(profileFileFullPath);
 
                     HttpResponseMessage response = Request.CreateResponse();
@@ -448,6 +451,8 @@ namespace Kudu.Services.Performance
                 info.EnvironmentVariables = SafeGetValue(process.GetEnvironmentVariables, null);
                 info.CommandLine = SafeGetValue(process.GetCommandLine, null);
                 info.IsProfileRunning = ProfileManager.IsProfileRunning(process.Id);
+                info.IsIisProfileRunning = ProfileManager.IsIisProfileRunning(process.Id);
+                info.IisProfileTimeoutInSeconds = ProfileManager.IisProfileTimeoutInSeconds;
                 SetEnvironmentInfo(info);
             }
 

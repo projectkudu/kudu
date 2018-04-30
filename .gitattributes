@@ -1,3 +1,5 @@
+.gitattributes text=auto
+
 *.doc  diff=astextplain
 *.DOC	diff=astextplain
 *.docx	diff=astextplain
@@ -47,3 +49,5 @@
 *.fsproj text=auto
 *.dbproj text=auto
 *.sln text=auto eol=crlf
+*.sh text eol=lf
+*.resx text=auto

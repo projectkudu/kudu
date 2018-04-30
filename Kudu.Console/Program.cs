@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.Diagnostics;
 using System.IO;
+using System.Net;
+using System.Net.Http;
+using System.Threading.Tasks;
 using Kudu.Console.Services;
 using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Settings;
@@ -54,8 +57,9 @@ namespace Kudu.Console
             string appRoot = args[0];
             string wapTargets = args[1];
             string deployer = args.Length == 2 ? null : args[2];
+            string requestId = System.Environment.GetEnvironmentVariable(Constants.RequestIdHeader);
 
-            IEnvironment env = GetEnvironment(appRoot);
+            IEnvironment env = GetEnvironment(appRoot, requestId);
             ISettings settings = new XmlSettings.Settings(GetSettingsPath(env));
             IDeploymentSettingsManager settingsManager = new DeploymentSettingsManager(settings);
 
@@ -105,7 +109,10 @@ namespace Kudu.Console
             System.Environment.SetEnvironmentVariable("GIT_DIR", null, System.EnvironmentVariableTarget.Process);
 
             // Skip SSL Certificate Validate
-            OperationClient.SkipSslValidationIfNeeded();
+            if (System.Environment.GetEnvironmentVariable(SettingsKeys.SkipSslValidation) == "1")
+            {
+                ServicePointManager.ServerCertificateValidationCallback = delegate { return true; };
+            }
 
             // Adjust repo path
             env.RepositoryPath = Path.Combine(env.SiteRootPath, settingsManager.GetRepositoryPath());
@@ -135,8 +142,6 @@ namespace Kudu.Console
 
             IWebHooksManager hooksManager = new WebHooksManager(tracer, env, hooksLock);
             IDeploymentStatusManager deploymentStatusManager = new DeploymentStatusManager(env, analytics, statusLock);
-            IAutoSwapHandler autoSwapHander = new AutoSwapHandler(env, settingsManager, traceFactory);
-            var functionManager = new FunctionManager(env, traceFactory);
             IDeploymentManager deploymentManager = new DeploymentManager(builderFactory,
                                                           env,
                                                           traceFactory,
@@ -145,8 +150,7 @@ namespace Kudu.Console
                                                           deploymentStatusManager,
                                                           deploymentLock,
                                                           GetLogger(env, level, logger),
-                                                          hooksManager,
-                                                          functionManager);
+                                                          hooksManager);
 
             var step = tracer.Step(XmlTracer.ExecutingExternalProcessTrace, new Dictionary<string, string>
             {
@@ -159,15 +163,26 @@ namespace Kudu.Console
             {
                 try
                 {
-                    deploymentManager.DeployAsync(gitRepository, changeSet: null, deployer: deployer, clean: false)
-                        .Wait();
+                    // although the api is called DeployAsync, most expensive works are done synchronously.
+                    // need to launch separate task to go async explicitly (consistent with FetchDeploymentManager)
+                    var deploymentTask = Task.Run(async () => await deploymentManager.DeployAsync(gitRepository, changeSet: null, deployer: deployer, clean: false));
 
-                    string branch = settingsManager.GetBranch();
-                    ChangeSet changeSet = gitRepository.GetChangeSet(branch);
-                    IDeploymentStatusFile statusFile = deploymentStatusManager.Open(changeSet.Id);
-                    if (statusFile != null && statusFile.Status == DeployStatus.Success)
+#pragma warning disable 4014
+                    // Track pending task
+                    PostDeploymentHelper.TrackPendingOperation(deploymentTask, TimeSpan.Zero);
+#pragma warning restore 4014
+
+                    deploymentTask.Wait();
+
+                    if (PostDeploymentHelper.IsAutoSwapEnabled())
                     {
-                        autoSwapHander.HandleAutoSwap(changeSet.Id, deploymentManager.GetLogger(changeSet.Id), tracer).Wait();
+                        string branch = settingsManager.GetBranch();
+                        ChangeSet changeSet = gitRepository.GetChangeSet(branch);
+                        IDeploymentStatusFile statusFile = deploymentStatusManager.Open(changeSet.Id);
+                        if (statusFile != null && statusFile.Status == DeployStatus.Success)
+                        {
+                            PostDeploymentHelper.PerformAutoSwap(env.RequestId, new PostDeploymentTraceListener(tracer, deploymentManager.GetLogger(changeSet.Id))).Wait();
+                        }
                     }
                 }
                 catch (Exception e)
@@ -199,7 +214,8 @@ namespace Kudu.Console
                 {
                     // Kudu.exe is executed as part of git.exe (post-receive), giving its initial depth of 4 indentations
                     string logPath = Path.Combine(env.TracePath, logFile);
-                    return new CascadeTracer(tracer, new TextTracer(logPath, level, 4));
+                    // since git push is "POST", which then run kudu.exe
+                    return new CascadeTracer(tracer, new TextTracer(logPath, level, 4), new ETWTracer(env.RequestId, requestMethod: HttpMethod.Post.Method));
                 }
 
                 return tracer;
@@ -228,7 +244,7 @@ namespace Kudu.Console
             return Path.Combine(environment.DeploymentsPath, Constants.DeploySettingsPath);
         }
 
-        private static IEnvironment GetEnvironment(string siteRoot)
+        private static IEnvironment GetEnvironment(string siteRoot, string requestId)
         {
             string root = Path.GetFullPath(Path.Combine(siteRoot, ".."));
 
@@ -245,7 +261,8 @@ namespace Kudu.Console
 
             return new Kudu.Core.Environment(root,
                 EnvironmentHelper.NormalizeBinPath(binPath),
-                repositoryPath);
+                repositoryPath,
+                requestId);
         }
     }
 }

@@ -32,7 +32,7 @@ namespace Kudu.Services.FetchHelpers
         // if we exceed this failure (considered unrecoverable - token expired), we will bail out.
         private const int MaxFailures = 10;
 
-        private readonly ITracer _tracer;
+        private ITracer _tracer;
         private readonly IDeploymentStatusManager _status;
         private readonly IDeploymentSettingsManager _settings;
         private readonly IEnvironment _environment;
@@ -57,11 +57,15 @@ namespace Kudu.Services.FetchHelpers
             _environment = environment;
         }
 
-        internal async Task<ChangeSet> Sync(OneDriveInfo info, IRepository repository)
+        internal async Task<ChangeSet> Sync(OneDriveInfo info, IRepository repository, ITracer tracer)
         {
             ChangeSet changeSet = null;
             string cursor = _settings.GetValue(CursorKey);
             ChangesResult changes = null;
+
+            // use incoming tracer since it is background work
+            _tracer = tracer;
+
             // We truncate cursor value in filename but keep it unharmed in the trace content
             using (_tracer.Step("Getting delta changes with cursor: {0}...", cursor.Truncate(5)))
             using (_tracer.Step("cursor: {0}", cursor))

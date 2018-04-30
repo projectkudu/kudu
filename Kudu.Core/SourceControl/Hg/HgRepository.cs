@@ -219,7 +219,8 @@ namespace Kudu.Core.SourceControl
             // This doesn't work for us since ssh.exe is located under Program Files in typical Kudu scenarios.
             _hgExecutable.SetHomePath(_homePath);
             string currentPath = System.Environment.GetEnvironmentVariable(PATH_KEY);
-            currentPath = currentPath.TrimEnd(';') + ';' + Path.GetDirectoryName(PathUtilityFactory.Instance.ResolveSSHPath());
+            char sep = Path.PathSeparator;
+            currentPath = currentPath.TrimEnd(sep) + sep + Path.GetDirectoryName(PathUtilityFactory.Instance.ResolveSSHPath());
             _hgExecutable.EnvironmentVariables[PATH_KEY] = currentPath;
 
             ITracer tracer = _traceFactory.GetTracer();
