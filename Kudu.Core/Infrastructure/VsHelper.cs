@@ -83,11 +83,12 @@ namespace Kudu.Core.Infrastructure
             return guids;
         }
 
-        public static bool IncludesReferencePackage(string path, string packageName)
+        // takes mulitple package names, return true if at least one is presented
+        public static bool IncludesAnyReferencePackage(string path, params string[] packageNames)
         {
             var packages = from packageReferences in XDocument.Load(path).Descendants("PackageReference")
                            let packageReferenceName = packageReferences.Attribute("Include")
-                           where packageReferenceName != null && String.Equals(packageReferenceName.Value, packageName, StringComparison.OrdinalIgnoreCase)
+                           where packageReferenceName != null && packageNames.Contains(packageReferenceName.Value, StringComparer.OrdinalIgnoreCase)
                            select packageReferenceName.Value;
 
             return packages.Any();

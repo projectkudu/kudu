@@ -9,7 +9,7 @@
 
         public static bool IsCSharpFunctionFromProjectFile(string projectPath)
         {
-            return VsHelper.IncludesReferencePackage(projectPath, "Microsoft.NET.Sdk.Functions");
+            return VsHelper.IncludesAnyReferencePackage(projectPath, "Microsoft.NET.Sdk.Functions");
         }
 
     }
