@@ -16,7 +16,7 @@ namespace Kudu.Core.Test.Jobs
         [InlineData("* * * 3 * *", "00:00:00 1/1/2015", "2.00:00:00", false)]
         [InlineData("* * * * 2 *", "00:00:00 1/1/2015", "31.00:00:00", false)]
         [InlineData("* * * * 3 *", "00:00:00 1/1/2015", "59.00:00:00", false)]
-        [InlineData("* * * * 4 *", "00:00:00 1/1/2015", "89.23:00:00", false)]  // DST transition on March 11th
+        [InlineData("* * * * 4 *", "00:00:00 1/1/2015", "90.00:00:00", false)]
         [InlineData("10 * * * * *", "00:00:00 1/1/2014", "00:00:10", false)]
         [InlineData("0 */5 * * * *", "23:00:00 12/31/2014", "00:05:00", false)]
         [InlineData("0 */2 * * * *", "23:57:00 12/31/2014", "00:00:00", false)]
@@ -31,12 +31,20 @@ namespace Kudu.Core.Test.Jobs
 
             var triggeredJobSchedulerLoggerMock = new Mock<TriggeredJobSchedulerLogger>(String.Empty, mockEnvironment.Object, null);
             var schedule = Schedule.BuildSchedule(cronExpression, triggeredJobSchedulerLoggerMock.Object);
-            schedule.SetDateTimeProvider(new TestDateTimeNowProvider(DateTime.Parse("00:00:00 1/1/2015", CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal)));
+            var now = DateTime.Parse( "00:00:00 1/1/2015" , CultureInfo.InvariantCulture , DateTimeStyles.AssumeLocal );
+            schedule.SetDateTimeProvider( new TestDateTimeNowProvider( now ) );
 
             DateTime lastSchedule = DateTime.Parse(lastScheduleStr, CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal);
             TimeSpan actualNextSchedule = schedule.GetNextInterval(lastSchedule, ignoreMissed);
 
             TimeSpan expectedNextInterval = TimeSpan.Parse(expectedNextIntervalStr);
+
+            var nowTimeOffset = new DateTimeOffset( now ).Offset;
+            var expectedTimeOffset = new DateTimeOffset( now.Add( TimeSpan.Parse( expectedNextIntervalStr ) ) ).Offset;
+
+            // Adjust the expected value for DST transition on March 11th
+            expectedNextInterval = expectedNextInterval.Add( nowTimeOffset - expectedTimeOffset );            
+
             Assert.Equal(expectedNextInterval, actualNextSchedule);
         }
 
@@ -60,8 +68,15 @@ namespace Kudu.Core.Test.Jobs
 
             TimeSpan interval = schedule.GetNextInterval(now, ignoreMissed: true);
 
+            var expectedHours = new TimeSpan( 168 , 0 , 0 );
+            var nowTimeOffset = new DateTimeOffset( now ).Offset;
+            var expectedTimeOffset = new DateTimeOffset( new DateTime( 2018 , 3 , 16 , 18 , 0 , 0 , DateTimeKind.Local ) ).Offset;
+
+            // Adjust the expected value for DST transition on March 11th
             // One week is normally 168 hours, but it's 167 hours across DST
-            Assert.Equal(167, interval.TotalHours);
+            expectedHours = expectedHours.Add( nowTimeOffset - expectedTimeOffset );
+
+            Assert.Equal( expectedHours , interval);
         }
 
         /// <summary>
