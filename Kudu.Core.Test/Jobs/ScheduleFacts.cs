@@ -28,24 +28,18 @@ namespace Kudu.Core.Test.Jobs
         {
             var mockEnvironment = new Mock<IEnvironment>();
             mockEnvironment.Setup(p => p.JobsDataPath).Returns(String.Empty);
+            var triggeredJobSchedulerLoggerMock = new Mock<TriggeredJobSchedulerLogger>(String.Empty , mockEnvironment.Object , null);
 
-            var triggeredJobSchedulerLoggerMock = new Mock<TriggeredJobSchedulerLogger>(String.Empty, mockEnvironment.Object, null);
-            var schedule = Schedule.BuildSchedule(cronExpression, triggeredJobSchedulerLoggerMock.Object);
-            var now = DateTime.Parse( "00:00:00 1/1/2015" , CultureInfo.InvariantCulture , DateTimeStyles.AssumeLocal );
-            schedule.SetDateTimeProvider( new TestDateTimeNowProvider( now ) );
-
-            DateTime lastSchedule = DateTime.Parse(lastScheduleStr, CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal);
-            TimeSpan actualNextSchedule = schedule.GetNextInterval(lastSchedule, ignoreMissed);
-
+            // Running on the Friday before the DST switch at 2 AM on 3/11 (Pacific Standard Time)
+            var schedule = Schedule.BuildSchedule(cronExpression , triggeredJobSchedulerLoggerMock.Object);
+            var now = DateTime.Parse("00:00:00 1/1/2015" , CultureInfo.InvariantCulture , DateTimeStyles.AssumeLocal);
+            schedule.SetDateTimeProvider(new TestDateTimeNowProvider(now));
+            DateTime lastSchedule = DateTime.Parse(lastScheduleStr , CultureInfo.InvariantCulture , DateTimeStyles.AssumeLocal);
+            TimeSpan actualNextSchedule = schedule.GetNextInterval(lastSchedule , ignoreMissed);
             TimeSpan expectedNextInterval = TimeSpan.Parse(expectedNextIntervalStr);
+            expectedNextInterval = GetTimeZoneAdjustedInterval(expectedNextInterval , now);
 
-            var nowTimeOffset = new DateTimeOffset( now ).Offset;
-            var expectedTimeOffset = new DateTimeOffset( now.Add( TimeSpan.Parse( expectedNextIntervalStr ) ) ).Offset;
-
-            // Adjust the expected value for DST transition on March 11th
-            expectedNextInterval = expectedNextInterval.Add( nowTimeOffset - expectedTimeOffset );            
-
-            Assert.Equal(expectedNextInterval, actualNextSchedule);
+            Assert.Equal(expectedNextInterval , actualNextSchedule);
         }
 
         /// <summary>
@@ -57,26 +51,19 @@ namespace Kudu.Core.Test.Jobs
         {
             var mockEnvironment = new Mock<IEnvironment>();
             mockEnvironment.Setup(p => p.JobsDataPath).Returns(String.Empty);
-            var triggeredJobSchedulerLoggerMock = new Mock<TriggeredJobSchedulerLogger>(String.Empty, mockEnvironment.Object, null);
+            var triggeredJobSchedulerLoggerMock = new Mock<TriggeredJobSchedulerLogger>(String.Empty , mockEnvironment.Object , null);
 
-            // Running on the Friday before the DST switch at 2 AM on 3/11 (Pacific Standard Time)
-            // Note: this test uses Local time, so if you're running in a timezone where
-            // DST doesn't transition the test might not be valid.
-            var schedule = Schedule.BuildSchedule("0 0 18 * * 5", triggeredJobSchedulerLoggerMock.Object);
-            var now = new DateTime(2018, 3, 9, 18, 0, 0, DateTimeKind.Local);
+            // Running at 1:59 AM, i.e. one minute before the DST switch at 2 AM on 3/11 (Pacific Standard Time)
+            var schedule = Schedule.BuildSchedule("0 0 18 * * 5" , triggeredJobSchedulerLoggerMock.Object);
+            var now = new DateTime(2018 , 3 , 9 , 18 , 0 , 0 , DateTimeKind.Local);
             schedule.SetDateTimeProvider(new TestDateTimeNowProvider(now));
+            TimeSpan interval = schedule.GetNextInterval(now , ignoreMissed: true);
+            var expectedInterval = new TimeSpan(168 , 0 , 0);
 
-            TimeSpan interval = schedule.GetNextInterval(now, ignoreMissed: true);
-
-            var expectedHours = new TimeSpan( 168 , 0 , 0 );
-            var nowTimeOffset = new DateTimeOffset( now ).Offset;
-            var expectedTimeOffset = new DateTimeOffset( new DateTime( 2018 , 3 , 16 , 18 , 0 , 0 , DateTimeKind.Local ) ).Offset;
-
-            // Adjust the expected value for DST transition on March 11th
             // One week is normally 168 hours, but it's 167 hours across DST
-            expectedHours = expectedHours.Add( nowTimeOffset - expectedTimeOffset );
+            expectedInterval = GetTimeZoneAdjustedInterval(expectedInterval , now);
 
-            Assert.Equal( expectedHours , interval);
+            Assert.Equal(expectedInterval , interval);
         }
 
         /// <summary>
@@ -91,9 +78,6 @@ namespace Kudu.Core.Test.Jobs
             var triggeredJobSchedulerLoggerMock = new Mock<TriggeredJobSchedulerLogger>(String.Empty, mockEnvironment.Object, null);
 
             // Running at 1:59 AM, i.e. one minute before the DST switch at 2 AM on 3/11 (Pacific Standard Time)
-            // Note: this test uses Local time, so if you're running in a timezone where
-            // DST doesn't transition the test might not be valid.
-            // Configure schedule to run on the 59th minute of every hour
             var schedule = Schedule.BuildSchedule("0 59 * * * *", triggeredJobSchedulerLoggerMock.Object);
             var now = new DateTime(2018, 3, 11, 1, 59, 0, DateTimeKind.Local);
             schedule.SetDateTimeProvider(new TestDateTimeNowProvider(now));
@@ -103,6 +87,14 @@ namespace Kudu.Core.Test.Jobs
             TimeSpan interval = schedule.GetNextInterval(now, ignoreMissed: true);
 
             Assert.Equal(1, interval.TotalHours);
+        }
+
+        private static TimeSpan GetTimeZoneAdjustedInterval(TimeSpan interval, DateTime now)
+        {
+            var nowTimeOffset = new DateTimeOffset(now).Offset;
+            var expectedTimeOffset = new DateTimeOffset(now.Add(interval)).Offset;
+
+            return interval.Add(nowTimeOffset - expectedTimeOffset);
         }
 
         private class TestDateTimeNowProvider : Schedule.IDateTimeNowProvider
