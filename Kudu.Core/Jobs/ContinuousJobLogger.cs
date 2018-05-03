@@ -24,7 +24,7 @@ namespace Kudu.Core.Jobs
 
         public event Action RolledLogFile;
 
-        private void ResetLockedStatusFile()
+        public void ResetLockedStatusFile()
         {
             try
             {
