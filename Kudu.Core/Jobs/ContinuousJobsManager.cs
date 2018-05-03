@@ -161,7 +161,7 @@ namespace Kudu.Core.Jobs
                 // Try to delete file, it'll be deleted if no one holds a lock on it
                 // That way we know the status file is obsolete
                 if (String.Equals(statusFileInstanceId, instanceId, StringComparison.OrdinalIgnoreCase)
-                    || !TryDelete(statusFile))
+                    || !TryDelete(job, statusFile))
                 {
                     // If we couldn't delete the file, we know it holds the status of an actual instance holding it
                     var continuousJobStatus = GetStatus<ContinuousJobStatus>(statusFile) ?? ContinuousJobStatus.Initializing;
@@ -180,11 +180,12 @@ namespace Kudu.Core.Jobs
             job.DetailedStatus = stringBuilder.ToString();
         }
 
-        private static bool TryDelete(string statusFile)
+        private bool TryDelete(ContinuousJob job, string statusFile)
         {
             try
             {
                 FileSystemHelpers.DeleteFile(statusFile);
+                Analytics.JobEvent(job.Name, string.Format("Delete stale status file {0}", statusFile), job.JobType, string.Empty);
                 return true;
             }
             catch
@@ -218,6 +219,12 @@ namespace Kudu.Core.Jobs
             {
                 continuousJobRunner = new ContinuousJobRunner(continuousJob, JobsBinariesPath, Environment, Settings, TraceFactory, Analytics);
                 _continuousJobRunners.Add(continuousJob.Name, continuousJobRunner);
+            }
+            else
+            {
+                // job may change due to network transient.  In such case,
+                // we may lose and need to re-acquire the instance status file lock.
+                continuousJobRunner.ResetLockedStatusFile();
             }
 
             JobSettings jobSettings = continuousJob.Settings;

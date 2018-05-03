@@ -40,6 +40,11 @@ namespace Kudu.Core.Jobs
             _singletonLock = new LockFile(Path.Combine(JobDataPath, "singleton.job.lock"), TraceFactory, ensureLock: true);
         }
 
+        public void ResetLockedStatusFile()
+        {
+            _continuousJobLogger.ResetLockedStatusFile();
+        }
+
         private void UpdateStatusIfChanged(ContinuousJobStatus continuousJobStatus)
         {
             var currentStatus = _continuousJobLogger.GetStatus<ContinuousJobStatus>();
