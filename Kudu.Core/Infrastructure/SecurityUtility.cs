@@ -51,7 +51,7 @@ namespace Kudu.Core.Infrastructure
             string siteName = ServerConfiguration.GetApplicationName();
             string issuer = $"https://{siteName}.scm.azurewebsites.net";
             string audience = $"https://{siteName}.azurewebsites.net/azurefunctions";
-            return JwtGenerator.GenerateToken(issuer, audience, expires: DateTime.UtcNow.AddMinutes(2));
+            return JwtGenerator.GenerateToken(issuer, audience, expires: DateTime.UtcNow.AddMinutes(5));
         }
     }
 }
