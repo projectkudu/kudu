@@ -710,7 +710,7 @@ namespace Kudu.Core.Helpers
 
         public static async Task UpdateSiteVersion(ZipDeploymentInfo deploymentInfo, IEnvironment environment, ILogger logger)
         {
-            var siteVersionPath = Path.Combine(environment.SitePackagesPath, Constants.SiteVersionTxt);
+            var siteVersionPath = Path.Combine(environment.SitePackagesPath, Constants.PackageNameTxt);
             logger.Log($"Updating {siteVersionPath} with deployment {deploymentInfo.ZipName}");
             await FileSystemHelpers.WriteAllTextToFileAsync(siteVersionPath, deploymentInfo.ZipName);
         }
