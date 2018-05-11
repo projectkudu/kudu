@@ -96,7 +96,7 @@ namespace Kudu.Services.GitServer
             }
         }
 
-        //  parse on of the four
+        //  parse one of the four
         //  GET Git/{repositorypath}/info/refs?service=git-upload-pack
         //  GET Git/{repositorypath}/info/refs?service=git-receive-pack
         //  GET Git/{repositorypath}/info/refs
