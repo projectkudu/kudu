@@ -417,8 +417,41 @@ namespace Kudu.Core.Functions
                 }
             }
 
-            return await FileSystemHelpers.ReadAllTextFromFileAsync(testDataFilePath);
+            // TODO use Rabin-Karp
+            var fileContentString = await FileSystemHelpers.ReadAllTextFromFileAsync(testDataFilePath);
+            // if it contains the following json property, need to remove them from the file
+            // "code": {
+            //    "name": "code",
+            //    "value": "gibberishxyz..."
+            // }
+            JObject testDataToAdjust = null;
+            if (fileContentString.Contains("\"code\":"))
+            {
+                try
+                {
+                    var testData = JObject.Parse(fileContentString);
+                    var codeProperty = testData["code"];
+                    if ("code".Equals((string)codeProperty["name"], StringComparison.OrdinalIgnoreCase) && (string)codeProperty["value"] != null)
+                    {
+                        testDataToAdjust = testData;
+                    }
+                }
+                catch (Exception)
+                {
+                    // failed to retrieve code property from fileContentString, NOOP
+                }
+            }
 
+            if (testDataToAdjust != null)
+            {
+                // TODO logging, since we are touching user data
+                testDataToAdjust.Property("code").Remove();
+                // update the fileContentString
+                fileContentString = testDataToAdjust.ToString(Formatting.None);
+                await FileSystemHelpers.WriteAllTextToFileAsync(testDataFilePath, fileContentString);
+            }
+
+            return fileContentString;
         }
 
         private string GetFunctionTestDataFilePath(string functionName)
