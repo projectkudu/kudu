@@ -417,7 +417,6 @@ namespace Kudu.Core.Functions
                 }
             }
 
-            // TODO use Rabin-Karp
             var fileContentString = await FileSystemHelpers.ReadAllTextFromFileAsync(testDataFilePath);
             // if it contains the following json property, need to remove them from the file
             // "code": {
