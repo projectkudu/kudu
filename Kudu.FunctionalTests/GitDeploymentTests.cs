@@ -441,6 +441,17 @@ namespace Kudu.FunctionalTests
         }
     }
 
+    [KuduXunitTestClass]
+    public class AspNetCore21WebApiCliTests : GitDeploymentTests
+    {
+        [Fact]
+        [KuduXunitTest(PrivateOnly = true)]
+        public void PushAndDeployAspNetCore21WebApiCli()
+        {
+            PushAndDeployApps("AspNetCore2.1.0WebApiCli", "master", "[\"value1\",\"value2\"]", HttpStatusCode.OK, "Deployment successful", resourcePath: "/api/values");
+        }
+    }
+
     public abstract class GitDeploymentTests
     {
         //Common code
