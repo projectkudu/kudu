@@ -158,7 +158,6 @@ namespace Kudu.Services.FetchHelpers
         public virtual HttpClient CreateHttpClient(string accessToken)
         {
             HttpClient client = new HttpClient();
-            client.MaxResponseContentBufferSize = 1024 * 1024 * 10;
             client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(JsonMediaType));
             if (!client.DefaultRequestHeaders.Contains(UserAgentHeader))
             {
