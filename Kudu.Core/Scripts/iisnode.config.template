@@ -23,7 +23,7 @@
 
         <!-- First we consider whether the incoming URL matches a physical file in the /public folder -->
         <rule name="StaticContent">
-          <action type="Rewrite" url="public{REQUEST_URI}"/>
+          <action type="Rewrite" url="public{PATH_INFO}"/>
         </rule>
 
         <!-- All other URLs are mapped to the node.js site entry point -->
