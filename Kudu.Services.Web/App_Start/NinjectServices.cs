@@ -148,6 +148,9 @@ namespace Kudu.Services.Web.App_Start
 
             EnsureDotNetCoreEnvironmentVariable(environment);
 
+            // fix up invalid d:\home\site\deployments\settings.xml
+            EnsureValidDeploymentXmlSettings(environment);
+
             // Add various folders that never change to the process path. All child processes will inherit
             PrependFoldersToPath(environment);
 
@@ -816,6 +819,35 @@ namespace Kudu.Services.Web.App_Start
             {
                 // Set it slightly differently if outside of Azure to differentiate
                 SetEnvironmentVariableIfNotYetSet("DOTNET_CLI_TELEMETRY_PROFILE", "Kudu");
+            }
+        }
+
+        private static void EnsureValidDeploymentXmlSettings(IEnvironment environment)
+        {
+            var path = GetSettingsPath(environment);
+            if (File.Exists(path))
+            {
+                try
+                {
+                    var settings = new DeploymentSettingsManager(new XmlSettings.Settings(path));
+                    settings.GetValue(SettingsKeys.TraceLevel);
+                }
+                catch (Exception ex)
+                {
+                    DateTime lastWriteTimeUtc = DateTime.MinValue;
+                    OperationManager.SafeExecute(() => lastWriteTimeUtc = File.GetLastWriteTimeUtc(path));
+
+                    // trace initialization error
+                    KuduEventSource.Log.KuduException(
+                        ServerConfiguration.GetApplicationName(),
+                        "NinjectServices.Start",
+                        string.Empty,
+                        string.Empty,
+                        string.Format("Invalid '{0}' is detected and deleted.  Last updated time was {1}.", path, lastWriteTimeUtc),
+                        ex.ToString());
+
+                    File.Delete(path);
+                }
             }
         }
 
