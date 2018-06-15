@@ -268,6 +268,10 @@ namespace Kudu.Core.Jobs
                 if (!_continuousJobThread.Join(JobSettings.GetStoppingWaitTime(DefaultContinuousJobStoppingWaitTimeInSeconds)))
                 {
                     _continuousJobThread.KuduAbort(String.Format("Stopping {0} {1} job", JobName, Constants.ContinuousPath));
+
+                    // to avoid overlapping new and old thread, we will wait for aborting thread to 
+                    // actually exit since it may take a few seconds after Thread.Abort is called.
+                    _continuousJobThread.Join(TimeSpan.FromMinutes(1));
                 }
 
                 _continuousJobThread = null;
