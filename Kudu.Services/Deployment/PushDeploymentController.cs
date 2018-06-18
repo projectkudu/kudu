@@ -219,21 +219,12 @@ namespace Kudu.Services.Deployment
             using (var zip = ZipFile.OpenRead(Path.Combine(_environment.SitePackagesPath, zipDeploymentInfo.ZipName)))
             {
                 var entries = zip.Entries
-                    // Only select host.json, proxies.json, or top level directories.
+                    // Only select host.json, proxies.json, or function.json that are from top level directories only
                     // Tested with a zip containing 120k files, and this took 90 msec
                     // on my machine.
                     .Where(e => e.FullName.Equals(Constants.FunctionsHostConfigFile, StringComparison.OrdinalIgnoreCase) ||
                                 e.FullName.Equals(Constants.ProxyConfigFile, StringComparison.OrdinalIgnoreCase) ||
-                                isTopLevelDirectory(e.FullName))
-                    // If entry is a top level dir, select the function.json in it.
-                    // otherwise that must be host.json, or proxies.json. Leave it as is.
-                    .Select(e => isTopLevelDirectory(e.FullName)
-                        ? zip.GetEntry($"{e.FullName}{Constants.FunctionsConfigFile}")
-                        : e
-                    )
-                    // if a top level folder wasn't a function, it won't contain a function.json
-                    // and GetEntry above will return null
-                    .Where(e => e != null);
+                                isFunctionJson(e.FullName));
 
                 foreach (var entry in entries)
                 {
@@ -245,20 +236,10 @@ namespace Kudu.Services.Deployment
 
             CommitRepo(repository, zipDeploymentInfo);
 
-            bool isTopLevelDirectory(string fullName)
+            bool isFunctionJson(string fullName)
             {
-                for (var i = 0; i < fullName.Length; i++)
-                {
-                    // Zip entries use '/' separators.
-                    // If the first '/' we find also the last in the string
-                    // It's a top level dir, otherwise it's not
-                    if (fullName[i] == '/')
-                    {
-                        return i + 1 == fullName.Length;
-                    }
-                }
-                // Top level file
-                return false;
+                return fullName.EndsWith(Constants.FunctionsConfigFile) &&
+                    fullName.Count(c => c == '/') == 1;
             }
         }
 
