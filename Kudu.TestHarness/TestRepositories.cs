@@ -17,6 +17,7 @@ namespace Kudu.TestHarness
             new TestRepositoryInfo("https://github.com/KuduApps/AspNetCore2.0CliWithLib.git",       "afdb55e"),
             new TestRepositoryInfo("https://github.com/KuduApps/AspNetCore2.0.0Cli.git",            "27ab60f"),
             new TestRepositoryInfo("https://github.com/KuduApps/AspNetCore2.0.0VS17WithLib.git",    "23d74c5"),
+            new TestRepositoryInfo("https://github.com/KuduApps/AspNetCore2.1.0VS17WithLib.git",    "c8bb987"),
             new TestRepositoryInfo("https://github.com/KuduApps/AspNetCore2.1.0WebApiCli.git",      "e182a89"),
             new TestRepositoryInfo("https://github.com/KuduApps/AspNetCoreRC4WebApiVsSln.git",      "61585d7"),
             new TestRepositoryInfo("https://github.com/KuduApps/Bakery.git",                        "2f29dc6"),
