@@ -91,17 +91,12 @@
                 </ul>
                 @{
                     var email = Request.Headers["X-MS-CLIENT-PRINCIPAL-NAME"];
-                    var displayName = Request.Headers["X-MS-CLIENT-DISPLAY-NAME"] ?? email;
                     if (email != null && email.Contains("@"))
                     {
-                        if (displayName.StartsWith("xn--"))
-                        {
-                            displayName = new System.Globalization.IdnMapping().GetUnicode(displayName);
-                        }
                         <ul class="nav navbar-nav navbar-right" style="position: fixed; right: 65px;">
                             <li class="dropdown">
                                 <img src="https://functionscdn.azureedge.net/public/kudu/icons/avatar.png" style="height: 50px; padding-top: 1px" />
-                                <a href="#" data-toggle="dropdown" style="display: inline">@displayName</a>
+                                <a href="#" data-toggle="dropdown" style="display: inline">@email</a>
                                 <ul class="dropdown-menu">
                                     <li><a href="/logout">Logout</a></li>
                                 </ul>
