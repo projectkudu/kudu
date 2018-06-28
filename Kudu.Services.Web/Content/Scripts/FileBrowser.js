@@ -299,6 +299,10 @@ $.connection.hub.start().done(function () {
                             }
                         });
 
+                        if (data.length > getLocalStorageSetting("maxViewItems", MAX_VIEW_ITEMS)) {
+                            showErrorAsToast("There are " + data.length + " items in this directory, but maxViewItems is set to " + (folders.length + files.length) + ". You can increase maxViewItems by setting it to a larger value in localStorage.");
+                        }
+
                         // view display folders then files
                         children.push.apply(children, folders);
                         children.push.apply(children, files);
