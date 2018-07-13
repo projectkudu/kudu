@@ -340,7 +340,12 @@ else {
             // or if it does not specify node.js version constraints, use WEBSITE_NODE_DEFAULT_VERSION. 
             if (typeof json !== 'object' || typeof json.engines !== 'object' || typeof json.engines.node !== 'string') {
                 // Attempt to read the pinned node version or fallback to the version of the executing node.exe.
-                console.log('The package.json file does not specify node.js engine version constraints.');
+                console.log('The package.json file does not specify node.js engine version constraints. Default version is ' + nodeVersion);
+                // Attempt to find closest installed node version
+                var versions = getInstalledNodeVersions(nodejsDir);
+                var installedNodeVersion = semver.maxSatisfying(versions, "<=" + nodeVersionSpec);
+                console.log('Finding closest matching installed node.js version: ' + installedNodeVersion + '. '); 
+                nodeVersison = installedNodeVersion || nodeVersion;
                 console.log('The node.js application will run with the default node.js version '
                     + nodeVersion + '.');
             } else {
