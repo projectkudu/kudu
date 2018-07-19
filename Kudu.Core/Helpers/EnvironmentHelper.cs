@@ -23,5 +23,19 @@ namespace Kudu.Core.Helpers
 
             return binPath;
         }
+
+        // Is this a Windows Containers site?
+        public static bool IsWindowsContainers()
+        {
+            string xenon = System.Environment.GetEnvironmentVariable("XENON");
+            int parsedXenon = 0;
+            bool isXenon = false;
+            if (int.TryParse(xenon, out parsedXenon))
+            {
+                isXenon = (parsedXenon == 1);
+            }
+
+            return isXenon;
+        }
     }
 }

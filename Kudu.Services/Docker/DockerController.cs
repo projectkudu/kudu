@@ -27,7 +27,7 @@ namespace Kudu.Services.Docker
         [HttpPost]
         public HttpResponseMessage ReceiveHook()
         {
-            if (OSDetector.IsOnWindows())
+            if (OSDetector.IsOnWindows() && !EnvironmentHelper.IsWindowsContainers())
             {
                 return Request.CreateResponse(HttpStatusCode.NotFound);
             }
@@ -39,7 +39,7 @@ namespace Kudu.Services.Docker
                 {
                     if (_settings.IsDockerCiEnabled())
                     {
-                        LinuxContainerRestartTrigger.RequestContainerRestart(_environment, RESTART_REASON);
+                        DockerContainerRestartTrigger.RequestContainerRestart(_environment, RESTART_REASON);
                     }
                 }
                 catch (Exception e)
