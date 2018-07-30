@@ -16,6 +16,7 @@ namespace Kudu.Core.Functions
         // read existing key file based on the content format, not the run time version
         string GetKeyValueFromJson(string json, out bool isEncrypted);
 
-        T GenerateKeyObject(string functionKey, string functionName);
+        //added route for bug with not sending correct URL when using a custom route
+        T GenerateKeyObject(string functionKey, string functionName, string route);
     }
 }

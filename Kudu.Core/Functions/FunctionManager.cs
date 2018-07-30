@@ -126,6 +126,17 @@ namespace Kudu.Core.Functions
 
         private async Task<T> GetKeyObjectFromFile<T>(string name, IKeyJsonOps<T> keyOp)
         {
+
+            //saving the httproute from host.json as it's needed to get secrets
+            var host = await TryGetHostConfigAsync();
+
+            string route = string.Empty;
+
+            if (host.SelectToken("http.routePrefix") != null)
+            {
+                route = host.SelectToken("http.routePrefix").ToString();
+            }
+
             var secretStorageType = System.Environment.GetEnvironmentVariable(Constants.AzureWebJobsSecretStorageType);
             if (!string.IsNullOrEmpty(secretStorageType) &&
                 secretStorageType.Equals("Blob", StringComparison.OrdinalIgnoreCase))
@@ -158,7 +169,7 @@ namespace Kudu.Core.Functions
                             }
                         }
                     }
-                    return keyOp.GenerateKeyObject(key, name);
+                    return keyOp.GenerateKeyObject(key, name, route);
                 }
                 catch (IOException)
                 {
@@ -193,7 +204,7 @@ namespace Kudu.Core.Functions
             {
                 key = SecurityUtility.DecryptSecretString(key);
             }
-            return keyOp.GenerateKeyObject(key, name);
+            return keyOp.GenerateKeyObject(key, name, route);
 
         }
 

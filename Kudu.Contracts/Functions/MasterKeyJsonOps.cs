@@ -51,9 +51,9 @@ namespace Kudu.Core.Functions
             throw new FormatException($"Invalid secrets json: {json}");
         }
 
-        public MasterKey GenerateKeyObject(string masterKey, string Name)
+        public MasterKey GenerateKeyObject(string masterKey, string Name, string route)
         {
-            // name is not used
+            // name and route is not used
             return new MasterKey { Key = masterKey };
         }
     }
