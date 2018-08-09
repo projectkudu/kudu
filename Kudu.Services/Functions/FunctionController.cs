@@ -110,7 +110,7 @@ namespace Kudu.Services.Functions
             }
         }
 
-        [HttpGet]
+        [HttpGet, HttpPost]
         public async Task<HttpResponseMessage> GetMasterKey()
         {
             var tracer = _traceFactory.GetTracer();
