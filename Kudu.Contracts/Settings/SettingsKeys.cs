@@ -43,7 +43,7 @@
         public const string DockerCiEnabled = "DOCKER_ENABLE_CI";
         public const string LinuxRestartAppContainerAfterDeployment = "SCM_RESTART_APP_CONTAINER_AFTER_DEPLOYMENT";
         public const string DoBuildDuringDeployment = "SCM_DO_BUILD_DURING_DEPLOYMENT";
-        public const string RunFromZipOld = "WEBSITE_USE_ZIP";  // Old name, will eventually go away
-        public const string RunFromZip = "WEBSITE_RUN_FROM_ZIP";
+        public const string RunFromZipOld = "WEBSITE_RUN_FROM_ZIP";  // Old name, will eventually go away
+        public const string RunFromZip = "WEBSITE_RUN_FROM_PACKAGE";
     }
 }
