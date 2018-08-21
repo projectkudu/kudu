@@ -117,7 +117,7 @@ namespace Kudu.Core.Infrastructure
             if (!propertyValues.Any() && ((int)projectFormat & 2) != 0)
             {
                 // new csproj does not have a namespace:http://schemas.microsoft.com/developer/msbuild/2003
-                propertyValues = from propertyGroup in root.Elements(GetName("PropertyGroup"))
+                propertyValues = from propertyGroup in root.Elements(XName.Get("PropertyGroup"))
                                  let property = propertyGroup.Element(XName.Get(propertyName))
                                  where property != null
                                  select property.Value;
