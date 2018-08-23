@@ -15,7 +15,8 @@ namespace Kudu.Contracts.Settings
 
         public const int DefaultMaxJobRunsHistoryCount = 50;
 
-        public static readonly string DefaultSiteExtensionFeedUrl = "https://www.siteextensions.net/api/v2/";
+        // The siteextensions.net feed is no longer used
+        //public static readonly string DefaultSiteExtensionFeedUrl = "https://www.siteextensions.net/api/v2/";
         public static readonly string NuGetSiteExtensionFeedUrl = "https://www.nuget.org/api/v2/";
 
         public static string GetValue(this IDeploymentSettingsManager settings, string key)
@@ -215,7 +216,7 @@ namespace Kudu.Contracts.Settings
         {
             string value = settings.GetValue(SettingsKeys.SiteExtensionsFeedUrl);
             isDefault = String.IsNullOrEmpty(value);
-            return !String.IsNullOrEmpty(value) ? value : DefaultSiteExtensionFeedUrl;
+            return !String.IsNullOrEmpty(value) ? value : NuGetSiteExtensionFeedUrl;
         }
 
         public static bool UseLibGit2SharpRepository(this IDeploymentSettingsManager settings)
