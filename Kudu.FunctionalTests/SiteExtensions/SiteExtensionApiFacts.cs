@@ -24,10 +24,10 @@ namespace Kudu.FunctionalTests.SiteExtensions
         private static readonly Dictionary<string, string> _galleryInstalledExtensions = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
             {"sitereplicator", "Site"},
-            {"websitelogs", "Log Browser"},
-            {"phpmyadmin", "php"},
-            {"AzureImageOptimizer", "Image Optimizer"},
-            {"AzureMinifier", "Minifier"},
+            {"letsencrypt", "Azure Let's Encrypt"},
+            {"filecounter", "counter"},
+            {"EnableFontAwesome", "awesome"},
+            {"RemoveCustomHeaders", "headers"},
         };
 
         [Theory]
