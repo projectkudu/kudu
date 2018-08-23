@@ -375,7 +375,7 @@ namespace Kudu.FunctionalTests.SiteExtensions
         }
 
         [Theory]
-        [InlineData(null, "sitereplicator", "filecounter", "filecountermvc")]    // default site extension endpoint (v2)
+        [InlineData(null, "sitereplicator", "filecounter", "letsencrypt")]    // default site extension endpoint (v2)
         // [InlineData("https://api.nuget.org/v3/index.json", "bootstrap", "knockoutjs", "angularjs")]    // v3 endpoint
         public async Task SiteExtensionParallelInstallationTest(string feedEndpoint, string testPackageId1, string testPackageId2, string testPackageId3)
         {
