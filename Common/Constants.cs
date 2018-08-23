@@ -117,7 +117,9 @@ namespace Kudu
         public const string FunctionKeyNewFormat = "~0.7";
         public const string FunctionRunTimeVersion = "FUNCTIONS_EXTENSION_VERSION";
         public const string WebSiteSku = "WEBSITE_SKU";
+        public const string WebSiteElasticScaleEnabled = "WEBSITE_ELASTIC_SCALING_ENABLED";
         public const string DynamicSku = "Dynamic";
+        public const string ElasticScaleEnabled = "1";
         public const string AzureWebJobsSecretStorageType = "AzureWebJobsSecretStorageType";
         public const string HubName = "HubName";
         public const string DurableTaskStorageConnection = "connection";
