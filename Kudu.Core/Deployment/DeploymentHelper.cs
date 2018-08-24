@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Kudu.Core.Tracing;
+using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.SourceControl;
 
@@ -48,6 +50,30 @@ namespace Kudu.Core.Deployment
             }
 
             return false;
+        }
+
+        public static void PurgeZipsIfNecessary(string sitePackagesPath, ITracer tracer, int totalAllowedZips)
+        {
+            IEnumerable<string> zipFiles = FileSystemHelpers.GetFiles(sitePackagesPath, "*.zip");
+            if (zipFiles.Count() > totalAllowedZips)
+            {
+                // Order the files in descending order of the modified date and remove the last (N - allowed zip files).
+                var fileNamesToDelete = zipFiles.OrderByDescending(fileName => FileSystemHelpers.GetLastWriteTimeUtc(fileName)).Skip(totalAllowedZips);
+                foreach (var fileName in fileNamesToDelete)
+                {
+                    using (tracer.Step("Deleting outdated zip file {0}", fileName))
+                    {
+                        try
+                        {
+                            File.Delete(fileName);
+                        }
+                        catch (Exception ex)
+                        {
+                            tracer.TraceError(ex, "Unable to delete zip file {0}", fileName);
+                        }
+                    }
+                }
+            }
         }
     }
 }

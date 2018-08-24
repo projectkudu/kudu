@@ -45,5 +45,6 @@
         public const string DoBuildDuringDeployment = "SCM_DO_BUILD_DURING_DEPLOYMENT";
         public const string RunFromZipOld = "WEBSITE_RUN_FROM_ZIP";  // Old name, will eventually go away
         public const string RunFromZip = "WEBSITE_RUN_FROM_PACKAGE";
+        public const string MaxZipPackageCount = "SCM_MAX_ZIP_PACKAGE_COUNT";
     }
 }
