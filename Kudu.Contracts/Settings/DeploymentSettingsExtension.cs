@@ -278,5 +278,19 @@ namespace Kudu.Contracts.Settings
 
         public static bool RunFromZip(this IDeploymentSettingsManager settings)
             => settings.RunFromLocalZip() || settings.RunFromRemoteZip();
+
+        public static int GetMaxZipPackageCount(this IDeploymentSettingsManager settings)
+        {
+            int DEFAULT_ALLOWED_ZIPS = 5;
+            int MIN_ALLOWED_ZIPS = 1;
+
+            string maxZipPackageCount = settings.GetValue(SettingsKeys.MaxZipPackageCount);
+            if(Int32.TryParse(maxZipPackageCount, out int totalAllowedZips))
+            {
+                return totalAllowedZips < MIN_ALLOWED_ZIPS ? MIN_ALLOWED_ZIPS : totalAllowedZips;
+            }
+
+            return DEFAULT_ALLOWED_ZIPS;
+        }
     }
 }

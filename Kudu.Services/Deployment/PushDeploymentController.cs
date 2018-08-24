@@ -316,6 +316,7 @@ namespace Kudu.Services.Deployment
                     await Request.Content.CopyToAsync(file);
                 }
             }
+            DeploymentHelper.PurgeZipsIfNecessary(_environment.SitePackagesPath, tracer, _settings.GetMaxZipPackageCount());
         }
 
         private void DeleteFilesAndDirsExcept(string fileToKeep, string dirToKeep, ITracer tracer)
