@@ -51,38 +51,43 @@ namespace Kudu.Services.Deployment
             [FromUri] string deployer = DefaultDeployer,
             [FromUri] string message = DefaultMessage)
         {
-            using (_tracer.Step("ZipPushDeploy"))
-            {
-                var deploymentInfo = new ZipDeploymentInfo(_environment, _traceFactory)
+            try {
+                using (_tracer.Step("ZipPushDeploy"))
                 {
-                    AllowDeploymentWhileScmDisabled = true,
-                    Deployer = deployer,
-                    IsContinuous = false,
-                    AllowDeferredDeployment = false,
-                    IsReusable = false,
-                    TargetChangeset = DeploymentManager.CreateTemporaryChangeSet(message: "Deploying from pushed zip file"),
-                    CommitId = null,
-                    RepositoryType = RepositoryType.None,
-                    Fetch = LocalZipHandler,
-                    DoFullBuildByDefault = false,
-                    Author = author,
-                    AuthorEmail = authorEmail,
-                    Message = message
-                };
+                    var deploymentInfo = new ZipDeploymentInfo(_environment, _traceFactory)
+                    {
+                        AllowDeploymentWhileScmDisabled = true,
+                        Deployer = deployer,
+                        IsContinuous = false,
+                        AllowDeferredDeployment = false,
+                        IsReusable = false,
+                        TargetChangeset = DeploymentManager.CreateTemporaryChangeSet(message: "Deploying from pushed zip file"),
+                        CommitId = null,
+                        RepositoryType = RepositoryType.None,
+                        Fetch = LocalZipHandler,
+                        DoFullBuildByDefault = false,
+                        Author = author,
+                        AuthorEmail = authorEmail,
+                        Message = message
+                    };
 
-                if (_settings.RunFromLocalZip())
-                {
-                    // This is used if the deployment is Run-From-Zip
-                    // the name of the deployed file in D:\home\data\SitePackages\{name}.zip is the 
-                    // timestamp in the format yyyMMddHHmmss. 
-                    deploymentInfo.ZipName = $"{DateTime.UtcNow.ToString("yyyyMMddHHmmss")}.zip";
+                    if (_settings.RunFromLocalZip())
+                    {
+                        // This is used if the deployment is Run-From-Zip
+                        // the name of the deployed file in D:\home\data\SitePackages\{name}.zip is the 
+                        // timestamp in the format yyyMMddHHmmss. 
+                        deploymentInfo.ZipName = $"{DateTime.UtcNow.ToString("yyyyMMddHHmmss")}.zip";
 
-                    // This is also for Run-From-Zip where we need to extract the triggers
-                    // for post deployment sync triggers.
-                    deploymentInfo.SyncFunctionsTriggersPath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+                        // This is also for Run-From-Zip where we need to extract the triggers
+                        // for post deployment sync triggers.
+                        deploymentInfo.SyncFunctionsTriggersPath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+                    }
+
+                    return await PushDeployAsync(deploymentInfo, isAsync);
                 }
-
-                return await PushDeployAsync(deploymentInfo, isAsync);
+            } catch (Exception e) {
+                _tracer.TraceError(e.ToString());
+                throw e;
             }
         }
 
@@ -94,119 +99,134 @@ namespace Kudu.Services.Deployment
             [FromUri] string deployer = DefaultDeployer,
             [FromUri] string message = DefaultMessage)
         {
-            using (_tracer.Step("WarPushDeploy"))
-            {
-                var appName = Request.RequestUri.ParseQueryString()["name"];
-
-                if (string.IsNullOrWhiteSpace(appName))
+            try {
+                using (_tracer.Step("WarPushDeploy"))
                 {
-                    appName = "ROOT";
+                    var appName = Request.RequestUri.ParseQueryString()["name"];
+
+                    if (string.IsNullOrWhiteSpace(appName))
+                    {
+                        appName = "ROOT";
+                    }
+
+                    var deploymentInfo = new ZipDeploymentInfo(_environment, _traceFactory)
+                    {
+                        AllowDeploymentWhileScmDisabled = true,
+                        Deployer = deployer,
+                        TargetPath = Path.Combine("webapps", appName),
+                        WatchedFilePath = Path.Combine("WEB-INF", "web.xml"),
+                        IsContinuous = false,
+                        AllowDeferredDeployment = false,
+                        IsReusable = false,
+                        CleanupTargetDirectory = true, // For now, always cleanup the target directory. If needed, make it configurable
+                        TargetChangeset = DeploymentManager.CreateTemporaryChangeSet(message: "Deploying from pushed war file"),
+                        CommitId = null,
+                        RepositoryType = RepositoryType.None,
+                        Fetch = LocalZipFetch,
+                        DoFullBuildByDefault = false,
+                        Author = author,
+                        AuthorEmail = authorEmail,
+                        Message = message
+                    };
+
+                    return await PushDeployAsync(deploymentInfo, isAsync);
                 }
-
-                var deploymentInfo = new ZipDeploymentInfo(_environment, _traceFactory)
-                {
-                    AllowDeploymentWhileScmDisabled = true,
-                    Deployer = deployer,
-                    TargetPath = Path.Combine("webapps", appName),
-                    WatchedFilePath = Path.Combine("WEB-INF", "web.xml"),
-                    IsContinuous = false,
-                    AllowDeferredDeployment = false,
-                    IsReusable = false,
-                    CleanupTargetDirectory = true, // For now, always cleanup the target directory. If needed, make it configurable
-                    TargetChangeset = DeploymentManager.CreateTemporaryChangeSet(message: "Deploying from pushed war file"),
-                    CommitId = null,
-                    RepositoryType = RepositoryType.None,
-                    Fetch = LocalZipFetch,
-                    DoFullBuildByDefault = false,
-                    Author = author,
-                    AuthorEmail = authorEmail,
-                    Message = message
-                };
-
-                return await PushDeployAsync(deploymentInfo, isAsync);
+            } catch (Exception e) {
+                _tracer.TraceError(e.ToString());
+                throw e;
             }
         }
 
         private async Task<HttpResponseMessage> PushDeployAsync(ZipDeploymentInfo deploymentInfo, bool isAsync)
         {
-            if (_settings.RunFromLocalZip())
-            {
-                await WriteSitePackageZip(deploymentInfo, _tracer);
-            }
-            else
-            {
-                var zipFileName = Path.ChangeExtension(Path.GetRandomFileName(), "zip");
-                var zipFilePath = Path.Combine(_environment.ZipTempPath, zipFileName);
-
-                using (_tracer.Step("Writing content to {0}", zipFilePath))
+            try {
+                if (_settings.RunFromLocalZip())
                 {
-                    using (var file = FileSystemHelpers.CreateFile(zipFilePath))
+                    await WriteSitePackageZip(deploymentInfo, _tracer);
+                }
+                else
+                {
+                    var zipFileName = Path.ChangeExtension(Path.GetRandomFileName(), "zip");
+                    var zipFilePath = Path.Combine(_environment.ZipTempPath, zipFileName);
+
+                    using (_tracer.Step("Writing content to {0}", zipFilePath))
                     {
-                        await Request.Content.CopyToAsync(file);
+                        using (var file = FileSystemHelpers.CreateFile(zipFilePath))
+                        {
+                            await Request.Content.CopyToAsync(file);
+                        }
                     }
+
+                    deploymentInfo.RepositoryUrl = zipFilePath;
                 }
 
-                deploymentInfo.RepositoryUrl = zipFilePath;
+                var result = await _deploymentManager.FetchDeploy(deploymentInfo, isAsync, UriHelper.GetRequestUri(Request), "HEAD");
+
+                var response = Request.CreateResponse();
+
+                switch (result)
+                {
+                    case FetchDeploymentRequestResult.RunningAynschronously:
+                        if (isAsync)
+                        {
+                            // latest deployment keyword reserved to poll till deployment done
+                            response.Headers.Location = new Uri(UriHelper.GetRequestUri(Request),
+                                String.Format("/api/deployments/{0}?deployer={1}&time={2}", Constants.LatestDeployment, deploymentInfo.Deployer, DateTime.UtcNow.ToString("yyy-MM-dd_HH-mm-ssZ")));
+                        }
+                        response.StatusCode = HttpStatusCode.Accepted;
+                        break;
+                    case FetchDeploymentRequestResult.ForbiddenScmDisabled:
+                        // Should never hit this for zip push deploy
+                        response.StatusCode = HttpStatusCode.Forbidden;
+                        _tracer.Trace("Scm is not enabled, reject all requests.");
+                        break;
+                    case FetchDeploymentRequestResult.ConflictAutoSwapOngoing:
+                        response.StatusCode = HttpStatusCode.Conflict;
+                        response.Content = new StringContent(Resources.Error_AutoSwapDeploymentOngoing);
+                        break;
+                    case FetchDeploymentRequestResult.Pending:
+                        // Shouldn't happen here, as we disallow deferral for this use case
+                        response.StatusCode = HttpStatusCode.Accepted;
+                        break;
+                    case FetchDeploymentRequestResult.RanSynchronously:
+                        response.StatusCode = HttpStatusCode.OK;
+                        break;
+                    case FetchDeploymentRequestResult.ConflictDeploymentInProgress:
+                        response.StatusCode = HttpStatusCode.Conflict;
+                        response.Content = new StringContent(Resources.Error_DeploymentInProgress);
+                        break;
+                    case FetchDeploymentRequestResult.ConflictRunFromRemoteZipConfigured:
+                        response.StatusCode = HttpStatusCode.Conflict;
+                        response.Content = new StringContent(Resources.Error_RunFromRemoteZipConfigured);
+                        break;
+                    default:
+                        response.StatusCode = HttpStatusCode.BadRequest;
+                        break;
+                }
+
+                return response;
+            } catch (Exception e) {
+                _tracer.TraceError(e.ToString());
+                throw e;
             }
-
-            var result = await _deploymentManager.FetchDeploy(deploymentInfo, isAsync, UriHelper.GetRequestUri(Request), "HEAD");
-
-            var response = Request.CreateResponse();
-
-            switch (result)
-            {
-                case FetchDeploymentRequestResult.RunningAynschronously:
-                    if (isAsync)
-                    {
-                        // latest deployment keyword reserved to poll till deployment done
-                        response.Headers.Location = new Uri(UriHelper.GetRequestUri(Request),
-                            String.Format("/api/deployments/{0}?deployer={1}&time={2}", Constants.LatestDeployment, deploymentInfo.Deployer, DateTime.UtcNow.ToString("yyy-MM-dd_HH-mm-ssZ")));
-                    }
-                    response.StatusCode = HttpStatusCode.Accepted;
-                    break;
-                case FetchDeploymentRequestResult.ForbiddenScmDisabled:
-                    // Should never hit this for zip push deploy
-                    response.StatusCode = HttpStatusCode.Forbidden;
-                    _tracer.Trace("Scm is not enabled, reject all requests.");
-                    break;
-                case FetchDeploymentRequestResult.ConflictAutoSwapOngoing:
-                    response.StatusCode = HttpStatusCode.Conflict;
-                    response.Content = new StringContent(Resources.Error_AutoSwapDeploymentOngoing);
-                    break;
-                case FetchDeploymentRequestResult.Pending:
-                    // Shouldn't happen here, as we disallow deferral for this use case
-                    response.StatusCode = HttpStatusCode.Accepted;
-                    break;
-                case FetchDeploymentRequestResult.RanSynchronously:
-                    response.StatusCode = HttpStatusCode.OK;
-                    break;
-                case FetchDeploymentRequestResult.ConflictDeploymentInProgress:
-                    response.StatusCode = HttpStatusCode.Conflict;
-                    response.Content = new StringContent(Resources.Error_DeploymentInProgress);
-                    break;
-                case FetchDeploymentRequestResult.ConflictRunFromRemoteZipConfigured:
-                    response.StatusCode = HttpStatusCode.Conflict;
-                    response.Content = new StringContent(Resources.Error_RunFromRemoteZipConfigured);
-                    break;
-                default:
-                    response.StatusCode = HttpStatusCode.BadRequest;
-                    break;
-            }
-
-            return response;
         }
 
         private async Task LocalZipHandler(IRepository repository, DeploymentInfoBase deploymentInfo, string targetBranch, ILogger logger, ITracer tracer)
         {
-            if (_settings.RunFromLocalZip() && deploymentInfo is ZipDeploymentInfo)
-            {
-                // If this is a Run-From-Zip deployment, then we need to extract function.json
-                // from the zip file into path zipDeploymentInfo.SyncFunctionsTrigersPath
-                ExtractTriggers(repository, deploymentInfo as ZipDeploymentInfo);
-            }
-            else
-            {
-                await LocalZipFetch(repository, deploymentInfo, targetBranch, logger, tracer);
+            try {
+                if (_settings.RunFromLocalZip() && deploymentInfo is ZipDeploymentInfo)
+                {
+                    // If this is a Run-From-Zip deployment, then we need to extract function.json
+                    // from the zip file into path zipDeploymentInfo.SyncFunctionsTrigersPath
+                    ExtractTriggers(repository, deploymentInfo as ZipDeploymentInfo);
+                }
+                else
+                {
+                    await LocalZipFetch(repository, deploymentInfo, targetBranch, logger, tracer);
+                }
+            } catch (Exception e) {
+                logger.Log(e.ToString());
+                throw e;
             }
         }
 
@@ -245,51 +265,56 @@ namespace Kudu.Services.Deployment
 
         private async Task LocalZipFetch(IRepository repository, DeploymentInfoBase deploymentInfo, string targetBranch, ILogger logger, ITracer tracer)
         {
-            var zipDeploymentInfo = (ZipDeploymentInfo)deploymentInfo;
+            try {
+                var zipDeploymentInfo = (ZipDeploymentInfo)deploymentInfo;
 
-            // For this kind of deployment, RepositoryUrl is a local path.
-            var sourceZipFile = zipDeploymentInfo.RepositoryUrl;
-            var extractTargetDirectory = repository.RepositoryPath;
+                // For this kind of deployment, RepositoryUrl is a local path.
+                var sourceZipFile = zipDeploymentInfo.RepositoryUrl;
+                var extractTargetDirectory = repository.RepositoryPath;
 
-            var info = FileSystemHelpers.FileInfoFromFileName(sourceZipFile);
-            var sizeInMb = (info.Length / (1024f * 1024f)).ToString("0.00", CultureInfo.InvariantCulture);
+                var info = FileSystemHelpers.FileInfoFromFileName(sourceZipFile);
+                var sizeInMb = (info.Length / (1024f * 1024f)).ToString("0.00", CultureInfo.InvariantCulture);
 
-            var message = String.Format(
-                CultureInfo.InvariantCulture,
-                "Cleaning up temp folders from previous zip deployments and extracting pushed zip file {0} ({1} MB) to {2}",
-                info.FullName,
-                sizeInMb,
-                extractTargetDirectory);
+                var message = String.Format(
+                    CultureInfo.InvariantCulture,
+                    "Cleaning up temp folders from previous zip deployments and extracting pushed zip file {0} ({1} MB) to {2}",
+                    info.FullName,
+                    sizeInMb,
+                    extractTargetDirectory);
 
-            logger.Log(message);
+                logger.Log(message);
 
-            using (tracer.Step(message))
-            {
-                // If extractTargetDirectory already exists, rename it so we can delete it concurrently with
-                // the unzip (along with any other junk in the folder)
-                var targetInfo = FileSystemHelpers.DirectoryInfoFromDirectoryName(extractTargetDirectory);
-                if (targetInfo.Exists)
+                using (tracer.Step(message))
                 {
-                    var moveTarget = Path.Combine(targetInfo.Parent.FullName, Path.GetRandomFileName());
-                    targetInfo.MoveTo(moveTarget);
+                    // If extractTargetDirectory already exists, rename it so we can delete it concurrently with
+                    // the unzip (along with any other junk in the folder)
+                    var targetInfo = FileSystemHelpers.DirectoryInfoFromDirectoryName(extractTargetDirectory);
+                    if (targetInfo.Exists)
+                    {
+                        var moveTarget = Path.Combine(targetInfo.Parent.FullName, Path.GetRandomFileName());
+                        targetInfo.MoveTo(moveTarget);
+                    }
+
+                    var cleanTask = Task.Run(() => DeleteFilesAndDirsExcept(sourceZipFile, extractTargetDirectory, tracer));
+                    var extractTask = Task.Run(() =>
+                    {
+                        FileSystemHelpers.CreateDirectory(extractTargetDirectory);
+
+                        using (var file = info.OpenRead())
+                        using (var zip = new ZipArchive(file, ZipArchiveMode.Read))
+                        {
+                            zip.Extract(extractTargetDirectory);
+                        }
+                    });
+
+                    await Task.WhenAll(cleanTask, extractTask);
                 }
 
-                var cleanTask = Task.Run(() => DeleteFilesAndDirsExcept(sourceZipFile, extractTargetDirectory, tracer));
-                var extractTask = Task.Run(() =>
-                {
-                    FileSystemHelpers.CreateDirectory(extractTargetDirectory);
-
-                    using (var file = info.OpenRead())
-                    using (var zip = new ZipArchive(file, ZipArchiveMode.Read))
-                    {
-                        zip.Extract(extractTargetDirectory);
-                    }
-                });
-
-                await Task.WhenAll(cleanTask, extractTask);
+                CommitRepo(repository, zipDeploymentInfo);
+            } catch (Exception e) {
+                logger.Log(e.ToString());
+                throw e;
             }
-
-            CommitRepo(repository, zipDeploymentInfo);
         }
 
         private static void CommitRepo(IRepository repository, ZipDeploymentInfo zipDeploymentInfo)
@@ -304,17 +329,22 @@ namespace Kudu.Services.Deployment
 
         private async Task WriteSitePackageZip(ZipDeploymentInfo zipDeploymentInfo, ITracer tracer)
         {
-            var filePath = Path.Combine(_environment.SitePackagesPath, zipDeploymentInfo.ZipName);
+            try {
+                var filePath = Path.Combine(_environment.SitePackagesPath, zipDeploymentInfo.ZipName);
 
-            // Make sure D:\home\data\SitePackages exists
-            FileSystemHelpers.EnsureDirectory(_environment.SitePackagesPath);
+                // Make sure D:\home\data\SitePackages exists
+                FileSystemHelpers.EnsureDirectory(_environment.SitePackagesPath);
 
-            using (tracer.Step("Writing content to {0}", filePath))
-            {
-                using (var file = FileSystemHelpers.CreateFile(filePath))
+                using (tracer.Step("Writing content to {0}", filePath))
                 {
-                    await Request.Content.CopyToAsync(file);
+                    using (var file = FileSystemHelpers.CreateFile(filePath))
+                    {
+                        await Request.Content.CopyToAsync(file);
+                    }
                 }
+            } catch (Exception e) {
+                tracer.TraceError(e.ToString());
+                throw e;
             }
         }
 
