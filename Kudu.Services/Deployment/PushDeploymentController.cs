@@ -239,7 +239,7 @@ namespace Kudu.Services.Deployment
             bool isFunctionJson(string fullName)
             {
                 return fullName.EndsWith(Constants.FunctionsConfigFile) &&
-                    fullName.Count(c => c == '/') == 1;
+                    fullName.Count(c => c == '/' || c == '\\') == 1;
             }
         }
 
