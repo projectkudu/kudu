@@ -811,7 +811,7 @@ namespace Kudu.Services.Web.App_Start
                 // On Azure, restore nuget packages to d:\home\.nuget so they're persistent. It also helps
                 // work around https://github.com/projectkudu/kudu/issues/2056.
                 // Note that this only applies to project.json scenarios (not packages.config)
-                SetEnvironmentVariableIfNotYetSet("NUGET_PACKAGES", Path.Combine(environment.RootPath, ".nuget"));
+                SetEnvironmentVariableIfNotYetSet("NUGET_PACKAGES", Path.Combine(environment.RootPath, @".nuget\"));
 
                 // Set the telemetry environment variable
                 SetEnvironmentVariableIfNotYetSet("DOTNET_CLI_TELEMETRY_PROFILE", "AzureKudu");
