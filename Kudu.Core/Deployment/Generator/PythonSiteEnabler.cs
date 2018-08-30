@@ -19,7 +19,7 @@ namespace Kudu.Core.Deployment.Generator
                 // For Linux web apps: Rely on WEBSITE_PYTHON_VERSION environment variable to
                 // detect if this is a python app
                 string pythonVersion = System.Environment.GetEnvironmentVariable("WEBSITE_PYTHON_VERSION");
-                if (!string.IsNullOrEmpty(pythonVersion) && pythonVersion.StartsWith("3"))
+                if (!string.IsNullOrEmpty(pythonVersion) && pythonVersion.StartsWith("3", StringComparison.OrdinalIgnoreCase))
                 {
                     return true;
                 }
