@@ -65,7 +65,7 @@ namespace Kudu.Core.Deployment
                     {
                         try
                         {
-                            File.Delete(fileName);
+                            FileSystemHelpers.DeleteFile(fileName);
                         }
                         catch (Exception ex)
                         {
