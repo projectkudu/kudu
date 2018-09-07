@@ -127,10 +127,19 @@ namespace Kudu.Core.Functions
         private async Task<T> GetKeyObjectFromFile<T>(string name, IKeyJsonOps<T> keyOp)
         {
             var secretStorageType = System.Environment.GetEnvironmentVariable(Constants.AzureWebJobsSecretStorageType);
-            if (!string.IsNullOrEmpty(secretStorageType) &&
-                secretStorageType.Equals("Blob", StringComparison.OrdinalIgnoreCase))
+
+            // Assume the default version to not be one
+            var isVersionOne = !string.IsNullOrEmpty(FunctionSiteExtensionVersion) && (FunctionSiteExtensionVersion.StartsWith("1.0") || FunctionSiteExtensionVersion.Equals("~1"));
+
+            // If it is version one (default is Files) and the secret storage type not Files (not default or set manually), throw an error.
+            // Or if it's not version one (default is Blob), and the secret storage is not Files (manually set), throw an error.
+            var isStorageFiles = isVersionOne
+                ? string.IsNullOrEmpty(secretStorageType) || !secretStorageType.Equals("Blob", StringComparison.OrdinalIgnoreCase)
+                : !string.IsNullOrEmpty(secretStorageType) && secretStorageType.Equals("Files", StringComparison.OrdinalIgnoreCase);
+            if (!isStorageFiles)
             {
-                throw new InvalidOperationException("Runtime keys are stored on blob storage. This API doesn't support this configuration.");
+                throw new InvalidOperationException($"Runtime keys are stored on blob storage. This API doesn't support this configuration. " +
+                    $"Please change Environment variable {Constants.AzureWebJobsSecretStorageType} value to 'Files'. For more info, visit https://aka.ms/funcsecrets");
             }
 
             string keyPath = GetFunctionSecretsFilePath(name);
