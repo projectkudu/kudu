@@ -41,6 +41,18 @@ namespace Kudu.Core.Infrastructure
             return path;
         }
 
+        public static string EnsureDirectoryIgnoreAccessExceptions(string path)
+        {
+            try
+            {
+                return EnsureDirectory(path);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return path;
+            }
+        }
+
         public static void MoveDirectory(string sourceDirName, string destDirName)
         {
             // Instance.Directory.Move will result in access denied sometime. Do it ourself!
