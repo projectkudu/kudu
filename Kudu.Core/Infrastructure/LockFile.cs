@@ -63,15 +63,20 @@ namespace Kudu.Core.Infrastructure
         public void InitializeAsyncLocks()
         {
             _lockRequestQueue = new ConcurrentQueue<QueueItem>();
-
-            FileSystemHelpers.EnsureDirectory(Path.GetDirectoryName(_path));
-
-            // Set up lock file watcher. Note that depending on how the file is accessed the file watcher may generate multiple events.
-            _lockFileWatcher = new FileSystemWatcher(Path.GetDirectoryName(_path), Path.GetFileName(_path));
-            _lockFileWatcher.NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName;
-            _lockFileWatcher.Changed += OnLockReleasedInternal;
-            _lockFileWatcher.Deleted += OnLockReleasedInternal;
-            _lockFileWatcher.EnableRaisingEvents = true;
+            try
+            {
+                FileSystemHelpers.EnsureDirectory(Path.GetDirectoryName(_path));
+                // Set up lock file watcher. Note that depending on how the file is accessed the file watcher may generate multiple events.
+                _lockFileWatcher = new FileSystemWatcher(Path.GetDirectoryName(_path), Path.GetFileName(_path));
+                _lockFileWatcher.NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName;
+                _lockFileWatcher.Changed += OnLockReleasedInternal;
+                _lockFileWatcher.Deleted += OnLockReleasedInternal;
+                _lockFileWatcher.EnableRaisingEvents = true;
+            }
+            catch (UnauthorizedAccessException)
+            {
+                // If not authorized to create the locks directory, do nothing for now.
+            }
         }
 
         /// <summary>
