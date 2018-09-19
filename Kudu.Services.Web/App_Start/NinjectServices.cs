@@ -570,10 +570,11 @@ namespace Kudu.Services.Web.App_Start
             routes.MapHttpRoute("delete-function", "api/functions/{name}", new { controller = "Function", action = "Delete" }, new { verb = new HttpMethodConstraint("DELETE") });
             routes.MapHttpRoute("download-functions", "api/functions/admin/download", new { controller = "Function", action = "DownloadFunctions" }, new { verb = new HttpMethodConstraint("GET") });
 
-            // Docker Hook Endpoint
+            // Container Hook Endpoint
             if (!OSDetector.IsOnWindows() || (OSDetector.IsOnWindows() && EnvironmentHelper.IsWindowsContainers()))
             {
                 routes.MapHttpRoute("docker", "docker/hook", new { controller = "Docker", action = "ReceiveHook" }, new { verb = new HttpMethodConstraint("POST") });
+                routes.MapHttpRoute("container", "container/webhook", new { controller = "Docker", action = "ReceiveHook" }, new { verb = new HttpMethodConstraint("POST") });
             }
 
             // catch all unregistered url to properly handle not found
