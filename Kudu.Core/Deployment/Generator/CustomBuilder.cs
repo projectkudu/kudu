@@ -35,8 +35,15 @@ namespace Kudu.Core.Deployment.Generator
                         }
                     }
 
-                    context.Logger.Log("Setting execute permissions for " + commandFullPath);
-                    PermissionHelper.Chmod("ugo+x", commandFullPath, Environment, DeploymentSettings, context.Logger);
+                    if(commandFullPath.Contains(RepositoryPath))
+                    {
+                        context.Logger.Log("Setting execute permissions for " + commandFullPath);
+                        PermissionHelper.Chmod("ugo+x", commandFullPath, Environment, DeploymentSettings, context.Logger);
+                    }
+                    else
+                    {
+                        context.Logger.Log("Not setting execute permissions for " + commandFullPath);
+                    }
                 }
                 
                 RunCommand(context, _command, ignoreManifest: false);
