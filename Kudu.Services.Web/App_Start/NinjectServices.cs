@@ -450,7 +450,7 @@ namespace Kudu.Services.Web.App_Start
             routes.MapHttpRouteDual("zip-put-files", "zip/{*path}", new { controller = "Zip", action = "PutItem" }, new { verb = new HttpMethodConstraint("PUT") });
 
             // Zip push deployment
-            routes.MapHttpRoute("zip-push-deploy", "api/zipdeploy", new { controller = "PushDeployment", action = "ZipPushDeploy" }, new { verb = new HttpMethodConstraint("POST") });
+            routes.MapHttpRouteDual("zip-push-deploy", "zipdeploy", new { controller = "PushDeployment", action = "ZipPushDeploy" }, new { verb = new HttpMethodConstraint("POST", "PUT") });
             routes.MapHttpRoute("zip-war-deploy", "api/wardeploy", new { controller = "PushDeployment", action = "WarPushDeploy" }, new { verb = new HttpMethodConstraint("POST") });
 
             // Live Command Line
