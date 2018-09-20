@@ -3,6 +3,7 @@ using System.IO;
 using System.IO.Abstractions;
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
 using Kudu.Contracts.Settings;
@@ -32,6 +33,8 @@ namespace Kudu.Core.Test.Deployment
             var directoryBase = new Mock<DirectoryBase>();
             var fileStream = new MemoryStream();
             var requestStream = new MemoryStream(Encoding.UTF8.GetBytes("Request Body"));
+            var streamContent = new StreamContent(requestStream);
+            streamContent.Headers.ContentType = new MediaTypeHeaderValue("text/plain");
 
             settings
                 .Setup(s => s.GetValue(It.Is<string>(t => t == SettingsKeys.RunFromZip), It.IsAny<bool>()))
@@ -66,7 +69,7 @@ namespace Kudu.Core.Test.Deployment
             {
                 Request = new HttpRequestMessage(HttpMethod.Post, "https://localhost/zipDeploy")
                 {
-                    Content = new StreamContent(requestStream)
+                    Content = streamContent
                 }
             };
 

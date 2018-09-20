@@ -256,13 +256,13 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="ZipDeploy\Default.cshtml">
+    <Content Include="ZipDeployUI\Default.cshtml">
       <SubType>Code</SubType>
     </Content>
-    <Content Include="ZipDeploy\WindowsZipDeploy.cshtml">
+    <Content Include="ZipDeployUI\WindowsZipDeploy.cshtml">
       <SubType>Code</SubType>
     </Content>
-    <Content Include="ZipDeploy\LinuxZipDeploy.cshtml">
+    <Content Include="ZipDeployUI\LinuxZipDeploy.cshtml">
       <SubType>Code</SubType>
     </Content>
   </ItemGroup>

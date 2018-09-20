@@ -6,6 +6,8 @@ using Kudu.Core.Tracing;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.SourceControl;
+using System.Net.Http;
+using System.Threading.Tasks;
 
 namespace Kudu.Core.Deployment
 {
@@ -70,6 +72,32 @@ namespace Kudu.Core.Deployment
                         catch (Exception ex)
                         {
                             tracer.TraceError(ex, "Unable to delete zip file {0}", fileName);
+                        }
+                    }
+                }
+            }
+        }
+
+        public static async Task<HttpContent> PerformGetAsync(HttpClient client, Uri uri, ITracer tracer)
+        {
+            int retries = 3;
+            HttpResponseMessage response = null;
+            while (true)
+            {
+                using (tracer.Step("Trying to make a GET request to {0}", uri.AbsoluteUri))
+                {
+                    try
+                    {
+                        response = await client.GetAsync(uri);
+                        response.EnsureSuccessStatusCode();
+                        return response.Content;
+                    }
+                    catch (Exception ex)
+                    {
+                        if (--retries <= 0)
+                        {
+                            tracer.TraceError(ex, "Could not make a successful GET request to {0}", uri.AbsoluteUri);
+                            throw ex;
                         }
                     }
                 }

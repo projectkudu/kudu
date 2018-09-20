@@ -14,7 +14,9 @@ using Kudu.Core.Deployment;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.SourceControl;
 using Kudu.Core.Tracing;
+using Kudu.Services.Arm;
 using Kudu.Services.Infrastructure;
+using Newtonsoft.Json.Linq;
 
 namespace Kudu.Services.Deployment
 {
@@ -44,6 +46,7 @@ namespace Kudu.Services.Deployment
         }
 
         [HttpPost]
+        [HttpPut]
         public async Task<HttpResponseMessage> ZipPushDeploy(
             [FromUri] bool isAsync = false,
             [FromUri] string author = null,
@@ -127,11 +130,50 @@ namespace Kudu.Services.Deployment
             }
         }
 
+        private async Task<HttpContent> GetZipFromJSON()
+        {
+            // ARM template should have properties field and a packageUri field inside the properties field.
+            var requestObject = await Request.Content.ReadAsAsync<JObject>();
+            string zipUrl = null;
+            using (_tracer.Step("Reading the zip URL from the request JSON"))
+            {
+                try
+                {
+                    zipUrl = requestObject.Value<JObject>("properties").Value<string>("packageUri");
+                }
+                catch (Exception ex)
+                {
+                    _tracer.TraceError(ex, "Error reading the URL from the JSON");
+                    throw ex;
+                }
+            }
+            using (var client = new HttpClient(new HttpClientHandler()))
+            {
+                return await DeploymentHelper.PerformGetAsync(client, new Uri(zipUrl), _tracer);
+            }
+        }
+
         private async Task<HttpResponseMessage> PushDeployAsync(ZipDeploymentInfo deploymentInfo, bool isAsync)
         {
+            var content = Request.Content;
+            var isRequestJSON = content.Headers.ContentType.MediaType.Equals("application/json", StringComparison.OrdinalIgnoreCase);
+            if (isRequestJSON)
+            {
+                try
+                {
+                    content = await GetZipFromJSON();
+                }
+                catch (Exception)
+                {
+                    var badResponse = Request.CreateResponse();
+                    badResponse.StatusCode = HttpStatusCode.BadRequest;
+                    return badResponse;
+                }
+            }
+
             if (_settings.RunFromLocalZip())
             {
-                await WriteSitePackageZip(deploymentInfo, _tracer);
+                await WriteSitePackageZip(deploymentInfo, _tracer, content);
             }
             else
             {
@@ -142,7 +184,7 @@ namespace Kudu.Services.Deployment
                 {
                     using (var file = FileSystemHelpers.CreateFile(zipFilePath))
                     {
-                        await Request.Content.CopyToAsync(file);
+                        await content.CopyToAsync(file);
                     }
                 }
 
@@ -178,7 +220,15 @@ namespace Kudu.Services.Deployment
                     response.StatusCode = HttpStatusCode.Accepted;
                     break;
                 case FetchDeploymentRequestResult.RanSynchronously:
-                    response.StatusCode = HttpStatusCode.OK;
+                    if (ArmUtils.IsArmRequest(Request) && isRequestJSON)
+                    {
+                        DeployResult dr = new DeployResult();
+                        response = Request.CreateResponse(HttpStatusCode.OK, ArmUtils.AddEnvelopeOnArmRequest(dr, Request));
+                    }
+                    else
+                    {
+                        response.StatusCode = HttpStatusCode.OK;
+                    }
                     break;
                 case FetchDeploymentRequestResult.ConflictDeploymentInProgress:
                     response.StatusCode = HttpStatusCode.Conflict;
@@ -302,7 +352,7 @@ namespace Kudu.Services.Deployment
             repository.Commit(zipDeploymentInfo.Message, zipDeploymentInfo.Author, zipDeploymentInfo.AuthorEmail);
         }
 
-        private async Task WriteSitePackageZip(ZipDeploymentInfo zipDeploymentInfo, ITracer tracer)
+        private async Task WriteSitePackageZip(ZipDeploymentInfo zipDeploymentInfo, ITracer tracer, HttpContent content)
         {
             var filePath = Path.Combine(_environment.SitePackagesPath, zipDeploymentInfo.ZipName);
 
@@ -313,7 +363,7 @@ namespace Kudu.Services.Deployment
             {
                 using (var file = FileSystemHelpers.CreateFile(filePath))
                 {
-                    await Request.Content.CopyToAsync(file);
+                    await content.CopyToAsync(file);
                 }
             }
             DeploymentHelper.PurgeZipsIfNecessary(_environment.SitePackagesPath, tracer, _settings.GetMaxZipPackageCount());
