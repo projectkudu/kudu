@@ -456,6 +456,12 @@ namespace Kudu.Services.Performance
                 SetEnvironmentInfo(info);
             }
 
+            if (ArmUtils.IsArmRequest(Request))
+            {
+                info.EnvironmentVariables = null;
+                info.CommandLine = null;
+            }
+
             return info;
         }
 
