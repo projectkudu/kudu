@@ -26,7 +26,7 @@ namespace Kudu.Core.Deployment.Generator
             {
                 if (!OSDetector.IsOnWindows())
                 {
-                    if (commandFullPath.StartsWith("."))
+                    if (commandFullPath.StartsWith(".", StringComparison.OrdinalIgnoreCase))
                     {
                         string finalCommandPath = Path.GetFullPath(Path.Combine(RepositoryPath, commandFullPath));
                         if (File.Exists(finalCommandPath))
