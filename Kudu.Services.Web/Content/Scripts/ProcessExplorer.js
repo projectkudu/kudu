@@ -62,7 +62,7 @@ var Utilities = (function () {
                 if (cells[j] instanceof HTMLElement) {
                     cell.appendChild(cells[j]);
                 } else {
-                    cell.innerHTML = cells[j];
+                    $(cell).text(cells[j]);
                 }
                 row.appendChild(cell);
             }
