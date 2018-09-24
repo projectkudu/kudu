@@ -29,6 +29,16 @@ namespace Kudu.Services.Performance
         private readonly IEnvironment _environment;
         private readonly IDeploymentSettingsManager _settings;
 
+
+        // These settings are not secrets, and are needed by the Visual Studio Snapshot debugger.
+        // Since they are not secrets, it's okay for a Reader over ARM to get them.
+        private readonly IReadOnlyList<string> _armWhitelistedVaiables = new []
+        {
+            "MicrosoftProductionDiagnostics_AgentPath",
+            "COR_ENABLE_PROFILING",
+            "CORECLR_ENABLE_PROFILING"
+        };
+
         public ProcessController(ITracer tracer,
                                  IEnvironment environment,
                                  IDeploymentSettingsManager settings)
@@ -448,18 +458,20 @@ namespace Kudu.Services.Performance
                 info.Threads = SafeGetValue(() => GetThreads(process, selfLink.ToString()), Enumerable.Empty<ProcessThreadInfo>());
                 info.Modules = SafeGetValue(() => GetModules(process, selfLink.ToString().TrimEnd('/') + "/modules"), Enumerable.Empty<ProcessModuleInfo>());
                 info.TimeStamp = DateTime.UtcNow;
-                info.EnvironmentVariables = SafeGetValue(process.GetEnvironmentVariables, null);
+                info.EnvironmentVariables = SafeGetValue(process.GetEnvironmentVariables, new Dictionary<string, string>());
                 info.CommandLine = SafeGetValue(process.GetCommandLine, null);
                 info.IsProfileRunning = ProfileManager.IsProfileRunning(process.Id);
                 info.IsIisProfileRunning = ProfileManager.IsIisProfileRunning(process.Id);
                 info.IisProfileTimeoutInSeconds = ProfileManager.IisProfileTimeoutInSeconds;
                 SetEnvironmentInfo(info);
-            }
 
-            if (ArmUtils.IsArmRequest(Request))
-            {
-                info.EnvironmentVariables = null;
-                info.CommandLine = null;
+                if (ArmUtils.IsArmRequest(Request))
+                {
+                    info.EnvironmentVariables = info.EnvironmentVariables
+                        .Where(kv => _armWhitelistedVaiables.Contains(kv.Key, StringComparer.OrdinalIgnoreCase))
+                        .ToDictionary(k => k.Key, v => v.Value);
+                    info.CommandLine = null;
+                }
             }
 
             return info;
