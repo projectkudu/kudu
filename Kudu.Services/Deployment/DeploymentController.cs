@@ -451,6 +451,27 @@ namespace Kudu.Services.Deployment
                 result.Url = baseUri;
                 result.LogUrl = UriHelper.MakeRelative(baseUri, "log");
 
+                if (ArmUtils.IsArmRequest(Request))
+                {
+                    switch (result.Status)
+                    {
+                        case DeployStatus.Building:
+                        case DeployStatus.Deploying:
+                        case DeployStatus.Pending:
+                            result.ProvisioningState = "InProgress";
+                            HttpResponseMessage responseMessage = Request.CreateResponse(HttpStatusCode.OK, ArmUtils.AddEnvelopeOnArmRequest(result, Request));
+                            responseMessage.Headers.Location = Request.RequestUri;
+                            return responseMessage;
+                        case DeployStatus.Failed:
+                            result.ProvisioningState = "Failed";
+                            break;
+                        case DeployStatus.Success:
+                            result.ProvisioningState = "Succeeded";
+                            break;
+                        default:
+                            return Request.CreateResponse(HttpStatusCode.BadRequest, ArmUtils.AddEnvelopeOnArmRequest(result, Request));
+                    }
+                }
                 return Request.CreateResponse(HttpStatusCode.OK, ArmUtils.AddEnvelopeOnArmRequest(result, Request));
             }
         }

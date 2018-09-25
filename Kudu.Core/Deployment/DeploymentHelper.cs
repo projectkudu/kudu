@@ -78,27 +78,26 @@ namespace Kudu.Core.Deployment
             }
         }
 
-        public static async Task<HttpContent> PerformGetAsync(HttpClient client, Uri uri, ITracer tracer)
+        public static async Task<HttpContent> GetZipContentFromURL(ZipDeploymentInfo zipDeploymentInfo, ITracer tracer)
         {
-            int retries = 3;
-            HttpResponseMessage response = null;
-            while (true)
+            using (var client = new HttpClient(new HttpClientHandler()))
             {
+                Uri uri = new Uri(zipDeploymentInfo.ZipURL);
                 using (tracer.Step("Trying to make a GET request to {0}", uri.AbsoluteUri))
                 {
                     try
                     {
-                        response = await client.GetAsync(uri);
-                        response.EnsureSuccessStatusCode();
-                        return response.Content;
+                        return await OperationManager.AttemptAsync<HttpContent>(async () =>
+                        {
+                            HttpResponseMessage response = await client.GetAsync(uri);
+                            response.EnsureSuccessStatusCode();
+                            return response.Content;
+                        });
                     }
                     catch (Exception ex)
                     {
-                        if (--retries <= 0)
-                        {
-                            tracer.TraceError(ex, "Could not make a successful GET request to {0}", uri.AbsoluteUri);
-                            throw ex;
-                        }
+                        tracer.TraceError(ex, "Could not make a successful GET request to {0}", uri.AbsoluteUri);
+                        throw;
                     }
                 }
             }

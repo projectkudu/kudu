@@ -69,5 +69,8 @@ namespace Kudu.Core.Deployment
 
         [JsonProperty(PropertyName = "site_name")]
         public string SiteName { get; set; }
+
+        [JsonProperty(PropertyName = "provisioningState")]
+        public string ProvisioningState { get; set; }
     }
 }
