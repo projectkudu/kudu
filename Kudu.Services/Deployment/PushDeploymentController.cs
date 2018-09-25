@@ -130,26 +130,26 @@ namespace Kudu.Services.Deployment
             }
         }
 
-        private async Task<HttpContent> GetZipFromJSON()
+        private async Task<string> GetZipURLFromJSON()
         {
             // ARM template should have properties field and a packageUri field inside the properties field.
             var requestObject = await Request.Content.ReadAsAsync<JObject>();
-            string zipUrl = null;
             using (_tracer.Step("Reading the zip URL from the request JSON"))
             {
                 try
                 {
-                    zipUrl = requestObject.Value<JObject>("properties").Value<string>("packageUri");
+                    string packageUri = requestObject.Value<JObject>("properties").Value<string>("packageUri");
+                    if (string.IsNullOrEmpty(packageUri))
+                    {
+                        throw new ArgumentException("Invalid Url in the JSON request");
+                    }
+                    return packageUri;
                 }
                 catch (Exception ex)
                 {
-                    _tracer.TraceError(ex, "Error reading the URL from the JSON");
-                    throw ex;
+                    _tracer.TraceError(ex, "Error reading the URL from the JSON {0}", requestObject.ToString());
+                    throw;
                 }
-            }
-            using (var client = new HttpClient(new HttpClientHandler()))
-            {
-                return await DeploymentHelper.PerformGetAsync(client, new Uri(zipUrl), _tracer);
             }
         }
 
@@ -161,35 +161,36 @@ namespace Kudu.Services.Deployment
             {
                 try
                 {
-                    content = await GetZipFromJSON();
+                    deploymentInfo.ZipURL = await GetZipURLFromJSON();
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
-                    var badResponse = Request.CreateResponse();
-                    badResponse.StatusCode = HttpStatusCode.BadRequest;
-                    return badResponse;
+                    return ArmUtils.CreateErrorResponse(Request, HttpStatusCode.BadRequest, ex);
                 }
-            }
-
-            if (_settings.RunFromLocalZip())
-            {
-                await WriteSitePackageZip(deploymentInfo, _tracer, content);
             }
             else
             {
-                var zipFileName = Path.ChangeExtension(Path.GetRandomFileName(), "zip");
-                var zipFilePath = Path.Combine(_environment.ZipTempPath, zipFileName);
-
-                using (_tracer.Step("Writing content to {0}", zipFilePath))
+                if (_settings.RunFromLocalZip())
                 {
-                    using (var file = FileSystemHelpers.CreateFile(zipFilePath))
-                    {
-                        await content.CopyToAsync(file);
-                    }
+                    await WriteSitePackageZip(deploymentInfo, _tracer, Request.Content);
                 }
+                else
+                {
+                    var zipFileName = Path.ChangeExtension(Path.GetRandomFileName(), "zip");
+                    var zipFilePath = Path.Combine(_environment.ZipTempPath, zipFileName);
 
-                deploymentInfo.RepositoryUrl = zipFilePath;
+                    using (_tracer.Step("Writing content to {0}", zipFilePath))
+                    {
+                        using (var file = FileSystemHelpers.CreateFile(zipFilePath))
+                        {
+                            await content.CopyToAsync(file);
+                        }
+                    }
+                    deploymentInfo.RepositoryUrl = zipFilePath;
+                }
             }
+
+            isAsync = ArmUtils.IsArmRequest(Request) ? true : isAsync;
 
             var result = await _deploymentManager.FetchDeploy(deploymentInfo, isAsync, UriHelper.GetRequestUri(Request), "HEAD");
 
@@ -198,7 +199,23 @@ namespace Kudu.Services.Deployment
             switch (result)
             {
                 case FetchDeploymentRequestResult.RunningAynschronously:
-                    if (isAsync)
+                    if (ArmUtils.IsArmRequest(Request))
+                    {
+                        DeployResult deployResult = new DeployResult();
+                        response = Request.CreateResponse(HttpStatusCode.Accepted, ArmUtils.AddEnvelopeOnArmRequest(deployResult, Request));
+                        string statusURL = GetStatusUrl();
+                        // Should not happen: If we couldn't make the URL, there must have been an error in the request
+                        if (string.IsNullOrEmpty(statusURL))
+                        {
+                            var badResponse = Request.CreateResponse();
+                            badResponse.StatusCode = HttpStatusCode.BadRequest;
+                            return badResponse;
+                        }
+                        // latest deployment keyword reserved to poll till deployment done
+                        response.Headers.Location = new Uri(statusURL +
+                            String.Format("/deployments/{0}?api-version=2018-02-01&deployer={1}&time={2}", Constants.LatestDeployment, deploymentInfo.Deployer, DateTime.UtcNow.ToString("yyy-MM-dd_HH-mm-ssZ")));
+                    }
+                    else if (isAsync)
                     {
                         // latest deployment keyword reserved to poll till deployment done
                         response.Headers.Location = new Uri(UriHelper.GetRequestUri(Request),
@@ -220,15 +237,7 @@ namespace Kudu.Services.Deployment
                     response.StatusCode = HttpStatusCode.Accepted;
                     break;
                 case FetchDeploymentRequestResult.RanSynchronously:
-                    if (ArmUtils.IsArmRequest(Request) && isRequestJSON)
-                    {
-                        DeployResult dr = new DeployResult();
-                        response = Request.CreateResponse(HttpStatusCode.OK, ArmUtils.AddEnvelopeOnArmRequest(dr, Request));
-                    }
-                    else
-                    {
-                        response.StatusCode = HttpStatusCode.OK;
-                    }
+                    response.StatusCode = HttpStatusCode.OK;
                     break;
                 case FetchDeploymentRequestResult.ConflictDeploymentInProgress:
                     response.StatusCode = HttpStatusCode.Conflict;
@@ -246,13 +255,33 @@ namespace Kudu.Services.Deployment
             return response;
         }
 
+        private string GetStatusUrl()
+        {
+            Uri referrer = Request.Headers.Referrer;
+            var armID = referrer != null ? referrer.AbsoluteUri : Request.RequestUri.AbsoluteUri;
+            string[] idTokens = armID.Split('/');
+            // The Absolute URI looks like https://management.azure.com/subscriptions/<sub-id>/resourcegroups/<rg-name>/providers/Microsoft.Web/sites/<site-name>/zipdeploy?api-version=2016-03-01
+            // We need everything up until <site-name>, without the endpoint.
+            if (idTokens.Length > 10 && idTokens[8] == "Microsoft.Web")
+            {
+                return string.Join("/", idTokens.Take(11));
+            }
+            return null;
+        }
+
         private async Task LocalZipHandler(IRepository repository, DeploymentInfoBase deploymentInfo, string targetBranch, ILogger logger, ITracer tracer)
         {
             if (_settings.RunFromLocalZip() && deploymentInfo is ZipDeploymentInfo)
             {
+                ZipDeploymentInfo zipDeploymentInfo = (ZipDeploymentInfo) deploymentInfo;
+                // If this was a request with a Zip URL in the JSON, we first need to get the zip content and write it to the site.
+                if (!string.IsNullOrEmpty(zipDeploymentInfo.ZipURL))
+                {
+                    await WriteSitePackageZip(zipDeploymentInfo, tracer, await DeploymentHelper.GetZipContentFromURL(zipDeploymentInfo, tracer));
+                }
                 // If this is a Run-From-Zip deployment, then we need to extract function.json
                 // from the zip file into path zipDeploymentInfo.SyncFunctionsTrigersPath
-                ExtractTriggers(repository, deploymentInfo as ZipDeploymentInfo);
+                ExtractTriggers(repository, zipDeploymentInfo);
             }
             else
             {
@@ -293,12 +322,33 @@ namespace Kudu.Services.Deployment
             }
         }
 
+        private async Task<string> DeployZipLocally(ZipDeploymentInfo zipDeploymentInfo, ITracer tracer)
+        {
+            var content = await DeploymentHelper.GetZipContentFromURL(zipDeploymentInfo, tracer);
+            var zipFileName = Path.ChangeExtension(Path.GetRandomFileName(), "zip");
+            var zipFilePath = Path.Combine(_environment.ZipTempPath, zipFileName);
+
+            using (_tracer.Step("Writing content to {0}", zipFilePath))
+            {
+                using (var file = FileSystemHelpers.CreateFile(zipFilePath))
+                {
+                    await content.CopyToAsync(file);
+                }
+            }
+            zipDeploymentInfo.RepositoryUrl = zipFilePath;
+            return zipFilePath;
+        }
+
         private async Task LocalZipFetch(IRepository repository, DeploymentInfoBase deploymentInfo, string targetBranch, ILogger logger, ITracer tracer)
         {
-            var zipDeploymentInfo = (ZipDeploymentInfo)deploymentInfo;
+            var zipDeploymentInfo = (ZipDeploymentInfo) deploymentInfo;
 
-            // For this kind of deployment, RepositoryUrl is a local path.
-            var sourceZipFile = zipDeploymentInfo.RepositoryUrl;
+            // If this was a request with a Zip URL in the JSON, we need to deploy the zip locally and get the path
+            // Otherwise, for this kind of deployment, RepositoryUrl is a local path.
+            var sourceZipFile = !string.IsNullOrEmpty(zipDeploymentInfo.ZipURL)
+                ? await DeployZipLocally(zipDeploymentInfo, tracer)
+                : zipDeploymentInfo.RepositoryUrl;
+
             var extractTargetDirectory = repository.RepositoryPath;
 
             var info = FileSystemHelpers.FileInfoFromFileName(sourceZipFile);
