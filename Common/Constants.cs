@@ -125,6 +125,7 @@ namespace Kudu
         public const string DurableTaskStorageConnection = "connection";
         public const string DurableTaskStorageConnectionName = "azureStorageConnectionStringName";
         public const string DurableTask = "durableTask";
+        public const string Extensions = "extensions";
         public const string SitePackages = "SitePackages";
         public const string PackageNameTxt = "packagename.txt";
     }

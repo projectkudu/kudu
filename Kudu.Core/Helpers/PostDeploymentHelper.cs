@@ -349,6 +349,13 @@ namespace Kudu.Core.Helpers
             var json = JObject.Parse(File.ReadAllText(hostConfigPath));
             JToken durableTaskValue;
 
+            // For Functions V2: the 'durableTask' property is set under the 'extensions' property.
+            JToken extensionsValue;
+            if (json.TryGetValue(Constants.Extensions, StringComparison.OrdinalIgnoreCase, out extensionsValue) && extensionsValue != null)
+            {
+                json = (JObject)extensionsValue;
+            }
+
             // we will allow case insensitivity given it is likely user hand edited
             // see https://github.com/Azure/azure-functions-durable-extension/issues/111
             if (json.TryGetValue(Constants.DurableTask, StringComparison.OrdinalIgnoreCase, out durableTaskValue) && durableTaskValue != null)
