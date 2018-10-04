@@ -272,6 +272,9 @@
   <ItemGroup>
     <Content Include="Support\Default.cshtml" />
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="Detectors\Default.cshtml" />
+  </ItemGroup>
   <ItemGroup />
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
