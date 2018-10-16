@@ -156,8 +156,8 @@ namespace Kudu.Services.Deployment
         private async Task<HttpResponseMessage> PushDeployAsync(ZipDeploymentInfo deploymentInfo, bool isAsync)
         {
             var content = Request.Content;
-            var isRequestJSON = content.Headers.ContentType.MediaType.Equals("application/json", StringComparison.OrdinalIgnoreCase);
-            if (isRequestJSON)
+            var isRequestJSON = content.Headers?.ContentType?.MediaType?.Equals("application/json", StringComparison.OrdinalIgnoreCase);
+            if (isRequestJSON == true)
             {
                 try
                 {
