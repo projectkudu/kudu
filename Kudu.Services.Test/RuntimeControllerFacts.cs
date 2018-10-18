@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.IO.Abstractions;
 using System.Linq;
@@ -15,6 +16,8 @@ namespace Kudu.Services.Test
     {
         private static readonly string _programFilesDir = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86);
         private static readonly string _nodeDir = Path.Combine(_programFilesDir, "nodejs");
+        private static readonly string _dotNetCoreRuntimeDir = Path.Combine(_programFilesDir, "dotnet", "shared", "Microsoft.NETCore.App");
+        private static readonly string _dotNetCoreSdkDir = Path.Combine(_programFilesDir, "dotnet", "sdk");
 
         [Fact]
         public void RuntimeControllerReturnsEmptyListIfDirectoryDoesNotExist()
@@ -62,6 +65,51 @@ namespace Kudu.Services.Test
             // Assert
             Assert.Equal(new[] { "0.8.19", "0.10.5", "0.10.18" }, nodeVersions.Select(v => v["version"]));
             Assert.Equal(new[] { "1.2.8", "1.3.11", null }, nodeVersions.Select(v => v["npm"]));
+        }
+
+        [Fact]
+        public void RuntimeControllerReturnsDotNetCoreVersions()
+        {
+            // Arrange
+            var coreRuntimeDir = new Mock<DirectoryInfoBase>();
+            coreRuntimeDir.Setup(d => d.Exists).Returns(true);
+            coreRuntimeDir.Setup(d => d.GetDirectories()).Returns(new[] {
+                CreateDirectory("2.2.7-alpha2"),
+                CreateDirectory("2.2.7-alpha1"),
+                CreateDirectory("2.2.7"),
+                CreateDirectory("2.2.22"),
+                CreateDirectory("1.0.12"),
+                CreateDirectory("1.1.9"),
+                CreateDirectory("1.1.12"),
+                CreateDirectory("2.1.6"),
+                CreateDirectory("ignore_me")
+            });
+            var coreSdkDir = new Mock<DirectoryInfoBase>();
+            coreSdkDir.Setup(d => d.Exists).Returns(true);
+            coreSdkDir.Setup(d => d.GetDirectories()).Returns(new[] {
+                CreateDirectory("1.1.10"),
+                CreateDirectory("2.1.403"),
+                CreateDirectory("2.2.0-alpha")
+            });
+            var nonExistingDir = new Mock<DirectoryInfoBase>();
+            nonExistingDir.Setup(d => d.Exists).Returns(false);
+            var directoryInfo = new Mock<IDirectoryInfoFactory>();
+            directoryInfo.Setup(d => d.FromDirectoryName(_dotNetCoreRuntimeDir)).Returns(coreRuntimeDir.Object);
+            directoryInfo.Setup(d => d.FromDirectoryName(_dotNetCoreSdkDir)).Returns(coreSdkDir.Object);
+            directoryInfo.Setup(d => d.FromDirectoryName(_nodeDir)).Returns(nonExistingDir.Object);
+            var fileSystem = new Mock<IFileSystem>();
+            fileSystem.Setup(f => f.DirectoryInfo).Returns(directoryInfo.Object);
+            FileSystemHelpers.Instance = fileSystem.Object;
+            var controller = new RuntimeController(Mock.Of<ITracer>());
+
+            // Act
+            dynamic coreVersions = controller.GetRuntimeVersions().DotNetCore32;
+            IEnumerable<string> runtime32Versions = coreVersions.netcore;
+            IEnumerable<string> sdk32Versions = coreVersions.sdk;
+
+            // Assert
+            Assert.Equal(new[] { "1.0.12", "1.1.9", "1.1.12", "2.1.6", "2.2.7-alpha1", "2.2.7-alpha2", "2.2.7", "2.2.22" }, runtime32Versions.ToArray());
+            Assert.Equal(new[] { "1.1.10", "2.1.403", "2.2.0-alpha" }, sdk32Versions.ToArray());
         }
 
         private DirectoryInfoBase CreateDirectory(string name, params FileInfoBase[] files)
