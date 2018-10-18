@@ -8,6 +8,7 @@ using System.Web.Http;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Helpers;
 using Kudu.Core.Infrastructure;
+using Kudu.Core.SiteExtensions;
 using Kudu.Core.Tracing;
 
 namespace Kudu.Services.Diagnostics
@@ -41,6 +42,8 @@ namespace Kudu.Services.Diagnostics
                 return new RuntimeInfo
                 {
                     NodeVersions = GetNodeVersions(allVersions),
+                    DotNetCore32 = GetDotNetCoreVersions(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86))),
+                    DotNetCore64 = GetDotNetCoreVersions(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles))),
                     System = new
                     {
                         os_name = osName,
@@ -84,5 +87,38 @@ namespace Kudu.Services.Diagnostics
                 return reader.ReadLine();
             }
         }
+
+        private static object GetDotNetCoreVersions(string folder)
+        {
+            return new
+            {
+                netcore = GetOrderedVersionStringsFromFolder(Path.Combine(folder, "dotnet", "shared", "Microsoft.NETCore.App")),
+                aspnetcore = GetOrderedVersionStringsFromFolder(Path.Combine(folder, "dotnet", "shared", "Microsoft.AspNetCore.App")),
+                sdk = GetOrderedVersionStringsFromFolder(Path.Combine(folder, "dotnet", "sdk"))
+            };
+        }
+
+        private static IEnumerable<string> GetOrderedVersionStringsFromFolder(string folder)
+        {
+            return GetSemanticVersionsFromFolder(folder)
+                .OrderBy(semver => semver)
+                .Select(semver => semver.ToString());
+        }
+
+        private static IEnumerable<SemanticVersion> GetSemanticVersionsFromFolder(string folder)
+        {
+            var directoryInfo = FileSystemHelpers.DirectoryInfoFromDirectoryName(folder);
+            if (directoryInfo.Exists)
+            {
+                foreach (var dir in directoryInfo.GetDirectories())
+                {
+                    if (SemanticVersion.TryParse(dir.Name, out SemanticVersion semver))
+                    {
+                        yield return semver;
+                    }
+                }
+            }
+        }
+
     }
 }
