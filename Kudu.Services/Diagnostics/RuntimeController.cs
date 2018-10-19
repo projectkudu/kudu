@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Abstractions;
 using System.Linq;
@@ -44,6 +45,7 @@ namespace Kudu.Services.Diagnostics
                     NodeVersions = GetNodeVersions(allVersions),
                     DotNetCore32 = GetDotNetCoreVersions(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86))),
                     DotNetCore64 = GetDotNetCoreVersions(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles))),
+                    AspNetCoreModule = GetAspNetCoreModuleVersions(),
                     System = new
                     {
                         os_name = osName,
@@ -92,8 +94,12 @@ namespace Kudu.Services.Diagnostics
         {
             return new
             {
-                netcore = GetOrderedVersionStringsFromFolder(Path.Combine(folder, "dotnet", "shared", "Microsoft.NETCore.App")),
-                aspnetcore = GetOrderedVersionStringsFromFolder(Path.Combine(folder, "dotnet", "shared", "Microsoft.AspNetCore.App")),
+                shared = new DotNetCoreSharedFrameworksInfo
+                {
+                    NetCoreApp = GetOrderedVersionStringsFromFolder(Path.Combine(folder, "dotnet", "shared", "Microsoft.NETCore.App")),
+                    AspNetCoreAll = GetOrderedVersionStringsFromFolder(Path.Combine(folder, "dotnet", "shared", "Microsoft.AspNetCore.All")),
+                    AspNetCoreApp = GetOrderedVersionStringsFromFolder(Path.Combine(folder, "dotnet", "shared", "Microsoft.AspNetCore.App"))
+                },
                 sdk = GetOrderedVersionStringsFromFolder(Path.Combine(folder, "dotnet", "sdk"))
             };
         }
@@ -120,5 +126,30 @@ namespace Kudu.Services.Diagnostics
             }
         }
 
+        private static Dictionary<string,string> GetAspNetCoreModuleVersions()
+        {
+            var versions = new Dictionary<string, string>();
+
+            AddAspNetCoreModuleVersionIfExists(
+                versions,
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), @"inetsrv\aspnetcore.dll"),
+                "aspnetcoremodule");
+            AddAspNetCoreModuleVersionIfExists(
+                versions,
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), @"IIS\Asp.Net Core Module\V2\aspnetcorev2.dll"),
+                "aspnetcoremoduleV2");
+
+            return versions;
+        }
+
+        private static void AddAspNetCoreModuleVersionIfExists(Dictionary<string, string> versions, string filePath, string keyName)
+        {
+            var fileInfo = FileSystemHelpers.FileInfoFromFileName(filePath);
+            if (fileInfo != null && fileInfo.Exists)
+            {
+                var fvi = FileVersionInfo.GetVersionInfo(fileInfo.FullName);
+                versions[keyName] = fvi.FileVersion;
+            }
+        }
     }
 }

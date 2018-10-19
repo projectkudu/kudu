@@ -16,6 +16,7 @@ namespace Kudu.Services.Test
     {
         private static readonly string _programFilesDir = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86);
         private static readonly string _nodeDir = Path.Combine(_programFilesDir, "nodejs");
+        private static readonly string _sharedRuntimeDir = Path.Combine(_programFilesDir, "dotnet", "shared");
         private static readonly string _dotNetCoreRuntimeDir = Path.Combine(_programFilesDir, "dotnet", "shared", "Microsoft.NETCore.App");
         private static readonly string _dotNetCoreSdkDir = Path.Combine(_programFilesDir, "dotnet", "sdk");
 
@@ -28,6 +29,7 @@ namespace Kudu.Services.Test
             var directory = new Mock<IDirectoryInfoFactory>();
             directory.Setup(d => d.FromDirectoryName(_nodeDir)).Returns(nodeDir.Object);
             var fileSystem = new Mock<IFileSystem>();
+            SetupFileSystemWithNoFiles(fileSystem);
             fileSystem.Setup(f => f.DirectoryInfo).Returns(directory.Object);
             FileSystemHelpers.Instance = fileSystem.Object;
             var controller = new RuntimeController(Mock.Of<ITracer>());
@@ -55,6 +57,7 @@ namespace Kudu.Services.Test
             var directoryInfo = new Mock<IDirectoryInfoFactory>();
             directoryInfo.Setup(d => d.FromDirectoryName(_nodeDir)).Returns(nodeDir.Object);
             var fileSystem = new Mock<IFileSystem>();
+            SetupFileSystemWithNoFiles(fileSystem);
             fileSystem.Setup(f => f.DirectoryInfo).Returns(directoryInfo.Object);
             FileSystemHelpers.Instance = fileSystem.Object;
             var controller = new RuntimeController(Mock.Of<ITracer>());
@@ -98,17 +101,18 @@ namespace Kudu.Services.Test
             directoryInfo.Setup(d => d.FromDirectoryName(_dotNetCoreSdkDir)).Returns(coreSdkDir.Object);
             directoryInfo.Setup(d => d.FromDirectoryName(_nodeDir)).Returns(nonExistingDir.Object);
             var fileSystem = new Mock<IFileSystem>();
+            SetupFileSystemWithNoFiles(fileSystem);
             fileSystem.Setup(f => f.DirectoryInfo).Returns(directoryInfo.Object);
             FileSystemHelpers.Instance = fileSystem.Object;
             var controller = new RuntimeController(Mock.Of<ITracer>());
 
             // Act
             dynamic coreVersions = controller.GetRuntimeVersions().DotNetCore32;
-            IEnumerable<string> runtime32Versions = coreVersions.netcore;
+            var shared = (DotNetCoreSharedFrameworksInfo)coreVersions.shared;
             IEnumerable<string> sdk32Versions = coreVersions.sdk;
 
             // Assert
-            Assert.Equal(new[] { "1.0.12", "1.1.9", "1.1.12", "2.1.6", "2.2.7-alpha1", "2.2.7-alpha2", "2.2.7", "2.2.22" }, runtime32Versions.ToArray());
+            Assert.Equal(new[] { "1.0.12", "1.1.9", "1.1.12", "2.1.6", "2.2.7-alpha1", "2.2.7-alpha2", "2.2.7", "2.2.22" }, shared.NetCoreApp);
             Assert.Equal(new[] { "1.1.10", "2.1.403", "2.2.0-alpha" }, sdk32Versions.ToArray());
         }
 
@@ -127,6 +131,15 @@ namespace Kudu.Services.Test
             var memoryStream = new MemoryStream(Encoding.UTF8.GetBytes(content));
             file.Setup(f => f.OpenRead()).Returns(memoryStream);
             return file.Object;
+        }
+
+        void SetupFileSystemWithNoFiles(Mock<IFileSystem> fileSystem)
+        {
+            var nonExistingFile = new Mock<FileInfoBase>();
+            nonExistingFile.Setup(f => f.Exists).Returns(false);
+            var fileInfo = new Mock<IFileInfoFactory>();
+            fileInfo.Setup(f => f.FromFileName(It.IsAny<string>())).Returns(nonExistingFile.Object);
+            fileSystem.Setup(f => f.FileInfo).Returns(fileInfo.Object);
         }
     }
 }
