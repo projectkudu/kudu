@@ -157,7 +157,7 @@ namespace Kudu.Services.Deployment
         {
             var content = Request.Content;
             var isRequestJSON = content.Headers?.ContentType?.MediaType?.Equals("application/json", StringComparison.OrdinalIgnoreCase);
-            if (isRequestJSON == true)
+            if (isRequestJSON == true && ArmUtils.IsArmRequest(Request))
             {
                 try
                 {
