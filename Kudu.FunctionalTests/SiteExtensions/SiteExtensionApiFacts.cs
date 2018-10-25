@@ -24,10 +24,10 @@ namespace Kudu.FunctionalTests.SiteExtensions
         private static readonly Dictionary<string, string> _galleryInstalledExtensions = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
             {"sitereplicator", "Site"},
-            {"websitelogs", "Log Browser"},
-            {"phpmyadmin", "php"},
-            {"AzureImageOptimizer", "Image Optimizer"},
-            {"AzureMinifier", "Minifier"},
+            {"letsencrypt", "Azure Let's Encrypt"},
+            {"filecounter", "counter"},
+            {"EnableFontAwesome", "awesome"},
+            {"RemoveCustomHeaders", "headers"},
         };
 
         [Theory]
@@ -375,7 +375,7 @@ namespace Kudu.FunctionalTests.SiteExtensions
         }
 
         [Theory]
-        [InlineData(null, "sitereplicator", "filecounter", "filecountermvc")]    // default site extension endpoint (v2)
+        [InlineData(null, "sitereplicator", "filecounter", "letsencrypt")]    // default site extension endpoint (v2)
         // [InlineData("https://api.nuget.org/v3/index.json", "bootstrap", "knockoutjs", "angularjs")]    // v3 endpoint
         public async Task SiteExtensionParallelInstallationTest(string feedEndpoint, string testPackageId1, string testPackageId2, string testPackageId3)
         {

@@ -1,0 +1,32 @@
+@{
+    var ownerName = Environment.GetEnvironmentVariable("WEBSITE_OWNER_NAME") ?? "";
+    var subscriptionId = ownerName;
+    var resourceGroup = Environment.GetEnvironmentVariable("WEBSITE_RESOURCE_GROUP") ?? "";
+    var siteName = Environment.GetEnvironmentVariable("WEBSITE_SITE_NAME") ?? "";
+    
+    var index = ownerName.IndexOf('+');
+    if (index >= 0)
+    {
+        subscriptionId = ownerName.Substring(0, index);
+    }
+    
+    string detectorPath;
+    if (Kudu.Core.Helpers.OSDetector.IsOnWindows())
+    {
+        detectorPath = "diagnostics/availability/analysis";
+    }
+    else
+    {
+        detectorPath = "detectors/LinuxAppDown";
+    }
+    
+    var detectorDeepLink = "https://portal.azure.com/?websitesextension_ext=asd.featurePath="
+            + detectorPath
+            + "#resource/subscriptions/" + subscriptionId
+            + "/resourceGroups/" + resourceGroup
+            + "/providers/Microsoft.Web/sites/"
+            + siteName
+            + "/troubleshoot";
+    
+    Response.Redirect(detectorDeepLink);
+}

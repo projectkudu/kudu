@@ -81,6 +81,12 @@ namespace Kudu.Core.Helpers
             get { return System.Environment.GetEnvironmentVariable(Constants.WebSiteSku); }
         }
 
+        // WEBSITE_ELASTIC_SCALING_ENABLED = 1
+        private static string WebSiteElasticScaleEnabled
+        {
+            get { return System.Environment.GetEnvironmentVariable(Constants.WebSiteElasticScaleEnabled); }
+        }
+
         // WEBSITE_INSTANCE_ID not null or empty
         public static bool IsAzureEnvironment()
         {
@@ -129,7 +135,8 @@ namespace Kudu.Core.Helpers
                 return;
             }
 
-            if (!string.Equals(Constants.DynamicSku, WebSiteSku, StringComparison.OrdinalIgnoreCase))
+            if (!string.Equals(Constants.DynamicSku, WebSiteSku, StringComparison.OrdinalIgnoreCase)
+                && !string.Equals(Constants.ElasticScaleEnabled, WebSiteElasticScaleEnabled, StringComparison.OrdinalIgnoreCase))
             {
                 Trace(TraceEventType.Verbose, string.Format("Skip function trigger and logicapp sync because sku ({0}) is not dynamic (consumption plan).", WebSiteSku));
                 return;
@@ -341,6 +348,13 @@ namespace Kudu.Core.Helpers
             config = new Dictionary<string, string>();
             var json = JObject.Parse(File.ReadAllText(hostConfigPath));
             JToken durableTaskValue;
+
+            // For Functions V2: the 'durableTask' property is set under the 'extensions' property.
+            JToken extensionsValue;
+            if (json.TryGetValue(Constants.Extensions, StringComparison.OrdinalIgnoreCase, out extensionsValue) && extensionsValue != null)
+            {
+                json = (JObject)extensionsValue;
+            }
 
             // we will allow case insensitivity given it is likely user hand edited
             // see https://github.com/Azure/azure-functions-durable-extension/issues/111

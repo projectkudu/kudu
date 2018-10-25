@@ -1,8 +1,0 @@
-﻿@if (Kudu.Core.Helpers.OSDetector.IsOnWindows())
-{
-    @RenderPage("WindowsZipDeploy.cshtml");
-}
-else
-{
-    @RenderPage("LinuxZipDeploy.cshtml");
-}

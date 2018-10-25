@@ -28,19 +28,9 @@ namespace Kudu.Core.Jobs
         {
             try
             {
-                if (_lockedStatusFile != null)
-                {
-                    _lockedStatusFile.Dispose();
-                }
-            }
-            catch (Exception ex)
-            {
-                TraceFactory.GetTracer().TraceError(ex);
-            }
-
-            try
-            {
-                _lockedStatusFile = File.Open(GetStatusFilePath(), FileMode.OpenOrCreate, FileAccess.Read, FileShare.ReadWrite);
+                FileStream newLockedStatusFile = File.Open(GetStatusFilePath(), FileMode.OpenOrCreate, FileAccess.Read, FileShare.ReadWrite);
+                OperationManager.SafeExecute(() => _lockedStatusFile?.Dispose());
+                _lockedStatusFile = newLockedStatusFile;
             }
             catch (Exception ex)
             {

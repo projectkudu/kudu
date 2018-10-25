@@ -151,7 +151,7 @@ namespace Kudu.Core
         {
             get
             {
-                return FileSystemHelpers.EnsureDirectory(_repositoryPath);
+                return FileSystemHelpers.EnsureDirectoryIgnoreAccessExceptions(_repositoryPath);
             }
             set
             {
@@ -172,7 +172,7 @@ namespace Kudu.Core
         {
             get
             {
-                return FileSystemHelpers.EnsureDirectory(_deploymentsPath);
+                return FileSystemHelpers.EnsureDirectoryIgnoreAccessExceptions(_deploymentsPath);
             }
         }
 
@@ -180,7 +180,7 @@ namespace Kudu.Core
         {
             get
             {
-                return FileSystemHelpers.EnsureDirectory(_deploymentToolsPath);
+                return FileSystemHelpers.EnsureDirectoryIgnoreAccessExceptions(_deploymentToolsPath);
             }
         }
 
@@ -272,7 +272,7 @@ namespace Kudu.Core
         {
             get
             {
-                return FileSystemHelpers.EnsureDirectory(_tracePath);
+                return FileSystemHelpers.EnsureDirectoryIgnoreAccessExceptions(_tracePath);
             }
         }
 

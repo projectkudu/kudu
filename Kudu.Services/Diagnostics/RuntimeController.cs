@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Abstractions;
 using System.Linq;
@@ -8,6 +9,7 @@ using System.Web.Http;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Helpers;
 using Kudu.Core.Infrastructure;
+using Kudu.Core.SiteExtensions;
 using Kudu.Core.Tracing;
 
 namespace Kudu.Services.Diagnostics
@@ -41,6 +43,9 @@ namespace Kudu.Services.Diagnostics
                 return new RuntimeInfo
                 {
                     NodeVersions = GetNodeVersions(allVersions),
+                    DotNetCore32 = GetDotNetCoreVersions(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86))),
+                    DotNetCore64 = GetDotNetCoreVersions(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles))),
+                    AspNetCoreModule = GetAspNetCoreModuleVersions(),
                     System = new
                     {
                         os_name = osName,
@@ -82,6 +87,68 @@ namespace Kudu.Services.Diagnostics
             using (StreamReader reader = new StreamReader(npmRedirectionFile.OpenRead()))
             {
                 return reader.ReadLine();
+            }
+        }
+
+        private static object GetDotNetCoreVersions(string folder)
+        {
+            return new
+            {
+                shared = new DotNetCoreSharedFrameworksInfo
+                {
+                    NetCoreApp = GetOrderedVersionStringsFromFolder(Path.Combine(folder, "dotnet", "shared", "Microsoft.NETCore.App")),
+                    AspNetCoreAll = GetOrderedVersionStringsFromFolder(Path.Combine(folder, "dotnet", "shared", "Microsoft.AspNetCore.All")),
+                    AspNetCoreApp = GetOrderedVersionStringsFromFolder(Path.Combine(folder, "dotnet", "shared", "Microsoft.AspNetCore.App"))
+                },
+                sdk = GetOrderedVersionStringsFromFolder(Path.Combine(folder, "dotnet", "sdk"))
+            };
+        }
+
+        private static IEnumerable<string> GetOrderedVersionStringsFromFolder(string folder)
+        {
+            return GetSemanticVersionsFromFolder(folder)
+                .OrderBy(semver => semver)
+                .Select(semver => semver.ToString());
+        }
+
+        private static IEnumerable<SemanticVersion> GetSemanticVersionsFromFolder(string folder)
+        {
+            var directoryInfo = FileSystemHelpers.DirectoryInfoFromDirectoryName(folder);
+            if (directoryInfo.Exists)
+            {
+                foreach (var dir in directoryInfo.GetDirectories())
+                {
+                    if (SemanticVersion.TryParse(dir.Name, out SemanticVersion semver))
+                    {
+                        yield return semver;
+                    }
+                }
+            }
+        }
+
+        private static Dictionary<string,string> GetAspNetCoreModuleVersions()
+        {
+            var versions = new Dictionary<string, string>();
+
+            AddAspNetCoreModuleVersionIfExists(
+                versions,
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), @"inetsrv\aspnetcore.dll"),
+                "aspnetcoremodule");
+            AddAspNetCoreModuleVersionIfExists(
+                versions,
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), @"IIS\Asp.Net Core Module\V2\aspnetcorev2.dll"),
+                "aspnetcoremoduleV2");
+
+            return versions;
+        }
+
+        private static void AddAspNetCoreModuleVersionIfExists(Dictionary<string, string> versions, string filePath, string keyName)
+        {
+            var fileInfo = FileSystemHelpers.FileInfoFromFileName(filePath);
+            if (fileInfo != null && fileInfo.Exists)
+            {
+                var fvi = FileVersionInfo.GetVersionInfo(fileInfo.FullName);
+                versions[keyName] = fvi.FileVersion;
             }
         }
     }
