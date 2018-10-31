@@ -70,10 +70,11 @@ namespace Kudu.Services.Web.Tracing
 
             // HACK: This is abusing the trace module
             // Disallow GET requests from CSM extensions bridge
-            // Except if owner or coadmin (aka legacy or non-rbac) authorization
+            // Except if owner or coadmin (aka legacy or non-rbac) or x-ms-client-rolebased-contributor (by FE) authorization
             if (!String.IsNullOrEmpty(httpRequest.Headers["X-MS-VIA-EXTENSIONS-ROUTE"]) &&
                 httpRequest.HttpMethod.Equals(HttpMethod.Get.Method, StringComparison.OrdinalIgnoreCase) &&
                 !String.Equals(httpRequest.Headers["X-MS-CLIENT-AUTHORIZATION-SOURCE"], "legacy", StringComparison.OrdinalIgnoreCase) &&
+                httpRequest.Headers["X-MS-CLIENT-ROLEBASED-CONTRIBUTOR"] != "1" &&
                 !IsRbacWhiteListPaths(httpRequest.Url.AbsolutePath))
             {
                 httpContext.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
