@@ -4,13 +4,11 @@ using System.Configuration;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Net.Http;
 using System.Net.NetworkInformation;
-using System.Runtime.ConstrainedExecution;
-using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
 using Kudu.Client.Deployment;
+using Kudu.Client.Infrastructure;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.SourceControl;
 using Kudu.Core.Infrastructure;
@@ -154,7 +152,8 @@ namespace Kudu.SiteManagement
                     await OperationManager.AttemptAsync(() => WaitForSiteAsync(serviceUrls.First()));
 
                     // Set initial ScmType state to LocalGit
-                    var settings = new RemoteDeploymentSettingsManager(serviceUrls.First() + "api/settings");
+                    var credentials = _context.Configuration.BasicAuthCredential.GetCredentials();
+                    var settings = new RemoteDeploymentSettingsManager(serviceUrls.First() + "api/settings", credentials);
                     await settings.SetValue(SettingsKeys.ScmType, ScmType.LocalGit);
 
                     var siteUrls = site.Bindings
@@ -590,9 +589,10 @@ namespace Kudu.SiteManagement
             return new ServerManager(_context.Configuration.IISConfigurationFile);
         }
 
-        private static async Task WaitForSiteAsync(string serviceUrl)
+        private async Task WaitForSiteAsync(string serviceUrl)
         {
-            using (var client = new HttpClient())
+            var credentials = _context.Configuration.BasicAuthCredential.GetCredentials();
+            using (var client = HttpClientHelper.CreateClient(serviceUrl, credentials))
             {
                 using (var response = await client.GetAsync(serviceUrl))
                 {
