@@ -66,7 +66,7 @@ namespace Kudu.Core.Test
 
                         using (var reader = new StreamReader(FileSystemHelpers.OpenFile(file, FileMode.Open, FileAccess.Read, FileShare.Write)))
                         {
-                            Assert.Contains("at Kudu.Core.Test.LockFileTests", reader.ReadToEnd());
+                            Assert.Contains(" Kudu.Core.Test.LockFileTests", reader.ReadToEnd());
                         }
 
                     }, "operationName", TimeSpan.FromSeconds(60));
