@@ -44,6 +44,17 @@ namespace Kudu.Services.Arm
                    request.Headers.Contains(GeoLocationHeaderKey);
         }
 
+        public static bool IsRbacContributorRequest(HttpRequestMessage request)
+        {
+            IEnumerable<string> headerValues;
+            if (request.Headers.TryGetValues(Constants.RoleBasedContributorHeader, out headerValues))
+            {
+                return headerValues.FirstOrDefault() == "1";
+            }
+
+            return false;
+        }
+
         private static ArmListEntry<T> Create<T>(IEnumerable<T> objects, HttpRequestMessage request) where T : INamedObject
         {
             return new ArmListEntry<T>
