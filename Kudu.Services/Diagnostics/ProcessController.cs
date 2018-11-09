@@ -465,7 +465,7 @@ namespace Kudu.Services.Performance
                 info.IisProfileTimeoutInSeconds = ProfileManager.IisProfileTimeoutInSeconds;
                 SetEnvironmentInfo(info);
 
-                if (ArmUtils.IsArmRequest(Request))
+                if (ArmUtils.IsArmRequest(Request) && !ArmUtils.IsRbacContributorRequest(Request))
                 {
                     info.EnvironmentVariables = info.EnvironmentVariables
                         .Where(kv => _armWhitelistedVaiables.Contains(kv.Key, StringComparer.OrdinalIgnoreCase))

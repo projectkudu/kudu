@@ -74,7 +74,7 @@ namespace Kudu.Services.Web.Tracing
             if (!String.IsNullOrEmpty(httpRequest.Headers["X-MS-VIA-EXTENSIONS-ROUTE"]) &&
                 httpRequest.HttpMethod.Equals(HttpMethod.Get.Method, StringComparison.OrdinalIgnoreCase) &&
                 !String.Equals(httpRequest.Headers["X-MS-CLIENT-AUTHORIZATION-SOURCE"], "legacy", StringComparison.OrdinalIgnoreCase) &&
-                httpRequest.Headers["X-MS-CLIENT-ROLEBASED-CONTRIBUTOR"] != "1" &&
+                httpRequest.Headers[Constants.RoleBasedContributorHeader] != "1" &&
                 !IsRbacWhiteListPaths(httpRequest.Url.AbsolutePath))
             {
                 httpContext.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
