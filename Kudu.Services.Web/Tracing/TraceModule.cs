@@ -73,7 +73,7 @@ namespace Kudu.Services.Web.Tracing
             // Except if owner or coadmin (aka legacy or non-rbac) or x-ms-client-rolebased-contributor (by FE) authorization
             if (!String.IsNullOrEmpty(httpRequest.Headers["X-MS-VIA-EXTENSIONS-ROUTE"]) &&
                 httpRequest.HttpMethod.Equals(HttpMethod.Get.Method, StringComparison.OrdinalIgnoreCase) &&
-                !String.Equals(httpRequest.Headers["X-MS-CLIENT-AUTHORIZATION-SOURCE"], "legacy", StringComparison.OrdinalIgnoreCase) &&
+                !String.Equals(httpRequest.Headers[Constants.ClientAuthorizationSourceHeader], "legacy", StringComparison.OrdinalIgnoreCase) &&
                 httpRequest.Headers[Constants.RoleBasedContributorHeader] != "1" &&
                 !IsRbacWhiteListPaths(httpRequest.Url.AbsolutePath))
             {

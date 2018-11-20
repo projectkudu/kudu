@@ -102,6 +102,7 @@ namespace Kudu
         public const string VCVersion = "2015";
 
         public const string RoleBasedContributorHeader = "X-MS-CLIENT-ROLEBASED-CONTRIBUTOR";
+        public const string ClientAuthorizationSourceHeader = "X-MS-CLIENT-AUTHORIZATION-SOURCE";
         public const string SiteRestrictedToken = "x-ms-site-restricted-token";
         public const string SiteAuthEncryptionKey = "WEBSITE_AUTH_ENCRYPTION_KEY";
         public const string HttpHost = "HTTP_HOST";
