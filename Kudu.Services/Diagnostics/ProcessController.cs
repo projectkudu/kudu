@@ -465,12 +465,16 @@ namespace Kudu.Services.Performance
                 info.IisProfileTimeoutInSeconds = ProfileManager.IisProfileTimeoutInSeconds;
                 SetEnvironmentInfo(info);
 
-                if (ArmUtils.IsArmRequest(Request) && !ArmUtils.IsRbacContributorRequest(Request))
+                if (ArmUtils.IsArmRequest(Request))
                 {
-                    info.EnvironmentVariables = info.EnvironmentVariables
-                        .Where(kv => _armWhitelistedVaiables.Contains(kv.Key, StringComparer.OrdinalIgnoreCase))
-                        .ToDictionary(k => k.Key, v => v.Value);
-                    info.CommandLine = null;
+                    // No need to hide the secrets if the request is from contributor or admin.
+                    if (!(ArmUtils.IsRbacContributorRequest(Request) || ArmUtils.IsLegacyAuthorizationSource(Request)))
+                    {
+                        info.EnvironmentVariables = info.EnvironmentVariables
+                            .Where(kv => _armWhitelistedVaiables.Contains(kv.Key, StringComparer.OrdinalIgnoreCase))
+                            .ToDictionary(k => k.Key, v => v.Value);
+                        info.CommandLine = null;
+                    }
                 }
             }
 

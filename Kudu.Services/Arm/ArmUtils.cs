@@ -55,6 +55,17 @@ namespace Kudu.Services.Arm
             return false;
         }
 
+        public static bool IsLegacyAuthorizationSource(HttpRequestMessage request)
+        {
+            IEnumerable<string> headerValues;
+            if (request.Headers.TryGetValues(Constants.ClientAuthorizationSourceHeader, out headerValues))
+            {
+                return string.Equals(headerValues.FirstOrDefault(), "legacy", StringComparison.OrdinalIgnoreCase);
+            }
+
+            return false;
+        }
+
         private static ArmListEntry<T> Create<T>(IEnumerable<T> objects, HttpRequestMessage request) where T : INamedObject
         {
             return new ArmListEntry<T>
