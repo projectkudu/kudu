@@ -13,14 +13,14 @@
     string detectorPath;
     if (Kudu.Core.Helpers.OSDetector.IsOnWindows())
     {
-        detectorPath = "diagnostics/availability/analysis";
+        detectorPath = "diagnostics%2Favailability%2Fanalysis";
     }
     else
     {
-        detectorPath = "detectors/LinuxAppDown";
+        detectorPath = "detectors%2FLinuxAppDown";
     }
     
-    var detectorDeepLink = "https://portal.azure.com/?websitesextension_ext=asd.featurePath="
+    var detectorDeepLink = "https://portal.azure.com/?websitesextension_ext=asd.featurePath%3D"
             + detectorPath
             + "#resource/subscriptions/" + subscriptionId
             + "/resourceGroups/" + resourceGroup
