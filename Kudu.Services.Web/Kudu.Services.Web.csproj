@@ -135,6 +135,16 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Content\Images\avatar.png" />
+    <Content Include="Content\Scripts\ace.js" />
+    <Content Include="Content\Scripts\ext-modelist.js" />
+    <Content Include="Content\Scripts\jquery-2.1.0.min.js" />
+    <Content Include="Content\Scripts\jquery-ui.min.js" />
+    <Content Include="Content\Scripts\knockout-2.2.1.js" />
+    <Content Include="Content\Scripts\knockout.mapping.js" />
+    <Content Include="Content\Scripts\theme-github.js" />
+    <Content Include="Content\Styles\font-awesome.css" />
+    <Content Include="Content\fonts\glyphicons-halflings-regular.svg" />
     <Content Include="Content\Images\collapse.gif" />
     <Content Include="Content\Images\expand.gif" />
     <Content Include="Content\Images\jquery-ui-theme\ui-bg_flat_0_aaaaaa_40x100.png" />
@@ -154,6 +164,8 @@
     <Content Include="Content\Images\Kudu.svg" />
     <Content Include="Content\Images\Windows Azure Web Site.png" />
     <Content Include="Content\Images\paKman.gif" />
+    <Content Include="Content\Scripts\bootstrap.min.js" />
+    <Content Include="Content\Scripts\jquery-2.2.1.min.js" />
     <Content Include="Content\Scripts\ZipDeploy\FileBrowser.js" />
     <Content Include="Content\Scripts\HelperScript.js" />
     <Content Include="Content\Scripts\jquery.contextMenu.js" />
@@ -162,6 +174,7 @@
     <Content Include="Content\Scripts\SiteExtensions.js" />
     <Content Include="Content\Scripts\ZipDeploy\TreeView.js" />
     <Content Include="Content\Scripts\vkbeautify.0.99.00.beta.js" />
+    <Content Include="Content\Styles\bootstrap.min.css" />
     <Content Include="Content\Styles\FileBrowser.css" />
     <Content Include="Content\Scripts\jquery-console\jquery.console.js" />
     <Content Include="Content\Scripts\KuduExecV2.js" />
@@ -224,6 +237,10 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Content\fonts\glyphicons-halflings-regular.eot" />
+    <Content Include="Content\fonts\glyphicons-halflings-regular.ttf" />
+    <Content Include="Content\fonts\glyphicons-halflings-regular.woff2" />
+    <Content Include="Content\fonts\glyphicons-halflings-regular.woff" />
     <None Include="packages.config" />
     <Content Include="ProcessExplorer\Default.cshtml" />
     <None Include="Properties\PublishProfiles\Local.pubxml" />

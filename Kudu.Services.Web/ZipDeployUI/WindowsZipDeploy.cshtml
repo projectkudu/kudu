@@ -4,14 +4,21 @@
 }
 @section PageHead {
     <link href="~/Content/Styles/FileBrowser.css" rel="stylesheet" />
-    <link href="//functionscdn.azureedge.net/public/kudu/font-awesome/4.0.2/css/font-awesome.css" rel="stylesheet" />
+    <link href="/Content/Styles/font-awesome.css" rel="stylesheet" />
     <link rel="stylesheet" type="text/css" href="~/Content/Styles/ZipDeployTreeView.css">
 
-    <script src="//ajax.aspnetcdn.com/ajax/knockout/knockout-2.2.1.js" type="text/javascript"></script>
-    <script src="https://functionscdn.azureedge.net/public/kudu/libs/knockout.mapping/2.4.1/knockout.mapping.js"></script>
-
-    <script src="https://functionscdn.azureedge.net/public/kudu/libs/ace/1.2.2/ace.js" type="text/javascript"></script>
-    <script src="https://functionscdn.azureedge.net/public/kudu/libs/ace/1.2.2/ext-modelist.js" type="text/javascript"></script>
+    <script src="/Content/Scripts/knockout-2.2.1.js" type="text/javascript"></script>
+    <script src="/Content/Scripts/knockout.mapping.js"></script>
+    <script>
+        var aceJsLoaded = false;
+    </script>
+    <script onload="aceJsLoaded = true;" src="https://functionscdn.azureedge.net/public/kudu/libs/ace/1.2.9/ace.js" type="text/javascript"></script>
+    <script>
+        if (!aceJsLoaded) {
+            document.write('<script type="text/javascript" src="/Content/Scripts/ace.js"><\/script>');
+        }
+    </script>
+    <script src="/Content/Scripts/ext-modelist.js" type="text/javascript"></script>
     <style>
         div.show-on-hover {
             width: 100%;
@@ -177,10 +184,11 @@
             <script type="text/html" id="node-name-template">
 
                 <div style="border-style:solid;border-color:#f9f9f9;background-color:#efefef;" onmouseover="this.style.background='#ffff99';" onmouseout="this.style.background='#efefef';">
-                    <span class="tree-item" data-bind="css: {'glyphicon glyphicon-minus-sign': isExpanded() && isExpandable()> 0,
-                                                        'glyphicon glyphicon-plus-sign': !isExpanded() && isExpandable() > 0,
-                                                        'glyphicon glyphicon-stop': !isExpandable()
-				                                        }">
+                    <span class="tree-item" data-bind="css: {'glyphicon glyphicon-minus-sign': isExpanded() && isExpandable()>
+                        0,
+                        'glyphicon glyphicon-plus-sign': !isExpanded() && isExpandable() > 0,
+                        'glyphicon glyphicon-stop': !isExpandable()
+                        }">
                     </span>
 
                     <span style="padding-left:5px" data-bind="
@@ -209,8 +217,8 @@
                                                  aria-valuenow="40" aria-valuemin="0" aria-valuemax="100" style="width:70%"
                                                  data-bind="style: { width: $root.getCopyPercentage($parent.copyProgStats()[item]) + '%' },
                                                  css: {
-                                                 'progress-bar-info':$root.getCopyPercentage($parent.copyProgStats()[item]) < 100,
-                                                    'progress-bar-success': $root.getCopyPercentage($parent.copyProgStats()[item]) >= 100  
+                                                 'progress-bar-info' :$root.getCopyPercentage($parent.copyProgStats()[item]) < 100,
+                                                    'progress-bar-success': $root.getCopyPercentage($parent.copyProgStats()[item]) >= 100
                                                 },
                                                     text: $root.getCopyPercentageDisplay($parent.copyProgStats()[item])">0%
                                             </div>
