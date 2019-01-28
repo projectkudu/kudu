@@ -89,8 +89,7 @@ namespace Kudu.Services.Performance
         {
             using (_tracer.Step("ProcessController.GetModule"))
             {
-
-                var module = GetProcessById(id).Modules.Cast<ProcessModule>().FirstOrDefault(t => t.BaseAddress.ToInt64() == Int64.Parse(baseAddress, NumberStyles.HexNumber));
+                var module = GetProcessModules(GetProcessById(id)).Cast<ProcessModule>().FirstOrDefault(t => t.BaseAddress.ToInt64() == Int64.Parse(baseAddress, NumberStyles.HexNumber));
 
                 if (module != null)
                 {
@@ -338,15 +337,29 @@ namespace Kudu.Services.Performance
             return threads;
         }
 
-        private static IEnumerable<ProcessModuleInfo> GetModules(Process process, string href)
+        private IEnumerable<ProcessModuleInfo> GetModules(Process process, string href)
         {
             var modules = new List<ProcessModuleInfo>();
-            foreach (var module in process.Modules.Cast<ProcessModule>().OrderBy(m => Path.GetFileName(m.FileName)))
+            foreach (var module in GetProcessModules(process).Cast<ProcessModule>().OrderBy(m => Path.GetFileName(m.FileName)))
             {
                 modules.Add(GetProcessModuleInfo(module, href.TrimEnd('/') + '/' + module.BaseAddress.ToInt64().ToString("x"), details: false));
             }
 
             return modules;
+        }
+
+        private ProcessModuleCollection GetProcessModules(Process process)
+        {
+            try
+            {
+                // this could fail with "A 32 bit processes cannot access modules of a 64 bit process."
+                // currently we don't support that and will return 400 instead of 500.
+                return process.Modules;
+            }
+            catch (Exception ex)
+            {
+                throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.BadRequest, ex.Message));
+            }
         }
 
         private ProcessThreadInfo GetProcessThreadInfo(ProcessThread thread, string href, bool details = false)
