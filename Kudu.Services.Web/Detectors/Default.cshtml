@@ -4,6 +4,7 @@
     var resourceGroup = Environment.GetEnvironmentVariable("WEBSITE_RESOURCE_GROUP") ?? "";
     var siteName = Environment.GetEnvironmentVariable("WEBSITE_SITE_NAME") ?? "";
     var hostName = Environment.GetEnvironmentVariable("HTTP_HOST") ?? "";
+    var slotName = "";
 
     var index = ownerName.IndexOf('+');
     if (index >= 0)
@@ -39,11 +40,13 @@
         var slotNameIndex = siteName.Length;
         if (hostName.Length > slotNameIndex && hostName[slotNameIndex] == '-')
         {
-            // Fix up hostName by replacing "-SLOTNAME" with "/slots/SLOTNAME"
-            var slotName = hostName.Substring(slotNameIndex + 1);
-            hostName = hostName.Substring(0, slotNameIndex) + "/slots/" + slotName;
+            // Fix up hostName by removing "-SLOTNAME"
+            slotName = hostName.Substring(slotNameIndex + 1);
+            hostName = hostName.Substring(0, slotNameIndex);
         }
     }
+
+    var isSlot = !String.IsNullOrWhiteSpace(slotName) && !slotName.Equals("production", StringComparison.CurrentCultureIgnoreCase);
 
     var detectorDeepLink = "https://portal.azure.com/?websitesextension_ext=asd.featurePath%3D"
             + detectorPath
@@ -51,6 +54,7 @@
             + "/resourceGroups/" + resourceGroup
             + "/providers/Microsoft.Web/sites/"
             + hostName
+            + (isSlot ? "/slots/" + slotName : "")
             + "/troubleshoot";
 
     Response.Redirect(detectorDeepLink);
