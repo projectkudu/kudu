@@ -3,13 +3,14 @@
     var subscriptionId = ownerName;
     var resourceGroup = Environment.GetEnvironmentVariable("WEBSITE_RESOURCE_GROUP") ?? "";
     var siteName = Environment.GetEnvironmentVariable("WEBSITE_SITE_NAME") ?? "";
-    
+    var hostName = Environment.GetEnvironmentVariable("HTTP_HOST") ?? "";
+
     var index = ownerName.IndexOf('+');
     if (index >= 0)
     {
         subscriptionId = ownerName.Substring(0, index);
     }
-    
+
     string detectorPath;
     if (Kudu.Core.Helpers.OSDetector.IsOnWindows())
     {
@@ -19,14 +20,38 @@
     {
         detectorPath = "detectors%2FLinuxAppDown";
     }
-    
+
+    var hostNameIndex = hostName.IndexOf('.');
+    if (hostNameIndex >= 0)
+    {
+        hostName = hostName.Substring(0, hostNameIndex);
+    }
+
+    var runtimeSuffxIndex = siteName.IndexOf("__");
+    if (runtimeSuffxIndex >= 0)
+    {
+        siteName = siteName.Substring(0, runtimeSuffxIndex);
+    }
+
+    // Get the slot name
+    if (!hostName.Equals(siteName, StringComparison.CurrentCultureIgnoreCase))
+    {
+        var slotNameIndex = siteName.Length;
+        if (hostName.Length > slotNameIndex && hostName[slotNameIndex] == '-')
+        {
+            // Fix up hostName by replacing "-SLOTNAME" with "/slots/SLOTNAME"
+            var slotName = hostName.Substring(slotNameIndex + 1);
+            hostName = hostName.Substring(0, slotNameIndex) + "/slots/" + slotName;
+        }
+    }
+
     var detectorDeepLink = "https://portal.azure.com/?websitesextension_ext=asd.featurePath%3D"
             + detectorPath
             + "#resource/subscriptions/" + subscriptionId
             + "/resourceGroups/" + resourceGroup
             + "/providers/Microsoft.Web/sites/"
-            + siteName
+            + hostName
             + "/troubleshoot";
-    
+
     Response.Redirect(detectorDeepLink);
 }
