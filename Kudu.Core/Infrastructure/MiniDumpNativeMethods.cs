@@ -23,6 +23,60 @@ namespace Kudu.Core.Infrastructure
             IntPtr expParam,
             IntPtr userStreamParam,
             IntPtr callbackParam);
+
+        [DllImport("dbghelp.dll",
+            EntryPoint = "MiniDumpWriteDump",
+            CallingConvention = CallingConvention.StdCall,
+            CharSet = CharSet.Unicode,
+            ExactSpelling = true,
+            SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool MiniDumpWriteDump(
+            PssSnapshotSafeHandle hpss,
+            uint processId,
+            SafeHandle hFile,
+            MINIDUMP_TYPE dumpType,
+            IntPtr expParam,
+            IntPtr userStreamParam,
+            [In] ref MINIDUMP_CALLBACK_INFORMATION callbackParam);
+
+        [StructLayout(LayoutKind.Sequential, Pack = 4)]
+        public struct MINIDUMP_CALLBACK_INFORMATION
+        {
+            public MINIDUMP_CALLBACK_ROUTINE CallbackRoutine;
+            public IntPtr CallbackParam;
+        }
+
+        public enum MINIDUMP_CALLBACK_TYPE : uint
+        {
+            ReadMemoryFailureCallback = 14,
+            IsProcessSnapshotCallback = 16
+        }
+
+        [StructLayout(LayoutKind.Explicit)]
+        public struct MINIDUMP_CALLBACK_INPUT_UNION
+        {
+            [FieldOffset(0)] public readonly uint Status;
+        }
+
+        [StructLayout(LayoutKind.Sequential, Pack = 4)]
+        public struct MINIDUMP_CALLBACK_INPUT
+        {
+            public readonly uint ProcessId;
+            public readonly IntPtr ProcessHandle;
+            public readonly MINIDUMP_CALLBACK_TYPE CallbackType;
+            public readonly MINIDUMP_CALLBACK_INPUT_UNION CallbackUnion;
+        }
+
+        [StructLayout(LayoutKind.Explicit, Pack = 4, Size = 52)]
+        public struct MINIDUMP_CALLBACK_OUTPUT
+        {
+            [FieldOffset(0)] public int Status;
+        }
+
+        [UnmanagedFunctionPointer(CallingConvention.Winapi)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public delegate bool MINIDUMP_CALLBACK_ROUTINE(IntPtr CallbackParam, [In] ref MINIDUMP_CALLBACK_INPUT CallbackInput, [In, Out] ref MINIDUMP_CALLBACK_OUTPUT CallbackOutput);
     }
 
     [Flags]
