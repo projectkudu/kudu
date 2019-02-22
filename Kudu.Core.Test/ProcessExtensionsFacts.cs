@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Runtime.InteropServices;
 using Kudu.Core.Deployment;
 using Kudu.Core.Infrastructure;
 using Xunit;
@@ -86,31 +85,28 @@ namespace Kudu.Core.Test
                 Assert.True(dmpFileInfo.Length > minimumReasonableDmpFileLength);
 
                 // Check for sensible values in the minidump header.
-                using (var stream = File.OpenRead(dmpFile))
+                using (var reader = new BinaryReader(File.OpenRead(dmpFile)))
                 {
-                    using (var reader = new BinaryReader(stream))
-                    {
-                        var signature = reader.ReadUInt32();
-                        Assert.Equal(MINIDUMP_SIGNATURE, signature);
+                    var signature = reader.ReadUInt32();
+                    Assert.Equal(MINIDUMP_SIGNATURE, signature);
 
-                        var version = reader.ReadUInt32();
-                        Assert.Equal(MINIDUMP_VERSION, (ushort)version);
+                    var version = reader.ReadUInt32();
+                    Assert.Equal(MINIDUMP_VERSION, (ushort)version);
 
-                        var numberOfStreams = reader.ReadUInt32();
-                        Assert.True(numberOfStreams > 0 && numberOfStreams < 40);
+                    var numberOfStreams = reader.ReadUInt32();
+                    Assert.True(numberOfStreams > 0 && numberOfStreams < 40);
 
-                        var streamDirectoryRva = reader.ReadUInt32();
-                        var checkSum = reader.ReadUInt32();
+                    var streamDirectoryRva = reader.ReadUInt32();
+                    var checkSum = reader.ReadUInt32();
 
-                        var timeDateStamp = reader.ReadUInt32();
-                        // Convert from time_t to FILETIME
-                        var filetimeUtc = timeDateStamp * 10000000L + 116444736000000000L;
-                        var dmpTimeStamp = DateTime.FromFileTimeUtc(filetimeUtc);
-                        Assert.True(dmpTimeStamp - utcTimeBeforeSnapshot < TimeSpan.FromSeconds(timeStampToleranceInSeconds));
+                    var timeDateStamp = reader.ReadUInt32();
+                    // Convert from time_t to FILETIME
+                    var filetimeUtc = timeDateStamp * 10000000L + 116444736000000000L;
+                    var dmpTimeStamp = DateTime.FromFileTimeUtc(filetimeUtc);
+                    Assert.True(dmpTimeStamp - utcTimeBeforeSnapshot < TimeSpan.FromSeconds(timeStampToleranceInSeconds));
 
-                        var flags = reader.ReadUInt64();
-                        Assert.Equal((MINIDUMP_TYPE)flags, MINIDUMP_TYPE.Normal | MINIDUMP_TYPE.IgnoreInaccessibleMemory);
-                    }
+                    var flags = reader.ReadUInt64();
+                    Assert.Equal((MINIDUMP_TYPE)flags, MINIDUMP_TYPE.Normal | MINIDUMP_TYPE.IgnoreInaccessibleMemory);
                 }
             }
             finally
