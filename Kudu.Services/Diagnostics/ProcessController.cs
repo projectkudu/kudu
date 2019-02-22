@@ -176,7 +176,7 @@ namespace Kudu.Services.Performance
                 {
                     using (_tracer.Step(String.Format("MiniDump pid={0}, name={1}, file={2}", process.Id, process.ProcessName, dumpFile)))
                     {
-                        process.MiniDump(dumpFile, (MINIDUMP_TYPE)dumpType);
+                        process.SnapshotAndDump(dumpFile, (MINIDUMP_TYPE)dumpType);
                         _tracer.Trace("MiniDump size={0}", new FileInfo(dumpFile).Length);
                     }
                 }
