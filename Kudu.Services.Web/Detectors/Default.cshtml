@@ -15,7 +15,7 @@
     string detectorPath;
     if (Kudu.Core.Helpers.OSDetector.IsOnWindows())
     {
-        detectorPath = "diagnostics%2Favailability%2Fanalysis";
+        detectorPath = "detectors%2FParentAvailabilityAndPerformance";
     }
     else
     {
@@ -55,7 +55,7 @@
             + "/providers/Microsoft.Web/sites/"
             + hostName
             + (isSlot ? "/slots/" + slotName : "")
-            + "/troubleshoot";
+            + "/customtroubleshoot";
 
     Response.Redirect(detectorDeepLink);
 }
