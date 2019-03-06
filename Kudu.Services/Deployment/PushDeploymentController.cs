@@ -371,7 +371,10 @@ namespace Kudu.Services.Deployment
                 if (targetInfo.Exists)
                 {
                     var moveTarget = Path.Combine(targetInfo.Parent.FullName, Path.GetRandomFileName());
-                    targetInfo.MoveTo(moveTarget);
+                    using (tracer.Step(string.Format("Renaming extractTargetDirectory({0}) to tempDirectory({1})", targetInfo.FullName, moveTarget)))
+                    {
+                        targetInfo.MoveTo(moveTarget);
+                    }
                 }
 
                 var cleanTask = Task.Run(() => DeleteFilesAndDirsExcept(sourceZipFile, extractTargetDirectory, tracer));
@@ -382,7 +385,7 @@ namespace Kudu.Services.Deployment
                     using (var file = info.OpenRead())
                     using (var zip = new ZipArchive(file, ZipArchiveMode.Read))
                     {
-                        zip.Extract(extractTargetDirectory);
+                        zip.Extract(extractTargetDirectory, tracer, _settings.GetZipDeployDoNotPreserveFileTime());
                     }
                 });
 

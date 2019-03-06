@@ -292,5 +292,10 @@ namespace Kudu.Contracts.Settings
 
             return DEFAULT_ALLOWED_ZIPS;
         }
+
+        public static bool GetZipDeployDoNotPreserveFileTime(this IDeploymentSettingsManager settings)
+        {
+            return "1" == settings.GetValue(SettingsKeys.ZipDeployDoNotPreserveFileTime);
+        }
     }
 }

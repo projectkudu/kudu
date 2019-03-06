@@ -184,7 +184,7 @@ namespace Kudu.Core.Jobs
                 {
                     using (var zipArchive = new ZipArchive(zipStream, ZipArchiveMode.Read))
                     {
-                        zipArchive.Extract(jobDirectory.FullName);
+                        zipArchive.Extract(jobDirectory.FullName, TraceFactory.GetTracer());
                     }
                 });
         }
