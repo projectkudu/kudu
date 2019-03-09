@@ -135,13 +135,6 @@ namespace Kudu.Core.Helpers
                 return;
             }
 
-            if (!string.Equals(Constants.DynamicSku, WebSiteSku, StringComparison.OrdinalIgnoreCase)
-                && !string.Equals(Constants.ElasticScaleEnabled, WebSiteElasticScaleEnabled, StringComparison.OrdinalIgnoreCase))
-            {
-                Trace(TraceEventType.Verbose, string.Format("Skip function trigger and logicapp sync because sku ({0}) is not dynamic (consumption plan).", WebSiteSku));
-                return;
-            }
-
             VerifyEnvironments();
 
             functionsPath = !string.IsNullOrEmpty(functionsPath)
