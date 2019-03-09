@@ -15,6 +15,7 @@ using Kudu.Core.Infrastructure;
 using Kudu.Core.SourceControl;
 using Kudu.Core.Tracing;
 using Kudu.Services.Arm;
+using Kudu.Services.ByteRanges;
 using Kudu.Services.Infrastructure;
 using Newtonsoft.Json.Linq;
 
@@ -179,13 +180,11 @@ namespace Kudu.Services.Deployment
                     var zipFileName = Path.ChangeExtension(Path.GetRandomFileName(), "zip");
                     var zipFilePath = Path.Combine(_environment.ZipTempPath, zipFileName);
 
-                    using (_tracer.Step("Writing content to {0}", zipFilePath))
+                    using (_tracer.Step("Saving request content to {0}", zipFilePath))
                     {
-                        using (var file = FileSystemHelpers.CreateFile(zipFilePath))
-                        {
-                            await content.CopyToAsync(file);
-                        }
+                        await content.CopyToAsync(zipFilePath, _tracer);
                     }
+
                     deploymentInfo.RepositoryUrl = zipFilePath;
                 }
             }
@@ -328,13 +327,11 @@ namespace Kudu.Services.Deployment
             var zipFileName = Path.ChangeExtension(Path.GetRandomFileName(), "zip");
             var zipFilePath = Path.Combine(_environment.ZipTempPath, zipFileName);
 
-            using (_tracer.Step("Writing content to {0}", zipFilePath))
+            using (_tracer.Step("Downloading content from {0} to {1}", zipDeploymentInfo.ZipURL.Split('?')[0], zipFilePath))
             {
-                using (var file = FileSystemHelpers.CreateFile(zipFilePath))
-                {
-                    await content.CopyToAsync(file);
-                }
+                await content.CopyToAsync(zipFilePath, _tracer);
             }
+
             zipDeploymentInfo.RepositoryUrl = zipFilePath;
             return zipFilePath;
         }
@@ -412,13 +409,11 @@ namespace Kudu.Services.Deployment
             // Make sure D:\home\data\SitePackages exists
             FileSystemHelpers.EnsureDirectory(_environment.SitePackagesPath);
 
-            using (tracer.Step("Writing content to {0}", filePath))
+            using (tracer.Step("Saving request content to {0}", filePath))
             {
-                using (var file = FileSystemHelpers.CreateFile(filePath))
-                {
-                    await content.CopyToAsync(file);
-                }
+                await content.CopyToAsync(filePath, tracer);
             }
+
             DeploymentHelper.PurgeZipsIfNecessary(_environment.SitePackagesPath, tracer, _settings.GetMaxZipPackageCount());
         }
 
