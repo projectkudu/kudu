@@ -75,18 +75,6 @@ namespace Kudu.Core.Helpers
             get { return System.Environment.ExpandEnvironmentVariables(@"%HOME%\site\wwwroot\" + Constants.LogicAppJson); }
         }
 
-        // WEBSITE_SKU = Dynamic
-        private static string WebSiteSku
-        {
-            get { return System.Environment.GetEnvironmentVariable(Constants.WebSiteSku); }
-        }
-
-        // WEBSITE_ELASTIC_SCALING_ENABLED = 1
-        private static string WebSiteElasticScaleEnabled
-        {
-            get { return System.Environment.GetEnvironmentVariable(Constants.WebSiteElasticScaleEnabled); }
-        }
-
         // WEBSITE_INSTANCE_ID not null or empty
         public static bool IsAzureEnvironment()
         {
