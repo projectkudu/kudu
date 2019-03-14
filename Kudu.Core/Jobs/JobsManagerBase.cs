@@ -502,6 +502,15 @@ namespace Kudu.Core.Jobs
             {
                 if (HttpContext.Current == null)
                 {
+                    if (string.IsNullOrEmpty(_lastKnownAppBaseUrlPrefix))
+                    {
+                        var httpHost = System.Environment.GetEnvironmentVariable(Constants.HttpHost);
+                        if (!string.IsNullOrEmpty(httpHost))
+                        {
+                            return "https://{0}".FormatInvariant(httpHost);
+                        }
+                    }
+
                     return _lastKnownAppBaseUrlPrefix;
                 }
 
