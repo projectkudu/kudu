@@ -8,7 +8,7 @@ namespace Kudu.Contracts.Settings
     public static class DeploymentSettingsExtension
     {
         public static readonly TimeSpan DefaultCommandIdleTimeout = TimeSpan.FromMinutes(1);
-        public static readonly TimeSpan DefaultLogStreamTimeout = TimeSpan.FromMinutes(30);
+        public static readonly TimeSpan DefaultLogStreamTimeout = TimeSpan.FromMinutes(120);
         public static readonly TimeSpan DefaultWebJobsRestartTime = TimeSpan.FromMinutes(1);
         public static readonly TimeSpan DefaultJobsIdleTimeout = TimeSpan.FromMinutes(2);
         public const TraceLevel DefaultTraceLevel = TraceLevel.Error;
