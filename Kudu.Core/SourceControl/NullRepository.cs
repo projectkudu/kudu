@@ -58,6 +58,7 @@ namespace Kudu.Core.SourceControl
 
         public ChangeSet GetChangeSet(string id)
         {
+            var message = "No commit was performed.";
             var changeSet = _latestChangeSet;
             if (changeSet != null)
             {
@@ -65,9 +66,11 @@ namespace Kudu.Core.SourceControl
                 {
                     return changeSet;
                 }
+
+                message = string.Format("ChangeSetId({0}) does not match {1}, 'master' or 'HEAD'", id, changeSet.Id);
             }
 
-            throw new InvalidOperationException();
+            throw new InvalidOperationException(message);
         }
 
         public void AddFile(string path)

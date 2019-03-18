@@ -1,17 +1,19 @@
-﻿using System.IO;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
 using System.IO.Compression;
+using System.Linq;
+using System.Net;
+using System.Net.Http;
+using System.Text;
+using System.Threading.Tasks;
+using Kudu.Client.Deployment;
+using Kudu.Contracts.Settings;
+using Kudu.Core.Deployment;
 using Kudu.TestHarness;
 using Kudu.TestHarness.Xunit;
+using Newtonsoft.Json;
 using Xunit;
-using System.Linq;
-using System;
-using System.Threading.Tasks;
-using System.Collections.Generic;
-using Kudu.Core.Deployment;
-using System.Net.Http;
-using System.Net;
-using Kudu.Contracts.Settings;
-using Kudu.Client.Deployment;
 
 namespace Kudu.FunctionalTests
 {
@@ -29,6 +31,58 @@ namespace Kudu.FunctionalTests
                 var response = await DeployZip(appManager, files, new ZipDeployMetadata());
                 response.EnsureSuccessStatusCode();
                 await AssertSuccessfulDeploymentByFilenames(appManager, files.Select(f => f.Filename).ToArray());
+            });
+        }
+
+        [Theory]
+        [InlineData(true, true)]
+        [InlineData(true, false)]
+        [InlineData(false, true)]
+        [InlineData(false, false)]
+        public Task TestSimpleZipUrlDeployment(bool isArmRequest, bool isAsync)
+        {
+            var testName = isArmRequest ? "TestSimpleZipUrlARMDeployment" : "TestSimpleZipUrlDeployment";
+            var packageUri = "https://raw.githubusercontent.com/KuduApps/ZipDeployArtifacts/master/HelloKudu.zip";
+            return ApplicationManager.RunAsync(testName, async appManager =>
+            {
+                var client = appManager.ZipDeploymentManager.Client;
+                var requestUri = client.BaseAddress;
+                if (!isArmRequest && isAsync)
+                {
+                    requestUri = new Uri(string.Format("{0}?isAsync=true", requestUri));
+                }
+
+                using (var request = new HttpRequestMessage(HttpMethod.Put, requestUri))
+                {
+                    if (isArmRequest)
+                    {
+                        var payload = new { properties = new { packageUri = packageUri } };
+                        request.Content = new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json");
+                        request.Headers.Referrer = new Uri("https://management.azure.com/subscriptions/sub-id/resourcegroups/rg-name/providers/Microsoft.Web/sites/site-name/extensions/zipdeploy?api-version=2016-03-01");
+                        request.Headers.Add("x-ms-geo-location", "westus");
+                    }
+                    else
+                    {
+                        var payload = new { packageUri = packageUri };
+                        request.Content = new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json");
+                    }
+
+                    using (var response = await client.SendAsync(request))
+                    {
+                        if (isAsync || isArmRequest)
+                        {
+                            Assert.Equal(HttpStatusCode.Accepted, response.StatusCode);
+                            await AssertSuccessfulDeployment(appManager, timeoutSecs: 10);
+                        }
+                        else
+                        {
+                            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+                        }
+
+                        await AssertSuccessfulDeploymentByFilenames(appManager, new[] { "host.json", "images", "index.htm" });
+                        await AssertSuccessfulDeploymentByFilenames(appManager, new[] { "picture1.jpg", "picture2.jpg" }, path: "images");
+                    }
+                }
             });
         }
 
@@ -412,7 +466,24 @@ namespace Kudu.FunctionalTests
             var deployedFilenames = entries.Select(e => e.Name);
 
             var filenameSet = new HashSet<string>(filenames);
-            Assert.True(filenameSet.SetEquals(entries.Select(e => e.Name)));
+            Assert.True(filenameSet.SetEquals(entries.Select(e => e.Name)), string.Join(",", filenameSet) + " != " + string.Join(",", entries.Select(e => e.Name)));
+        }
+
+        private static async Task AssertSuccessfulDeployment(ApplicationManager appManager, int timeoutSecs = 30)
+        {
+            DeployResult deployment = null;
+            for (int i = 0; i < timeoutSecs; ++i)
+            {
+                deployment = await appManager.DeploymentManager.GetResultAsync("latest");
+                if (deployment.Status == DeployStatus.Success || deployment.Status == DeployStatus.Failed)
+                {
+                    break;
+                }
+
+                await Task.Delay(1000);
+            }
+
+            Assert.Equal(DeployStatus.Success, deployment.Status);
         }
 
         private static async Task<HttpResponseMessage> DeployZip(

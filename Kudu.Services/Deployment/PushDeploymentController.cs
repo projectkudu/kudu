@@ -131,15 +131,35 @@ namespace Kudu.Services.Deployment
             }
         }
 
-        private async Task<string> GetZipURLFromJSON()
+        private string GetZipURLFromARMJSON(JObject requestObject)
         {
-            // ARM template should have properties field and a packageUri field inside the properties field.
-            var requestObject = await Request.Content.ReadAsAsync<JObject>();
             using (_tracer.Step("Reading the zip URL from the request JSON"))
             {
                 try
                 {
+                    // ARM template should have properties field and a packageUri field inside the properties field.
                     string packageUri = requestObject.Value<JObject>("properties").Value<string>("packageUri");
+                    if (string.IsNullOrEmpty(packageUri))
+                    {
+                        throw new ArgumentException("Invalid Url in the JSON request");
+                    }
+                    return packageUri;
+                }
+                catch (Exception ex)
+                {
+                    _tracer.TraceError(ex, "Error reading the URL from the JSON {0}", requestObject.ToString());
+                    throw;
+                }
+            }
+        }
+
+        private string GetZipURLFromJSON(JObject requestObject)
+        {
+            using (_tracer.Step("Reading the zip URL from the request JSON"))
+            {
+                try
+                {
+                    string packageUri = requestObject.Value<string>("packageUri");
                     if (string.IsNullOrEmpty(packageUri))
                     {
                         throw new ArgumentException("Invalid Url in the JSON request");
@@ -158,11 +178,12 @@ namespace Kudu.Services.Deployment
         {
             var content = Request.Content;
             var isRequestJSON = content.Headers?.ContentType?.MediaType?.Equals("application/json", StringComparison.OrdinalIgnoreCase);
-            if (isRequestJSON == true && ArmUtils.IsArmRequest(Request))
+            if (isRequestJSON == true)
             {
                 try
                 {
-                    deploymentInfo.ZipURL = await GetZipURLFromJSON();
+                    var requestObject = await Request.Content.ReadAsAsync<JObject>();
+                    deploymentInfo.ZipURL = ArmUtils.IsArmRequest(Request) ? GetZipURLFromARMJSON(requestObject) : GetZipURLFromJSON(requestObject);
                 }
                 catch (Exception ex)
                 {
