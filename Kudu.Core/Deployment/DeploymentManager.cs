@@ -275,6 +275,15 @@ namespace Kudu.Core.Deployment
                 {
                     throw new DeploymentFailedException(exception);
                 }
+
+                if (statusFile != null && statusFile.Status == DeployStatus.Success && _settings.RunFromLocalZip())
+                {
+                    var zipDeploymentInfo = deploymentInfo as ZipDeploymentInfo;
+                    if (zipDeploymentInfo != null)
+                    {
+                        await PostDeploymentHelper.UpdateSiteVersion(zipDeploymentInfo, _environment, tracer);
+                    }
+                }
             }
         }
 
@@ -666,11 +675,6 @@ namespace Kudu.Core.Deployment
                         if (_settings.TouchWatchedFileAfterDeployment())
                         {
                             TryTouchWatchedFile(context, deploymentInfo);
-                        }
-
-                        if (_settings.RunFromLocalZip() && deploymentInfo is ZipDeploymentInfo)
-                        {
-                            await PostDeploymentHelper.UpdateSiteVersion(deploymentInfo as ZipDeploymentInfo, _environment, logger);
                         }
 
                         FinishDeployment(id, deployStep);

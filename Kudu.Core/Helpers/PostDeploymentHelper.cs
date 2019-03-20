@@ -12,8 +12,10 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Kudu.Contracts.Settings;
+using Kudu.Contracts.Tracing;
 using Kudu.Core.Deployment;
 using Kudu.Core.Infrastructure;
+using Kudu.Core.Tracing;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -703,11 +705,13 @@ namespace Kudu.Core.Helpers
             }
         }
 
-        public static async Task UpdateSiteVersion(ZipDeploymentInfo deploymentInfo, IEnvironment environment, ILogger logger)
+        public static async Task UpdateSiteVersion(ZipDeploymentInfo deploymentInfo, IEnvironment environment, ITracer tracer)
         {
             var siteVersionPath = Path.Combine(environment.SitePackagesPath, Constants.PackageNameTxt);
-            logger.Log($"Updating {siteVersionPath} with deployment {deploymentInfo.ZipName}");
-            await FileSystemHelpers.WriteAllTextToFileAsync(siteVersionPath, deploymentInfo.ZipName);
+            using (tracer.Step($"Updating {siteVersionPath} with deployment {deploymentInfo.ZipName}"))
+            {
+                await FileSystemHelpers.WriteAllTextToFileAsync(siteVersionPath, deploymentInfo.ZipName);
+            }
         }
     }
 }
