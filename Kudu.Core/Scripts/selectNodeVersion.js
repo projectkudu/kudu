@@ -328,36 +328,51 @@ else {
             npmVersion = null,
             yml = existsSync(repoIisnodeYml) ? fs.readFileSync(repoIisnodeYml, 'utf8') : '',
             shouldUpdateIisNodeYml = false;
-
-        if (yml.match(/^ *nodeProcessCommandLine *:/m)) {
-            // If the iisnode.yml included with the application explicitly specifies the
-            // nodeProcessCommandLine, exit this script. The presence of nodeProcessCommandLine
-            // deactivates automatic version selection.
-            console.log('The iisnode.yml file explicitly sets nodeProcessCommandLine. ' +
-                'Automatic node.js version selection is turned off.');
+        
+        // Always try to read the package.json if present to get the specified version
+        // If the package.json file is not included with the application 
+        // or if it does not specify node.js version constraints, use WEBSITE_NODE_DEFAULT_VERSION. 
+        if (typeof json !== 'object' || typeof json.engines !== 'object' || typeof json.engines.node !== 'string') {
+            // Attempt to read the pinned node version or fallback to the version of the executing node.exe.
+            console.log('The package.json file does not specify node.js engine version constraints.');
+            console.log('The node.js application will run with the default node.js version '
+                + nodeVersion + '.');
         } else {
-            // If the package.json file is not included with the application 
-            // or if it does not specify node.js version constraints, use WEBSITE_NODE_DEFAULT_VERSION. 
-            if (typeof json !== 'object' || typeof json.engines !== 'object' || typeof json.engines.node !== 'string') {
-                // Attempt to read the pinned node version or fallback to the version of the executing node.exe.
-                console.log('The package.json file does not specify node.js engine version constraints.');
-                console.log('The node.js application will run with the default node.js version '
-                    + nodeVersion + '.');
-            } else {
-                var versions = getInstalledNodeVersions(nodejsDir);
+            var versions = getInstalledNodeVersions(nodejsDir);
 
-                // Calculate actual node.js version to use for the application as the maximum available version
-                // that satisfies the version constraints from package.json.
-                nodeVersion = semver.maxSatisfying(versions, json.engines.node);
-                if (!nodeVersion) {
-                    throw new Error('No available node.js version matches application\'s version constraint of \''
-                        + json.engines.node + '\'. Use package.json to choose one of the available versions.');
-                }
-
-                console.log('Selected node.js version ' + nodeVersion + '. Use package.json file to choose a different version.');
-                npmVersion = getNpmVersionFromJson(npmRootPath, json);
-                shouldUpdateIisNodeYml = true;
+            // Calculate actual node.js version to use for the application as the maximum available version
+            // that satisfies the version constraints from package.json.
+            nodeVersion = semver.maxSatisfying(versions, json.engines.node);
+            if (!nodeVersion) {
+                throw new Error('No available node.js version matches application\'s version constraint of \''
+                    + json.engines.node + '\'. Use package.json to choose one of the available versions.');
             }
+
+            console.log('Selected node.js version ' + nodeVersion + '. Use package.json file to choose a different version.');
+            npmVersion = getNpmVersionFromJson(npmRootPath, json);
+        }
+        
+        var ymlVersionRegex = /nodeProcessCommandLine.*?\\([\d.]*)\\node\.exe/;
+        var ymlMatch = ymlVersionRegex.exec(yml);
+
+        if (ymlMatch) {
+            // If the iisnode.yml that is present explicitly specifies the nodeProcessCommandLine, read out
+            // the specified version and compare it with the package.json
+            var ymlNodeVersion = semver.maxSatisfying(versions, ymlMatch[1]);
+            console.log('The iisnode.yml file explicitly sets nodeProcessCommandLine. ' +
+                'node.js version ' + ymlNodeVersion + ' was detected.');
+            
+            if (ymlNodeVersion !== nodeVersion) {
+                console.log('The iisnode.yml node version (' + ymlNodeVersion + ') differs from the package.json version (' +
+                    nodeVersion + '). We will update the iisnode.yml.');
+                
+                nodeVersion = ymlNodeVersion;
+                // Another version was specified in the package.json, update the iisNodeYml to reflect this
+                shouldUpdateIisNodeYml = true;   
+            }
+        } else {
+            // Always update iisNodeYml if it was not yet specified
+            shouldUpdateIisNodeYml = true;
         }
 
         var nodeVersionPath = path.resolve(nodejsDir, nodeVersion),
