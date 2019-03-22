@@ -672,7 +672,7 @@ namespace Kudu.Core.Deployment
 
                         await PostDeploymentHelper.SyncFunctionsTriggers(_environment.RequestId, new PostDeploymentTraceListener(tracer, logger), deploymentInfo?.SyncFunctionsTriggersPath);
 
-                        if (_settings.TouchWatchedFileAfterDeployment())
+                        if (!_settings.RunFromZip() && _settings.TouchWatchedFileAfterDeployment())
                         {
                             TryTouchWatchedFile(context, deploymentInfo);
                         }
