@@ -365,29 +365,7 @@ namespace Kudu.Core.Helpers
                 var functionName = Path.GetFileName(Path.GetDirectoryName(functionJson));
                 var json = JObject.Parse(File.ReadAllText(functionJson));
 
-                JToken value;
-                // https://github.com/Azure/azure-webjobs-sdk-script/blob/a9bafba78a3a8092bfd61a8c7093200dae867efb/src/WebJobs.Script/Host/ScriptHost.cs#L1476-L1498
-                if (json.TryGetValue("disabled", out value))
-                {
-                    string stringValue = value.ToString();
-                    bool disabled;
-                    // if "disabled" is not a boolean, we try to expend it as an environment variable
-                    if (!Boolean.TryParse(stringValue, out disabled))
-                    {
-                        string expandValue = System.Environment.GetEnvironmentVariable(stringValue);
-                        // "1"/"true" -> true, else false
-                        disabled = string.Equals(expandValue, "1", StringComparison.OrdinalIgnoreCase) ||
-                                   string.Equals(expandValue, "true", StringComparison.OrdinalIgnoreCase);
-                    }
-
-                    if (disabled)
-                    {
-                        Trace(TraceEventType.Verbose, "Function {0} is disabled", functionName);
-                        return Enumerable.Empty<JObject>();
-                    }
-                }
-
-                var excluded = json.TryGetValue("excluded", out value) && (bool)value;
+                var excluded = json.TryGetValue("excluded", out JToken value) && (bool)value;
                 if (excluded)
                 {
                     Trace(TraceEventType.Verbose, "Function {0} is excluded", functionName);
