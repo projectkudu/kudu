@@ -205,7 +205,7 @@
     <value>{0}  Stream terminated due to timeout {1} min(s).{2}</value>
   </data>
   <data name="LogStream_Welcome" xml:space="preserve">
-    <value>{0}  Welcome, you are now connected to log-streaming service.{1}</value>
+    <value>{0}  Welcome, you are now connected to log-streaming service. The default timeout is 2 hours. Change the timeout with the setting SCM_LOGSTREAM_TIMEOUT {1}</value>
   </data>
   <data name="Error_InvalidRepoUrl" xml:space="preserve">
     <value>Repository url '{0}' is invalid.</value>
