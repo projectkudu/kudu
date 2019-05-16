@@ -31,7 +31,7 @@ namespace Kudu.Stress
         static ConcurrentDictionary<string, TestArtifacts> testArtifactStore = new ConcurrentDictionary<string, TestArtifacts>();
         static object initializationLockObj = new object();
 
-        // default the app beign tested to AspNetWebApplication"
+        // default the app being tested to AspNetWebApplication"
         public GitApplication TestApplication = new GitApplication()
         {
             AppName = "AspNetWebApplication",
