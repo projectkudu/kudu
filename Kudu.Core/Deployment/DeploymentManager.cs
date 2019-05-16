@@ -462,13 +462,13 @@ namespace Kudu.Core.Deployment
             return toDelete;
         }
 
-        private static string GenerateTemporaryId(int lenght = 8)
+        private static string GenerateTemporaryId(int length = 8)
         {
             const string HexChars = "0123456789abcdfe";
 
             var strb = new StringBuilder();
             strb.Append(TemporaryDeploymentIdPrefix);
-            for (int i = 0; i < lenght; ++i)
+            for (int i = 0; i < length; ++i)
             {
                 strb.Append(HexChars[_random.Next(HexChars.Length)]);
             }
