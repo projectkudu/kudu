@@ -137,7 +137,7 @@ namespace Kudu.Core.Jobs
                     catch (ThreadAbortException ex)
                     {
                         // by nature, ThreadAbortException will be rethrown at the end of this catch block and
-                        // this bool may not be neccessary since while loop will be exited anyway.  we added
+                        // this bool may not be necessary since while loop will be exited anyway.  we added
                         // it to be explicit.
                         threadAborted = true;
 

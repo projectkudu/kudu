@@ -135,7 +135,7 @@ namespace Kudu.Services.SiteExtensions
                                 // since "IsAnyInstallationRequireRestart" is depending on properties inside site extension status files 
                                 // while "UpdateArmSettingsForSuccessInstallation" will override some of the values
                                 bool requireRestart = SiteExtensionStatus.IsAnyInstallationRequireRestart(_environment.SiteExtensionSettingsPath, _siteExtensionRoot, tracer, _analytics);
-                                // clear operation, since opeation is done
+                                // clear operation, since operation is done
                                 if (UpdateArmSettingsForSuccessInstallation())
                                 {
                                     using (tracer.Step("{0} finished installation and batch update lock aquired. Will notify Antares GEO to restart website.", id))
@@ -159,7 +159,7 @@ namespace Kudu.Services.SiteExtensions
                     }
                     else if (!isInstallationLockHeld && !armSettings.IsTerminalStatus())
                     {
-                        // no background thread is working on instalation
+                        // no background thread is working on installation
                         // app-pool must be recycled
                         using (tracer.Step("{0} installation cancelled, background thread must be dead.", id))
                         {

@@ -196,7 +196,7 @@ namespace Kudu.Contracts.SiteExtensions
 
         // For Arm Request
         [JsonIgnore]
-        [SuppressMessage("Microsoft.Design", "CA1033:InterfaceMethodsShouldBeCallableByChildTypes", Justification = "to provide ARM spceific name")]
+        [SuppressMessage("Microsoft.Design", "CA1033:InterfaceMethodsShouldBeCallableByChildTypes", Justification = "to provide ARM specific name")]
         string INamedObject.Name { get { return Id; } }
 
         [JsonProperty(PropertyName = "provisioningState")]

@@ -32,7 +32,7 @@ namespace Kudu.Services.Performance
 
         // These settings are not secrets, and are needed by the Visual Studio Snapshot debugger.
         // Since they are not secrets, it's okay for a Reader over ARM to get them.
-        private readonly IReadOnlyList<string> _armWhitelistedVaiables = new []
+        private readonly IReadOnlyList<string> _armWhitelistedVariables = new []
         {
             "MicrosoftProductionDiagnostics_AgentPath",
             "COR_ENABLE_PROFILING",
@@ -484,7 +484,7 @@ namespace Kudu.Services.Performance
                     if (!(ArmUtils.IsRbacContributorRequest(Request) || ArmUtils.IsLegacyAuthorizationSource(Request)))
                     {
                         info.EnvironmentVariables = info.EnvironmentVariables
-                            .Where(kv => _armWhitelistedVaiables.Contains(kv.Key, StringComparer.OrdinalIgnoreCase))
+                            .Where(kv => _armWhitelistedVariables.Contains(kv.Key, StringComparer.OrdinalIgnoreCase))
                             .ToDictionary(k => k.Key, v => v.Value);
                         info.CommandLine = null;
                     }

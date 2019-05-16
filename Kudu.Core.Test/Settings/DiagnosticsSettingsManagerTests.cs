@@ -131,7 +131,7 @@ namespace Kudu.Core.Test.Settings
         {
             var fileSystemMock = new Mock<IFileSystem>();
             var fileBaseMock = new Mock<FileBase>();
-            var fileInfoFactoryMoack = new Mock<IFileInfoFactory>();
+            var fileInfoFactoryMock = new Mock<IFileInfoFactory>();
             var fileInfoMock = new Mock<FileInfoBase>();
             var directoryBaseMock = new Mock<DirectoryBase>();
             var files = new Dictionary<string, TestMemoryStream>();
@@ -140,9 +140,9 @@ namespace Kudu.Core.Test.Settings
                       .Returns(fileBaseMock.Object);
 
             fileSystemMock.SetupGet(fs => fs.FileInfo)
-                      .Returns(fileInfoFactoryMoack.Object);
+                      .Returns(fileInfoFactoryMock.Object);
 
-            fileInfoFactoryMoack.Setup(f => f.FromFileName(It.IsAny<string>()))
+            fileInfoFactoryMock.Setup(f => f.FromFileName(It.IsAny<string>()))
                                 .Returns(fileInfoMock.Object);
 
             fileSystemMock.SetupGet(fs => fs.Directory)

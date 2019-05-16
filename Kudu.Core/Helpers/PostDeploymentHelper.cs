@@ -552,12 +552,12 @@ namespace Kudu.Core.Helpers
                 // create or update marker timestamp
                 OperationManager.SafeExecute(() => File.WriteAllText(markerFile, start.ToString("o")));
 
-                var cancelation = new CancellationTokenSource();
-                var delay = Task.Delay(DefaultUpdateMarkerIntervalMS, cancelation.Token);
+                var cancellation = new CancellationTokenSource();
+                var delay = Task.Delay(DefaultUpdateMarkerIntervalMS, cancellation.Token);
                 var completed = await Task.WhenAny(delay, task);
                 if (completed != delay)
                 {
-                    cancelation.Cancel();
+                    cancellation.Cancel();
                     break;
                 }
             }

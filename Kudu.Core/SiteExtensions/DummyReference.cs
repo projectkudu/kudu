@@ -6,7 +6,7 @@ namespace Kudu.Core.SiteExtensions
 {
     /// <summary>
     /// 
-    /// This class is ment for maintaining a direct reference to those NuGet client dll that loaded via MEF by v3 client,
+    /// This class is meant for maintaining a direct reference to those NuGet client dll that loaded via MEF by v3 client,
     /// since MEF loads dll via reflection, Kudu.Core do not have any direct usage to those dll, dll will be drop during build time,
     /// causing project that reference Kudu.Core won`t function properly due to missing dll.
     /// 

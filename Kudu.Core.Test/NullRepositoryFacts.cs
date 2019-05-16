@@ -83,7 +83,7 @@ namespace Kudu.Core.Test
             return settings;
         }
 
-        private Mock<IEnvironment> MockEnviroment(string sitePath, IDeploymentSettingsManager settings)
+        private Mock<IEnvironment> MockEnvironment(string sitePath, IDeploymentSettingsManager settings)
         {
             var environment = new Mock<IEnvironment>(MockBehavior.Strict);
 

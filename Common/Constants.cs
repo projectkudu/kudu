@@ -63,11 +63,11 @@ namespace Kudu
 
         public const string LatestDeployment = "latest";
 
-        private static readonly TimeSpan _maxAllowedExectionTime = TimeSpan.FromMinutes(30);
+        private static readonly TimeSpan _maxAllowedExecutionTime = TimeSpan.FromMinutes(30);
 
         public static TimeSpan MaxAllowedExecutionTime
         {
-            get { return _maxAllowedExectionTime; }
+            get { return _maxAllowedExecutionTime; }
         }
 
         public const string ApplicationHostXdtFileName = "applicationHost.xdt";

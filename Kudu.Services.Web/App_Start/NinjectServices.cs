@@ -578,7 +578,7 @@ namespace Kudu.Services.Web.App_Start
             }
 
             // catch all unregistered url to properly handle not found
-            // this is to work arounf the issue in TraceModule where we see double OnBeginRequest call
+            // this is to work around the issue in TraceModule where we see double OnBeginRequest call
             // for the same request (404 and then 200 statusCode).
             routes.MapHttpRoute("error-404", "{*path}", new { controller = "Error404", action = "Handle" });
         }

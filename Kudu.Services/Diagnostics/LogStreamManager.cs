@@ -117,7 +117,7 @@ namespace Kudu.Services.Performance
         {
             System.Diagnostics.Debug.Assert(_watcher == null, "we only allow one manager per request!");
 
-            // initalize _logFiles before the file watcher since file watcher event handlers reference _logFiles
+            // initialize _logFiles before the file watcher since file watcher event handlers reference _logFiles
             // this mirrors the Reset() where we stop the file watcher before nulling _logFile.
             if (_logFiles == null)
             {

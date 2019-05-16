@@ -72,7 +72,7 @@ namespace Kudu.Web.App_Start
             kernel.Bind<ICertificateSearcher>().To<CertificateSearcher>();
             kernel.Bind<IKuduContext>().To<KuduContext>();
 
-            //TODO: Instantialte from container instead of factory.
+            //TODO: Instantiate from container instead of factory.
             kernel.Bind<KuduEnvironment>().ToMethod(_ => new KuduEnvironment
             {
                 RunningAgainstLocalKuduService = true,

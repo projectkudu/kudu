@@ -27,7 +27,7 @@ namespace Kudu.Core.Infrastructure
         private bool disposed;
 
         /// <summary>
-        /// Creates a new <see cref="ProgessWriter"/> instance defaulting to Console.Out and Console.Error and with 
+        /// Creates a new <see cref="ProgressWriter"/> instance defaulting to Console.Out and Console.Error and with 
         /// default idling start and delay times.
         /// </summary>
         public ProgressWriter()
@@ -36,7 +36,7 @@ namespace Kudu.Core.Infrastructure
         }
 
         /// <summary>
-        /// Creates a new <see cref="ProgessWriter"/> instance.
+        /// Creates a new <see cref="ProgressWriter"/> instance.
         /// </summary>
         /// <param name="output">The output writer. The idle character (".") is always written to this writer. Writer is not disposed.</param>
         /// <param name="error">The error writer. Writer is not disposed.</param>

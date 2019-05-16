@@ -146,7 +146,7 @@ namespace Kudu.Core.Infrastructure
             {
                 var aspNetConfigurations = _aspNetConfigurationsProperty.GetValue<Hashtable>(_projectInstance);
 
-                // Use the release configuraiton and debug if it isn't available
+                // Use the release configuration and debug if it isn't available
                 object configurationObject = aspNetConfigurations["Release"] ?? aspNetConfigurations["Debug"];
 
                 // REVIEW: Is there always a configuration object (i.e. can this ever be null?)

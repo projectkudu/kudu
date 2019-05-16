@@ -300,7 +300,7 @@ namespace Kudu.Core.Infrastructure
                 : Path.Combine(toolPath, String.Format("{0}.cmd", toolName));
         }
 
-        private static string ResolveRelativePathToProgramFiles(string relativeX86Path, string relativeX64Path, string errorMessge)
+        private static string ResolveRelativePathToProgramFiles(string relativeX86Path, string relativeX64Path, string errorMessage)
         {
             string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);
             string path = Path.Combine(programFiles, relativeX86Path);
@@ -312,7 +312,7 @@ namespace Kudu.Core.Infrastructure
 
             if (!File.Exists(path))
             {
-                throw new InvalidOperationException(errorMessge);
+                throw new InvalidOperationException(errorMessage);
             }
 
             return path;

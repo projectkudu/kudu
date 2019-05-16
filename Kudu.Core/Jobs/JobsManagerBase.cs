@@ -625,7 +625,7 @@ namespace Kudu.Core.Jobs
         }
         protected virtual void Dispose(bool disposing)
         {
-            // HACK: Next if statement should be removed once ninject wlll not dispose this class
+            // HACK: Next if statement should be removed once ninject will not dispose this class
             // Since ninject automatically calls dispose we currently disable it
             if (disposing)
             {
