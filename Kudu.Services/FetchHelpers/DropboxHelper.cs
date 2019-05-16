@@ -209,7 +209,7 @@ namespace Kudu.Services
                 }
             }
 
-            // Save new dropboc cursor
+            // Save new dropbox cursor
             LogInfo("Update dropbox cursor");
             _settings.SetValue(CursorKey, deployInfo.NewCursor);
 
