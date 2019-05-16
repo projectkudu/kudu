@@ -37,8 +37,8 @@ function getDefaultNpmVersion(nodeVersionPath) {
     var appSettingNpmVersion = process.env.WEBSITE_NPM_DEFAULT_VERSION;
 
     // extract the current node version from the path
-    var nodePathSplited = nodeVersionPath.split(path.sep).filter(function(e) { return e; });
-    var currentNodeVersion = nodePathSplited[nodePathSplited.length - 1];
+    var nodePathSplitted = nodeVersionPath.split(path.sep).filter(function(e) { return e; });
+    var currentNodeVersion = nodePathSplitted[nodePathSplitted.length - 1];
 
     if (appSettingNpmVersion) {
         return appSettingNpmVersion;
