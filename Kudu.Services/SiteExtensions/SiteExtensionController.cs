@@ -159,7 +159,7 @@ namespace Kudu.Services.SiteExtensions
                     }
                     else if (!isInstallationLockHeld && !armSettings.IsTerminalStatus())
                     {
-                        // no background thread is working on instalation
+                        // no background thread is working on installation
                         // app-pool must be recycled
                         using (tracer.Step("{0} installation cancelled, background thread must be dead.", id))
                         {
