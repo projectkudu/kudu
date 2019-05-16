@@ -6,7 +6,7 @@ using System.Web.Http;
 namespace Kudu.Services.Performance
 {
     // This is a placeholder for future process API functionality on Linux,
-    // the implementation of which will differ from Windows enought that it warrants
+    // the implementation of which will differ from Windows enough that it warrants
     // a separate controller class. For now this returns 400s for all routes.
 
     public class LinuxProcessController : ApiController
