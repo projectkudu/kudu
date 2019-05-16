@@ -8,7 +8,7 @@ namespace Kudu.Core.Deployment
     public class LogEntry : INamedObject
     {
         [JsonIgnore]
-        [SuppressMessage("Microsoft.Design", "CA1033:InterfaceMethodsShouldBeCallableByChildTypes", Justification = "to provide ARM spceific name")]
+        [SuppressMessage("Microsoft.Design", "CA1033:InterfaceMethodsShouldBeCallableByChildTypes", Justification = "to provide ARM specific name")]
         string INamedObject.Name { get { return Id; } }
 
         [JsonProperty(PropertyName = "log_time")]

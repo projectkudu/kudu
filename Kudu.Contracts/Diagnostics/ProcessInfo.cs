@@ -15,7 +15,7 @@ namespace Kudu.Core.Diagnostics
         public int Id { get; set; }
 
         [JsonIgnore]
-        [SuppressMessage("Microsoft.Design", "CA1033:InterfaceMethodsShouldBeCallableByChildTypes", Justification = "to provide ARM spceific name")]
+        [SuppressMessage("Microsoft.Design", "CA1033:InterfaceMethodsShouldBeCallableByChildTypes", Justification = "to provide ARM specific name")]
         string INamedObject.Name { get { return Id.ToString(); } }
 
         [JsonProperty(PropertyName = "name")]
