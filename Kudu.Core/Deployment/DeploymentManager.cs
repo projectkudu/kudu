@@ -356,7 +356,7 @@ namespace Kudu.Core.Deployment
                 status.MarkFailed();
             }
 
-            // Cleaup old deployments
+            // Cleanup old deployments
             PurgeAndGetDeployments();
         }
 
