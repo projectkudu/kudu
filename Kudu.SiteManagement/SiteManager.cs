@@ -181,7 +181,7 @@ namespace Kudu.SiteManagement
             }
         }
 
-        //NOTE: Small temprary object for configuration.
+        //NOTE: Small temporary object for configuration.
         private struct BindingInformation
         {
             public string Binding { get; set; }
