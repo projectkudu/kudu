@@ -385,7 +385,7 @@ namespace Kudu.Core.Deployment
             // is created before we return.
             if (waitForTempDeploymentCreation)
             {
-                // deploymentTask may return withoout creating the temp deployment (lock contention,
+                // deploymentTask may return without creating the temp deployment (lock contention,
                 // other exception), in which case just continue.
                 await Task.WhenAny(tempDeploymentCreatedTcs.Task, deploymentTask);
             }
