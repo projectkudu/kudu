@@ -421,7 +421,7 @@ namespace Kudu.Core.Infrastructure
                 var stdio = Task.WhenAll(tasks);
                 var completed = await Task.WhenAny(stdio, delay);
 
-                // if delay commpleted first (meaning timeout), check if activity and continue to wait
+                // if delay completed first (meaning timeout), check if activity and continue to wait
                 if (completed == delay)
                 {
                     var lastActivity = idleManager.LastActivity;
