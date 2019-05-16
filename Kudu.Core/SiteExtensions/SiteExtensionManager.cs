@@ -105,7 +105,7 @@ namespace Kudu.Core.SiteExtensions
                     packages,
                     async (uiPackage) =>
                     {
-                        // this function is called in multiple threads simoutaneously
+                        // this function is called in multiple threads simultaneously
                         return await ConvertRemotePackageToSiteExtensionInfo(uiPackage, feedUrl, metadataResource);
                     });
 
