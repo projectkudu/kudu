@@ -21,7 +21,7 @@ namespace Kudu.TestHarness
 {
     public class ApplicationManager
     {
-        private static bool _testFailureOccured;
+        private static bool _testFailureOccurred;
         private readonly ISiteManager _siteManager;
         private readonly Site _site;
         private readonly string _appName;
@@ -258,7 +258,7 @@ namespace Kudu.TestHarness
 
         public static async Task RunAsync(string testName, Func<ApplicationManager, Task> action)
         {
-            if (KuduUtils.StopAfterFirstTestFailure && _testFailureOccured)
+            if (KuduUtils.StopAfterFirstTestFailure && _testFailureOccurred)
             {
                 return;
             }
@@ -300,7 +300,7 @@ namespace Kudu.TestHarness
 
                 succcess = false;
 
-                _testFailureOccured = true;
+                _testFailureOccurred = true;
 
                 throw;
             }
