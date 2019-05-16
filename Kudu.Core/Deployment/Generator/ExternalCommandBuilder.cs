@@ -126,7 +126,7 @@ namespace Kudu.Core.Deployment.Generator
             const string extensionEnvVarSuffix = "_EXTENSION_VERSION";
 
             // "/site/deployments/tools/PostDeploymentActions" (can override with %SCM_POST_DEPLOYMENT_ACTIONS_PATH%)
-            // if %SCM_POST_DEPLOYMENT_ACTIONS_PATH% is set, we will support both absolute path or relative parth from "d:/home/site/repository"
+            // if %SCM_POST_DEPLOYMENT_ACTIONS_PATH% is set, we will support both absolute path or relative path from "d:/home/site/repository"
             var customPostDeploymentPath = DeploymentSettings.GetValue(SettingsKeys.PostDeploymentActionsDirectory);
             var postDeploymentPath = string.IsNullOrEmpty(customPostDeploymentPath) ? Path.Combine(Environment.DeploymentToolsPath, PostDeploymentActions) : Path.Combine(Environment.RepositoryPath, customPostDeploymentPath);
 
