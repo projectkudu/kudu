@@ -91,7 +91,7 @@ namespace Kudu.Services.FetchHelpers
             {
                 LogMessage(Resources.OneDriveApplyingChanges, _totals);
 
-                // perform action seperately, so that can ensure timestamp on directory
+                // perform action separately, so that can ensure timestamp on directory
                 // e.g two changes:
                 //  (new) file /a/b/c.txt
                 //  (new) dir  /a/b
