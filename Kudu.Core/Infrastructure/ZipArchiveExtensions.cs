@@ -154,7 +154,7 @@ namespace Kudu.Core.Infrastructure
                                 zipStream.CopyTo(fileStream);
                             }
 
-                            // this is to allow, the file time to always be newer than destrination
+                            // this is to allow, the file time to always be newer than destination
                             // the outcome is always replacing the destination files.
                             // it is non-optimized but workaround NPM reset file time issue (https://github.com/projectkudu/kudu/issues/2917).
                             if (!doNotPreserveFileTime)
