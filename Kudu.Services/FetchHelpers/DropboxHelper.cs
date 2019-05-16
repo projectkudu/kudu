@@ -137,7 +137,7 @@ namespace Kudu.Services
             ResetStats();
 
             // for Dropbox OAuth V2, the delta is collected and applied by SCM
-            // simply set OldCursoras current.
+            // simply set OldCursor as current.
             if (dropboxInfo.OAuthVersion == 2)
             {
                 deployInfo.OldCursor = _settings.GetValue(CursorKey);
