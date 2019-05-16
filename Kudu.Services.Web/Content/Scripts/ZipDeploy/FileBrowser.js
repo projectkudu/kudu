@@ -608,7 +608,7 @@ $.connection.hub.start().done(function () {
                 copyObjectsManager.removeAtIndex(0);
             }
             var date = new Date();
-            copyObjectsManager.setInfoMessage('Cache was partialy auto-cleared at ' + date.toLocaleString() + ' for performance improvements');
+            copyObjectsManager.setInfoMessage('Cache was partially auto-cleared at ' + date.toLocaleString() + ' for performance improvements');
         }
 
         if ($('#files-transfered-modal').is(':visible') || forceUpdateModal) { // update if modal visible
