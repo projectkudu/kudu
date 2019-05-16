@@ -581,14 +581,14 @@ namespace Kudu.Core.SiteExtensions
 
                 FileSystemHelpers.EnsureDirectory(_toBeDeletedDirectoryPath);
                 DirectoryInfo dirInfo = new DirectoryInfo(installationDir);
-                string tmpFoder = Path.Combine(
+                string tmpFolder = Path.Combine(
                     _toBeDeletedDirectoryPath,
                     string.Format(CultureInfo.InvariantCulture, "{0}-{1}", dirInfo.Name, Guid.NewGuid().ToString("N").Substring(0, 8)));
 
-                using (tracer.Step("Failed to cleanup. Moving leftover data to {0}", tmpFoder))
+                using (tracer.Step("Failed to cleanup. Moving leftover data to {0}", tmpFolder))
                 {
                     // if failed, let exception bubble up to trigger bad request
-                    OperationManager.Attempt(() => FileSystemHelpers.MoveDirectory(installationDir, tmpFoder));
+                    OperationManager.Attempt(() => FileSystemHelpers.MoveDirectory(installationDir, tmpFolder));
                 }
             }
 
