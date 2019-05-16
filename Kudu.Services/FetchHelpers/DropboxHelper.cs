@@ -29,7 +29,7 @@ namespace Kudu.Services
         private const string CursorKey = "dropbox_cursor";
 
         /// <summary>
-        /// The duratio to wait between file download retries to avoid rate limiting.
+        /// The duration to wait between file download retries to avoid rate limiting.
         /// </summary>
         internal static TimeSpan RetryWaitToAvoidRateLimit = TimeSpan.FromSeconds(20);
 
