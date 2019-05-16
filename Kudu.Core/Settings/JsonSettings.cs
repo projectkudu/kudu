@@ -106,8 +106,8 @@ namespace Kudu.Core.Settings
 
         private JObject Read()
         {
-            // need to check file exist before aquire lock
-            // since aquire lock will generate lock file, and if folder not exist, will create folder
+            // need to check file exist before acquire lock
+            // since acquire lock will generate lock file, and if folder not exist, will create folder
             if (!FileSystemHelpers.FileExists(_path))
             {
                 return new JObject();

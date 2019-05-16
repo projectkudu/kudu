@@ -234,7 +234,7 @@ namespace Kudu.SiteManagement
             }
 
             //NOTE: DeleteSiteAsync was not split into to usings before, but by calling CommitChanges midway, the iis manager goes into a read-only mode on Windows7 which then provokes
-            //      an error on the next commit. On the next pass. Aquirering a new Manager seems like a more safe aproach.
+            //      an error on the next commit. On the next pass. Acquirering a new Manager seems like a more safe aproach.
             using (var iis = GetServerManager())
             {
                 string appPath = _context.Paths.GetApplicationPath(applicationName);
