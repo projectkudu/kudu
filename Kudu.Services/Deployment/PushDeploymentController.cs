@@ -300,7 +300,7 @@ namespace Kudu.Services.Deployment
                     await WriteSitePackageZip(zipDeploymentInfo, tracer, await DeploymentHelper.GetZipContentFromURL(zipDeploymentInfo, tracer));
                 }
                 // If this is a Run-From-Zip deployment, then we need to extract function.json
-                // from the zip file into path zipDeploymentInfo.SyncFunctionsTrigersPath
+                // from the zip file into path zipDeploymentInfo.SyncFunctionsTriggersPath
                 ExtractTriggers(repository, zipDeploymentInfo);
             }
             else
