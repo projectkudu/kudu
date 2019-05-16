@@ -274,7 +274,7 @@ namespace Kudu.TestHarness
             TestTracer.Trace("Using site - {0}", appManager.SiteUrl);
 
             var dumpPath = Path.Combine(PathHelper.TestResultsPath, testName, testName + ".zip");
-            bool succcess = true;
+            bool success = true;
             try
             {
                 using (StartLogStream(appManager))
@@ -298,7 +298,7 @@ namespace Kudu.TestHarness
 
                 TestTracer.Trace("Run failed with exception\n{0}", ex);
 
-                succcess = false;
+                success = false;
 
                 _testFailureOccurred = true;
 
@@ -308,7 +308,7 @@ namespace Kudu.TestHarness
             {
                 SafeTraceDeploymentLogs(appManager);
 
-                SitePool.ReportTestCompletion(appManager, succcess);
+                SitePool.ReportTestCompletion(appManager, success);
             }
         }
 
