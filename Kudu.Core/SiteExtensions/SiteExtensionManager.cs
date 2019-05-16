@@ -513,7 +513,7 @@ namespace Kudu.Core.SiteExtensions
                     }
                 }
 
-                // ignore below action if we install packge to wwwroot
+                // ignore below action if we install package to wwwroot
                 if (SiteExtensionInfo.SiteExtensionType.WebRoot != type)
                 {
                     using (tracer.Step("Check if applicationHost.xdt or scmApplicationHost.xdt file existed."))
