@@ -100,8 +100,8 @@ namespace Kudu.Services.GitServer
         //  GET Git/{repositorypath}/info/refs?service=git-upload-pack
         //  GET Git/{repositorypath}/info/refs?service=git-receive-pack
         //  GET Git/{repositorypath}/info/refs
-        // POST Git/{repostiorypath}/git-receive-pack
-        // POST Git/{repostiorypath}/git-upload-pack
+        // POST Git/{repositorypath}/git-receive-pack
+        // POST Git/{repositorypath}/git-upload-pack
         public static bool TryParseUri(Uri url, out string repoRelLocalPath, out GitServerRequestType requestType)
         {
             repoRelLocalPath = null;
