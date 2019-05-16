@@ -554,7 +554,7 @@ namespace Kudu.Core.SiteExtensions
         }
 
         /// <summary>
-        /// <para>Check if there is damanged leftover data</para>
+        /// <para>Check if there is damaged leftover data</para>
         /// <para>If there is leftover data, will try to cleanup.</para>
         /// <para>If fail to cleanup, will move leftover data to Temp folder</para>
         /// </summary>
