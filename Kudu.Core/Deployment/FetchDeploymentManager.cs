@@ -248,7 +248,7 @@ namespace Kudu.Core.Deployment
                 IDeploymentStatusFile statusFile = _status.Open(lastChange.Id);
                 if (statusFile.Status == DeployStatus.Success)
                 {
-                    // if last change is not null and finish successfully, mean there was at least one deployoment happened
+                    // if last change is not null and finish successfully, mean there was at least one deployment happened
                     // since deployment is now done, trigger swap if enabled
                     await PostDeploymentHelper.PerformAutoSwap(_environment.RequestId, new PostDeploymentTraceListener(_tracer, _deploymentManager.GetLogger(lastChange.Id)));
                 }
