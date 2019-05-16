@@ -7,12 +7,12 @@ set _SCMURI=%~1
 set _CURLEXE="%ProgramFiles(x86)%\git\bin\curl.exe"
 
 if NOT EXIST %_CURLEXE% (
-  REM must put quote to not inteprete ( and )
+  REM must put quote to not intepret ( and )
   set _CURLEXE="%ProgramFiles(x86)%\git\mingw32\bin\curl.exe"
 )
 
 if NOT EXIST %_CURLEXE% (
-  REM must put quote to not inteprete ( and )
+  REM must put quote to not intepret ( and )
   set _CURLEXE="%ProgramW6432%\git\mingw64\bin\curl.exe"
 )
 
