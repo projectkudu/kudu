@@ -137,7 +137,7 @@ namespace Kudu.Core.Deployment.Generator
 
             // D:\Program Files (x86)\SiteExtensions
             string siteExtensionFolder = Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.ProgramFilesX86), "SiteExtensions");
-            // Find all enviroment variable with format {package id}_EXTENSION_VERSION,
+            // Find all environment variable with format {package id}_EXTENSION_VERSION,
             // And find scripts from PostDeploymentActions" folder
             foreach (DictionaryEntry entry in System.Environment.GetEnvironmentVariables())
             {

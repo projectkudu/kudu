@@ -26,7 +26,7 @@ namespace Kudu.Services.GitServer
         private readonly Func<Type, object> _getInstance;
         private readonly ITracer _tracer;
         // We need to take an instance constructor from so we can ensure we create the IGitServer after
-        // repository path in IEnviroment is set.
+        // repository path in IEnvironment is set.
         public CustomGitRepositoryHandler(Func<Type, object> getInstance)
         {
             _getInstance = getInstance;

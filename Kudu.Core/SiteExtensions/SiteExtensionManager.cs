@@ -452,7 +452,7 @@ namespace Kudu.Core.SiteExtensions
         {
             try
             {
-                EnsureInstallationEnviroment(installationDirectory, tracer);
+                EnsureInstallationEnvironment(installationDirectory, tracer);
 
                 string packageLocalFilePath = GetNuGetPackageFile(package.Identity.Id, package.Identity.Version.ToNormalizedString());
                 bool packageExisted = FileSystemHelpers.DirectoryExists(installationDirectory);
@@ -558,7 +558,7 @@ namespace Kudu.Core.SiteExtensions
         /// <para>If there is leftover data, will try to cleanup.</para>
         /// <para>If fail to cleanup, will move leftover data to Temp folder</para>
         /// </summary>
-        private static void EnsureInstallationEnviroment(string installationDir, ITracer tracer)
+        private static void EnsureInstallationEnvironment(string installationDir, ITracer tracer)
         {
             // folder is there but nupkg is gone, means previous uninstallation must encounter some error
             bool isInstalledPackageBroken = FileSystemHelpers.DirectoryExists(installationDir) && FileSystemHelpers.GetFiles(installationDir, "*.nupkg").Length == 0;
