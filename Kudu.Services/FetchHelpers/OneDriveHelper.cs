@@ -398,7 +398,7 @@ namespace Kudu.Services.FetchHelpers
                 return HandlingUpdateOrCreate(change, wwwroot, accessToken);
             });
 
-            // TODO: hande rename and move
+            // TODO: handle rename and move
 
             return updated;
         }
