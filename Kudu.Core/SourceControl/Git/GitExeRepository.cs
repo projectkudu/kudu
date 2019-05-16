@@ -21,7 +21,7 @@ namespace Kudu.Core.SourceControl.Git
         internal const string RemoteAlias = "origin";
 
         // From CIT experience, this is most common flakiness issue with github.com
-        private static readonly string[] RetriableFetchFailures =
+        private static readonly string[] RetryableFetchFailures =
         {
             "Unknown SSL protocol error in connection",
             "The requested URL returned error: 403 while accessing",
@@ -578,7 +578,7 @@ fi" + "\n";
             return OperationManager.Attempt(func, delayBeforeRetry: 1000, shouldRetry: ex =>
             {
                 string error = ex.Message;
-                if (RetriableFetchFailures.Any(retriableFailureMessage => error.Contains(retriableFailureMessage)))
+                if (RetryableFetchFailures.Any(retryableFailureMessage => error.Contains(retryableFailureMessage)))
                 {
                     _tracerFactory.GetTracer().Trace("Retry due to {0}", error);
                     return true;
