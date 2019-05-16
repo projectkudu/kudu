@@ -49,7 +49,7 @@ namespace Kudu.Console
                 return 1;
             }
 
-            // The post receive hook launches the exe from sh and intereprets newline differently.
+            // The post receive hook launches the exe from sh and interprets newline differently.
             // This fixes very wacky issues with how the output shows up in the console on push
             System.Console.Error.NewLine = "\n";
             System.Console.Out.NewLine = "\n";
