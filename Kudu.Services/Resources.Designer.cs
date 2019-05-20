@@ -475,7 +475,7 @@ namespace Kudu.Services {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to {0} successed, {1} failed..
+        ///   Looks up a localized string similar to {0} succeeded, {1} failed..
         /// </summary>
         internal static string OneDriveApplyResult {
             get {
