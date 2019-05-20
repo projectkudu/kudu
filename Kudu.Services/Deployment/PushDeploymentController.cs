@@ -218,7 +218,7 @@ namespace Kudu.Services.Deployment
 
             switch (result)
             {
-                case FetchDeploymentRequestResult.RunningAynschronously:
+                case FetchDeploymentRequestResult.RunningAsynchronously:
                     if (ArmUtils.IsArmRequest(Request))
                     {
                         DeployResult deployResult = new DeployResult();

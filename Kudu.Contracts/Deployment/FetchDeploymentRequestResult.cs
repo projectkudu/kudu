@@ -4,7 +4,7 @@
     {
         Unknown = 0,
         ForbiddenScmDisabled,
-        RunningAynschronously,
+        RunningAsynchronously,
         ConflictAutoSwapOngoing,
         RanSynchronously,
         Pending,
