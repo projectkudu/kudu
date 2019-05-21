@@ -333,8 +333,9 @@
     </PropertyGroup>
     <Message Text="Running post build events" Importance="High" />
     <Exec Command="&quot;$(ProjectDir)\updateNodeModules.cmd&quot; &quot;$(TargetDir)&quot;" Condition=" '$(BuildOutputsUpdated)' == 'true' " />
-    <Exec Command="&quot;$(ProgramW6432)\Git\bin\git.exe&quot; rev-parse HEAD &gt; &quot;$(MsBuildProjectDirectory)\commit.txt&quot;" Condition=" '$(BuildOutputsUpdated)' == 'true' AND Exists('$(ProgramW6432)\Git\bin\git.exe') " />
-    <Exec Command="&quot;$(ProgramFiles)\Git\bin\git.exe&quot; rev-parse HEAD &gt; &quot;$(MsBuildProjectDirectory)\commit.txt&quot;" Condition=" '$(BuildOutputsUpdated)' == 'true' AND !Exists('$(ProgramW6432)\Git\bin\git.exe') AND Exists('$(ProgramFiles)\Git\bin\git.exe') " />
+    <Exec Command="echo $(GIT_SHA) &gt; &quot;$(MsBuildProjectDirectory)\commit.txt&quot;" Condition=" '$(GIT_SHA)' != '' " />
+    <Exec Command="&quot;$(ProgramW6432)\Git\bin\git.exe&quot; rev-parse HEAD &gt; &quot;$(MsBuildProjectDirectory)\commit.txt&quot;" Condition=" '$(GIT_SHA)' == '' AND '$(BuildOutputsUpdated)' == 'true' AND Exists('$(ProgramW6432)\Git\bin\git.exe') " />
+    <Exec Command="&quot;$(ProgramFiles)\Git\bin\git.exe&quot; rev-parse HEAD &gt; &quot;$(MsBuildProjectDirectory)\commit.txt&quot;" Condition=" '$(GIT_SHA)' == '' AND '$(BuildOutputsUpdated)' == 'true' AND !Exists('$(ProgramW6432)\Git\bin\git.exe') AND Exists('$(ProgramFiles)\Git\bin\git.exe') " />
     <Copy SourceFiles="$(SolutionDir)\Kudu.Console\bin\$(ConfigurationName)\kudu.exe" DestinationFolder="$(TargetDir)" SkipUnchangedFiles="true" />
     <Copy SourceFiles="$(SolutionDir)\Kudu.Console\bin\$(ConfigurationName)\kudu.exe.config" DestinationFolder="$(TargetDir)" SkipUnchangedFiles="true" />
     <ItemGroup>
