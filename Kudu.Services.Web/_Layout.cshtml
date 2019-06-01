@@ -55,7 +55,7 @@
             <div class="collapse navbar-collapse">
                 <ul class="nav navbar-nav">
                     <li><a href="~/Env.cshtml">Environment</a></li>
-                    @if (Kudu.Core.Helpers.OSDetector.IsOnWindows())
+                    @if (Kudu.Core.Helpers.OSDetector.IsOnWindows() && !Kudu.Core.Helpers.EnvironmentHelper.IsWindowsContainers())
                     {
                         <li class="dropdown">
                             <a href="#" data-toggle="dropdown" class="dropdown-toggle">Debug console <b class="caret"></b></a>
@@ -77,6 +77,15 @@
                             </ul>
                         </li>
                         <li><a href="~/SiteExtensions/">Site extensions</a></li>
+                    }
+                    else if (Kudu.Core.Helpers.OSDetector.IsOnWindows() && Kudu.Core.Helpers.EnvironmentHelper.IsWindowsContainers())
+                    {
+                        <li class="dropdown">
+                            <a href="#" data-toggle="dropdown" class="dropdown-toggle">Debug console <b class="caret"></b></a>
+                            <ul class="dropdown-menu">
+                                <li><a href="~/webssh/host">SSH</a></li>
+                            </ul>
+                        </li>
                     }
                     else
                     {
