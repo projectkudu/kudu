@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Net.Http;
+using System.Threading.Tasks;
 using Kudu.Console.Services;
 using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Settings;
@@ -48,7 +49,7 @@ namespace Kudu.Console
                 return 1;
             }
 
-            // The post receive hook launches the exe from sh and intereprets newline differently.
+            // The post receive hook launches the exe from sh and interprets newline differently.
             // This fixes very wacky issues with how the output shows up in the console on push
             System.Console.Error.NewLine = "\n";
             System.Console.Out.NewLine = "\n";
@@ -57,9 +58,8 @@ namespace Kudu.Console
             string wapTargets = args[1];
             string deployer = args.Length == 2 ? null : args[2];
             string requestId = System.Environment.GetEnvironmentVariable(Constants.RequestIdHeader);
-            string siteRestrictedJwt = System.Environment.GetEnvironmentVariable(Constants.SiteRestrictedJWT);
 
-            IEnvironment env = GetEnvironment(appRoot, requestId, siteRestrictedJwt);
+            IEnvironment env = GetEnvironment(appRoot, requestId);
             ISettings settings = new XmlSettings.Settings(GetSettingsPath(env));
             IDeploymentSettingsManager settingsManager = new DeploymentSettingsManager(settings);
 
@@ -163,8 +163,16 @@ namespace Kudu.Console
             {
                 try
                 {
-                    deploymentManager.DeployAsync(gitRepository, changeSet: null, deployer: deployer, clean: false)
-                        .Wait();
+                    // although the api is called DeployAsync, most expensive works are done synchronously.
+                    // need to launch separate task to go async explicitly (consistent with FetchDeploymentManager)
+                    var deploymentTask = Task.Run(async () => await deploymentManager.DeployAsync(gitRepository, changeSet: null, deployer: deployer, clean: false));
+
+#pragma warning disable 4014
+                    // Track pending task
+                    PostDeploymentHelper.TrackPendingOperation(deploymentTask, TimeSpan.Zero);
+#pragma warning restore 4014
+
+                    deploymentTask.Wait();
 
                     if (PostDeploymentHelper.IsAutoSwapEnabled())
                     {
@@ -173,7 +181,7 @@ namespace Kudu.Console
                         IDeploymentStatusFile statusFile = deploymentStatusManager.Open(changeSet.Id);
                         if (statusFile != null && statusFile.Status == DeployStatus.Success)
                         {
-                            PostDeploymentHelper.PerformAutoSwap(env.RequestId, env.SiteRestrictedJwt, new PostDeploymentTraceListener(tracer, deploymentManager.GetLogger(changeSet.Id))).Wait();
+                            PostDeploymentHelper.PerformAutoSwap(env.RequestId, new PostDeploymentTraceListener(tracer, deploymentManager.GetLogger(changeSet.Id))).Wait();
                         }
                     }
                 }
@@ -236,7 +244,7 @@ namespace Kudu.Console
             return Path.Combine(environment.DeploymentsPath, Constants.DeploySettingsPath);
         }
 
-        private static IEnvironment GetEnvironment(string siteRoot, string requestId, string siteRestrictedJwt)
+        private static IEnvironment GetEnvironment(string siteRoot, string requestId)
         {
             string root = Path.GetFullPath(Path.Combine(siteRoot, ".."));
 
@@ -254,8 +262,7 @@ namespace Kudu.Console
             return new Kudu.Core.Environment(root,
                 EnvironmentHelper.NormalizeBinPath(binPath),
                 repositoryPath,
-                requestId,
-                siteRestrictedJwt);
+                requestId);
         }
     }
 }

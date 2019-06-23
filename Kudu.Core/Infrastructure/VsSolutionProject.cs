@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Kudu.Core.Deployment;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -145,7 +146,7 @@ namespace Kudu.Core.Infrastructure
             {
                 var aspNetConfigurations = _aspNetConfigurationsProperty.GetValue<Hashtable>(_projectInstance);
 
-                // Use the release configuraiton and debug if it isn't available
+                // Use the release configuration and debug if it isn't available
                 object configurationObject = aspNetConfigurations["Release"] ?? aspNetConfigurations["Debug"];
 
                 // REVIEW: Is there always a configuration object (i.e. can this ever be null?)
@@ -157,26 +158,15 @@ namespace Kudu.Core.Infrastructure
             }
 
             _absolutePath = Path.Combine(Path.GetDirectoryName(_solutionPath), relativePath);
-            if (FileSystemHelpers.FileExists(_absolutePath))
+            if (FileSystemHelpers.FileExists(_absolutePath) && DeploymentHelper.IsMsBuildProject(_absolutePath))
             {
-                // used to determine project type
+                // used to determine project type from project file
                 _projectTypeGuids = VsHelper.GetProjectTypeGuids(_absolutePath);
-                if (AspNetCoreHelper.IsDotnetCoreFromProjectFile(_absolutePath, _projectTypeGuids))
-                {
-                    _isAspNetCore = true;
-                }
-                else if (projectType == SolutionProjectType.KnownToBeMSBuildFormat)
-                {
-                    // KnownToBeMSBuildFormat: C#, VB, and VJ# projects
-                    // Check if it's a wap
-                    _isWap = VsHelper.IsWap(_projectTypeGuids);
 
-                    _isExecutable = VsHelper.IsExecutableProject(_absolutePath);
-                }
-                else if (FunctionAppHelper.LooksLikeFunctionApp())
-                {
-                    _isFunctionApp = true;
-                }
+                _isAspNetCore = AspNetCoreHelper.IsDotnetCoreFromProjectFile(_absolutePath, _projectTypeGuids);
+                _isWap = VsHelper.IsWap(_projectTypeGuids);
+                _isExecutable = VsHelper.IsExecutableProject(_absolutePath);
+                _isFunctionApp = FunctionAppHelper.LooksLikeFunctionApp();
             }
             else
             {
@@ -190,7 +180,7 @@ namespace Kudu.Core.Infrastructure
         private enum SolutionProjectType
         {
             Unknown,
-            KnownToBeMSBuildFormat,
+            KnownToBeMSBuildFormat,  // KnownToBeMSBuildFormat: C#, VB, and VJ# projects
             SolutionFolder,
             WebProject,
             WebDeploymentProject,

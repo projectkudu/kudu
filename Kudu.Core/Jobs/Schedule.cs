@@ -38,16 +38,20 @@ namespace Kudu.Core.Jobs
 
             lastSchedule = lastSchedule == DateTime.MinValue ? now : lastSchedule.ToLocalTime();
 
-            // Check for next occurence from last occurence
+            // Check for next occurrence from last occurrence
             DateTime nextOccurrence = _crontabSchedule.GetNextOccurrence(lastSchedule);
 
-            // If next occurence is in the future use it
-            if (nextOccurrence >= now)
+            // Note: For calculations, we use DateTimeOffsets and TimeZoneInfo to ensure we honor time zone
+            // changes (e.g. Daylight Savings Time)
+            var nowOffset = new DateTimeOffset(now, TimeZoneInfo.Local.GetUtcOffset(now));
+            var nextOffset = new DateTimeOffset(nextOccurrence, TimeZoneInfo.Local.GetUtcOffset(nextOccurrence));
+            if (nextOffset >= nowOffset)
             {
-                return nextOccurrence - now;
+                // If next occurrence is in the future use it
+                return nextOffset - nowOffset;
             }
 
-            // Otherwise if next occurence is up to 10 minutes in the past or ignore missed is true use now
+            // Otherwise if next occurrence is up to 10 minutes in the past or ignore missed is true use now
             if (ignoreMissed || nextOccurrence >= now - TimeSpan.FromMinutes(10))
             {
                 return TimeSpan.Zero;
@@ -60,8 +64,10 @@ namespace Kudu.Core.Jobs
                 _logger.LogWarning("Missed {0} schedules, most recent at {1}".FormatCurrentCulture(nextOccurrencesCount, nextOccurrences.Last()));
             }
 
-            // Return next occurence after now
-            return _crontabSchedule.GetNextOccurrence(now) - now;
+            // Return next occurrence after now
+            nextOccurrence = _crontabSchedule.GetNextOccurrence(now);
+            nextOffset = new DateTimeOffset(nextOccurrence, TimeZoneInfo.Local.GetUtcOffset(nextOccurrence));
+            return nextOffset - nowOffset;
         }
 
         public override string ToString()

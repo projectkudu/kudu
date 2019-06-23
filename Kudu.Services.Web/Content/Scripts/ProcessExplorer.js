@@ -62,7 +62,7 @@ var Utilities = (function () {
                 if (cells[j] instanceof HTMLElement) {
                     cell.appendChild(cells[j]);
                 } else {
-                    cell.innerHTML = cells[j];
+                    $(cell).text(cells[j]);
                 }
                 row.appendChild(cell);
             }
@@ -411,10 +411,10 @@ var Process = (function () {
             $(profilingButton).addClass("btn-danger");
         }
 
-        if (Process.prototype.WebSiteSku === "Free" || Process.prototype.WebSiteSku === "Shared") {
+        if (Process.prototype.WebSiteSku === "Free" || Process.prototype.WebSiteSku === "Shared" || Process.prototype.WebSiteSku === "Dynamic") {
             $(profilingButton).css("opacity", "0.5");
             $(profilingButton).off("click");
-            $(profilingButton).attr("title", "Profiling is not supported for Free/Shared sites.");
+            $(profilingButton).attr("title", "Profiling is not supported for Free/Shared sites or Function apps in consumption plan.");
             $(profilingButton).tooltip().show();
 
             var iisProfilingCheckboxControl = iisProfilingCheckbox.childNodes.item(this._json.id + "-iisProfilingCheck");           
@@ -633,7 +633,7 @@ var Module = (function () {
     Module.prototype.tableCells = function () {
         var _this = this;
         return [
-            "<strong>" + this._json.file_name + "</strong>", this._json.file_version, Utilities.getButton("ui-button-info", this._json.base_address.toString() + "-more", "More...", function () {
+            this._json.file_name, this._json.file_version, Utilities.getButton("ui-button-info", this._json.base_address.toString() + "-more", "More...", function () {
                 _this.dialog().dialog("open");
             })];
     };

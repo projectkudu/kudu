@@ -22,7 +22,7 @@ namespace Kudu.Services.Performance
         private const string DetailedTracingAgentGuid = "31003EE3-A8E1-427A-931E-97057D4D2B7D";
         private const string IisWebServerProviderGuid = "3A2A4E84-4C21-4981-AE10-3FDA0D9B0F83";
         private const string DiagnosticsHubAgentGuid = "4EA90761-2248-496C-B854-3C0399A591A4";
-        
+
         private static ConcurrentDictionary<int, ProfileInfo> _profilingList = new ConcurrentDictionary<int, ProfileInfo>();
         private static object _lockObject = new object();
 
@@ -33,7 +33,19 @@ namespace Kudu.Services.Performance
 
         private static Timer _profilingIdleTimer;
 
-        private static string _processName = System.Environment.ExpandEnvironmentVariables("%SystemDrive%\\msvsmon\\profiler\\VSStandardCollector.Dev14.exe");
+        private static string _processName;
+
+        static ProfileManager()
+        {
+            if(Environment.OSVersion.Version.Major < 10)
+            {
+                _processName = Environment.ExpandEnvironmentVariables("%SystemDrive%\\msvsmon\\profiler\\VSStandardCollector.Dev14.exe");
+            }
+            else
+            {
+                _processName = Environment.ExpandEnvironmentVariables("%SystemDrive%\\Program Files\\Microsoft Visual Studio 15.0\\Team Tools\\DiagnosticsHub\\Collector\\VSDiagnostics.exe");
+            }
+        }
 
         internal static async Task<ProfileResultInfo> StartProfileAsync(int processId, ITracer tracer = null, bool iisProfiling = false)
         {
@@ -54,7 +66,18 @@ namespace Kudu.Services.Performance
                 }
                 else
                 {
-                    string arguments = System.Environment.ExpandEnvironmentVariables(string.Format("start {0} /attach:{1} /loadAgent:{2};DiagnosticsHub.CpuAgent.dll  /scratchLocation:%LOCAL_EXPANDED%\\Temp", profilingSessionId, processId, DiagnosticsHubAgentGuid));
+                    string arguments;
+
+                    // This is temp fix while we are in process of retiring Windows 2012 server.
+                    if (Environment.OSVersion.Version.Major < 10)
+                    {
+                        arguments = System.Environment.ExpandEnvironmentVariables(string.Format("start {0} /attach:{1} /loadAgent:{2};DiagnosticsHub.CpuAgent.dll  /scratchLocation:%LOCAL_EXPANDED%\\Temp", profilingSessionId, processId, DiagnosticsHubAgentGuid));
+                    }
+                    else
+                    {
+                        arguments = System.Environment.ExpandEnvironmentVariables(string.Format("start {0} /attach:{1} /loadAgent:{2};DiagnosticsHub.CpuAgent.dll;{{\\\"collectNgenPdbs\\\":false}}  /scratchLocation:%LOCAL_EXPANDED%\\Temp", profilingSessionId, processId, DiagnosticsHubAgentGuid));
+                    }
+
                     profileProcessResponse = await ExecuteProfilingCommandAsync(arguments, tracer);
                 }
                 if (profileProcessResponse.StatusCode != HttpStatusCode.OK)

@@ -28,8 +28,8 @@ namespace Kudu.Core.Jobs
         private bool _alwaysOnWarningLogged;
         private bool? _isSingleton;
 
-        public ContinuousJobRunner(ContinuousJob continuousJob, IEnvironment environment, IDeploymentSettingsManager settings, ITraceFactory traceFactory, IAnalytics analytics)
-            : base(continuousJob.Name, Constants.ContinuousPath, environment, settings, traceFactory, analytics)
+        public ContinuousJobRunner(ContinuousJob continuousJob, string basePath, IEnvironment environment, IDeploymentSettingsManager settings, ITraceFactory traceFactory, IAnalytics analytics)
+            : base(continuousJob.Name, Constants.ContinuousPath, basePath, environment, settings, traceFactory, analytics)
         {
             _analytics = analytics;
             _continuousJobLogger = new ContinuousJobLogger(continuousJob.Name, Environment, TraceFactory);
@@ -38,6 +38,11 @@ namespace Kudu.Core.Jobs
             _disableFilePath = Path.Combine(continuousJob.JobBinariesRootPath, "disable.job");
 
             _singletonLock = new LockFile(Path.Combine(JobDataPath, "singleton.job.lock"), TraceFactory, ensureLock: true);
+        }
+
+        public void ResetLockedStatusFile()
+        {
+            _continuousJobLogger.ResetLockedStatusFile();
         }
 
         private void UpdateStatusIfChanged(ContinuousJobStatus continuousJobStatus)
@@ -132,7 +137,7 @@ namespace Kudu.Core.Jobs
                     catch (ThreadAbortException ex)
                     {
                         // by nature, ThreadAbortException will be rethrown at the end of this catch block and
-                        // this bool may not be neccessary since while loop will be exited anyway.  we added
+                        // this bool may not be necessary since while loop will be exited anyway.  we added
                         // it to be explicit.
                         threadAborted = true;
 
@@ -263,6 +268,10 @@ namespace Kudu.Core.Jobs
                 if (!_continuousJobThread.Join(JobSettings.GetStoppingWaitTime(DefaultContinuousJobStoppingWaitTimeInSeconds)))
                 {
                     _continuousJobThread.KuduAbort(String.Format("Stopping {0} {1} job", JobName, Constants.ContinuousPath));
+
+                    // to avoid overlapping new and old thread, we will wait for aborting thread to 
+                    // actually exit since it may take a few seconds after Thread.Abort is called.
+                    _continuousJobThread.Join(TimeSpan.FromMinutes(1));
                 }
 
                 _continuousJobThread = null;

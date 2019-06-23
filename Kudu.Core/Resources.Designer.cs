@@ -259,6 +259,15 @@ namespace Kudu.Core {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Fetching changes..
+        /// </summary>
+        internal static string FetchingChanges {
+            get {
+                return ResourceManager.GetString("FetchingChanges", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Cleaning {0} repository..
         /// </summary>
         internal static string Log_CleaningRepository {
@@ -340,6 +349,15 @@ namespace Kudu.Core {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to App container will begin restart within 10 seconds..
+        /// </summary>
+        internal static string Log_TriggeringContainerRestart {
+            get {
+                return ResourceManager.GetString("Log_TriggeringContainerRestart", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to An unknown error has occurred. Check the diagnostic log for details..
         /// </summary>
         internal static string Log_UnexpectedError {
@@ -363,6 +381,15 @@ namespace Kudu.Core {
         internal static string Log_UpdatingSubmodules {
             get {
                 return ResourceManager.GetString("Log_UpdatingSubmodules", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Receiving changes..
+        /// </summary>
+        internal static string ReceivingChanges {
+            get {
+                return ResourceManager.GetString("ReceivingChanges", resourceCulture);
             }
         }
         

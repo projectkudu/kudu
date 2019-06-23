@@ -65,6 +65,12 @@ namespace Kudu.TestHarness
             set;
         }
 
+        public string ZipTempPath
+        {
+            get;
+            set;
+        }
+
         public string ScriptPath
         {
             get;
@@ -125,6 +131,12 @@ namespace Kudu.TestHarness
             set;
         }
 
+        public string SecondaryJobsBinariesPath
+        {
+            get;
+            set;
+        }
+
         public string SiteExtensionSettingsPath
         {
             get;
@@ -138,6 +150,12 @@ namespace Kudu.TestHarness
         }
 
         public string FunctionsPath
+        {
+            get;
+            set;
+        }
+
+        public string SitePackagesPath
         {
             get;
             set;

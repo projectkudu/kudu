@@ -44,6 +44,28 @@ namespace Kudu.Services.Arm
                    request.Headers.Contains(GeoLocationHeaderKey);
         }
 
+        public static bool IsRbacContributorRequest(HttpRequestMessage request)
+        {
+            IEnumerable<string> headerValues;
+            if (request.Headers.TryGetValues(Constants.RoleBasedContributorHeader, out headerValues))
+            {
+                return headerValues.FirstOrDefault() == "1";
+            }
+
+            return false;
+        }
+
+        public static bool IsLegacyAuthorizationSource(HttpRequestMessage request)
+        {
+            IEnumerable<string> headerValues;
+            if (request.Headers.TryGetValues(Constants.ClientAuthorizationSourceHeader, out headerValues))
+            {
+                return string.Equals(headerValues.FirstOrDefault(), "legacy", StringComparison.OrdinalIgnoreCase);
+            }
+
+            return false;
+        }
+
         private static ArmListEntry<T> Create<T>(IEnumerable<T> objects, HttpRequestMessage request) where T : INamedObject
         {
             return new ArmListEntry<T>

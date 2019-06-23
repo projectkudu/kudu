@@ -80,7 +80,7 @@ namespace Kudu.TestHarness
             }
             catch (Exception ex)
             {
-                // Swallow exceptions on comit, since things like changing line endings
+                // Swallow exceptions on commit, since things like changing line endings
                 // show up as an error
                 TestTracer.Trace("Commit failed with {0}", ex);
             }

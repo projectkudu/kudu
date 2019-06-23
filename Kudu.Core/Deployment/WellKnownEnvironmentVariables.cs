@@ -16,6 +16,7 @@
         public const string BuildTempPath = "DEPLOYMENT_TEMP";
         public const string PreviousManifestPath = "PREVIOUS_MANIFEST_PATH";
         public const string NextManifestPath = "NEXT_MANIFEST_PATH";
+        public const string IgnoreManifest = "IGNORE_MANIFEST";
         public const string InPlaceDeployment = "IN_PLACE_DEPLOYMENT";
         public const string ApplicationPoolId = "APP_POOL_ID";
 

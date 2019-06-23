@@ -26,7 +26,7 @@ namespace Kudu.Services.GitServer
         private readonly Func<Type, object> _getInstance;
         private readonly ITracer _tracer;
         // We need to take an instance constructor from so we can ensure we create the IGitServer after
-        // repository path in IEnviroment is set.
+        // repository path in IEnvironment is set.
         public CustomGitRepositoryHandler(Func<Type, object> getInstance)
         {
             _getInstance = getInstance;
@@ -96,12 +96,12 @@ namespace Kudu.Services.GitServer
             }
         }
 
-        //  parse on of the four
+        //  parse one of the four
         //  GET Git/{repositorypath}/info/refs?service=git-upload-pack
         //  GET Git/{repositorypath}/info/refs?service=git-receive-pack
         //  GET Git/{repositorypath}/info/refs
-        // POST Git/{repostiorypath}/git-receive-pack
-        // POST Git/{repostiorypath}/git-upload-pack
+        // POST Git/{repositorypath}/git-receive-pack
+        // POST Git/{repositorypath}/git-upload-pack
         public static bool TryParseUri(Uri url, out string repoRelLocalPath, out GitServerRequestType requestType)
         {
             repoRelLocalPath = null;

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.IO.Abstractions;
+using Kudu.Core.Helpers;
 using Kudu.Core.Infrastructure;
 
 namespace Kudu.Core.Deployment.Generator
@@ -13,6 +14,19 @@ namespace Kudu.Core.Deployment.Generator
 
         public static bool LooksLikePython(string siteFolder)
         {
+            if (!OSDetector.IsOnWindows())
+            {
+                // For Linux web apps: Rely on WEBSITE_PYTHON_VERSION environment variable to
+                // detect if this is a python app
+                string pythonVersion = System.Environment.GetEnvironmentVariable("WEBSITE_PYTHON_VERSION");
+                if (!string.IsNullOrEmpty(pythonVersion) && pythonVersion.StartsWith("3", StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+
+                return false;
+            }
+
             var reqsFilePath = Path.Combine(siteFolder, RequirementsFileName);
             if (!FileSystemHelpers.FileExists(reqsFilePath))
             {

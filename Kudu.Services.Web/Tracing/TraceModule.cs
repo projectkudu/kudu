@@ -24,6 +24,14 @@ namespace Kudu.Services.Web.Tracing
         private static int _traceStartup;
         private static DateTime _lastRequestDateTime;
 
+        private static DateTime _nextHeartbeatDateTime = DateTime.MinValue; 
+        private static Lazy<string> _kuduVersion = new Lazy<string>(() =>
+        {
+            var assembly = Assembly.GetExecutingAssembly();
+            var fvi = FileVersionInfo.GetVersionInfo(assembly.Location);
+            return fvi.FileVersion;
+        });
+
         // (/|$) means either "/" or end-of-line
         // {0,2} means repeat pattern 0 to 2 times
         private static Regex[] _rbacWhiteListPaths = new[]
@@ -62,10 +70,11 @@ namespace Kudu.Services.Web.Tracing
 
             // HACK: This is abusing the trace module
             // Disallow GET requests from CSM extensions bridge
-            // Except if owner or coadmin (aka legacy or non-rbac) authorization
+            // Except if owner or coadmin (aka legacy or non-rbac) or x-ms-client-rolebased-contributor (by FE) authorization
             if (!String.IsNullOrEmpty(httpRequest.Headers["X-MS-VIA-EXTENSIONS-ROUTE"]) &&
                 httpRequest.HttpMethod.Equals(HttpMethod.Get.Method, StringComparison.OrdinalIgnoreCase) &&
-                !String.Equals(httpRequest.Headers["X-MS-CLIENT-AUTHORIZATION-SOURCE"], "legacy", StringComparison.OrdinalIgnoreCase) &&
+                !String.Equals(httpRequest.Headers[Constants.ClientAuthorizationSourceHeader], "legacy", StringComparison.OrdinalIgnoreCase) &&
+                httpRequest.Headers[Constants.RoleBasedContributorHeader] != "1" &&
                 !IsRbacWhiteListPaths(httpRequest.Url.AbsolutePath))
             {
                 httpContext.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
@@ -87,6 +96,9 @@ namespace Kudu.Services.Web.Tracing
 
             // Always trace the startup request.
             ITracer tracer = TraceStartup(httpContext);
+
+            // Trace heartbeat periodically
+            TraceHeartbeat();
 
             // Skip certain paths
             if (TraceExtensions.ShouldSkipRequest(httpRequest))
@@ -124,8 +136,7 @@ namespace Kudu.Services.Web.Tracing
             foreach (string key in httpContext.Request.Headers)
             {
                 if (!key.Equals("Authorization", StringComparison.OrdinalIgnoreCase) &&
-                    !key.Equals("X-MS-CLIENT-PRINCIPAL-NAME", StringComparison.OrdinalIgnoreCase) &&
-                    !key.Equals(Constants.SiteRestrictedJWT, StringComparison.OrdinalIgnoreCase))
+                    !key.Equals("X-MS-CLIENT-PRINCIPAL-NAME", StringComparison.OrdinalIgnoreCase))
                 {
                     attribs[key] = httpContext.Request.Headers[key];
                 }
@@ -319,19 +330,37 @@ namespace Kudu.Services.Web.Tracing
                 OperationManager.SafeExecute(() =>
                 {
                     var requestId = (string)httpContext.Items[Constants.RequestIdHeader];
-                    var assembly = Assembly.GetExecutingAssembly();
-                    var fvi = FileVersionInfo.GetVersionInfo(assembly.Location);
                     KuduEventSource.Log.GenericEvent(
                         ServerConfiguration.GetApplicationName(),
                         string.Format("StartupRequest pid:{0}, domain:{1}", Process.GetCurrentProcess().Id, AppDomain.CurrentDomain.Id),
                         requestId,
                         Environment.GetEnvironmentVariable(SettingsKeys.ScmType),
                         Environment.GetEnvironmentVariable(SettingsKeys.WebSiteSku),
-                        fvi.FileVersion);
+                        _kuduVersion.Value);
                 });
             }
 
             return tracer;
+        }
+
+        private static void TraceHeartbeat()
+        {
+            var now = DateTime.UtcNow;
+            if (_nextHeartbeatDateTime < now)
+            {
+                _nextHeartbeatDateTime = now.AddHours(1);
+
+                OperationManager.SafeExecute(() =>
+                {
+                    KuduEventSource.Log.GenericEvent(
+                        ServerConfiguration.GetApplicationName(),
+                        string.Format("Heartbeat pid:{0}, domain:{1}", Process.GetCurrentProcess().Id, AppDomain.CurrentDomain.Id),
+                        string.Empty,
+                        Environment.GetEnvironmentVariable(SettingsKeys.ScmType),
+                        Environment.GetEnvironmentVariable(SettingsKeys.WebSiteSku),
+                        _kuduVersion.Value);
+                });
+            }
         }
 
         private static Dictionary<string, string> GetTraceAttributes(HttpContext httpContext)

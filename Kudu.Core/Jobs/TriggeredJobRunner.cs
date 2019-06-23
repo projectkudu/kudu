@@ -15,8 +15,8 @@ namespace Kudu.Core.Jobs
         private ManualResetEvent _currentRunningJobWaitHandle;
         private readonly LockFile _lockFile;
 
-        public TriggeredJobRunner(string jobName, IEnvironment environment, IDeploymentSettingsManager settings, ITraceFactory traceFactory, IAnalytics analytics)
-            : base(jobName, Constants.TriggeredPath, environment, settings, traceFactory, analytics)
+        public TriggeredJobRunner(string jobName, string basePath, IEnvironment environment, IDeploymentSettingsManager settings, ITraceFactory traceFactory, IAnalytics analytics)
+            : base(jobName, Constants.TriggeredPath, basePath, environment, settings, traceFactory, analytics)
         {
             _lockFile = BuildTriggeredJobRunnerLockFile(JobDataPath, TraceFactory);
         }

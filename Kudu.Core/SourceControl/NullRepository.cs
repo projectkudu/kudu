@@ -18,12 +18,12 @@ namespace Kudu.Core.SourceControl
         // for null repo, good enough for last known changeset
         private static ChangeSet _latestChangeSet;
 
-        private readonly IEnvironment _environment;
+        private readonly string _path;
         private readonly ITraceFactory _traceFactory;
 
-        public NullRepository(IEnvironment environment, ITraceFactory traceFactory)
+        public NullRepository(string path, ITraceFactory traceFactory)
         {
-            _environment = environment;
+            _path = path;
             _traceFactory = traceFactory;
         }
 
@@ -38,7 +38,7 @@ namespace Kudu.Core.SourceControl
 
         public string RepositoryPath
         {
-            get { return _environment.RepositoryPath; }
+            get { return _path; }
         }
 
         public RepositoryType RepositoryType
@@ -58,6 +58,7 @@ namespace Kudu.Core.SourceControl
 
         public ChangeSet GetChangeSet(string id)
         {
+            var message = "No commit was performed.";
             var changeSet = _latestChangeSet;
             if (changeSet != null)
             {
@@ -65,9 +66,11 @@ namespace Kudu.Core.SourceControl
                 {
                     return changeSet;
                 }
+
+                message = string.Format("ChangeSetId({0}) does not match {1}, 'master' or 'HEAD'", id, changeSet.Id);
             }
 
-            throw new InvalidOperationException();
+            throw new InvalidOperationException(message);
         }
 
         public void AddFile(string path)
@@ -94,7 +97,7 @@ namespace Kudu.Core.SourceControl
 
                 tracer.Trace("Commit id: " + changeSet.Id, new Dictionary<string, string>
                 {
-                    { "Messsage", changeSet.Message },
+                    { "Message", changeSet.Message },
                     { "AuthorName", changeSet.AuthorName },
                     { "AuthorEmail", changeSet.AuthorEmail }
                 });

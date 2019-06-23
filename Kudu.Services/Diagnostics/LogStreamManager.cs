@@ -94,12 +94,12 @@ namespace Kudu.Services.Performance
             {
                 _operationLock.LockOperation(() =>
                 {
-                    // retry 5 times with 1 sec interval
-                    OperationManager.Attempt(() =>
+                    // best effort trying to enable application logging
+                    OperationManager.SafeExecute(() =>
                     {
                         var diagnostics = new DiagnosticsSettingsManager(Path.Combine(_environment.DiagnosticsPath, Constants.SettingsJsonFile), _tracer);
                         diagnostics.UpdateSetting(AzureDriveEnabledKey, true);
-                    }, retries: 5, delayBeforeRetry: 1000);
+                    });
                 }, "Updating diagnostics setting", TimeSpan.FromSeconds(30));
             }
 
@@ -117,7 +117,7 @@ namespace Kudu.Services.Performance
         {
             System.Diagnostics.Debug.Assert(_watcher == null, "we only allow one manager per request!");
 
-            // initalize _logFiles before the file watcher since file watcher event handlers reference _logFiles
+            // initialize _logFiles before the file watcher since file watcher event handlers reference _logFiles
             // this mirrors the Reset() where we stop the file watcher before nulling _logFile.
             if (_logFiles == null)
             {
@@ -405,12 +405,10 @@ namespace Kudu.Services.Performance
                         {
                             changes.Add(line);
                         }
-
-                        offset += line.Length;
                     }
 
                     // Adjust offset and return changes
-                    _logFiles[e.FullPath] = offset;
+                    _logFiles[e.FullPath] = reader.BaseStream.Position;
 
                     return changes;
                 }

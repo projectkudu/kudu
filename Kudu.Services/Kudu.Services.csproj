@@ -11,11 +11,6 @@
     <DocumentationFile>bin\Debug\Kudu.Services.XML</DocumentationFile>
     <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
     <TargetFrameworkProfile />
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <NoWarn>1591</NoWarn>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'">
     <NoWarn>1591</NoWarn>
   </PropertyGroup>
   <ItemGroup>
@@ -38,6 +33,7 @@
       <HintPath>..\packages\System.IO.Abstractions.1.4.0.74\lib\net35\System.IO.Abstractions.dll</HintPath>
     </Reference>
     <Reference Include="System.IO.Compression" />
+    <Reference Include="System.IO.Compression.FileSystem" />
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Net.Http.Extensions">
       <HintPath>..\packages\Microsoft.Net.Http.2.2.29\lib\net45\System.Net.Http.Extensions.dll</HintPath>
@@ -103,7 +99,9 @@
     <Compile Include="Commands\CommandsNativeMethods.cs" />
     <Compile Include="Commands\PersistentCommandController.cs" />
     <Compile Include="Deployment\DeploymentController.cs" />
+    <Compile Include="Deployment\PushDeploymentController.cs" />
     <Compile Include="Diagnostics\HttpRequestExtensions.cs" />
+    <Compile Include="Diagnostics\LinuxProcessController.cs" />
     <Compile Include="Diagnostics\LogStreamHandler.cs" />
     <Compile Include="Diagnostics\LogStreamManager.cs" />
     <Compile Include="Diagnostics\ProfileManager.cs" />
@@ -144,7 +142,6 @@
     <Compile Include="ServiceHookHandlers\GenericHandler.cs" />
     <Compile Include="ServiceHookHandlers\GitHubCompatHandler.cs" />
     <Compile Include="ServiceHookHandlers\GitlabHqHandler.cs" />
-    <Compile Include="ServiceHookHandlers\DeploymentInfo.cs" />
     <Compile Include="ServiceHookHandlers\IServiceHookHandler.cs" />
     <Compile Include="ServiceHookHandlers\BitbucketHandler.cs" />
     <Compile Include="ServiceHookHandlers\GitHubHandler.cs" />

@@ -1,33 +1,194 @@
-﻿@using System.Configuration
-
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+﻿<!DOCTYPE HTML PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="EN">
-    <head>
-        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-        <title>Azure Websites Support</title>
-        <style type="text/css">
-            html {
-                overflow: auto;
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Azure Websites Support</title>
+    <style type="text/css">
+        html {
+            font-size: 100%;
+            overflow-y: scroll;
+            -webkit-text-size-adjust: 100%;
+            -ms-text-size-adjust: 100%;
+        }
+
+        body {
+            margin: 0;
+            line-height: 1.231;
+            font-family: sans-serif;
+            color: #222;
+            background: #525252;
+            margin: 0;
+            padding: 0;
+            text-rendering: optimizeLegibility;
+            font-family: wf_segoe-ui_normal,"Segoe UI","Segoe WP",Tahoma,Arial,sans-serif;
+            font-weight: 400;
+            font-size: 14px;
+            line-height: 1.5em;
+            color: #505050;
+        }
+
+
+        a {
+            color: #00abec;
+            text-decoration: none;
+            -webkit-transition: all .1s ease-in-out;
+            transition: all .1s ease-in-out;
+        }
+
+            a:active, a:hover {
+                color: #0072c6;
+                text-decoration: none;
+                -webkit-transition: all .1s ease-in-out;
+                transition: all .1s ease-in-out;
             }
-            html, body, div, iframe {
-                margin: 0;
-                padding: 0;
-                height: 100%;
-                border: none;
+
+        header {
+            background-color: #1a1a1a;
+            color: #fff;
+            display: block;
+            margin-left: -90px;
+            padding: 23px 0 0 0;
+            position: fixed;
+            top: 0;
+            width: 960px;
+            z-index: 9999;
+        }
+
+            header .wa-content {
+                background-color: #1a1a1a;
+                padding-left: 40px;
+                position: relative;
+                width: 780px;
             }
-            iframe {
+
+
+            header .logo-1 {
                 display: block;
-                width: 100%;
-                border: none;
-                overflow-y: auto;
-                overflow-x: hidden;
+                float: left;
+                height: 30px;
+                width: 400px;
+                font-size: 28px;
+                font-weight: 400;
             }
-        </style>
-    </head>
-    <body>
-        <iframe id="tree" name="tree"
-                src=@("https://mawssupport.trafficmanager.net/?SiteName=" + @Environment.GetEnvironmentVariable("WEBSITE_SITE_NAME"))
-                marginheight="0" marginwidth="0" width="100%" height="100%" scrolling="auto">
-        </iframe>
-    </body>
+
+        footer {
+            background-color: #1a1a1a;
+            margin: 0 -90px;
+        }
+
+
+        .footer-bottom {
+            border-top: 1px solid #6a6a6a;
+            clear: both;
+            color: #fff;
+            min-height: 62px;
+            padding: 0 190px 10px 0;
+            position: relative;
+        }
+
+            .footer-bottom a {
+                color: #fff;
+            }
+
+            .footer-bottom ul {
+                float: left;
+                margin: 20px 0 0 90px;
+                padding: 0;
+                list-style: none;
+            }
+
+                .footer-bottom ul.legal {
+                    font-size: 11px;
+                }
+
+                .footer-bottom ul li {
+                    float: left;
+                    height: 24px;
+                    margin-right: 10px;
+                }
+
+
+
+            .footer-bottom .footer-copyright {
+                position: absolute;
+                right: 90px;
+                top: 20px;
+            }
+
+
+                .footer-bottom .footer-copyright a, .footer-bottom .footer-copyright span {
+                    clear: both;
+                    color: #fff;
+                    float: left;
+                    font-size: 10px;
+                    margin: 0;
+                }
+
+        .wa-container {
+            background-color: #fff;
+            margin: 0 auto;
+            width: 780px;
+            padding-left: 90px;
+            padding-right: 90px;
+            padding-top: 88px;
+        }
+
+        .wa-section {
+            background-color: transparent;
+            display: block;
+            margin: 0 -90px;
+            min-height: 0;
+            overflow: hidden;
+            padding-bottom: 50px;
+            padding-left: 35px;
+            padding-right: 25px;
+            position: relative;
+        }
+    </style>
+</head>
+<body>
+    <div class="wa-container">
+        <header>
+            <div class="wa-content">
+                <a class="logo-1" style="">Azure App Service Support</a>
+            </div>
+        </header>
+
+        <section class="wa-section ">
+            <h2>This portal is deprecated!</h2>
+
+            <div>
+                To run the Diagnostic tools, go to <a href="https://portal.azure.com">Azure Portal</a>, choose your web app and click
+                on <strong>Diagnose and Solve</strong> blade. Under the <strong>Diagnostic Tools</strong> category, you can run the tools based on your technology stack.
+
+                <br />
+                <br />
+                Here is a screenshot:
+            </div>
+            <img style="border:2px solid #0072c6;margin-top:15px;width:100%" id='diagnoseAndSolve'
+                 src='https://functionscdn.azureedge.net/public/kudu/images/DiagnoseAndSolveScreenshot.PNG' />
+        </section>
+        <footer>
+            <div class="wa-content">
+                <div class="footer-bottom">
+                    <ul class="legal">
+                        <li>
+                            <a href="http://azure.microsoft.com/en-us/support/legal/website-terms-of-use">Terms of Use</a>
+                        </li>
+                        <li>
+                            <a href="http://www.windowsazure.com/en-us/support/legal/privacy-statement">Privacy Statement</a>
+                        </li>
+                        <li>
+                            <a href="http://azure.microsoft.com/en-us/support/legal/subscription-agreement">Azure Agreement</a>
+                        </li>
+                    </ul>
+                    <div class="footer-copyright">
+                        <span>&copy; 2018 Microsoft</span>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </div>
+</body>
 </html>
+

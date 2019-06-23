@@ -1,30 +1,57 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using System.Net.Http;
+using System.Web;
 using Kudu.Core.Helpers;
 
 namespace Kudu.Services.Infrastructure
 {
     public static class UriHelper
     {
+        private const string DisguisedHostHeaderName = "DISGUISED-HOST";
+
         public static Uri GetBaseUri(HttpRequestMessage request)
         {
-            IEnumerable<string> disguisedHostValues = new List<string>();
+            return new Uri(GetRequestUri(request).GetComponents(UriComponents.SchemeAndServer, UriFormat.Unescaped));
+        }
 
-            // Azure will always pass this header to Kudu, and it always carry the right host name.
-            // when running Kudu on mono in a container, container is bound to a local ip
-            // so we cannot rely on "request.RequestUri", which will be "127.0.0.1:xxxx".
-            if (!OSDetector.IsOnWindows()
-                && request.Headers.TryGetValues("DISGUISED-HOST", out disguisedHostValues)
+        public static Uri GetRequestUri(HttpRequestMessage request)
+        {
+            string disguisedHost = null;
+
+            IEnumerable<string> disguisedHostValues;
+            if (request.Headers.TryGetValues(DisguisedHostHeaderName, out disguisedHostValues)
                 && disguisedHostValues.Count() > 0)
             {
-                // host value can be "{site name}.scm.azurewebsites.net:443" or "{site name}.scm.azurewebsites.net"
-                return new Uri(string.Format(CultureInfo.InvariantCulture, "https://{0}", disguisedHostValues.First()));
+                disguisedHost = disguisedHostValues.First();
             }
 
-            return new Uri(request.RequestUri.GetComponents(UriComponents.SchemeAndServer, UriFormat.Unescaped));
+            return GetRequestUriInternal(request.RequestUri, disguisedHost);
+        }
+
+        public static Uri GetRequestUri(HttpRequest request)
+        {
+            return GetRequestUriInternal(request.Url, request.Headers[DisguisedHostHeaderName]);
+        }
+
+        private static Uri GetRequestUriInternal(Uri uri, string disguisedHostValue)
+        {
+            // On Linux, corrections to the request URI are needed due to the way the request is handled on the worker:
+            // - Set scheme to https
+            // - Set host to the value of DISGUISED-HOST
+            // - Remove port value
+            if (!OSDetector.IsOnWindows() && disguisedHostValue != null)
+            {
+                uri = (new UriBuilder(uri)
+                {
+                    Scheme = "https",
+                    Host = disguisedHostValue,
+                    Port = -1
+                }).Uri;
+            }
+
+            return uri;
         }
 
         public static Uri MakeRelative(Uri baseUri, string relativeUri)

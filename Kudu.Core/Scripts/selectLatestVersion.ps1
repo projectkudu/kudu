@@ -1,5 +1,5 @@
 ﻿<#
-this script takes in two param, target foler path and output file path
+this script takes in two param, target folder path and output file path
 what it does is, it assume immediate sub folder of targer folder are all name with version
 and this script is trying to get the folder name has the largest version
 #>

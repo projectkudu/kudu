@@ -132,7 +132,9 @@ namespace Kudu.Services.Deployment
                             clean = result.Value<bool>("clean");
                             JToken needFileUpdateToken;
                             if (result.TryGetValue("needFileUpdate", out needFileUpdateToken))
+                            {
                                 needFileUpdate = needFileUpdateToken.Value<bool>();
+                            }
                         }
 
                         string username = null;
@@ -154,7 +156,20 @@ namespace Kudu.Services.Deployment
                             }
                         }
 
-                        await _deploymentManager.DeployAsync(repository, changeSet, username, clean, needFileUpdate);
+                        try
+                        {
+                            await _deploymentManager.DeployAsync(repository, changeSet, username, clean, deploymentInfo: null, needFileUpdate: needFileUpdate);
+                        }
+                        catch (DeploymentFailedException ex)
+                        {
+                            if (!ArmUtils.IsArmRequest(Request))
+                            {
+                                throw;
+                            }
+
+                            // if requests comes thru ARM, we adjust the error code from 500 -> 400
+                            throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.BadRequest, ex.ToString()));
+                        }
 
                         // auto-swap
                         if (PostDeploymentHelper.IsAutoSwapEnabled())
@@ -168,7 +183,7 @@ namespace Kudu.Services.Deployment
                             IDeploymentStatusFile statusFile = _status.Open(changeSet.Id);
                             if (statusFile != null && statusFile.Status == DeployStatus.Success)
                             {
-                                await PostDeploymentHelper.PerformAutoSwap(_environment.RequestId, _environment.SiteRestrictedJwt, new PostDeploymentTraceListener(_tracer, _deploymentManager.GetLogger(changeSet.Id)));
+                                await PostDeploymentHelper.PerformAutoSwap(_environment.RequestId, new PostDeploymentTraceListener(_tracer, _deploymentManager.GetLogger(changeSet.Id)));
                             }
                         }
                     }
@@ -436,6 +451,27 @@ namespace Kudu.Services.Deployment
                 result.Url = baseUri;
                 result.LogUrl = UriHelper.MakeRelative(baseUri, "log");
 
+                if (ArmUtils.IsArmRequest(Request))
+                {
+                    switch (result.Status)
+                    {
+                        case DeployStatus.Building:
+                        case DeployStatus.Deploying:
+                        case DeployStatus.Pending:
+                            result.ProvisioningState = "InProgress";
+                            HttpResponseMessage responseMessage = Request.CreateResponse(HttpStatusCode.OK, ArmUtils.AddEnvelopeOnArmRequest(result, Request));
+                            responseMessage.Headers.Location = Request.RequestUri;
+                            return responseMessage;
+                        case DeployStatus.Failed:
+                            result.ProvisioningState = "Failed";
+                            break;
+                        case DeployStatus.Success:
+                            result.ProvisioningState = "Succeeded";
+                            break;
+                        default:
+                            return Request.CreateResponse(HttpStatusCode.BadRequest, ArmUtils.AddEnvelopeOnArmRequest(result, Request));
+                    }
+                }
                 return Request.CreateResponse(HttpStatusCode.OK, ArmUtils.AddEnvelopeOnArmRequest(result, Request));
             }
         }

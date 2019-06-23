@@ -8,6 +8,8 @@ namespace Kudu
         public const string WebRoot = "wwwroot";
         public const string MappedSite = "/_app";
         public const string RepositoryPath = "repository";
+        public const string ZipTempPath = "zipdeploy";
+        public const string ZipExtractPath = "extracted";
 
         public const string LockPath = "locks";
         public const string DeploymentLockFile = "deployments.lock";
@@ -61,11 +63,11 @@ namespace Kudu
 
         public const string LatestDeployment = "latest";
 
-        private static readonly TimeSpan _maxAllowedExectionTime = TimeSpan.FromMinutes(30);
+        private static readonly TimeSpan _maxAllowedExecutionTime = TimeSpan.FromMinutes(30);
 
         public static TimeSpan MaxAllowedExecutionTime
         {
-            get { return _maxAllowedExectionTime; }
+            get { return _maxAllowedExecutionTime; }
         }
 
         public const string ApplicationHostXdtFileName = "applicationHost.xdt";
@@ -99,8 +101,10 @@ namespace Kudu
         //Setting for VC++ for node builds
         public const string VCVersion = "2015";
 
-        // Enviroment variable for site retricted jwt token
-        public const string SiteRestrictedJWT = "X-MS-SITE-RESTRICTED-JWT";
+        public const string RoleBasedContributorHeader = "X-MS-CLIENT-ROLEBASED-CONTRIBUTOR";
+        public const string ClientAuthorizationSourceHeader = "X-MS-CLIENT-AUTHORIZATION-SOURCE";
+        public const string SiteRestrictedToken = "x-ms-site-restricted-token";
+        public const string SiteAuthEncryptionKey = "WEBSITE_AUTH_ENCRYPTION_KEY";
         public const string HttpHost = "HTTP_HOST";
         public const string WebSiteSwapSlotName = "WEBSITE_SWAP_SLOTNAME";
 
@@ -108,13 +112,23 @@ namespace Kudu
         public const string Functions = "functions";
         public const string FunctionsConfigFile = "function.json";
         public const string FunctionsHostConfigFile = "host.json";
+        public const string ProxyConfigFile = "proxies.json";
         public const string Secrets = "secrets";
         public const string SampleData = "sampledata";
         public const string FunctionsPortal = "FunctionsPortal";
         public const string FunctionKeyNewFormat = "~0.7";
         public const string FunctionRunTimeVersion = "FUNCTIONS_EXTENSION_VERSION";
-        public const string RoutingRunTimeVersion = "ROUTING_EXTENSION_VERSION";
         public const string WebSiteSku = "WEBSITE_SKU";
+        public const string WebSiteElasticScaleEnabled = "WEBSITE_ELASTIC_SCALING_ENABLED";
         public const string DynamicSku = "Dynamic";
+        public const string ElasticScaleEnabled = "1";
+        public const string AzureWebJobsSecretStorageType = "AzureWebJobsSecretStorageType";
+        public const string HubName = "HubName";
+        public const string DurableTaskStorageConnection = "connection";
+        public const string DurableTaskStorageConnectionName = "azureStorageConnectionStringName";
+        public const string DurableTask = "durableTask";
+        public const string Extensions = "extensions";
+        public const string SitePackages = "SitePackages";
+        public const string PackageNameTxt = "packagename.txt";
     }
 }

@@ -194,7 +194,6 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="System.Web.Extensions" />
-    <Reference Include="System.Web.Http" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Web" />
     <Reference Include="System.Xml" />
@@ -211,8 +210,10 @@
     <Compile Include="Commands\CommandExecutor.cs" />
     <Compile Include="Deployment\CascadeLogger.cs" />
     <Compile Include="Deployment\BuildPropertyProvider.cs" />
+    <Compile Include="Deployment\DeploymentInfo.cs" />
     <Compile Include="Deployment\DeploymentStatusFileExtensions.cs" />
     <Compile Include="Deployment\DeploymentStatusManager.cs" />
+    <Compile Include="Deployment\FetchDeploymentManager.cs" />
     <Compile Include="Deployment\Generator\FunctionMsbuildBuilder.cs" />
     <Compile Include="Deployment\Generator\DotNetConsoleBuilder.cs" />
     <Compile Include="Deployment\Generator\CustomGeneratorCommandSiteBuilder.cs" />
@@ -221,6 +222,7 @@
     <Compile Include="Deployment\Generator\GoSiteBuilder.cs" />
     <Compile Include="Deployment\Generator\GoSiteEnabler.cs" />
     <Compile Include="Deployment\Generator\MicrosoftSiteBuilder.cs" />
+    <Compile Include="Deployment\Generator\RunFromZipSiteBuilder.cs" />
     <Compile Include="Deployment\Generator\PHPSiteBuilder.cs" />
     <Compile Include="Deployment\Generator\PHPSiteEnabler.cs" />
     <Compile Include="Deployment\Generator\PythonSiteEnabler.cs" />
@@ -240,6 +242,7 @@
     <Compile Include="Deployment\StructuredTextDocument.cs" />
     <Compile Include="Deployment\StructuredTextDocumentEntry.cs" />
     <Compile Include="Deployment\StructuredTextLogger.cs" />
+    <Compile Include="Deployment\ZipDeploymentInfo.cs" />
     <Compile Include="Functions\FunctionManager.cs" />
     <Compile Include="Helpers\EnvironmentHelper.cs" />
     <Compile Include="Helpers\OSDetector.cs" />
@@ -247,6 +250,7 @@
     <Compile Include="Helpers\PostDeploymentHelper.cs" />
     <Compile Include="Helpers\PostDeploymentTraceListener.cs" />
     <Compile Include="Helpers\ProjectGuidParser.cs" />
+    <Compile Include="Helpers\SimpleWebTokenHelper.cs" />
     <Compile Include="Hooks\WebHooksManager.cs" />
     <Compile Include="Infrastructure\AspNetCoreHelper.cs" />
     <Compile Include="Infrastructure\FunctionAppHelper.cs" />
@@ -255,7 +259,10 @@
     <Compile Include="Infrastructure\InstanceIdUtility.cs" />
     <Compile Include="Infrastructure\IntegratedServices.cs" />
     <Compile Include="Infrastructure\IServerConfiguration.cs" />
+    <Compile Include="Infrastructure\DockerContainerRestartTrigger.cs" />
     <Compile Include="Infrastructure\NaiveFileSystemWatcher.cs" />
+    <Compile Include="Infrastructure\PssSnapshotSafeHandle.cs" />
+    <Compile Include="Infrastructure\PssSnapshotNativeMethods.cs" />
     <Compile Include="Infrastructure\SecurityUtility.cs" />
     <Compile Include="Infrastructure\PathUtils\PathLinuxUtility.cs" />
     <Compile Include="Infrastructure\PathUtils\PathUtilityBase.cs" />
@@ -264,6 +271,9 @@
     <Compile Include="Infrastructure\ServerConfiguration.cs" />
     <Compile Include="Infrastructure\SettingsProcessor.cs" />
     <Compile Include="Infrastructure\ZipArchiveExtensions.cs" />
+    <Compile Include="Jobs\AggregateContinuousJobsManager.cs" />
+    <Compile Include="Jobs\AggregateJobsManagerBase.cs" />
+    <Compile Include="Jobs\AggregateTriggeredJobsManager.cs" />
     <Compile Include="Jobs\ContinuousJobLogger.cs" />
     <Compile Include="Jobs\ContinuousJobRunner.cs" />
     <Compile Include="Jobs\DnxScriptHost.cs" />
@@ -456,6 +466,7 @@
       <SubType>Designer</SubType>
     </EmbeddedResource>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="BeforeBuild">
     <!-- Ensure NuGet.exe exists in the Build directory prior to building this project. -->

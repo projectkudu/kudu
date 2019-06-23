@@ -13,6 +13,7 @@
         string LocksPath { get; }               // e.g. /site/locks
         string SSHKeyPath { get; }
         string TempPath { get; }
+        string ZipTempPath { get; }             // e.g. ${TempPath}/zipdeploy
         string ScriptPath { get; }
         string NodeModulesPath { get; }
         string LogFilesPath { get; }            // e.g. /logfiles
@@ -23,9 +24,10 @@
         string DataPath { get; }                // e.g. /data
         string JobsDataPath { get; }            // e.g. /data/jobs
         string JobsBinariesPath { get; }        // e.g. /site/wwwroot/app_data/jobs
+        string SecondaryJobsBinariesPath { get; } // e.g. /site/jobs
         string FunctionsPath { get; }           // e.g. /site/wwwroot
         string AppBaseUrlPrefix { get; }        // e.g. siteName.azurewebsites.net
         string RequestId { get; }               // e.g. x-arr-log-id or x-ms-request-id header value
-        string SiteRestrictedJwt { get; }       // e.g. x-ms-site-restricted-jwt header value
+        string SitePackagesPath { get; }        // e.g. /data/SitePackages
     }
 }

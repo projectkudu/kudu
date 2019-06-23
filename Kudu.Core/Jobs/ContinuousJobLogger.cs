@@ -24,23 +24,13 @@ namespace Kudu.Core.Jobs
 
         public event Action RolledLogFile;
 
-        private void ResetLockedStatusFile()
+        public void ResetLockedStatusFile()
         {
             try
             {
-                if (_lockedStatusFile != null)
-                {
-                    _lockedStatusFile.Dispose();
-                }
-            }
-            catch (Exception ex)
-            {
-                TraceFactory.GetTracer().TraceError(ex);
-            }
-
-            try
-            {
-                _lockedStatusFile = File.Open(GetStatusFilePath(), FileMode.OpenOrCreate, FileAccess.Read, FileShare.ReadWrite);
+                FileStream newLockedStatusFile = File.Open(GetStatusFilePath(), FileMode.OpenOrCreate, FileAccess.Read, FileShare.ReadWrite);
+                OperationManager.SafeExecute(() => _lockedStatusFile?.Dispose());
+                _lockedStatusFile = newLockedStatusFile;
             }
             catch (Exception ex)
             {

@@ -8,6 +8,7 @@ using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Tracing;
+using System.Diagnostics;
 
 namespace Kudu.Core.Jobs
 {
@@ -20,16 +21,19 @@ namespace Kudu.Core.Jobs
         private readonly string _id;
         private readonly string _historyPath;
         private readonly string _outputFilePath;
+        private readonly bool _logToAppLogs;
 
-        private TriggeredJobRunLogger(string jobName, string id, IEnvironment environment, ITraceFactory traceFactory)
+        private TriggeredJobRunLogger(string jobName, string id, IEnvironment environment, ITraceFactory traceFactory, bool logToAppLogs)
             : base(TriggeredStatusFile, environment, traceFactory)
         {
             _id = id;
 
             _historyPath = Path.Combine(Environment.JobsDataPath, Constants.TriggeredPath, jobName, _id);
-            FileSystemHelpers.EnsureDirectory(_historyPath);
+            OperationManager.SafeExecute(() => FileSystemHelpers.EnsureDirectory(_historyPath));
 
             _outputFilePath = Path.Combine(_historyPath, OutputLogFileName);
+
+            _logToAppLogs = logToAppLogs;
         }
 
         [SuppressMessage("Microsoft.Design", "CA1011:ConsiderPassingBaseTypesAsParameters", Justification = "We do not want to accept jobs which are not TriggeredJob")]
@@ -38,7 +42,7 @@ namespace Kudu.Core.Jobs
             OldRunsCleanup(triggeredJob.Name, environment, traceFactory, settings);
 
             string id = DateTime.UtcNow.ToString("yyyyMMddHHmmssffff");
-            var logger = new TriggeredJobRunLogger(triggeredJob.Name, id, environment, traceFactory);
+            var logger = new TriggeredJobRunLogger(triggeredJob.Name, id, environment, traceFactory, settings.LogTriggeredJobsToAppLogs());
             var triggeredJobStatus = new TriggeredJobStatus
             {
                 Trigger = trigger,
@@ -134,11 +138,21 @@ namespace Kudu.Core.Jobs
 
         public override void LogStandardOutput(string message)
         {
+            if (_logToAppLogs)
+            {
+                Trace.TraceInformation(message);
+            }
+
             Log(Level.Info, message, isSystem: false);
         }
 
         public override void LogStandardError(string message)
         {
+            if (_logToAppLogs)
+            {
+                Trace.TraceError(message);
+            }
+
             Log(Level.Err, message, isSystem: false);
         }
 

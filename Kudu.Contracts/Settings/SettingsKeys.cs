@@ -33,11 +33,19 @@
         public const string WebJobsHistorySize = "WEBJOBS_HISTORY_SIZE";
         public const string WebJobsStopped = "WEBJOBS_STOPPED";
         public const string WebJobsDisableSchedule = "WEBJOBS_DISABLE_SCHEDULE";
+        public const string WebJobsLogTriggeredJobsToAppLogs = "WEBJOBS_LOG_TRIGGERED_JOBS_TO_APP_LOGS";
         public const string PostDeploymentActionsDirectory = "SCM_POST_DEPLOYMENT_ACTIONS_PATH";
         public const string DisableSubmodules = "SCM_DISABLE_SUBMODULES";
         public const string SiteExtensionsFeedUrl = "SCM_SITEEXTENSIONS_FEED_URL";
         public const string DisableDeploymentOnPush = "SCM_DISABLE_DEPLOY_ON_PUSH";
         public const string TouchWebConfigAfterDeployment = "SCM_TOUCH_WEBCONFIG_AFTER_DEPLOYMENT";
         public const string MaxRandomDelayInSec = "SCM_MAX_RANDOM_START_DELAY";
+        public const string DockerCiEnabled = "DOCKER_ENABLE_CI";
+        public const string LinuxRestartAppContainerAfterDeployment = "SCM_RESTART_APP_CONTAINER_AFTER_DEPLOYMENT";
+        public const string DoBuildDuringDeployment = "SCM_DO_BUILD_DURING_DEPLOYMENT";
+        public const string RunFromZipOld = "WEBSITE_RUN_FROM_ZIP";  // Old name, will eventually go away
+        public const string RunFromZip = "WEBSITE_RUN_FROM_PACKAGE";
+        public const string MaxZipPackageCount = "SCM_MAX_ZIP_PACKAGE_COUNT";
+        public const string ZipDeployDoNotPreserveFileTime = "SCM_ZIPDEPLOY_DONOT_PRESERVE_FILETIME";
     }
 }

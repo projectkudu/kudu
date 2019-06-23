@@ -81,6 +81,7 @@ namespace Kudu.FunctionalTests
                 tests.Add(commandTestSettings);
 
                 // Make sure 'npm -g' installs to AppData (and not Program Files)
+                // If this fails, check your <applicationPoolDefaults>, per https://github.com/projectkudu/kudu/wiki/Getting-started
                 commandTestSettings = new CommandTestSettings("npm install -g underscore --quiet");
                 commandTestSettings.ExpectedResult.Output = "AppData";
                 tests.Add(commandTestSettings);
@@ -149,6 +150,11 @@ namespace Kudu.FunctionalTests
                 WorkingDirectory = ".";
 
                 Command = command;
+            }
+
+            public override string ToString()
+            {
+                return $"Command: '{Command}'";
             }
         }
     }

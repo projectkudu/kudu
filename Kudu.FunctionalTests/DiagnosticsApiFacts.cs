@@ -311,7 +311,7 @@ namespace Kudu.FunctionalTests
 
                 // Test runtime object by checking for one Node version
                 RuntimeInfo runtimeInfo = await appManager.RuntimeManager.GetRuntimeInfo();
-                Assert.True(runtimeInfo.NodeVersions.Any(dict => dict["version"] == "0.8.2"));
+                Assert.True(runtimeInfo.NodeVersions.Any());
             });
         }
 

@@ -21,7 +21,7 @@ namespace Kudu.TestHarness
 {
     public class ApplicationManager
     {
-        private static bool _testFailureOccured;
+        private static bool _testFailureOccurred;
         private readonly ISiteManager _siteManager;
         private readonly Site _site;
         private readonly string _appName;
@@ -55,6 +55,8 @@ namespace Kudu.TestHarness
             JobsManager = new RemoteJobsManager(site.ServiceUrl + "api", credentials);
             LogFilesManager = new RemoteLogFilesManager(site.ServiceUrl + "api/logs", credentials);
             SiteExtensionManager = new RemoteSiteExtensionManager(site.ServiceUrl + "api", credentials);
+            ZipDeploymentManager = new RemotePushDeploymentManager(site.ServiceUrl + "api/zipdeploy", credentials);
+            WarDeploymentManager = new RemotePushDeploymentManager(site.ServiceUrl + "api/wardeploy", credentials);
 
             var repositoryInfo = RepositoryManager.GetRepositoryInfo().Result;
             GitUrl = repositoryInfo.GitUrl.OriginalString;
@@ -184,6 +186,18 @@ namespace Kudu.TestHarness
             private set;
         }
 
+        public RemotePushDeploymentManager ZipDeploymentManager
+        {
+            get;
+            private set;
+        }
+
+        public RemotePushDeploymentManager WarDeploymentManager
+        {
+            get;
+            private set;
+        }
+
         public string GitUrl
         {
             get;
@@ -244,7 +258,7 @@ namespace Kudu.TestHarness
 
         public static async Task RunAsync(string testName, Func<ApplicationManager, Task> action)
         {
-            if (KuduUtils.StopAfterFirstTestFailure && _testFailureOccured)
+            if (KuduUtils.StopAfterFirstTestFailure && _testFailureOccurred)
             {
                 return;
             }
@@ -260,7 +274,7 @@ namespace Kudu.TestHarness
             TestTracer.Trace("Using site - {0}", appManager.SiteUrl);
 
             var dumpPath = Path.Combine(PathHelper.TestResultsPath, testName, testName + ".zip");
-            bool succcess = true;
+            bool success = true;
             try
             {
                 using (StartLogStream(appManager))
@@ -284,9 +298,9 @@ namespace Kudu.TestHarness
 
                 TestTracer.Trace("Run failed with exception\n{0}", ex);
 
-                succcess = false;
+                success = false;
 
-                _testFailureOccured = true;
+                _testFailureOccurred = true;
 
                 throw;
             }
@@ -294,7 +308,7 @@ namespace Kudu.TestHarness
             {
                 SafeTraceDeploymentLogs(appManager);
 
-                SitePool.ReportTestCompletion(appManager, succcess);
+                SitePool.ReportTestCompletion(appManager, success);
             }
         }
 

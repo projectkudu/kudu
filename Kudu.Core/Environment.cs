@@ -22,6 +22,7 @@ namespace Kudu.Core
         private readonly string _locksPath;
         private readonly string _sshKeyPath;
         private readonly string _tempPath;
+        private readonly string _zipTempPath;
         private readonly string _scriptPath;
         private readonly string _nodeModulesPath;
         private string _repositoryPath;
@@ -33,12 +34,15 @@ namespace Kudu.Core
         private readonly string _dataPath;
         private readonly string _jobsDataPath;
         private readonly string _jobsBinariesPath;
+        private readonly string _sitePackagesPath;
+        private readonly string _secondaryJobsBinariesPath;
 
         // This ctor is used only in unit tests
         public Environment(
                 string rootPath,
                 string siteRootPath,
                 string tempPath,
+                string zipTempPath,
                 string repositoryPath,
                 string webRootPath,
                 string deploymentsPath,
@@ -49,8 +53,8 @@ namespace Kudu.Core
                 string nodeModulesPath,
                 string dataPath,
                 string siteExtensionSettingsPath,
-                string requestId,
-                string siteRestrictedJwt)
+                string sitePackagesPath,
+                string requestId)
         {
             if (repositoryPath == null)
             {
@@ -61,6 +65,7 @@ namespace Kudu.Core
             SiteRootPath = siteRootPath;
             _tempPath = tempPath;
             _repositoryPath = repositoryPath;
+            _zipTempPath = zipTempPath;
             _webRootPath = webRootPath;
             _deploymentsPath = deploymentsPath;
             _deploymentToolsPath = Path.Combine(_deploymentsPath, Constants.DeploymentToolsPath);
@@ -75,23 +80,23 @@ namespace Kudu.Core
 
             _jobsDataPath = Path.Combine(_dataPath, Constants.JobsPath);
             _jobsBinariesPath = _jobsDataPath;
+            _secondaryJobsBinariesPath = _jobsDataPath;
 
             _logFilesPath = Path.Combine(rootPath, Constants.LogFilesPath);
             _applicationLogFilesPath = Path.Combine(_logFilesPath, Constants.ApplicationLogFilesDirectory);
             _tracePath = Path.Combine(rootPath, Constants.TracePath);
             _analyticsPath = Path.Combine(tempPath ?? _logFilesPath, Constants.SiteExtensionLogsDirectory);
             _deploymentTracePath = Path.Combine(rootPath, Constants.DeploymentTracePath);
+            _sitePackagesPath = sitePackagesPath;
 
             RequestId = !string.IsNullOrEmpty(requestId) ? requestId : Guid.Empty.ToString();
-            SiteRestrictedJwt = siteRestrictedJwt;
         }
 
         public Environment(
                 string rootPath,
                 string binPath,
                 string repositoryPath,
-                string requestId,
-                string siteRetrictedJwt)
+                string requestId)
         {
             RootPath = rootPath;
 
@@ -99,13 +104,14 @@ namespace Kudu.Core
 
             _tempPath = Path.GetTempPath();
             _repositoryPath = repositoryPath;
+            _zipTempPath = Path.Combine(_tempPath, Constants.ZipTempPath);
             _webRootPath = Path.Combine(SiteRootPath, Constants.WebRoot);
             _deploymentsPath = Path.Combine(SiteRootPath, Constants.DeploymentCachePath);
             _deploymentToolsPath = Path.Combine(_deploymentsPath, Constants.DeploymentToolsPath);
             _siteExtensionSettingsPath = Path.Combine(SiteRootPath, Constants.SiteExtensionsCachePath);
             _diagnosticsPath = Path.Combine(SiteRootPath, Constants.DiagnosticsPath);
             _locksPath = Path.Combine(SiteRootPath, Constants.LocksPath);
-            
+
             if (OSDetector.IsOnWindows())
             {
                 _sshKeyPath = Path.Combine(rootPath, Constants.SSHKeyPath);
@@ -125,6 +131,7 @@ namespace Kudu.Core
             _dataPath = Path.Combine(rootPath, Constants.DataPath);
             _jobsDataPath = Path.Combine(_dataPath, Constants.JobsPath);
             _jobsBinariesPath = Path.Combine(_webRootPath, Constants.AppDataPath, Constants.JobsPath);
+            _secondaryJobsBinariesPath = Path.Combine(SiteRootPath, Constants.JobsPath);
             string userDefinedWebJobRoot = System.Environment.GetEnvironmentVariable(SettingsKeys.WebJobsRootPath);
             if (!String.IsNullOrEmpty(userDefinedWebJobRoot))
             {
@@ -135,16 +142,16 @@ namespace Kudu.Core
                 // if userDefinedWebJobRoot = "D:/home/functionfolder", _jobsBinariesPath = "D:/home/functionfolder"
                 _jobsBinariesPath = Path.Combine(_webRootPath, userDefinedWebJobRoot);
             }
+            _sitePackagesPath = Path.Combine(_dataPath, Constants.SitePackages);
 
             RequestId = !string.IsNullOrEmpty(requestId) ? requestId : Guid.Empty.ToString();
-            SiteRestrictedJwt = siteRetrictedJwt;
         }
 
         public string RepositoryPath
         {
             get
             {
-                return FileSystemHelpers.EnsureDirectory(_repositoryPath);
+                return FileSystemHelpers.EnsureDirectoryIgnoreAccessExceptions(_repositoryPath);
             }
             set
             {
@@ -165,7 +172,7 @@ namespace Kudu.Core
         {
             get
             {
-                return FileSystemHelpers.EnsureDirectory(_deploymentsPath);
+                return FileSystemHelpers.EnsureDirectoryIgnoreAccessExceptions(_deploymentsPath);
             }
         }
 
@@ -173,7 +180,7 @@ namespace Kudu.Core
         {
             get
             {
-                return FileSystemHelpers.EnsureDirectory(_deploymentToolsPath);
+                return FileSystemHelpers.EnsureDirectoryIgnoreAccessExceptions(_deploymentToolsPath);
             }
         }
 
@@ -221,6 +228,14 @@ namespace Kudu.Core
             }
         }
 
+        public string ZipTempPath
+        {
+            get
+            {
+                return FileSystemHelpers.EnsureDirectory(_zipTempPath);
+            }
+        }
+
         public string ScriptPath
         {
             get
@@ -257,7 +272,7 @@ namespace Kudu.Core
         {
             get
             {
-                return FileSystemHelpers.EnsureDirectory(_tracePath);
+                return FileSystemHelpers.EnsureDirectoryIgnoreAccessExceptions(_tracePath);
             }
         }
 
@@ -298,6 +313,11 @@ namespace Kudu.Core
             get { return _jobsBinariesPath; }
         }
 
+        public string SecondaryJobsBinariesPath
+        {
+            get { return _secondaryJobsBinariesPath; }
+        }
+
         public string SiteExtensionSettingsPath
         {
             get { return _siteExtensionSettingsPath; }
@@ -308,6 +328,14 @@ namespace Kudu.Core
             get
             {
                 return this.WebRootPath;
+            }
+        }
+
+        public string SitePackagesPath
+        {
+            get
+            {
+                return _sitePackagesPath;
             }
         }
 
@@ -333,12 +361,6 @@ namespace Kudu.Core
         }
 
         public string RequestId
-        {
-            get;
-            private set;
-        }
-
-        public string SiteRestrictedJwt
         {
             get;
             private set;

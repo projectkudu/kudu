@@ -28,7 +28,7 @@ namespace Kudu.Services.Test
             var helper = CreateDropboxHelper(handler);
 
             // Act
-            await helper.ProcessFileAsync(CreateHttpClient(handler), path, @"foo/bar/", DateTime.UtcNow);
+            await helper.ProcessFileAsync(CreateHttpClient(handler), path, @"foo/bar/", DateTime.UtcNow, false);
 
             // Assert
             string expectedFile = Path.Combine(helper.Environment.RepositoryPath, "test.txt");
@@ -59,7 +59,7 @@ namespace Kudu.Services.Test
             var helper = CreateDropboxHelper(handler);
 
             // Act
-            await helper.ProcessFileAsync(CreateHttpClient(handler), path, @"foo/qux/", DateTime.UtcNow);
+            await helper.ProcessFileAsync(CreateHttpClient(handler), path, @"foo/qux/", DateTime.UtcNow, false);
 
             // Assert
             string expectedFile = Path.Combine(helper.Environment.RepositoryPath, "test.txt");
@@ -83,7 +83,7 @@ namespace Kudu.Services.Test
 
             // Act
             await Assert.ThrowsAsync<HttpRequestException>(async() =>
-                await helper.ProcessFileAsync(CreateHttpClient(handler), path, @"foo/qux/", DateTime.UtcNow));
+                await helper.ProcessFileAsync(CreateHttpClient(handler), path, @"foo/qux/", DateTime.UtcNow, false));
 
             // Assert
             Assert.Equal(3, counter);
@@ -135,11 +135,11 @@ namespace Kudu.Services.Test
             // Arrange
             var helper = CreateDropboxHelper();
             int processedFiles = 0;
-            Mock.Get(helper).Setup(h => h.ProcessFileAsync(It.IsAny<HttpClient>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<DateTime>()))
+            Mock.Get(helper).Setup(h => h.ProcessFileAsync(It.IsAny<HttpClient>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<bool>()))
                             .Callback(() => Interlocked.Increment(ref processedFiles))
                             .Returns(Task.FromResult(0));
 
-            Mock.Get(helper).Setup(h => h.ProcessFileAsync(It.IsAny<HttpClient>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<DateTime>()))
+            Mock.Get(helper).Setup(h => h.ProcessFileAsync(It.IsAny<HttpClient>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<bool>()))
                             .Callback(() => Interlocked.Increment(ref processedFiles))
                             .Returns(GetFailedTask());
             var deployInfo = new DropboxDeployInfo { Path = "foo" };
@@ -168,7 +168,7 @@ namespace Kudu.Services.Test
         public async Task GetDeltasPopulatesEntriesNode()
         {
             // Arrange
-            const string DeltaPayload = @"{""reset"": true, ""cursor"": ""AAGWKUylpghsuMRcKQSdHSpvUW3uPVcIyGINt30oO36wDebzBoqtFFaiqzNCWV568-U_uZwdM1QGyzxYw3GxJRsCWv0G3BlOUiguFrttRsbpmA"", ""has_more"": false, ""entries"": [[""/foo/bar.txt"", {""revision"": 1, ""rev"": ""11357a5a5"", ""thumb_exists"": false, ""bytes"": 123641, ""modified"": ""Thu, 22 Aug 2013 22:50:24 +0000"", ""client_mtime"": ""Thu, 22 Aug 2013 22:50:24 +0000"", ""path"": ""/foo/bar.txt"", ""is_dir"": false, ""icon"": ""page_white"", ""root"": ""dropbox"", ""mime_type"": ""application/epub+zip"", ""size"": ""120.7 KB""}]]}";
+            const string DeltaPayload = @"{""cursor"": ""AAGWKUylpghsuMRcKQSdHSpvUW3uPVcIyGINt30oO36wDebzBoqtFFaiqzNCWV568-U_uZwdM1QGyzxYw3GxJRsCWv0G3BlOUiguFrttRsbpmA"", ""has_more"": false, ""entries"": [{"".tag"": ""file"", ""path_display"": ""/foo/bar.txt"", ""server_modified"": ""2017-08-30T18:50:02Z""}]}";
             var dropboxInfo = new DropboxDeployInfo
             {
                 Token = "Some-token",
@@ -191,8 +191,8 @@ namespace Kudu.Services.Test
         public async Task GetDeltasPopulatesEntriesNodeWhenHasMoreIsSet()
         {
             // Arrange
-            const string DeltaPayload1 = @"{""reset"": true, ""cursor"": ""cursor1"", ""has_more"": true, ""entries"": [[""/foo/bar.txt"", {""revision"": 1, ""rev"": ""11357a5a5"", ""bytes"": 123641, ""modified"": ""Thu, 22 Aug 2013 22:50:24 +0000"", ""client_mtime"": ""Thu, 22 Aug 2013 22:50:24 +0000"", ""path"": ""/foo/bar.txt"", ""is_dir"": false}]]}";
-            const string DeltaPayload2 = @"{""reset"": false, ""cursor"": ""cursor2"", ""has_more"": false, ""entries"": [[""/foo/bar.txt"", {""revision"": 1, ""rev"": ""11357a5a5"", ""bytes"": 123641, ""modified"": ""Thu, 22 Aug 2013 22:50:24 +0000"", ""client_mtime"": ""Thu, 22 Aug 2013 22:50:24 +0000"", ""path"": ""/foo/qux.txt"", ""is_dir"": false}]]}";
+            const string DeltaPayload1 = @"{""cursor"": ""cursor1"", ""has_more"": true, ""entries"": [{"".tag"": ""file"", ""path_display"": ""/foo/bar.txt"", ""server_modified"": ""2017-08-30T19:20:02Z""}]}";
+            const string DeltaPayload2 = @"{""cursor"": ""cursor2"", ""has_more"": false, ""entries"": [{"".tag"": ""file"", ""path_display"": ""/foo/qux.txt"", ""server_modified"": ""2017-08-30T21:40:35Z""}]}";
             var dropboxInfo = new DropboxDeployInfo
             {
                 Token = "Some-token",

@@ -198,7 +198,7 @@ namespace Kudu.Core.Infrastructure.Test
         }
 
         [Fact]
-        public void ToStringReturnsReaminingString()
+        public void ToStringReturnsRemainingString()
         {
             // Arrange
             var stringReader = new StringReader("abcd");

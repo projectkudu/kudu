@@ -25,9 +25,9 @@ namespace Kudu.Core.Test.Deployment.Generator
                 Path.Combine(DeploymentToolsPath, "Ps1Test.ps1")
             };
 
-            var enviromentMock = new Mock<IEnvironment>();
-            enviromentMock.Setup(e => e.RepositoryPath).Returns(@"e:\");
-            enviromentMock.Setup(e => e.DeploymentToolsPath).Returns(DeploymentToolsPath);
+            var environmentMock = new Mock<IEnvironment>();
+            environmentMock.Setup(e => e.RepositoryPath).Returns(@"e:\");
+            environmentMock.Setup(e => e.DeploymentToolsPath).Returns(DeploymentToolsPath);
 
             var deploymentSettingsMock = new Mock<IDeploymentSettingsManager>();
 
@@ -43,7 +43,7 @@ namespace Kudu.Core.Test.Deployment.Generator
             FileSystemHelpers.Instance = fileSystemMock.Object;
 
             var builder = new CustomBuilder(
-                enviromentMock.Object,
+                environmentMock.Object,
                 deploymentSettingsMock.Object,
                 Mock.Of<IBuildPropertyProvider>(),
                 string.Empty,
@@ -102,9 +102,9 @@ namespace Kudu.Core.Test.Deployment.Generator
                 Path.Combine(DeploymentToolsPath, "Ps1Test.ps1")
             };
 
-            var enviromentMock = new Mock<IEnvironment>();
-            enviromentMock.Setup(e => e.RepositoryPath).Returns(@"e:\");
-            enviromentMock.Setup(e => e.DeploymentToolsPath).Returns(DeploymentToolsPath);
+            var environmentMock = new Mock<IEnvironment>();
+            environmentMock.Setup(e => e.RepositoryPath).Returns(@"e:\");
+            environmentMock.Setup(e => e.DeploymentToolsPath).Returns(DeploymentToolsPath);
             
             var directoryMock = new Mock<DirectoryBase>();
             directoryMock.Setup(d => d.Exists(Path.Combine(DeploymentToolsPath, "PostDeploymentActions"))).Returns(true);
@@ -158,7 +158,7 @@ namespace Kudu.Core.Test.Deployment.Generator
                 FileSystemHelpers.Instance = fileSystemMock.Object;
 
                 var builder = new CustomBuilder(
-                    enviromentMock.Object,
+                    environmentMock.Object,
                     Mock.Of<IDeploymentSettingsManager>(),
                     Mock.Of<IBuildPropertyProvider>(),
                     string.Empty,

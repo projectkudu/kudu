@@ -69,11 +69,11 @@ namespace Kudu.Core.Deployment.Generator
                 {
                     scriptFilePath = string.Format(CultureInfo.InvariantCulture, "\"{0}\"", file);
                 }
-                RunCommand(context, scriptFilePath, Path.GetFileNameWithoutExtension(file));
+                RunCommand(context, scriptFilePath, false, Path.GetFileNameWithoutExtension(file));
             }
         }
 
-        protected void RunCommand(DeploymentContext context, string command, string message = "Running deployment command...")
+        protected void RunCommand(DeploymentContext context, string command, bool ignoreManifest, string message = "Running deployment command...")
         {
             ILogger customLogger = context.Logger.Log(message);
             customLogger.Log("Command: " + command);
@@ -84,6 +84,7 @@ namespace Kudu.Core.Deployment.Generator
 
             exe.EnvironmentVariables[WellKnownEnvironmentVariables.PreviousManifestPath] = context.PreviousManifestFilePath ?? String.Empty;
             exe.EnvironmentVariables[WellKnownEnvironmentVariables.NextManifestPath] = context.NextManifestFilePath;
+            exe.EnvironmentVariables[WellKnownEnvironmentVariables.IgnoreManifest] = ignoreManifest ? "1" : "0";
 
             exe.EnvironmentVariables[WellKnownEnvironmentVariables.BuildTempPath] = context.BuildTempPath;
 
@@ -125,7 +126,7 @@ namespace Kudu.Core.Deployment.Generator
             const string extensionEnvVarSuffix = "_EXTENSION_VERSION";
 
             // "/site/deployments/tools/PostDeploymentActions" (can override with %SCM_POST_DEPLOYMENT_ACTIONS_PATH%)
-            // if %SCM_POST_DEPLOYMENT_ACTIONS_PATH% is set, we will support both absolute path or relative parth from "d:/home/site/repository"
+            // if %SCM_POST_DEPLOYMENT_ACTIONS_PATH% is set, we will support both absolute path or relative path from "d:/home/site/repository"
             var customPostDeploymentPath = DeploymentSettings.GetValue(SettingsKeys.PostDeploymentActionsDirectory);
             var postDeploymentPath = string.IsNullOrEmpty(customPostDeploymentPath) ? Path.Combine(Environment.DeploymentToolsPath, PostDeploymentActions) : Path.Combine(Environment.RepositoryPath, customPostDeploymentPath);
 
@@ -136,7 +137,7 @@ namespace Kudu.Core.Deployment.Generator
 
             // D:\Program Files (x86)\SiteExtensions
             string siteExtensionFolder = Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.ProgramFilesX86), "SiteExtensions");
-            // Find all enviroment variable with format {package id}_EXTENSION_VERSION,
+            // Find all environment variable with format {package id}_EXTENSION_VERSION,
             // And find scripts from PostDeploymentActions" folder
             foreach (DictionaryEntry entry in System.Environment.GetEnvironmentVariables())
             {

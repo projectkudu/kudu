@@ -29,13 +29,16 @@ namespace Kudu.Services
         private const string CursorKey = "dropbox_cursor";
 
         /// <summary>
-        /// The duratio to wait between file download retries to avoid rate limiting.
+        /// The duration to wait between file download retries to avoid rate limiting.
         /// </summary>
         internal static TimeSpan RetryWaitToAvoidRateLimit = TimeSpan.FromSeconds(20);
 
         private const string AccountInfoUri = "https://api.dropbox.com/1/account/info";
         private const string DeltaApiUri = "https://api.dropbox.com/1/delta";
         private const string DropboxApiContentUri = "https://api-content.dropbox.com/";
+        private const string ListFolderApiUri = "https://api.dropboxapi.com/2/files/list_folder";
+        private const string ListFolderContinueApiUri = "https://api.dropboxapi.com/2/files/list_folder/continue";
+        private const string DownloadContentApiUri = "https://content.dropboxapi.com/2/files/download";
         private const string SandboxFilePath = "1/files/sandbox";
         private const int MaxConcurrentRequests = 5;
         private const int MaxRetries = 2;
@@ -86,14 +89,16 @@ namespace Kudu.Services
             string parentPath = dropboxInfo.Path.TrimEnd('/') + '/';
 
             using (_tracer.Step("Updating deploy info"))
-            using (var client = CreateDropboxV2HttpClient(DeltaApiUri, dropboxToken))
+            using (var client = CreateDropboxV2HttpClient(ListFolderApiUri, dropboxToken))
             {
                 while (true)
                 {
                     LogInfo("Fetching delta for cursor '{0}'.", currentCursor);
-                    string url = String.IsNullOrEmpty(currentCursor) ? String.Empty :
-                                                                      ("?cursor=" + HttpUtility.UrlPathEncode(currentCursor));
-                    using (var response = await client.PostAsync(url, content: null))
+                    var content = string.IsNullOrEmpty(currentCursor) ?
+                        new StringContent("{\"path\":\"" + dropboxInfo.Path + "\",\"recursive\":true}", Encoding.UTF8, "application/json") :
+                        new StringContent("{\"cursor\":\"" + currentCursor + "\"}", Encoding.UTF8, "application/json");
+                    var uri = string.IsNullOrEmpty(currentCursor) ? ListFolderApiUri : ListFolderContinueApiUri;
+                    using (var response = await client.PostAsync(uri, content))
                     {
                         // The Content-Type of the Json result is text/json which the JsonMediaTypeFormatter does not approve of.
                         // We'll parse it separately instead.
@@ -103,7 +108,7 @@ namespace Kudu.Services
                         var entries = deltaResult.Value<JArray>("entries");
                         if (entries != null && entries.Count > 0)
                         {
-                            var filteredEntries = entries.Cast<JArray>()
+                            var filteredEntries = entries.Cast<JObject>()
                                                             .Select(DropboxEntryInfo.ParseFrom)
                                                             .Where(entry => !CanIgnoreEntry(parentPath, entry));
 
@@ -131,7 +136,13 @@ namespace Kudu.Services
 
             ResetStats();
 
-            if (_settings.GetValue(CursorKey) != deployInfo.OldCursor)
+            // for Dropbox OAuth V2, the delta is collected and applied by SCM
+            // simply set OldCursor as current.
+            if (dropboxInfo.OAuthVersion == 2)
+            {
+                deployInfo.OldCursor = _settings.GetValue(CursorKey);
+            }
+            else if (_settings.GetValue(CursorKey) != deployInfo.OldCursor)
             {
                 throw new InvalidOperationException(Resources.Error_MismatchDropboxCursor);
             }
@@ -198,7 +209,7 @@ namespace Kudu.Services
                 }
             }
 
-            // Save new dropboc cursor
+            // Save new dropbox cursor
             LogInfo("Update dropbox cursor");
             _settings.SetValue(CursorKey, deployInfo.NewCursor);
 
@@ -210,9 +221,12 @@ namespace Kudu.Services
             DropboxDeployInfo info = dropboxInfo.DeployInfo;
             _totals = info.Deltas.Count;
 
-            using (new Timer(UpdateStatusFile, state: dropboxInfo.TargetChangeset.Id, dueTime: TimeSpan.FromSeconds(5), period: TimeSpan.FromSeconds(5)))
+            if (_totals > 0)
             {
-                await ApplyChangesCore(info, useOAuth20);
+                using (new Timer(UpdateStatusFile, state: dropboxInfo.TargetChangeset.Id, dueTime: TimeSpan.FromSeconds(5), period: TimeSpan.FromSeconds(5)))
+                {
+                    await ApplyChangesCore(info, useOAuth20);
+                }
             }
         }
 
@@ -245,7 +259,7 @@ namespace Kudu.Services
                 else
                 {
                     DateTime modified;
-                    if (DateTime.TryParse(entry.Modified, out modified))
+                    if (useOAuth20 ? DateTime.TryParse(entry.Modified, null, DateTimeStyles.AssumeUniversal, out modified) : DateTime.TryParse(entry.Modified, out modified))
                     {
                         modified = modified.ToUniversalTime();
                     }
@@ -269,11 +283,11 @@ namespace Kudu.Services
                             try
                             {
                                 await rateLimiter.ThrottleAsync();
-                                using (HttpClient client = useOAuth20 ? CreateDropboxV2HttpClient(DropboxApiContentUri, info.Token) :
+                                using (HttpClient client = useOAuth20 ? CreateDropboxV2HttpClient(DownloadContentApiUri, info.Token) :
                                                                         CreateDropboxHttpClient(info, entry))
                                 {
 
-                                    await ProcessFileAsync(client, entry.Path, parent, modified);
+                                    await ProcessFileAsync(client, entry.Path, parent, modified, useOAuth20);
                                 }
                             }
                             finally
@@ -350,21 +364,37 @@ namespace Kudu.Services
             File.SetLastWriteTimeUtc(fullPath, lastModifiedUtc);
         }
 
-        public virtual async Task ProcessFileAsync(HttpClient client, string path, string parent, DateTime lastModifiedUtc)
+        public virtual async Task ProcessFileAsync(HttpClient client, string path, string parent, DateTime lastModifiedUtc, bool useOAuth20)
         {
             int retries = 0;
             while (retries <= MaxRetries)
             {
                 try
                 {
-                    string requestPath = SandboxFilePath + DropboxPathEncode(path.ToLowerInvariant());
-                    using (HttpResponseMessage response = await client.GetAsync(requestPath))
+                    if (useOAuth20)
                     {
-                        using (Stream stream = await response.EnsureSuccessStatusCode().Content.ReadAsStreamAsync())
+                        var request = new HttpRequestMessage(HttpMethod.Post, string.Empty);
+                        request.Headers.Add("Dropbox-API-Arg", "{\"path\": \"" + DropboxJsonHeaderEncode(path) + "\"}");
+                        using (HttpResponseMessage response = await client.SendAsync(request))
                         {
-                            await SafeWriteFile(parent, path, lastModifiedUtc, stream);
+                            using (Stream stream = await response.EnsureSuccessStatusCode().Content.ReadAsStreamAsync())
+                            {
+                                await SafeWriteFile(parent, path, lastModifiedUtc, stream);
+                            }
                         }
                     }
+                    else
+                    {
+                        string requestPath = SandboxFilePath + DropboxPathEncode(path.ToLowerInvariant());
+                        using (HttpResponseMessage response = await client.GetAsync(requestPath))
+                        {
+                            using (Stream stream = await response.EnsureSuccessStatusCode().Content.ReadAsStreamAsync())
+                            {
+                                await SafeWriteFile(parent, path, lastModifiedUtc, stream);
+                            }
+                        }
+                    }
+
                     if (retries > 0)
                     {
                         // Increment the successful retry count
@@ -380,7 +410,7 @@ namespace Kudu.Services
                     if (retries == MaxRetries)
                     {
                         Interlocked.Increment(ref _failedCount);
-                        LogError("Get({0}) '{1}' failed with {2}", retries, SandboxFilePath + path, ex.Message);
+                        LogError("Get({0}) '{1}' failed with {2}", retries, (useOAuth20 ? DownloadContentApiUri : SandboxFilePath) + path, ex.Message);
                         throw;
                     }
                 }
@@ -478,6 +508,27 @@ namespace Kudu.Services
             return sb.ToString();
         }
 
+
+        private static string DropboxJsonHeaderEncode(string path)
+        {
+            StringBuilder result = new StringBuilder();
+            foreach (char symbol in path)
+            {
+                byte[] bytes = Encoding.Unicode.GetBytes(new char[] { symbol });
+
+                // none ANSI
+                if (bytes[1] > 0)
+                {
+                    result.AppendFormat(@"\u{0:x2}{1:x2}", bytes[1], bytes[0]);
+                }
+                else
+                {
+                    result.Append(symbol);
+                }
+            }
+
+            return result.ToString();
+        }
 
         // Ported from https://github.com/SpringSource/spring-net-social-dropbox/blob/master/src/Spring.Social.Dropbox/Social/Dropbox/Api/Impl/DropboxTemplate.cs#L1713
         private static string DropboxPathEncode(string path)

@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
-using System.IO.Abstractions;
 using System.Linq;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
@@ -23,12 +22,12 @@ namespace Kudu.Core.Deployment.Generator
             _environment = environment;
         }
 
-        public ISiteBuilder CreateBuilder(ITracer tracer, ILogger logger, IDeploymentSettingsManager settings, IFileFinder fileFinder)
+        public ISiteBuilder CreateBuilder(ITracer tracer, ILogger logger, IDeploymentSettingsManager settings, IRepository repository)
         {
-            string repositoryRoot = _environment.RepositoryPath;
+            string repositoryRoot = repository.RepositoryPath;
 
             // Use the cached vs projects file finder for: a. better performance, b. ignoring solutions/projects under node_modules
-            fileFinder = new CachedVsProjectsFileFinder(fileFinder);
+            var fileFinder = new CachedVsProjectsFileFinder(repository);
 
             // If there's a custom deployment file then let that take over.
             var command = settings.GetValue(SettingsKeys.Command);
@@ -50,9 +49,22 @@ namespace Kudu.Core.Deployment.Generator
             if (!String.IsNullOrEmpty(targetProjectPath))
             {
                 tracer.Trace("Specific project was specified: " + targetProjectPath);
-
                 targetProjectPath = Path.GetFullPath(Path.Combine(repositoryRoot, targetProjectPath.TrimStart('/', '\\')));
+            }
 
+            if (settings.RunFromLocalZip())
+            {
+                return new RunFromZipSiteBuilder();
+            }
+
+            if (!settings.DoBuildDuringDeployment())
+            {
+                var projectPath = !String.IsNullOrEmpty(targetProjectPath) ? targetProjectPath : repositoryRoot;
+                return new BasicBuilder(_environment, settings, _propertyProvider, repositoryRoot, projectPath);
+            }
+
+            if (!String.IsNullOrEmpty(targetProjectPath))
+            {
                 // Try to resolve the project
                 return ResolveProject(repositoryRoot,
                                       targetProjectPath,
@@ -87,6 +99,7 @@ namespace Kudu.Core.Deployment.Generator
             // figure out with some heuristic, which one to deploy.
 
             // TODO: Pick only 1 and throw if there's more than one
+            // shunTODO need to implement this
             VsSolutionProject project = solution.Projects.Where(p => p.IsWap || p.IsWebSite || p.IsAspNetCore || p.IsFunctionApp).FirstOrDefault();
 
             if (project == null)
@@ -105,6 +118,8 @@ namespace Kudu.Core.Deployment.Generator
 
                 logger.Log(Resources.Log_NoDeployableProjects, solution.Path);
 
+                // we have a solution file, but no deployable project
+                // shunTODO how often do we run into this
                 return ResolveNonAspProject(repositoryRoot, null, settings);
             }
 
@@ -149,7 +164,6 @@ namespace Kudu.Core.Deployment.Generator
         private ISiteBuilder ResolveNonAspProject(string repositoryRoot, string projectPath, IDeploymentSettingsManager perDeploymentSettings)
         {
             string sourceProjectPath = projectPath ?? repositoryRoot;
-            // "FUNCTIONS_EXTENSION_VERSION" environment variable implies a functionApp
             if (FunctionAppHelper.LooksLikeFunctionApp())
             {
                 return new FunctionBasicBuilder(_environment, perDeploymentSettings, _propertyProvider, repositoryRoot, projectPath);
@@ -211,7 +225,7 @@ namespace Kudu.Core.Deployment.Generator
         // unless user specifies which project to deploy, targetPath == repositoryRoot
         private ISiteBuilder ResolveProject(string repositoryRoot, string targetPath, IDeploymentSettingsManager perDeploymentSettings, IFileFinder fileFinder, bool tryWebSiteProject, SearchOption searchOption = SearchOption.AllDirectories, bool specificConfiguration = true)
         {
-            if (DeploymentHelper.IsProject(targetPath))
+            if (DeploymentHelper.IsMsBuildProject(targetPath))
             {
                 // needs to check for project file existence
                 if (!File.Exists(targetPath))
@@ -224,7 +238,7 @@ namespace Kudu.Core.Deployment.Generator
             }
 
             // Check for loose projects
-            var projects = DeploymentHelper.GetProjects(targetPath, fileFinder, searchOption);
+            var projects = DeploymentHelper.GetMsBuildProjects(targetPath, fileFinder, searchOption);
             if (projects.Count > 1)
             {
                 // Can't determine which project to build
@@ -322,12 +336,25 @@ namespace Kudu.Core.Deployment.Generator
             }
             else if (FunctionAppHelper.LooksLikeFunctionApp())
             {
-                return new FunctionMsbuildBuilder(_environment,
-                                                perDeploymentSettings,
-                                                _propertyProvider,
-                                                repositoryRoot,
-                                                targetPath,
-                                                solutionPath);
+                if (FunctionAppHelper.IsCSharpFunctionFromProjectFile(targetPath))
+                {
+                    return new FunctionMsbuildBuilder(_environment,
+                                                    perDeploymentSettings,
+                                                    _propertyProvider,
+                                                    repositoryRoot,
+                                                    targetPath,
+                                                    solutionPath);
+                }
+                else
+                {
+                    // csx or node function with extensions.csproj
+                    return new FunctionBasicBuilder(_environment,
+                                                    perDeploymentSettings,
+                                                    _propertyProvider,
+                                                    repositoryRoot,
+                                                    Path.GetDirectoryName(targetPath));
+                }
+
             }
 
             throw new InvalidOperationException(String.Format(CultureInfo.CurrentCulture,

@@ -4,13 +4,11 @@ using System.Configuration;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Net.Http;
 using System.Net.NetworkInformation;
-using System.Runtime.ConstrainedExecution;
-using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
 using Kudu.Client.Deployment;
+using Kudu.Client.Infrastructure;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.SourceControl;
 using Kudu.Core.Infrastructure;
@@ -28,14 +26,14 @@ namespace Kudu.SiteManagement
         private const string HostingStartHtml = "hostingstart.html";
         private const string HostingStartHtmlContents = @"<html>
 <head>
-<title>This web site has been created</title>
+<title>This web site is up and running</title>
 <style type=""text/css"">
     BODY { color: #444444; background-color: #E5F2FF; font-family: verdana; margin: 0px; text-align: center; margin-top: 100px; }
     H1 { font-size: 16pt; margin-bottom: 4px; }
 </style>
 </head>
 <body>
-<h1>This web site has been created</h1><br/>
+<h1>This web site is up and running</h1><br/>
 </body> 
 </html>";
 
@@ -154,7 +152,8 @@ namespace Kudu.SiteManagement
                     await OperationManager.AttemptAsync(() => WaitForSiteAsync(serviceUrls.First()));
 
                     // Set initial ScmType state to LocalGit
-                    var settings = new RemoteDeploymentSettingsManager(serviceUrls.First() + "api/settings");
+                    var credentials = _context.Configuration.BasicAuthCredential.GetCredentials();
+                    var settings = new RemoteDeploymentSettingsManager(serviceUrls.First() + "api/settings", credentials);
                     await settings.SetValue(SettingsKeys.ScmType, ScmType.LocalGit);
 
                     var siteUrls = site.Bindings
@@ -182,7 +181,7 @@ namespace Kudu.SiteManagement
             }
         }
 
-        //NOTE: Small temprary object for configuration.
+        //NOTE: Small temporary object for configuration.
         private struct BindingInformation
         {
             public string Binding { get; set; }
@@ -235,7 +234,7 @@ namespace Kudu.SiteManagement
             }
 
             //NOTE: DeleteSiteAsync was not split into to usings before, but by calling CommitChanges midway, the iis manager goes into a read-only mode on Windows7 which then provokes
-            //      an error on the next commit. On the next pass. Aquirering a new Manager seems like a more safe aproach.
+            //      an error on the next commit. On the next pass. Acquirering a new Manager seems like a more safe approach.
             using (var iis = GetServerManager())
             {
                 string appPath = _context.Paths.GetApplicationPath(applicationName);
@@ -375,6 +374,7 @@ namespace Kudu.SiteManagement
                 kuduAppPool.ManagedRuntimeVersion = "v4.0";
                 kuduAppPool.AutoStart = true;
                 kuduAppPool.ProcessModel.LoadUserProfile = true;
+                kuduAppPool.Failure.RapidFailProtection = false;
 
                 // We've seen strange errors after switching to VS 2015 msbuild when using App Pool Identity.
                 // The errors look like:
@@ -589,9 +589,10 @@ namespace Kudu.SiteManagement
             return new ServerManager(_context.Configuration.IISConfigurationFile);
         }
 
-        private static async Task WaitForSiteAsync(string serviceUrl)
+        private async Task WaitForSiteAsync(string serviceUrl)
         {
-            using (var client = new HttpClient())
+            var credentials = _context.Configuration.BasicAuthCredential.GetCredentials();
+            using (var client = HttpClientHelper.CreateClient(serviceUrl, credentials))
             {
                 using (var response = await client.GetAsync(serviceUrl))
                 {

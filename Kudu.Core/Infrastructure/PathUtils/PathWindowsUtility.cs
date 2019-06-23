@@ -33,11 +33,15 @@ namespace Kudu.Core.Infrastructure
         {
             // as of git 2.8.1, various unix tools are installed in multiple paths.
             // add them to %path%.
+            // As of git 2.14.1 curl no longer exists in usr/bin. Use the one from mingw32/bin (mingw64/bin) instead
+            // We add both mingw32 and mingw64, but it will only end up adding those that actually exist to the PATH
             string gitPath = ResolveGitInstallDirPath();
             return new[]
             {
                 Path.Combine(gitPath, "bin"),
-                Path.Combine(gitPath, "usr", "bin")
+                Path.Combine(gitPath, "usr", "bin"),
+                Path.Combine(gitPath, "mingw32", "bin"),
+                Path.Combine(gitPath, "mingw64", "bin")
             };
         }
 
@@ -98,7 +102,15 @@ namespace Kudu.Core.Infrastructure
         internal override string ResolveMSBuild15Dir()
         {
             string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);
-            return Path.Combine(programFiles, "MSBuild-15.3-preview", "MSBuild", "15.0", "Bin");
+            string[] probPaths = new[]{
+                Path.Combine(programFiles, "Microsoft Visual Studio", "2017", "Enterprise", "MSBuild", "15.0", "Bin"), // visual studio Enterprise
+                Path.Combine(programFiles, "Microsoft Visual Studio", "2017", "Professional", "MSBuild", "15.0", "Bin"), // visual studio Professional
+                Path.Combine(programFiles, "Microsoft Visual Studio", "2017", "Community", "MSBuild", "15.0", "Bin"), // visual studio Community
+                Path.Combine(programFiles, "Microsoft Visual Studio", "2017", "BuildTools", "MSBuild", "15.0", "Bin"), // msbuild tools
+                // above is for public kudu, below is for azure
+                Path.Combine(programFiles, "MSBuild-15.3.409.57025", "MSBuild", "15.0", "Bin")
+                };
+            return probPaths.FirstOrDefault(path => Directory.Exists(path));
         }
 
         internal override string ResolveMSBuildPath()
@@ -142,16 +154,17 @@ namespace Kudu.Core.Infrastructure
         internal static string ResolveGitInstallDirPath()
         {
             // look up whether x86 or x64 of git was installed.
-            string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);
+            // if both exists, x64 will be used (assuming it is newly installed).
+            string programFiles = SystemEnvironment.GetEnvironmentVariable(ProgramFiles64bitKey) ?? SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFiles);
             string path = Path.Combine(programFiles, "Git");
-            if (Directory.Exists(path))
+            if (Directory.Exists(path) && File.Exists(Path.Combine(path, "cmd", "git.exe")))
             {
                 return path;
             }
 
-            programFiles = SystemEnvironment.GetEnvironmentVariable(ProgramFiles64bitKey) ?? SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFiles);
+            programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);
             path = Path.Combine(programFiles, "Git");
-            if (Directory.Exists(path))
+            if (Directory.Exists(path) && File.Exists(Path.Combine(path, "cmd", "git.exe")))
             {
                 return path;
             }
@@ -245,7 +258,7 @@ namespace Kudu.Core.Infrastructure
             return paths;
         }
 
-        internal override bool PathsEquals(string path1, string path2)
+        public override bool PathsEquals(string path1, string path2)
         {
             if (path1 == null)
             {
@@ -287,7 +300,7 @@ namespace Kudu.Core.Infrastructure
                 : Path.Combine(toolPath, String.Format("{0}.cmd", toolName));
         }
 
-        private static string ResolveRelativePathToProgramFiles(string relativeX86Path, string relativeX64Path, string errorMessge)
+        private static string ResolveRelativePathToProgramFiles(string relativeX86Path, string relativeX64Path, string errorMessage)
         {
             string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);
             string path = Path.Combine(programFiles, relativeX86Path);
@@ -299,7 +312,7 @@ namespace Kudu.Core.Infrastructure
 
             if (!File.Exists(path))
             {
-                throw new InvalidOperationException(errorMessge);
+                throw new InvalidOperationException(errorMessage);
             }
 
             return path;

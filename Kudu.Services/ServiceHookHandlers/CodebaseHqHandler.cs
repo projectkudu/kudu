@@ -1,11 +1,17 @@
 ﻿using System;
 using System.Web;
 using Newtonsoft.Json.Linq;
+using Kudu.Contracts.SourceControl;
 
 namespace Kudu.Services.ServiceHookHandlers
 {
     public class CodebaseHqHandler : GitHubCompatHandler
     {
+        public CodebaseHqHandler(IRepositoryFactory repositoryFactory)
+            : base(repositoryFactory)
+        {
+        }
+
         protected override bool ParserMatches(HttpRequestBase request, JObject payload, string targetBranch)
         {
             return (request.UserAgent != null && request.UserAgent.StartsWith("Codebasehq", StringComparison.OrdinalIgnoreCase));

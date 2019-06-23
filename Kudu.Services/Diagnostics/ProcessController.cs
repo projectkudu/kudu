@@ -29,6 +29,16 @@ namespace Kudu.Services.Performance
         private readonly IEnvironment _environment;
         private readonly IDeploymentSettingsManager _settings;
 
+
+        // These settings are not secrets, and are needed by the Visual Studio Snapshot debugger.
+        // Since they are not secrets, it's okay for a Reader over ARM to get them.
+        private readonly IReadOnlyList<string> _armWhitelistedVariables = new []
+        {
+            "MicrosoftProductionDiagnostics_AgentPath",
+            "COR_ENABLE_PROFILING",
+            "CORECLR_ENABLE_PROFILING"
+        };
+
         public ProcessController(ITracer tracer,
                                  IEnvironment environment,
                                  IDeploymentSettingsManager settings)
@@ -79,8 +89,7 @@ namespace Kudu.Services.Performance
         {
             using (_tracer.Step("ProcessController.GetModule"))
             {
-
-                var module = GetProcessById(id).Modules.Cast<ProcessModule>().FirstOrDefault(t => t.BaseAddress.ToInt64() == Int64.Parse(baseAddress, NumberStyles.HexNumber));
+                var module = GetProcessModules(GetProcessById(id)).Cast<ProcessModule>().FirstOrDefault(t => t.BaseAddress.ToInt64() == Int64.Parse(baseAddress, NumberStyles.HexNumber));
 
                 if (module != null)
                 {
@@ -111,7 +120,7 @@ namespace Kudu.Services.Performance
             {
                 var currentUser = Process.GetCurrentProcess().GetUserName();
                 var results = Process.GetProcesses()
-                    .Where(p => allUsers || String.Equals(currentUser, SafeGetValue(p.GetUserName, null), StringComparison.OrdinalIgnoreCase))
+                    .Where(p => allUsers || Kudu.Core.Environment.IsAzureEnvironment() || String.Equals(currentUser, SafeGetValue(p.GetUserName, null), StringComparison.OrdinalIgnoreCase))
                     .Select(p => GetProcessInfo(p, Request.RequestUri.GetLeftPart(UriPartial.Path).TrimEnd('/') + '/' + p.Id)).OrderBy(p => p.Name.ToLowerInvariant())
                     .ToList();
                 return Request.CreateResponse(HttpStatusCode.OK, ArmUtils.AddEnvelopeOnArmRequest(results, Request));
@@ -167,7 +176,7 @@ namespace Kudu.Services.Performance
                 {
                     using (_tracer.Step(String.Format("MiniDump pid={0}, name={1}, file={2}", process.Id, process.ProcessName, dumpFile)))
                     {
-                        process.MiniDump(dumpFile, (MINIDUMP_TYPE)dumpType);
+                        process.SnapshotAndDump(dumpFile, (MINIDUMP_TYPE)dumpType);
                         _tracer.Trace("MiniDump size={0}", new FileInfo(dumpFile).Length);
                     }
                 }
@@ -328,15 +337,29 @@ namespace Kudu.Services.Performance
             return threads;
         }
 
-        private static IEnumerable<ProcessModuleInfo> GetModules(Process process, string href)
+        private IEnumerable<ProcessModuleInfo> GetModules(Process process, string href)
         {
             var modules = new List<ProcessModuleInfo>();
-            foreach (var module in process.Modules.Cast<ProcessModule>().OrderBy(m => Path.GetFileName(m.FileName)))
+            foreach (var module in GetProcessModules(process).Cast<ProcessModule>().OrderBy(m => Path.GetFileName(m.FileName)))
             {
                 modules.Add(GetProcessModuleInfo(module, href.TrimEnd('/') + '/' + module.BaseAddress.ToInt64().ToString("x"), details: false));
             }
 
             return modules;
+        }
+
+        private ProcessModuleCollection GetProcessModules(Process process)
+        {
+            try
+            {
+                // this could fail with "A 32 bit processes cannot access modules of a 64 bit process."
+                // currently we don't support that and will return 400 instead of 500.
+                return process.Modules;
+            }
+            catch (Exception ex)
+            {
+                throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.BadRequest, ex.Message));
+            }
         }
 
         private ProcessThreadInfo GetProcessThreadInfo(ProcessThread thread, string href, bool details = false)
@@ -448,12 +471,24 @@ namespace Kudu.Services.Performance
                 info.Threads = SafeGetValue(() => GetThreads(process, selfLink.ToString()), Enumerable.Empty<ProcessThreadInfo>());
                 info.Modules = SafeGetValue(() => GetModules(process, selfLink.ToString().TrimEnd('/') + "/modules"), Enumerable.Empty<ProcessModuleInfo>());
                 info.TimeStamp = DateTime.UtcNow;
-                info.EnvironmentVariables = SafeGetValue(process.GetEnvironmentVariables, null);
+                info.EnvironmentVariables = SafeGetValue(process.GetEnvironmentVariables, new Dictionary<string, string>());
                 info.CommandLine = SafeGetValue(process.GetCommandLine, null);
                 info.IsProfileRunning = ProfileManager.IsProfileRunning(process.Id);
                 info.IsIisProfileRunning = ProfileManager.IsIisProfileRunning(process.Id);
                 info.IisProfileTimeoutInSeconds = ProfileManager.IisProfileTimeoutInSeconds;
                 SetEnvironmentInfo(info);
+
+                if (ArmUtils.IsArmRequest(Request))
+                {
+                    // No need to hide the secrets if the request is from contributor or admin.
+                    if (!(ArmUtils.IsRbacContributorRequest(Request) || ArmUtils.IsLegacyAuthorizationSource(Request)))
+                    {
+                        info.EnvironmentVariables = info.EnvironmentVariables
+                            .Where(kv => _armWhitelistedVariables.Contains(kv.Key, StringComparer.OrdinalIgnoreCase))
+                            .ToDictionary(k => k.Key, v => v.Value);
+                        info.CommandLine = null;
+                    }
+                }
             }
 
             return info;

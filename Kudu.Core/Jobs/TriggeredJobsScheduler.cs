@@ -95,7 +95,7 @@ namespace Kudu.Core.Jobs
                 DateTime lastRun = latestTriggeredJobRun != null ? latestTriggeredJobRun.StartTime : DateTime.Now.AddMinutes(-1);
 
                 // Make sure we are on schedule
-                // Check for the next occurence after the last run (as of now)
+                // Check for the next occurrence after the last run (as of now)
                 // If it is still now, invoke the triggered job
                 // If it's not now (in the future) reschedule the triggered job schedule starting with the last triggered job run
                 TimeSpan currentSchedule = triggeredJobSchedule.Schedule.GetNextInterval(lastRun, ignoreMissed: true);

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -10,9 +11,13 @@ using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Web.Script.Serialization;
 using Kudu.Contracts.Settings;
-using Microsoft.Win32.SafeHandles;
+using Kudu.Contracts.Tracing;
+using Kudu.Core.Deployment;
+using Kudu.Core.Infrastructure;
+using Kudu.Core.Tracing;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Kudu.Core.Helpers
 {
@@ -60,12 +65,6 @@ namespace Kudu.Core.Helpers
             get { return System.Environment.GetEnvironmentVariable(Constants.FunctionRunTimeVersion); }
         }
 
-        // ROUTING_EXTENSION_VERSION = 1.0
-        private static string RoutingRunTimeVersion
-        {
-            get { return System.Environment.GetEnvironmentVariable(Constants.RoutingRunTimeVersion); }
-        }
-
         // LOGICAPP_URL = [url to PUT logicapp.json to]
         private static string LogicAppUrl
         {
@@ -78,10 +77,16 @@ namespace Kudu.Core.Helpers
             get { return System.Environment.ExpandEnvironmentVariables(@"%HOME%\site\wwwroot\" + Constants.LogicAppJson); }
         }
 
-        // WEBSITE_SKU = Dynamic
-        private static string WebSiteSku
+        // WEBSITE_INSTANCE_ID not null or empty
+        public static bool IsAzureEnvironment()
         {
-            get { return System.Environment.GetEnvironmentVariable(Constants.WebSiteSku); }
+            return !String.IsNullOrEmpty(System.Environment.GetEnvironmentVariable("WEBSITE_INSTANCE_ID"));
+        }
+
+        // WEBSITE_HOME_STAMPNAME = waws-prod-bay-001
+        private static string HomeStamp
+        {
+            get { return System.Environment.GetEnvironmentVariable("WEBSITE_HOME_STAMPNAME"); }
         }
 
         /// <summary>
@@ -89,16 +94,28 @@ namespace Kudu.Core.Helpers
         /// It is written to require least dependencies but framework assemblies.
         /// Caller is responsible for synchronization.
         /// </summary>
+        [SuppressMessage("Microsoft.Usage", "CA1801:Parameter 'siteRestrictedJwt' is never used", 
+            Justification = "Method signature has to be the same because it's called via reflections from web-deploy")]
         public static async Task Run(string requestId, string siteRestrictedJwt, TraceListener tracer)
+        {
+            await Invoke(requestId, tracer);
+        }
+
+        /// <summary>
+        /// This common codes is to invoke post deployment operations.
+        /// It is written to require least dependencies but framework assemblies.
+        /// Caller is responsible for synchronization.
+        /// </summary>
+        public static async Task Invoke(string requestId, TraceListener tracer)
         {
             RunPostDeploymentScripts(tracer);
 
-            await SyncFunctionsTriggers(requestId, siteRestrictedJwt, tracer);
+            await SyncFunctionsTriggers(requestId, tracer);
 
-            await PerformAutoSwap(requestId, siteRestrictedJwt, tracer);
+            await PerformAutoSwap(requestId, tracer);
         }
 
-        public static async Task SyncFunctionsTriggers(string requestId, string siteRestrictedJwt, TraceListener tracer)
+        public static async Task SyncFunctionsTriggers(string requestId, TraceListener tracer, string functionsPath = null)
         {
             _tracer = tracer;
 
@@ -108,35 +125,65 @@ namespace Kudu.Core.Helpers
                 return;
             }
 
-            if (!string.Equals(Constants.DynamicSku, WebSiteSku, StringComparison.OrdinalIgnoreCase))
-            {
-                Trace(TraceEventType.Verbose, string.Format("Skip function trigger and logicapp sync because sku ({0}) is not dynamic (consumption plan).", WebSiteSku));
-                return;
-            }
-
             VerifyEnvironments();
 
-            // use framework serializer to avoid dependency requirement on callers
-            // though it is not the best serializer, it should do for this specific use.
-            var serializer = new JavaScriptSerializer();
-            var funtionsPath = System.Environment.ExpandEnvironmentVariables(@"%HOME%\site\wwwroot");
-            var triggers = Directory
-                    .GetDirectories(funtionsPath)
-                    .Select(d => Path.Combine(d, Constants.FunctionsConfigFile))
-                    .Where(File.Exists)
-                    .SelectMany(f => DeserializeFunctionTrigger(serializer, f))
-                    .ToList();
+            functionsPath = !string.IsNullOrEmpty(functionsPath)
+                ? functionsPath
+                : System.Environment.ExpandEnvironmentVariables(@"%HOME%\site\wwwroot");
 
-            if (!string.IsNullOrEmpty(RoutingRunTimeVersion))
+            // Read host.json
+            // Get HubName property for Durable Functions
+            Dictionary<string, string> durableConfig = null;
+            string hostJson = Path.Combine(functionsPath, Constants.FunctionsHostConfigFile);
+            if (File.Exists(hostJson))
             {
-                triggers.Add(new Dictionary<string, object> { { "type", "routingTrigger" } });
+                ReadDurableConfig(hostJson, out durableConfig);
             }
 
-            var content = serializer.Serialize(triggers);
+            // Collect each functions.json
+            var triggers = Directory
+                    .GetDirectories(functionsPath)
+                    .Select(d => Path.Combine(d, Constants.FunctionsConfigFile))
+                    .Where(File.Exists)
+                    .SelectMany(f => DeserializeFunctionTrigger(f))
+                    .ToList();
+
+            if (File.Exists(Path.Combine(functionsPath, Constants.ProxyConfigFile)))
+            {
+                var routing = new JObject();
+                routing["type"] = "routingTrigger";
+                triggers.Add(routing);
+            }
+
+            // Add hubName, connection, to each Durable Functions trigger
+            if (durableConfig != null)
+            {
+                foreach (var trigger in triggers)
+                {
+                    JToken typeValue;
+                    if (trigger.TryGetValue("type", out typeValue)
+                    && typeValue != null
+                    && (typeValue.ToString().Equals("orchestrationTrigger", StringComparison.OrdinalIgnoreCase)
+                    || typeValue.ToString().Equals("activityTrigger", StringComparison.OrdinalIgnoreCase)))
+                    {
+                        if (durableConfig.ContainsKey(Constants.HubName))
+                        {
+                            trigger["taskHubName"] = durableConfig[Constants.HubName];
+                        }
+
+                        if (durableConfig.ContainsKey(Constants.DurableTaskStorageConnection))
+                        {
+                            trigger[Constants.DurableTaskStorageConnection] = durableConfig[Constants.DurableTaskStorageConnection];
+                        }
+                    }
+                }
+            }
+
+            var content = JsonConvert.SerializeObject(triggers);
             Exception exception = null;
             try
             {
-                await PostAsync("/operations/settriggers", requestId, siteRestrictedJwt, content);
+                await PostAsync("/operations/settriggers", requestId, content);
             }
             catch (Exception ex)
             {
@@ -235,7 +282,7 @@ namespace Kudu.Core.Helpers
             return !string.IsNullOrEmpty(WebSiteSwapSlotName);
         }
 
-        public static async Task PerformAutoSwap(string requestId, string siteRestrictedJwt, TraceListener tracer)
+        public static async Task PerformAutoSwap(string requestId, TraceListener tracer)
         {
             _tracer = tracer;
 
@@ -252,7 +299,7 @@ namespace Kudu.Core.Helpers
             Exception exception = null;
             try
             {
-                await PostAsync(string.Format("/operations/autoswap?slot={0}&operationId={1}", slotSwapName, operationId), requestId, siteRestrictedJwt);
+                await PostAsync(string.Format("/operations/autoswap?slot={0}&operationId={1}", slotSwapName, operationId), requestId);
 
                 WriteAutoSwapOngoing();
             }
@@ -279,44 +326,54 @@ namespace Kudu.Core.Helpers
             }
         }
 
-        private static IEnumerable<Dictionary<string, object>> DeserializeFunctionTrigger(JavaScriptSerializer serializer, string functionJson)
+        private static void ReadDurableConfig(string hostConfigPath, out Dictionary<string, string> config)
+        {
+            config = new Dictionary<string, string>();
+            var json = JObject.Parse(File.ReadAllText(hostConfigPath));
+            JToken durableTaskValue;
+
+            // For Functions V2: the 'durableTask' property is set under the 'extensions' property.
+            JToken extensionsValue;
+            if (json.TryGetValue(Constants.Extensions, StringComparison.OrdinalIgnoreCase, out extensionsValue) && extensionsValue != null)
+            {
+                json = (JObject)extensionsValue;
+            }
+
+            // we will allow case insensitivity given it is likely user hand edited
+            // see https://github.com/Azure/azure-functions-durable-extension/issues/111
+            if (json.TryGetValue(Constants.DurableTask, StringComparison.OrdinalIgnoreCase, out durableTaskValue) && durableTaskValue != null)
+            {
+                var kvp = (JObject)durableTaskValue;
+
+                JToken nameValue;
+                if (kvp.TryGetValue(Constants.HubName, StringComparison.OrdinalIgnoreCase, out nameValue) && nameValue != null)
+                {
+                    config.Add(Constants.HubName, nameValue.ToString());
+                }
+
+                if (kvp.TryGetValue(Constants.DurableTaskStorageConnectionName, StringComparison.OrdinalIgnoreCase, out nameValue) && nameValue != null)
+                {
+                    config.Add(Constants.DurableTaskStorageConnection, nameValue.ToString());
+                }
+            }
+        }
+
+        private static IEnumerable<JObject> DeserializeFunctionTrigger(string functionJson)
         {
             try
             {
                 var functionName = Path.GetFileName(Path.GetDirectoryName(functionJson));
-                var json = (Dictionary<string, object>)serializer.DeserializeObject(File.ReadAllText(functionJson));
+                var json = JObject.Parse(File.ReadAllText(functionJson));
 
-                object value;
-                // https://github.com/Azure/azure-webjobs-sdk-script/blob/a9bafba78a3a8092bfd61a8c7093200dae867efb/src/WebJobs.Script/Host/ScriptHost.cs#L1476-L1498
-                if (json.TryGetValue("disabled", out value))
-                {
-                    string stringValue = value.ToString();
-                    bool disabled;
-                    // if "disabled" is not a boolean, we try to expend it as an environment variable
-                    if (!Boolean.TryParse(stringValue, out disabled))
-                    {
-                        string expandValue = System.Environment.GetEnvironmentVariable(stringValue);
-                        // "1"/"true" -> true, else false
-                        disabled = string.Equals(expandValue, "1", StringComparison.OrdinalIgnoreCase) ||
-                                   string.Equals(expandValue, "true", StringComparison.OrdinalIgnoreCase);
-                    }
-
-                    if (disabled)
-                    {
-                        Trace(TraceEventType.Verbose, "Function {0} is disabled", functionName);
-                        return Enumerable.Empty<Dictionary<string, object>>();
-                    }
-                }
-
-                var excluded = json.TryGetValue("excluded", out value) && (bool)value;
+                var excluded = json.TryGetValue("excluded", out JToken value) && (bool)value;
                 if (excluded)
                 {
                     Trace(TraceEventType.Verbose, "Function {0} is excluded", functionName);
-                    return Enumerable.Empty<Dictionary<string, object>>();
+                    return Enumerable.Empty<JObject>();
                 }
 
-                var triggers = new List<Dictionary<string, object>>();
-                foreach (Dictionary<string, object> binding in (object[])json["bindings"])
+                var triggers = new List<JObject>();
+                foreach (JObject binding in (JArray)json["bindings"])
                 {
                     var type = (string)binding["type"];
                     if (type.EndsWith("Trigger", StringComparison.OrdinalIgnoreCase))
@@ -336,9 +393,10 @@ namespace Kudu.Core.Helpers
             catch (Exception ex)
             {
                 Trace(TraceEventType.Warning, "{0} is invalid. {1}", functionJson, ex);
-            }
 
-            return Enumerable.Empty<Dictionary<string, object>>();
+                // Fail the deployment if invalid function.json
+                throw;
+            }
         }
 
         private static void WriteAutoSwapOngoing()
@@ -356,18 +414,29 @@ namespace Kudu.Core.Helpers
             }
         }
 
-        private static async Task PostAsync(string path, string requestId, string siteRestrictedJwt, string content = null)
+        private static async Task PostAsync(string path, string requestId, string content = null)
         {
             var host = HttpHost;
+            var ipAddress = await GetAlternativeIPAddress(host);
             var statusCode = default(HttpStatusCode);
-            Trace(TraceEventType.Verbose, "Begin HttpPost https://{0}{1}, x-ms-request-id: {2}", host, path, requestId);
             try
             {
                 using (var client = HttpClientFactory())
                 {
-                    client.BaseAddress = new Uri(string.Format("https://{0}", host));
+                    if (ipAddress == null)
+                    {
+                        Trace(TraceEventType.Verbose, "Begin HttpPost https://{0}{1}, x-ms-request-id: {2}", host, path, requestId);
+                        client.BaseAddress = new Uri(string.Format("https://{0}", host));
+                    }
+                    else
+                    {
+                        Trace(TraceEventType.Verbose, "Begin HttpPost https://{0}{1}, host: {2}, x-ms-request-id: {3}", ipAddress, path, host, requestId);
+                        client.BaseAddress = new Uri(string.Format("https://{0}", ipAddress));
+                        client.DefaultRequestHeaders.Host = host;
+                    }
+
                     client.DefaultRequestHeaders.UserAgent.Add(_userAgent.Value);
-                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", siteRestrictedJwt);
+                    client.DefaultRequestHeaders.Add(Constants.SiteRestrictedToken, SimpleWebTokenHelper.CreateToken(DateTime.UtcNow.AddMinutes(5)));
                     client.DefaultRequestHeaders.Add(Constants.RequestIdHeader, requestId);
 
                     var payload = new StringContent(content ?? string.Empty, Encoding.UTF8, "application/json");
@@ -384,6 +453,64 @@ namespace Kudu.Core.Helpers
             }
         }
 
+        /// <summary>
+        /// This works around the hostname dns resolution issue for recently created site.
+        /// If dns failed, we will use the home hosted service as alternative IP address.
+        /// </summary>
+        /// <returns></returns>
+        private static async Task<IPAddress> GetAlternativeIPAddress(string host)
+        {
+            try
+            {
+                // if resolved successfully, return null to not use alternative ipAddress
+                await Dns.GetHostEntryAsync(host);
+                return null;
+            }
+            catch (Exception ex)
+            {
+                Trace(TraceEventType.Verbose, "Unable to dns resolve {0}.  {1}", host, ex);
+            }
+
+            return await GetHomeStampAddress(host);
+        }
+
+        private static async Task<IPAddress> GetHomeStampAddress(string host)
+        {
+            var homeStamp = HomeStamp;
+            if (string.IsNullOrEmpty(homeStamp))
+            {
+                return null;
+            }
+
+            // cloudapp.net is the default to make it easy for private stamp testing.
+            var homeStampHostName = string.Format("{0}.cloudapp.net", homeStamp);
+            if (host.EndsWith(".scm.azurewebsites.us", StringComparison.OrdinalIgnoreCase))
+            {
+                homeStampHostName = string.Format("{0}.usgovcloudapp.net", homeStamp);
+            }
+            else if (host.EndsWith(".scm.chinacloudsites.cn", StringComparison.OrdinalIgnoreCase))
+            {
+                homeStampHostName = string.Format("{0}.chinacloudapp.cn", homeStamp);
+            }
+            else if (host.EndsWith(".scm.azurewebsites.de", StringComparison.OrdinalIgnoreCase))
+            {
+                homeStampHostName = string.Format("{0}.azurecloudapp.de", homeStamp);
+            }
+
+            try
+            {
+                Trace(TraceEventType.Verbose, "Try to dns resolve stamp {0}.", homeStampHostName);
+                var entry = await Dns.GetHostEntryAsync(homeStampHostName);
+                return entry.AddressList.First();
+            }
+            catch (Exception ex)
+            {
+                Trace(TraceEventType.Verbose, "Unable to dns resolve stamp {0}.  {1}", homeStampHostName, ex);
+            }
+
+            return null;
+        }
+
         public static void RunPostDeploymentScripts(TraceListener tracer)
         {
             _tracer = tracer;
@@ -392,6 +519,51 @@ namespace Kudu.Core.Helpers
             {
                 ExecuteScript(file);
             }
+        }
+
+        /// <summary>
+        /// As long as the task was not completed, we will keep updating the marker file.
+        /// The routine completes when either task completes or timeout.
+        /// If task is completed, we will remove the marker.
+        /// If timeout, we will leave the stale marker.
+        /// </summary>
+        public static async Task TrackPendingOperation(Task task, TimeSpan timeout)
+        {
+            const int DefaultTimeoutMinutes = 30;
+            const int DefaultUpdateMarkerIntervalMS = 10000;
+            const string MarkerFilePath = @"%TEMP%\SCMPendingOperation.txt";
+
+            // only applicable to azure env
+            if (!IsAzureEnvironment())
+            {
+                return;
+            }
+
+            if (timeout <= TimeSpan.Zero || timeout >= TimeSpan.FromMinutes(DefaultTimeoutMinutes))
+            {
+                // track at most N mins by default
+                timeout = TimeSpan.FromMinutes(DefaultTimeoutMinutes);
+            }
+
+            var start = DateTime.UtcNow;
+            var markerFile = System.Environment.ExpandEnvironmentVariables(MarkerFilePath);
+            while (start.Add(timeout) >= DateTime.UtcNow)
+            {
+                // create or update marker timestamp
+                OperationManager.SafeExecute(() => File.WriteAllText(markerFile, start.ToString("o")));
+
+                var cancellation = new CancellationTokenSource();
+                var delay = Task.Delay(DefaultUpdateMarkerIntervalMS, cancellation.Token);
+                var completed = await Task.WhenAny(delay, task);
+                if (completed != delay)
+                {
+                    cancellation.Cancel();
+                    break;
+                }
+            }
+
+            // remove marker
+            OperationManager.SafeExecute(() => File.Delete(markerFile));
         }
 
         private static void ExecuteScript(string file)
@@ -508,6 +680,15 @@ namespace Kudu.Core.Helpers
             if (tracer != null)
             {
                 tracer.TraceEvent(null, "PostDeployment", eventType, (int)eventType, format, args);
+            }
+        }
+
+        public static async Task UpdateSiteVersion(ZipDeploymentInfo deploymentInfo, IEnvironment environment, ITracer tracer)
+        {
+            var siteVersionPath = Path.Combine(environment.SitePackagesPath, Constants.PackageNameTxt);
+            using (tracer.Step($"Updating {siteVersionPath} with deployment {deploymentInfo.ZipName}"))
+            {
+                await FileSystemHelpers.WriteAllTextToFileAsync(siteVersionPath, deploymentInfo.ZipName);
             }
         }
     }

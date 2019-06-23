@@ -22,7 +22,7 @@ namespace Kudu.Core.Tracing
             _depth = depth;
 
             // Initialize cleanup timer
-            CleanupHelper.Initialize(path);
+            OperationManager.SafeExecute(() => CleanupHelper.Initialize(path));
         }
 
         public TraceLevel TraceLevel

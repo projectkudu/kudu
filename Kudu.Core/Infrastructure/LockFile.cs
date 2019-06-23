@@ -63,15 +63,20 @@ namespace Kudu.Core.Infrastructure
         public void InitializeAsyncLocks()
         {
             _lockRequestQueue = new ConcurrentQueue<QueueItem>();
-
-            FileSystemHelpers.EnsureDirectory(Path.GetDirectoryName(_path));
-
-            // Set up lock file watcher. Note that depending on how the file is accessed the file watcher may generate multiple events.
-            _lockFileWatcher = new FileSystemWatcher(Path.GetDirectoryName(_path), Path.GetFileName(_path));
-            _lockFileWatcher.NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName;
-            _lockFileWatcher.Changed += OnLockReleasedInternal;
-            _lockFileWatcher.Deleted += OnLockReleasedInternal;
-            _lockFileWatcher.EnableRaisingEvents = true;
+            try
+            {
+                FileSystemHelpers.EnsureDirectory(Path.GetDirectoryName(_path));
+                // Set up lock file watcher. Note that depending on how the file is accessed the file watcher may generate multiple events.
+                _lockFileWatcher = new FileSystemWatcher(Path.GetDirectoryName(_path), Path.GetFileName(_path));
+                _lockFileWatcher.NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName;
+                _lockFileWatcher.Changed += OnLockReleasedInternal;
+                _lockFileWatcher.Deleted += OnLockReleasedInternal;
+                _lockFileWatcher.EnableRaisingEvents = true;
+            }
+            catch (UnauthorizedAccessException)
+            {
+                // If not authorized to create the locks directory, do nothing for now.
+            }
         }
 
         /// <summary>
@@ -113,7 +118,7 @@ namespace Kudu.Core.Infrastructure
                     // for write action, it will fail with UnauthorizedAccessException when perform actual write operation
                     //      There is one drawback, previously for write action, even acquire lock will fail with UnauthorizedAccessException,
                     //      there will be retry within given timeout. so if exception is temporary, previous`s implementation will still go thru.
-                    //      While right now will end up failure. But it is a extreem edge case, should be ok to ignore.
+                    //      While right now will end up failure. But it is a extreme edge case, should be ok to ignore.
                     return !FileSystemHelpers.IsFileSystemReadOnly();
                 }
                 catch (IOException ex)
@@ -163,7 +168,7 @@ namespace Kudu.Core.Infrastructure
                     // for write action, it will fail with UnauthorizedAccessException when perform actual write operation
                     //      There is one drawback, previously for write action, even acquire lock will fail with UnauthorizedAccessException,
                     //      there will be retry within given timeout. so if exception is temporary, previous`s implementation will still go thru.
-                    //      While right now will end up failure. But it is a extreem edge case, should be ok to ignore.
+                    //      While right now will end up failure. But it is a extreme edge case, should be ok to ignore.
                     return FileSystemHelpers.IsFileSystemReadOnly();
                 }
             }

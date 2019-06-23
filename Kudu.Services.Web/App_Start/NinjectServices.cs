@@ -4,6 +4,7 @@ using System.Configuration;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Http.Formatting;
 using System.Web;
@@ -74,10 +75,27 @@ namespace Kudu.Services.Web.App_Start
         /// </summary>
         public static void Start()
         {
-            HttpApplication.RegisterModule(typeof(SafeOnePerRequestHttpModule));
-            HttpApplication.RegisterModule(typeof(NinjectHttpModule));
-            HttpApplication.RegisterModule(typeof(TraceModule));
-            _bootstrapper.Initialize(CreateKernel);
+            try
+            {
+                HttpApplication.RegisterModule(typeof(SafeOnePerRequestHttpModule));
+                HttpApplication.RegisterModule(typeof(NinjectHttpModule));
+                HttpApplication.RegisterModule(typeof(TraceModule));
+
+                _bootstrapper.Initialize(CreateKernel);
+            }
+            catch (Exception ex)
+            {
+                // trace initialization error
+                KuduEventSource.Log.KuduException(
+                    ServerConfiguration.GetApplicationName(),
+                    "NinjectServices.Start",
+                    string.Empty,
+                    string.Empty,
+                    "Fail to initialize NinjectServices",
+                    ex.ToString());
+
+                throw;
+            }
         }
 
         /// <summary>
@@ -139,6 +157,9 @@ namespace Kudu.Services.Web.App_Start
 
             EnsureDotNetCoreEnvironmentVariable(environment);
 
+            // fix up invalid d:\home\site\deployments\settings.xml
+            EnsureValidDeploymentXmlSettings(environment);
+
             // Add various folders that never change to the process path. All child processes will inherit
             PrependFoldersToPath(environment);
 
@@ -152,14 +173,13 @@ namespace Kudu.Services.Web.App_Start
             kernel.Bind<IBuildPropertyProvider>().ToConstant(new BuildPropertyProvider());
 
             System.Func<ITracer> createTracerThunk = () => GetTracer(kernel);
-            System.Func<ILogger> createLoggerThunk = () => GetLogger(environment, kernel);
 
             // First try to use the current request profiler if any, otherwise create a new one
             var traceFactory = new TracerFactory(() => TraceServices.CurrentRequestTracer ?? createTracerThunk());
 
             kernel.Bind<ITracer>().ToMethod(context => TraceServices.CurrentRequestTracer ?? NullTracer.Instance);
             kernel.Bind<ITraceFactory>().ToConstant(traceFactory);
-            TraceServices.SetTraceFactory(createTracerThunk, createLoggerThunk);
+            TraceServices.SetTraceFactory(createTracerThunk);
 
             // Setup the deployment lock
             string lockPath = Path.Combine(environment.SiteRootPath, Constants.LockPath);
@@ -241,7 +261,7 @@ namespace Kudu.Services.Web.App_Start
             kernel.Bind<IWebHooksManager>().To<WebHooksManager>()
                                              .InRequestScope();
 
-            ITriggeredJobsManager triggeredJobsManager = new TriggeredJobsManager(
+            ITriggeredJobsManager triggeredJobsManager = new AggregateTriggeredJobsManager(
                 etwTraceFactory,
                 kernel.Get<IEnvironment>(),
                 kernel.Get<IDeploymentSettingsManager>(),
@@ -259,13 +279,14 @@ namespace Kudu.Services.Web.App_Start
             kernel.Bind<TriggeredJobsScheduler>().ToConstant(triggeredJobsScheduler)
                                              .InTransientScope();
 
-            IContinuousJobsManager continuousJobManager = new ContinuousJobsManager(
+            IContinuousJobsManager continuousJobManager = new AggregateContinuousJobsManager(
                 etwTraceFactory,
                 kernel.Get<IEnvironment>(),
                 kernel.Get<IDeploymentSettingsManager>(),
                 kernel.Get<IAnalytics>());
 
             OperationManager.SafeExecute(triggeredJobsManager.CleanupDeletedJobs);
+
             OperationManager.SafeExecute(continuousJobManager.CleanupDeletedJobs);
 
             kernel.Bind<IContinuousJobsManager>().ToConstant(continuousJobManager)
@@ -275,6 +296,8 @@ namespace Kudu.Services.Web.App_Start
                                              .InRequestScope();
 
             kernel.Bind<IDeploymentManager>().To<DeploymentManager>()
+                                             .InRequestScope();
+            kernel.Bind<IFetchDeploymentManager>().To<FetchDeploymentManager>()
                                              .InRequestScope();
             kernel.Bind<ISSHKeyManager>().To<SSHKeyManager>()
                                              .InRequestScope();
@@ -435,6 +458,10 @@ namespace Kudu.Services.Web.App_Start
             routes.MapHttpRouteDual("zip-get-files", "zip/{*path}", new { controller = "Zip", action = "GetItem" }, new { verb = new HttpMethodConstraint("GET", "HEAD") });
             routes.MapHttpRouteDual("zip-put-files", "zip/{*path}", new { controller = "Zip", action = "PutItem" }, new { verb = new HttpMethodConstraint("PUT") });
 
+            // Zip push deployment
+            routes.MapHttpRouteDual("zip-push-deploy", "zipdeploy", new { controller = "PushDeployment", action = "ZipPushDeploy" }, new { verb = new HttpMethodConstraint("POST", "PUT") });
+            routes.MapHttpRoute("zip-war-deploy", "api/wardeploy", new { controller = "PushDeployment", action = "WarPushDeploy" }, new { verb = new HttpMethodConstraint("POST") });
+
             // Live Command Line
             routes.MapHttpRouteDual("execute-command", "command", new { controller = "Command", action = "ExecuteCommand" }, new { verb = new HttpMethodConstraint("POST") });
 
@@ -474,17 +501,26 @@ namespace Kudu.Services.Web.App_Start
             routes.MapHandlerDual<LogStreamHandler>(kernel, "logstream", "logstream/{*path}");
             routes.MapHttpRoute("recent-logs", "api/logs/recent", new { controller = "Diagnostics", action = "GetRecentLogs" }, new { verb = new HttpMethodConstraint("GET") });
 
+            // Enable these for Linux and Windows Containers.
+            if (!OSDetector.IsOnWindows() || (OSDetector.IsOnWindows() && EnvironmentHelper.IsWindowsContainers()))
+            {
+                routes.MapHttpRoute("current-docker-logs-zip", "api/logs/docker/zip", new { controller = "Diagnostics", action = "GetDockerLogsZip" }, new { verb = new HttpMethodConstraint("GET") });
+                routes.MapHttpRoute("current-docker-logs", "api/logs/docker", new { controller = "Diagnostics", action = "GetDockerLogs" }, new { verb = new HttpMethodConstraint("GET") });
+            }
+            
+            var processControllerName = OSDetector.IsOnWindows() ? "Process" : "LinuxProcess";
+
             // Processes
-            routes.MapHttpProcessesRoute("all-processes", "", new { controller = "Process", action = "GetAllProcesses" }, new { verb = new HttpMethodConstraint("GET") });
-            routes.MapHttpProcessesRoute("one-process-get", "/{id}", new { controller = "Process", action = "GetProcess" }, new { verb = new HttpMethodConstraint("GET") });
-            routes.MapHttpProcessesRoute("one-process-delete", "/{id}", new { controller = "Process", action = "KillProcess" }, new { verb = new HttpMethodConstraint("DELETE") });
-            routes.MapHttpProcessesRoute("one-process-dump", "/{id}/dump", new { controller = "Process", action = "MiniDump" }, new { verb = new HttpMethodConstraint("GET") });
-            routes.MapHttpProcessesRoute("start-process-profile", "/{id}/profile/start", new { controller = "Process", action = "StartProfileAsync" }, new { verb = new HttpMethodConstraint("POST") });
-            routes.MapHttpProcessesRoute("stop-process-profile", "/{id}/profile/stop", new { controller = "Process", action = "StopProfileAsync" }, new { verb = new HttpMethodConstraint("GET") });
-            routes.MapHttpProcessesRoute("all-threads", "/{id}/threads", new { controller = "Process", action = "GetAllThreads" }, new { verb = new HttpMethodConstraint("GET") });
-            routes.MapHttpProcessesRoute("one-process-thread", "/{processId}/threads/{threadId}", new { controller = "Process", action = "GetThread" }, new { verb = new HttpMethodConstraint("GET") });
-            routes.MapHttpProcessesRoute("all-modules", "/{id}/modules", new { controller = "Process", action = "GetAllModules" }, new { verb = new HttpMethodConstraint("GET") });
-            routes.MapHttpProcessesRoute("one-process-module", "/{id}/modules/{baseAddress}", new { controller = "Process", action = "GetModule" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpProcessesRoute("all-processes", "", new { controller = processControllerName, action = "GetAllProcesses" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpProcessesRoute("one-process-get", "/{id}", new { controller = processControllerName, action = "GetProcess" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpProcessesRoute("one-process-delete", "/{id}", new { controller = processControllerName, action = "KillProcess" }, new { verb = new HttpMethodConstraint("DELETE") });
+            routes.MapHttpProcessesRoute("one-process-dump", "/{id}/dump", new { controller = processControllerName, action = "MiniDump" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpProcessesRoute("start-process-profile", "/{id}/profile/start", new { controller = processControllerName, action = "StartProfileAsync" }, new { verb = new HttpMethodConstraint("POST") });
+            routes.MapHttpProcessesRoute("stop-process-profile", "/{id}/profile/stop", new { controller = processControllerName, action = "StopProfileAsync" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpProcessesRoute("all-threads", "/{id}/threads", new { controller = processControllerName, action = "GetAllThreads" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpProcessesRoute("one-process-thread", "/{processId}/threads/{threadId}", new { controller = processControllerName, action = "GetThread" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpProcessesRoute("all-modules", "/{id}/modules", new { controller = processControllerName, action = "GetAllModules" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpProcessesRoute("one-process-module", "/{id}/modules/{baseAddress}", new { controller = processControllerName, action = "GetModule" }, new { verb = new HttpMethodConstraint("GET") });
 
             // Runtime
             routes.MapHttpRouteDual("runtime", "diagnostics/runtime", new { controller = "Runtime", action = "GetRuntimeVersions" }, new { verb = new HttpMethodConstraint("GET") });
@@ -543,14 +579,15 @@ namespace Kudu.Services.Web.App_Start
             routes.MapHttpRoute("delete-function", "api/functions/{name}", new { controller = "Function", action = "Delete" }, new { verb = new HttpMethodConstraint("DELETE") });
             routes.MapHttpRoute("download-functions", "api/functions/admin/download", new { controller = "Function", action = "DownloadFunctions" }, new { verb = new HttpMethodConstraint("GET") });
 
-            // Docker Hook Endpoint
-            if (!OSDetector.IsOnWindows())
+            // Container Hook Endpoint
+            if (!OSDetector.IsOnWindows() || (OSDetector.IsOnWindows() && EnvironmentHelper.IsWindowsContainers()))
             {
                 routes.MapHttpRoute("docker", "docker/hook", new { controller = "Docker", action = "ReceiveHook" }, new { verb = new HttpMethodConstraint("POST") });
+                routes.MapHttpRoute("container", "container/webhook", new { controller = "Docker", action = "ReceiveHook" }, new { verb = new HttpMethodConstraint("POST") });
             }
 
             // catch all unregistered url to properly handle not found
-            // this is to work arounf the issue in TraceModule where we see double OnBeginRequest call
+            // this is to work around the issue in TraceModule where we see double OnBeginRequest call
             // for the same request (404 and then 200 statusCode).
             routes.MapHttpRoute("error-404", "{*path}", new { controller = "Error404", action = "Handle" });
         }
@@ -735,7 +772,9 @@ namespace Kudu.Services.Web.App_Start
             List<string> folders = PathUtilityFactory.Instance.GetPathFolders(environment);
 
             string path = System.Environment.GetEnvironmentVariable("PATH");
-            string additionalPaths = String.Join(Path.PathSeparator.ToString(), folders);
+
+            // Ignore any folder that doesn't actually exist
+            string additionalPaths = String.Join(Path.PathSeparator.ToString(), folders.Where(dir => Directory.Exists(dir)));
 
             // Make sure we haven't already added them. This can happen if the Kudu appdomain restart (since it's still same process)
             if (!path.Contains(additionalPaths))
@@ -766,8 +805,7 @@ namespace Kudu.Services.Web.App_Start
             string repositoryPath = Path.Combine(siteRoot, settings == null ? Constants.RepositoryPath : settings.GetRepositoryPath());
             string binPath = HttpRuntime.BinDirectory;
             string requestId = httpContext?.Request.GetRequestId();
-            string siteRetrictedJwt = httpContext?.Request.GetSiteRetrictedJwt();
-            return new Core.Environment(root, EnvironmentHelper.NormalizeBinPath(binPath), repositoryPath, requestId, siteRetrictedJwt);
+            return new Core.Environment(root, EnvironmentHelper.NormalizeBinPath(binPath), repositoryPath, requestId);
         }
 
         private static void EnsureDotNetCoreEnvironmentVariable(IEnvironment environment)
@@ -783,7 +821,44 @@ namespace Kudu.Services.Web.App_Start
                 // On Azure, restore nuget packages to d:\home\.nuget so they're persistent. It also helps
                 // work around https://github.com/projectkudu/kudu/issues/2056.
                 // Note that this only applies to project.json scenarios (not packages.config)
-                SetEnvironmentVariableIfNotYetSet("NUGET_PACKAGES", Path.Combine(environment.RootPath, ".nuget"));
+                SetEnvironmentVariableIfNotYetSet("NUGET_PACKAGES", Path.Combine(environment.RootPath, @".nuget\"));
+
+                // Set the telemetry environment variable
+                SetEnvironmentVariableIfNotYetSet("DOTNET_CLI_TELEMETRY_PROFILE", "AzureKudu");
+            }
+            else
+            {
+                // Set it slightly differently if outside of Azure to differentiate
+                SetEnvironmentVariableIfNotYetSet("DOTNET_CLI_TELEMETRY_PROFILE", "Kudu");
+            }
+        }
+
+        private static void EnsureValidDeploymentXmlSettings(IEnvironment environment)
+        {
+            var path = GetSettingsPath(environment);
+            if (File.Exists(path))
+            {
+                try
+                {
+                    var settings = new DeploymentSettingsManager(new XmlSettings.Settings(path));
+                    settings.GetValue(SettingsKeys.TraceLevel);
+                }
+                catch (Exception ex)
+                {
+                    DateTime lastWriteTimeUtc = DateTime.MinValue;
+                    OperationManager.SafeExecute(() => lastWriteTimeUtc = File.GetLastWriteTimeUtc(path));
+
+                    // trace initialization error
+                    KuduEventSource.Log.KuduException(
+                        ServerConfiguration.GetApplicationName(),
+                        "NinjectServices.Start",
+                        string.Empty,
+                        string.Empty,
+                        string.Format("Invalid '{0}' is detected and deleted.  Last updated time was {1}.", path, lastWriteTimeUtc),
+                        ex.ToString());
+
+                    File.Delete(path);
+                }
             }
         }
 

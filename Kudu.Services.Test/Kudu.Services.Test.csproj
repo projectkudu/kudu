@@ -80,7 +80,6 @@
     <Compile Include="Diagnostics\ProcessControllerFacts.cs" />
     <Compile Include="DropboxHelperFacts.cs" />
     <Compile Include="FileInfoBase.cs" />
-    <Compile Include="FetchHandlerFacts.cs" />
     <Compile Include="GenericHandlerFacts.cs" />
     <Compile Include="GithubHandlerFacts.cs" />
     <Compile Include="InfoRefsControllerFacts.cs" />

@@ -1,12 +1,17 @@
 ﻿using System;
 using System.Web;
-using Kudu.Core.SourceControl;
 using Newtonsoft.Json.Linq;
+using Kudu.Contracts.SourceControl;
 
 namespace Kudu.Services.ServiceHookHandlers
 {
     public class GitlabHqHandler : GitHubCompatHandler
     {
+        public GitlabHqHandler(IRepositoryFactory repositoryFactory)
+            : base(repositoryFactory)
+        {
+        }
+
         //{
         //  "before": "2370e44c850e732d71edd2db36920482558e3fe0",
         //  "after": "2370e44c850e732d71edd2db36920482558e3fe0",

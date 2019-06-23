@@ -8,6 +8,7 @@ using System.Web;
 using System.Web.Hosting;
 using Kudu.Contracts.Jobs;
 using Kudu.Contracts.Settings;
+using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Tracing;
 using Newtonsoft.Json;
@@ -40,6 +41,25 @@ namespace Kudu.Core.Jobs
                 return false;
             }
         }
+
+        public static void CleanupDeletedJobs(IEnumerable<string> existingJobs, string jobsDataPath, ITracer tracer)
+        {
+            DirectoryInfoBase jobsDataDirectory = FileSystemHelpers.DirectoryInfoFromDirectoryName(jobsDataPath);
+            if (jobsDataDirectory.Exists)
+            {
+                DirectoryInfoBase[] jobDataDirectories = jobsDataDirectory.GetDirectories("*", SearchOption.TopDirectoryOnly);
+                IEnumerable<string> allJobDataDirectories = jobDataDirectories.Select(j => j.Name);
+                IEnumerable<string> directoriesToRemove = allJobDataDirectories.Except(existingJobs, StringComparer.OrdinalIgnoreCase);
+                foreach (string directoryToRemove in directoriesToRemove)
+                {
+                    using (tracer.Step("CleanupDeletedJobs"))
+                    {
+                        tracer.Trace("Removed job data path as the job was already deleted: " + directoryToRemove);
+                        FileSystemHelpers.DeleteDirectorySafe(Path.Combine(jobsDataPath, directoryToRemove));
+                    }
+                }
+            }
+        }
     }
 
     public abstract class JobsManagerBase<TJob> : JobsManagerBase, IJobsManager<TJob>, IDisposable, IRegisteredObject where TJob : JobBase, new()
@@ -64,8 +84,11 @@ namespace Kudu.Core.Jobs
 
         protected IAnalytics Analytics { get; private set; }
 
+        private readonly IEnumerable<string> _excludedJobsNames;
+
         protected JobsFileWatcher JobsWatcher { get; set; }
-        internal static IEnumerable<TJob> JobListCache { get; set; }
+
+        internal static IDictionary<string, IEnumerable<TJob>> CacheMap { get; } = new Dictionary<string, IEnumerable<TJob>>();
 
         private DateTime _jobListCacheExpiryDate;
 
@@ -73,16 +96,16 @@ namespace Kudu.Core.Jobs
 
         List<Action<string>> FileWatcherExtraEventHandlers;
 
-        protected JobsManagerBase(ITraceFactory traceFactory, IEnvironment environment, IDeploymentSettingsManager settings, IAnalytics analytics, string jobsTypePath)
+        protected JobsManagerBase(ITraceFactory traceFactory, IEnvironment environment, IDeploymentSettingsManager settings, IAnalytics analytics, string jobsTypePath, string basePath, IEnumerable<string> excludedJobsNames)
         {
             TraceFactory = traceFactory;
             Environment = environment;
             Settings = settings;
             Analytics = analytics;
 
+            _excludedJobsNames = excludedJobsNames ?? Enumerable.Empty<string>();
             _jobsTypePath = jobsTypePath;
-
-            JobsBinariesPath = Path.Combine(Environment.JobsBinariesPath, jobsTypePath);
+            JobsBinariesPath = Path.Combine(basePath, jobsTypePath);
             JobsDataPath = Path.Combine(Environment.JobsDataPath, jobsTypePath);
             JobsWatcher = new JobsFileWatcher(JobsBinariesPath, OnJobChanged, null, ListJobNames, traceFactory, analytics, jobsTypePath);
             HostingEnvironment.RegisterObject(this);
@@ -130,12 +153,29 @@ namespace Kudu.Core.Jobs
             return jobList;
         }
 
+        internal IEnumerable<TJob> JobListCache
+        {
+            get
+            {
+                return CacheMap.ContainsKey(JobsBinariesPath)
+                    ? CacheMap[JobsBinariesPath]
+                    : null;
+            }
+
+            set
+            {
+                CacheMap[JobsBinariesPath] = value;
+            }
+        }
+
         internal static void ClearJobListCache()
         {
-            JobListCache = null;
+            CacheMap.Clear();
         }
 
         public abstract TJob GetJob(string jobName);
+
+        public bool HasJob(string jobName) => FileSystemHelpers.DirectoryExists(Path.Combine(JobsBinariesPath, jobName));
 
         public TJob CreateOrReplaceJobFromZipStream(Stream zipStream, string jobName)
         {
@@ -144,7 +184,7 @@ namespace Kudu.Core.Jobs
                 {
                     using (var zipArchive = new ZipArchive(zipStream, ZipArchiveMode.Read))
                     {
-                        zipArchive.Extract(jobDirectory.FullName);
+                        zipArchive.Extract(jobDirectory.FullName, TraceFactory.GetTracer());
                     }
                 });
         }
@@ -210,24 +250,8 @@ namespace Kudu.Core.Jobs
 
         public void CleanupDeletedJobs()
         {
-            IEnumerable<TJob> jobs = ListJobs(forceRefreshCache: true);
-            IEnumerable<string> jobNames = jobs.Select(j => j.Name);
-            DirectoryInfoBase jobsDataDirectory = FileSystemHelpers.DirectoryInfoFromDirectoryName(JobsDataPath);
-            if (jobsDataDirectory.Exists)
-            {
-                DirectoryInfoBase[] jobDataDirectories = jobsDataDirectory.GetDirectories("*", SearchOption.TopDirectoryOnly);
-                IEnumerable<string> allJobDataDirectories = jobDataDirectories.Select(j => j.Name);
-                IEnumerable<string> directoriesToRemove = allJobDataDirectories.Except(jobNames, StringComparer.OrdinalIgnoreCase);
-                foreach (string directoryToRemove in directoriesToRemove)
-                {
-                    var tracer = TraceFactory.GetTracer();
-                    using (tracer.Step("CleanupDeletedJobs"))
-                    {
-                        tracer.Trace("Removed job data path as the job was already deleted: " + directoryToRemove);
-                        FileSystemHelpers.DeleteDirectorySafe(Path.Combine(JobsDataPath, directoryToRemove));
-                    }
-                }
-            }
+            var jobs = ListJobs(forceRefreshCache: true).Select(j => j.Name);
+            CleanupDeletedJobs(jobs, JobsDataPath, TraceFactory.GetTracer());
         }
 
         private string GetSpecificJobDataPath(string jobName)
@@ -245,7 +269,8 @@ namespace Kudu.Core.Jobs
         {
             var jobs = new List<TJob>();
 
-            IEnumerable<DirectoryInfoBase> jobDirectories = ListJobDirectories(JobsBinariesPath);
+            IEnumerable<DirectoryInfoBase> jobDirectories = ListJobDirectories(JobsBinariesPath)
+                .Where(d => !_excludedJobsNames.Any(e => d.Name.Equals(e, StringComparison.OrdinalIgnoreCase)));
             foreach (DirectoryInfoBase jobDirectory in jobDirectories)
             {
                 TJob job = BuildJob(jobDirectory);
@@ -477,6 +502,15 @@ namespace Kudu.Core.Jobs
             {
                 if (HttpContext.Current == null)
                 {
+                    if (string.IsNullOrEmpty(_lastKnownAppBaseUrlPrefix))
+                    {
+                        var httpHost = System.Environment.GetEnvironmentVariable(Constants.HttpHost);
+                        if (!string.IsNullOrEmpty(httpHost))
+                        {
+                            return "https://{0}".FormatInvariant(httpHost);
+                        }
+                    }
+
                     return _lastKnownAppBaseUrlPrefix;
                 }
 
@@ -507,7 +541,7 @@ namespace Kudu.Core.Jobs
             DirectoryInfoBase jobDirectory = GetJobDirectory(jobName);
             if (!jobDirectory.Exists)
             {
-                throw new JobNotFoundException();
+                throw new JobNotFoundException($"Cannot find '{jobDirectory.FullName}' directory for '{jobName}' triggered job");
             }
 
             return GetJobScriptDirectory(jobDirectory);
@@ -591,7 +625,7 @@ namespace Kudu.Core.Jobs
         }
         protected virtual void Dispose(bool disposing)
         {
-            // HACK: Next if statement should be removed once ninject wlll not dispose this class
+            // HACK: Next if statement should be removed once ninject will not dispose this class
             // Since ninject automatically calls dispose we currently disable it
             if (disposing)
             {

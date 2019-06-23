@@ -10,7 +10,7 @@ namespace Kudu.Core.Diagnostics
     public class ProcessModuleInfo : INamedObject
     {
         [JsonIgnore]
-        [SuppressMessage("Microsoft.Design", "CA1033:InterfaceMethodsShouldBeCallableByChildTypes", Justification = "to provide ARM spceific name")]
+        [SuppressMessage("Microsoft.Design", "CA1033:InterfaceMethodsShouldBeCallableByChildTypes", Justification = "to provide ARM specific name")]
         string INamedObject.Name { get { return BaseAddress; } }
 
         [JsonProperty(PropertyName = "base_address")]

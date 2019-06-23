@@ -10,7 +10,7 @@ namespace Kudu.Core.Deployment
     public class DeployResult : INamedObject
     {
         [JsonIgnore]
-        [SuppressMessage("Microsoft.Design", "CA1033:InterfaceMethodsShouldBeCallableByChildTypes", Justification = "to provide ARM spceific name")]
+        [SuppressMessage("Microsoft.Design", "CA1033:InterfaceMethodsShouldBeCallableByChildTypes", Justification = "to provide ARM specific name")]
         string INamedObject.Name { get { return Id; } }
 
         [JsonProperty(PropertyName = "id")]
@@ -69,5 +69,8 @@ namespace Kudu.Core.Deployment
 
         [JsonProperty(PropertyName = "site_name")]
         public string SiteName { get; set; }
+
+        [JsonProperty(PropertyName = "provisioningState")]
+        public string ProvisioningState { get; set; }
     }
 }

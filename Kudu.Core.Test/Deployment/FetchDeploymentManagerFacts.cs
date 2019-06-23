@@ -8,45 +8,46 @@ using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.SourceControl;
 using Kudu.Contracts.Tracing;
-using Kudu.Core;
 using Kudu.Core.Deployment;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.SourceControl;
-using Kudu.Services.ServiceHookHandlers;
 using Moq;
 using Xunit;
+using Kudu.Services.ServiceHookHandlers;
 
-namespace Kudu.Services.Test
+namespace Kudu.Core.Test
 {
-    public class FetchHandlerFacts
+    public class FetchDeploymentManagerFacts
     {
         [Theory]
         [MemberData("Scenarios")]
-        public async Task FetchHandlerBasicTests(IScenario scenario)
+        public async Task FetchDeploymentManagerBasicTests(IScenario scenario)
         {
             // Arrange
             var siteRoot = @"x:\vdir0\site";
             var deploymentManager = new MockDeploymentManager();
             var fileSystem = GetFileSystem(siteRoot, scenario.WriteTimeUTCs.ToArray());
             var environment = GetEnvironment(siteRoot);
-            var serviceHookHandler = GetServiceHookHandler();
             var repositoryFactory = GetRepositoryFactory();
-            var handler = CreateFetchHandler(deploymentManager: deploymentManager,
+            var handler = CreateFetchDeploymentManager(deploymentManager: deploymentManager,
                                              fileSystem: fileSystem.Object,
-                                             serviceHookHandler: serviceHookHandler.Object,
-                                             repositoryFactory: repositoryFactory.Object,
                                              environment: environment.Object);
 
             // Test
-            await handler.PerformDeployment(new DeploymentInfo
+            await handler.PerformDeployment(new DeploymentInfo(repositoryFactory.Object)
             {
                 IsReusable = scenario.IsReusable,
-                Handler = serviceHookHandler.Object,
+                Fetch = FakeFetch,
                 TargetChangeset = GetChangeSet()
             });
 
             // Assert
             Assert.Equal(scenario.DeployCount, deploymentManager.DeployCount);
+        }
+
+        public static Task FakeFetch(IRepository repository, DeploymentInfoBase deploymentInfo, string targetBranch, ILogger logger, ITracer tracer)
+        {
+            return Task.FromResult(0);
         }
 
         public static IEnumerable<object[]> Scenarios
@@ -87,25 +88,23 @@ namespace Kudu.Services.Test
             public int DeployCount { get { return 1; } }
         }
 
-        private FetchHandler CreateFetchHandler(ITracer tracer = null,
+        private FetchDeploymentManager CreateFetchDeploymentManager(ITracer tracer = null,
                                                 IDeploymentManager deploymentManager = null,
                                                 IDeploymentSettingsManager settings = null,
                                                 IDeploymentStatusManager status = null,
                                                 IOperationLock deploymentLock = null,
                                                 IEnvironment environment = null,
-                                                IServiceHookHandler serviceHookHandler = null,
-                                                IRepositoryFactory repositoryFactory = null,
                                                 IFileSystem fileSystem = null)
         {
             FileSystemHelpers.Instance = fileSystem ?? Mock.Of<IFileSystem>();
-            return new FetchHandler(tracer ?? Mock.Of<ITracer>(),
-                                    deploymentManager ?? Mock.Of<IDeploymentManager>(),
-                                    settings ?? Mock.Of<IDeploymentSettingsManager>(),
-                                    status ?? Mock.Of<IDeploymentStatusManager>(),
-                                    deploymentLock ?? Mock.Of<IOperationLock>(),
-                                    environment ?? Mock.Of<IEnvironment>(),
-                                    new[] { serviceHookHandler ?? Mock.Of<IServiceHookHandler>() },
-                                    repositoryFactory ?? Mock.Of<IRepositoryFactory>());
+
+            return new FetchDeploymentManager(
+                settings ?? Mock.Of<IDeploymentSettingsManager>(),
+                environment ?? Mock.Of<IEnvironment>(),
+                tracer ?? Mock.Of<ITracer>(),
+                deploymentLock ?? Mock.Of<IOperationLock>(),
+                deploymentManager ?? Mock.Of<IDeploymentManager>(),
+                status ?? Mock.Of<IDeploymentStatusManager>());
         }
 
         private Mock<IFileSystem> GetFileSystem(string siteRoot, params DateTime[] writeTimeUtcs)
@@ -124,14 +123,6 @@ namespace Kudu.Services.Test
             fileBase.Setup(f => f.GetLastWriteTimeUtc(markerFile))
                     .Returns(() => index < writeTimeUtcs.Length ? writeTimeUtcs[index++] : DateTime.MinValue);
             return fileSystem;
-        }
-
-        private Mock<IServiceHookHandler> GetServiceHookHandler()
-        {
-            var handler = new Mock<IServiceHookHandler>();
-            handler.Setup(h => h.Fetch(It.IsAny<IRepository>(), It.IsAny<DeploymentInfo>(), It.IsAny<string>(), It.IsAny<ILogger>(), It.IsAny<ITracer>()))
-                   .Returns(Task.FromResult(0));
-            return handler;
         }
 
         private static ChangeSet GetChangeSet()
@@ -189,7 +180,7 @@ namespace Kudu.Services.Test
                 throw new NotImplementedException();
             }
 
-            public Task DeployAsync(IRepository repository, ChangeSet changeSet, string deployer, bool clean, bool needFileUpdate = true)
+            public Task DeployAsync(IRepository repository, ChangeSet changeSet, string deployer, bool clean, DeploymentInfoBase deploymentInfo = null, bool needFileUpdate = true, bool fullBuildByDefault = true)
             {
                 ++DeployCount;
                 return Task.FromResult(1);

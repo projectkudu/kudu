@@ -35,8 +35,15 @@ namespace Kudu.Core.Infrastructure
 
         public static string DecryptSecretString(string content)
         {
-            var protector = DataProtectionProvider.CreateAzureDataProtector().CreateProtector(DefaultProtectorPurpose);
-            return protector.Unprotect(content);
+            try
+            {
+                var protector = DataProtectionProvider.CreateAzureDataProtector().CreateProtector(DefaultProtectorPurpose);
+                return protector.Unprotect(content);
+            }
+            catch (CryptographicException ex)
+            {
+                throw new FormatException($"unable to decrypt {content}, the key is either invalid or malformed", ex);
+            }
         }
 
         public static string GenerateFunctionToken()
@@ -44,7 +51,7 @@ namespace Kudu.Core.Infrastructure
             string siteName = ServerConfiguration.GetApplicationName();
             string issuer = $"https://{siteName}.scm.azurewebsites.net";
             string audience = $"https://{siteName}.azurewebsites.net/azurefunctions";
-            return JwtGenerator.GenerateToken(issuer, audience, expires: DateTime.UtcNow.AddMinutes(2));
+            return JwtGenerator.GenerateToken(issuer, audience, expires: DateTime.UtcNow.AddMinutes(5));
         }
     }
 }

@@ -23,8 +23,8 @@ namespace Kudu.Core.Jobs
 
         private readonly IWebHooksManager _hooksManager;
 
-        public TriggeredJobsManager(ITraceFactory traceFactory, IEnvironment environment, IDeploymentSettingsManager settings, IAnalytics analytics, IWebHooksManager hooksManager)
-            : base(traceFactory, environment, settings, analytics, Constants.TriggeredPath)
+        public TriggeredJobsManager(string basePath, ITraceFactory traceFactory, IEnvironment environment, IDeploymentSettingsManager settings, IAnalytics analytics, IWebHooksManager hooksManager, IEnumerable<string> excludedJobsNames = null)
+            : base(traceFactory, environment, settings, analytics, Constants.TriggeredPath, basePath, excludedJobsNames)
         {
             _hooksManager = hooksManager;
         }
@@ -56,7 +56,7 @@ namespace Kudu.Core.Jobs
                     if (isLatest)
                     {
                         // The history state is determined by the most recent invocation,
-                        // as previous ones are immutable (beind historical records).
+                        // as previous ones are immutable (being historical records).
                         currentETag = CalculateETag(triggeredJobRun);
                         if (currentETag == etag)
                         {
@@ -227,7 +227,7 @@ namespace Kudu.Core.Jobs
             TriggeredJob triggeredJob = GetJob(jobName);
             if (triggeredJob == null)
             {
-                throw new JobNotFoundException();
+                throw new JobNotFoundException($"Cannot find '{jobName}' triggered job");
             }
 
             triggeredJob.CommandArguments = arguments;
@@ -240,7 +240,7 @@ namespace Kudu.Core.Jobs
             TriggeredJobRunner triggeredJobRunner =
                 _triggeredJobRunners.GetOrAdd(
                     jobName,
-                    _ => new TriggeredJobRunner(triggeredJob.Name, Environment, Settings, TraceFactory, Analytics));
+                    _ => new TriggeredJobRunner(triggeredJob.Name, JobsBinariesPath, Environment, Settings, TraceFactory, Analytics));
 
             JobSettings jobSettings = triggeredJob.Settings;
 

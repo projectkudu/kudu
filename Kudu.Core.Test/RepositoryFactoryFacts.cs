@@ -21,12 +21,15 @@ namespace Kudu.Core.Test
                         continue;
                     }
 
+                    var environment = new Mock<IEnvironment>();
+
                     // Arrange
                     var repoFactory = new Mock<RepositoryFactory>(
-                        Mock.Of<IEnvironment>(), 
+                        environment.Object,
                         Mock.Of<IDeploymentSettingsManager>(),
-                        Mock.Of<ITraceFactory>()) { CallBase = true };
-                    repoFactory.SetupGet(f => f.IsNullRepository)
+                        Mock.Of<ITraceFactory>())
+                    { CallBase = true };
+                    repoFactory.SetupGet(f => f.NoRepository)
                                .Returns(currentType == RepositoryType.None);
                     repoFactory.SetupGet(f => f.IsGitRepository)
                                .Returns(currentType == RepositoryType.Git);
@@ -35,8 +38,8 @@ namespace Kudu.Core.Test
 
                     // Act and Assert
                     var ex = Assert.Throws<InvalidOperationException>(() => repoFactory.Object.EnsureRepository(repoType));
-
                     Assert.Equal(String.Format("Expected a '{0}' repository but found a '{1}' repository at path ''.", repoType, currentType), ex.Message);
+
                 }
             }
         }

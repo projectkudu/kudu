@@ -4,16 +4,28 @@ using System.Threading.Tasks;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Deployment;
 using Kudu.Core.SourceControl;
+using Kudu.Contracts.SourceControl;
 
 namespace Kudu.Services.ServiceHookHandlers
 {
     public abstract class ServiceHookHandlerBase : IServiceHookHandler
     {
         private static readonly Task _completed = Task.FromResult(0);
+        private readonly IRepositoryFactory _repositoryFactory;
 
-        public abstract DeployAction TryParseDeploymentInfo(System.Web.HttpRequestBase request, Newtonsoft.Json.Linq.JObject payload, string targetBranch, out DeploymentInfo deploymentInfo);
+        protected ServiceHookHandlerBase(IRepositoryFactory repositoryFactory)
+        {
+            _repositoryFactory = repositoryFactory;
+        }
 
-        public Task Fetch(IRepository repository, DeploymentInfo deploymentInfo, string targetBranch, ILogger logger, ITracer tracer)
+        protected IRepositoryFactory RepositoryFactory
+        {
+            get { return _repositoryFactory; }
+        }
+
+        public abstract DeployAction TryParseDeploymentInfo(System.Web.HttpRequestBase request, Newtonsoft.Json.Linq.JObject payload, string targetBranch, out DeploymentInfoBase deploymentInfo);
+
+        public Task Fetch(IRepository repository, DeploymentInfoBase deploymentInfo, string targetBranch, ILogger logger, ITracer tracer)
         {
             repository.FetchWithoutConflict(deploymentInfo.RepositoryUrl, targetBranch);
             return _completed;

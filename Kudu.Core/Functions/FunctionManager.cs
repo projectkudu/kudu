@@ -33,7 +33,7 @@ namespace Kudu.Core.Functions
             tracer = tracer ?? _traceFactory.GetTracer();
             using (tracer.Step("FunctionManager.SyncTriggers"))
             {
-                await PostDeploymentHelper.SyncFunctionsTriggers(_environment.RequestId, _environment.SiteRestrictedJwt, new PostDeploymentTraceListener(tracer));
+                await PostDeploymentHelper.SyncFunctionsTriggers(_environment.RequestId, new PostDeploymentTraceListener(tracer));
             }
         }
 
@@ -96,7 +96,7 @@ namespace Kudu.Core.Functions
                 setConfigChanged();
             }
 
-            if (functionEnvelope.TestData != null)
+            if (functionEnvelope?.TestData != null)
             {
                 await FileSystemHelpers.WriteAllTextToFileAsync(dataFilePath, functionEnvelope.TestData);
             }
@@ -126,6 +126,22 @@ namespace Kudu.Core.Functions
 
         private async Task<T> GetKeyObjectFromFile<T>(string name, IKeyJsonOps<T> keyOp)
         {
+            var secretStorageType = System.Environment.GetEnvironmentVariable(Constants.AzureWebJobsSecretStorageType);
+
+            // Assume the default version to not be one
+            var isVersionOne = !string.IsNullOrEmpty(FunctionSiteExtensionVersion) && (FunctionSiteExtensionVersion.StartsWith("1.0") || FunctionSiteExtensionVersion.Equals("~1"));
+
+            // If it is version one (default is Files) and the secret storage type not Files (not default or set manually), throw an error.
+            // Or if it's not version one (default is Blob), and the secret storage is not Files (manually set), throw an error.
+            var isStorageFiles = isVersionOne
+                ? string.IsNullOrEmpty(secretStorageType) || !secretStorageType.Equals("Blob", StringComparison.OrdinalIgnoreCase)
+                : !string.IsNullOrEmpty(secretStorageType) && secretStorageType.Equals("Files", StringComparison.OrdinalIgnoreCase);
+            if (!isStorageFiles)
+            {
+                throw new InvalidOperationException($"Runtime keys are stored on blob storage. This API doesn't support this configuration. " +
+                    $"Please change Environment variable {Constants.AzureWebJobsSecretStorageType} value to 'Files'. For more info, visit https://aka.ms/funcsecrets");
+            }
+
             string keyPath = GetFunctionSecretsFilePath(name);
             string key = null;
             if (!FileSystemHelpers.FileExists(keyPath) || FileSystemHelpers.FileInfoFromFileName(keyPath).Length == 0)
@@ -410,8 +426,40 @@ namespace Kudu.Core.Functions
                 }
             }
 
-            return await FileSystemHelpers.ReadAllTextFromFileAsync(testDataFilePath);
+            var fileContentString = await FileSystemHelpers.ReadAllTextFromFileAsync(testDataFilePath);
+            // if it contains the following json property, need to remove them from the file
+            // "code": {
+            //    "name": "code",
+            //    "value": "gibberishxyz..."
+            // }
+            JObject testDataToAdjust = null;
+            if (fileContentString.Contains("\"code\":"))
+            {
+                try
+                {
+                    var testData = JObject.Parse(fileContentString);
+                    var codeProperty = testData["code"];
+                    if ("code".Equals((string)codeProperty["name"], StringComparison.OrdinalIgnoreCase) && (string)codeProperty["value"] != null)
+                    {
+                        testDataToAdjust = testData;
+                    }
+                }
+                catch (Exception)
+                {
+                    // failed to retrieve code property from fileContentString, NOOP
+                }
+            }
 
+            if (testDataToAdjust != null)
+            {
+                // TODO logging, since we are touching user data
+                testDataToAdjust.Property("code").Remove();
+                // update the fileContentString
+                fileContentString = testDataToAdjust.ToString(Formatting.None);
+                await FileSystemHelpers.WriteAllTextToFileAsync(testDataFilePath, fileContentString);
+            }
+
+            return fileContentString;
         }
 
         private string GetFunctionTestDataFilePath(string functionName)
@@ -469,9 +517,9 @@ namespace Kudu.Core.Functions
         /// <param name="projectName">the {projectName}.csproj</param>
         private static ZipArchiveEntry AddCsprojFile(ZipArchive zip, IEnumerable<ZipArchiveEntry> files, string projectName)
         {
-            const string microsoftAzureWebJobsVersion = "2.1.0-beta1";
-            const string microsoftAzureWebJobsExtensionsHttpVersion = "1.0.0-beta1";
-            const string microsoftNETSdkFunctionsVersion = "1.0.0-alpha5";
+            // TODO different template for functionv2
+            // TODO download git repository when read only
+            const string microsoftNETSdkFunctionsVersion = "1.0.8";
 
             var csprojFile = new StringBuilder();
             csprojFile.AppendLine(
@@ -480,8 +528,6 @@ namespace Kudu.Core.Functions
     <TargetFramework>net461</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include=""Microsoft.Azure.WebJobs"" Version=""{microsoftAzureWebJobsVersion}"" />
-    <PackageReference Include=""Microsoft.Azure.WebJobs.Extensions.Http"" Version=""{microsoftAzureWebJobsExtensionsHttpVersion}"" />
     <PackageReference Include=""Microsoft.NET.Sdk.Functions"" Version=""{microsoftNETSdkFunctionsVersion}"" />
   </ItemGroup>
   <ItemGroup>
@@ -525,9 +571,9 @@ namespace Kudu.Core.Functions
             var appSettings = System.Environment.GetEnvironmentVariables()
                 .Cast<DictionaryEntry>()
                 .Where(p => p.Key.ToString().StartsWith(appSettingsPrefix, StringComparison.OrdinalIgnoreCase))
-                .ToDictionary(k => k.Key, v => v.Value);
+                .ToDictionary(k => k.Key.ToString().Substring(appSettingsPrefix.Length), v => v.Value);
 
-            var localSettings = JsonConvert.SerializeObject(new { IsEncrypted = false, Value = appSettings }, Formatting.Indented);
+            var localSettings = JsonConvert.SerializeObject(new { IsEncrypted = false, Values = appSettings }, Formatting.Indented);
 
             return zip.AddFile(localAppSettingsFileName, localSettings);
         }
