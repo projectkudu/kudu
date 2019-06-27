@@ -129,7 +129,7 @@ namespace Kudu.Core.Helpers
 
             functionsPath = !string.IsNullOrEmpty(functionsPath)
                 ? functionsPath
-                : System.Environment.ExpandEnvironmentVariables(@"%HOME%\site\wwwroot");
+                : System.Environment.ExpandEnvironmentVariables("C:\\Users\\patle\\work\\projectkudu\\debug");
 
             // Read host.json
             // Get HubName property for Durable Functions

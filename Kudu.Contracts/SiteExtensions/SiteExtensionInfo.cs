@@ -60,6 +60,29 @@ namespace Kudu.Contracts.SiteExtensions
             DownloadCount = data.DownloadCount;
         }
 
+        public SiteExtensionInfo(NuGetValue nugetValue)
+        {
+            Id = nugetValue.Id;
+            Title = nugetValue.Title;
+            Type = SiteExtensionType.Gallery;
+            //Type = nugetValue.GetType;
+            Summary = nugetValue.Summary;
+            Description = nugetValue.Description;
+            Version = nugetValue.Version;
+            //ExtensionUrl = nugetValue.ExtensionUrl;
+            ProjectUrl = nugetValue.ProjectUrl;
+            IconUrl = nugetValue.IconUrl == null ? "https://www.siteextensions.net/Content/Images/packageDefaultIcon-50x50.png" : nugetValue.IconUrl.ToString();
+            LicenseUrl = nugetValue.LicenseUrl;
+            Authors = nugetValue.Authors;
+            PublishedDateTime = nugetValue.Published;
+            IsLatestVersion = true;
+            DownloadCount = nugetValue.DownloadCount;
+            //LocalIsLatestVersion = nugetValue.LocalIsLatestVersion;
+            //LocalPath = nugetValue.LocalPath;
+            //InstalledDateTime = nugetValue.InstalledDateTime;
+            //InstallationArgs = nugetValue.InstallationArgs;
+        }
+
         [JsonProperty(PropertyName = "id")]
         public string Id
         {

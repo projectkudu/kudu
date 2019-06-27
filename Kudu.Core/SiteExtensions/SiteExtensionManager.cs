@@ -12,6 +12,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
 using System.Xml;
+using System.Xml.Linq;
+using System.Xml.Serialization;
 using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Jobs;
 using Kudu.Contracts.Settings;
@@ -28,6 +30,7 @@ using NuGet.Client;
 using NuGet.Client.VisualStudio;
 using NuGet.Versioning;
 using NullLogger = Kudu.Core.Deployment.NullLogger;
+
 namespace Kudu.Core.SiteExtensions
 {
     public class SiteExtensionManager : ISiteExtensionManager
@@ -73,46 +76,65 @@ namespace Kudu.Core.SiteExtensions
             _analytics = analytics;
         }
 
-        public async Task<IEnumerable<SiteExtensionInfo>> GetRemoteExtensions(string filter, bool allowPrereleaseVersions, string feedUrl)
+        public async Task<IEnumerable<SiteExtensionInfo>> GetRemoteExtensions(string filter, bool allowPrereleaseVersions, string feedUrl, string version)
         {
-            ITracer tracer = _traceFactory.GetTracer();
-            var extensions = new List<SiteExtensionInfo>();
-            IEnumerable<SourceRepository> remoteRepos = GetRemoteRepositories(feedUrl);
-
-            SearchFilter filterOptions = new SearchFilter();
-            filterOptions.IncludePrerelease = allowPrereleaseVersions;
-
-            IEnumerable<UIPackageMetadata> packages = new List<UIPackageMetadata>();
-
-            using (tracer.Step("Search site extensions by filter: {0}", filter))
+            if (version != null && version.Equals("1.0"))
             {
-                foreach (SourceRepository remoteRepo in remoteRepos)
+                
+            }
+            else
+            {
+                ITracer tracer = _traceFactory.GetTracer();
+                var extensions = new List<SiteExtensionInfo>();
+                using (tracer.Step("Search site extensions by filter: {0}", filter))
                 {
-                    var foundUIPackages = await remoteRepo.Search(string.IsNullOrWhiteSpace(filter) ? string.Empty : filter, filterOptions: filterOptions);
-                    if (null != foundUIPackages && foundUIPackages.Count() > 0)
+                    feedUrl = getFeedUrl(feedUrl, filter);
+                    using (XmlReader reader = XmlReader.Create(feedUrl))
                     {
-                        packages = packages.Concat(foundUIPackages);
+                        reader.ReadStartElement("feed");
+                        while (reader.Read())
+                        {
+                            if (reader.Name == "entry" && reader.IsStartElement())
+                            {
+                                reader.ReadToDescendant("m:properties");
+                                NuGetValue nuVal = new NuGetValue((XElement)XNode.ReadFrom(reader));
+                                extensions.Add(new SiteExtensionInfo(nuVal));
+                            }
+                        }
                     }
+                    await Task.Delay(0);
                 }
-                packages = packages.OrderByDescending(p => p.DownloadCount);
+                return extensions;
             }
+        }
 
-            using (tracer.Step("Convert search result to SiteExtensionInfos with max concurrent requests: {0}", System.Environment.ProcessorCount))
+        private string getFeedUrl(String feedUrl, string filter)
+        {
+            if (feedUrl == null)
             {
-                // GetResourceAsync is not thread safe
-                var metadataResource = await _localRepository.GetResourceAndValidateAsync<UIMetadataResource>();
-                var convertedResult = await ConvertNuGetPackagesToSiteExtensionInfos(
-                    packages,
-                    async (uiPackage) =>
-                    {
-                        // this function is called in multiple threads simultaneously
-                        return await ConvertRemotePackageToSiteExtensionInfo(uiPackage, feedUrl, metadataResource);
-                    });
-
-                extensions.AddRange(convertedResult);
+                String searchTerm = "tags:AzureSiteExtension";
+                if (String.IsNullOrWhiteSpace(filter))
+                {
+                    // No user provided search string: just search by tag
+                    searchTerm = "tags:AzureSiteExtension";
+                }
+                else if (filter.Contains(":"))
+                {
+                    // User provided complex query with fields: add it as is to the tag field query
+                    searchTerm = $"tags:AzureSiteExtension {filter}";
+                }
+                else
+                {
+                    // User provided simple string: treat it as a title. This is not ideal behavior, but
+                    // is the best we can do based on how nuget.org works
+                    searchTerm = $"tags:AzureSiteExtension title:\"{filter}\"";
+                }
+                return $"https://www.nuget.org/api/v2/Search?searchTerm=%27{searchTerm}%27&includePrerelease=true&semVerLevel=2.0.0";
             }
-
-            return extensions;
+            else
+            {
+                return feedUrl;
+            }
         }
 
         public async Task<SiteExtensionInfo> GetRemoteExtension(string id, string version, string feedUrl)

@@ -9,7 +9,7 @@ namespace Kudu.Services.Web
         public static string ResolveRootPath()
         {
             // The HOME path should always be set correctly
-            string path = Environment.ExpandEnvironmentVariables(@"%HOME%");
+            string path = "C:\\Users\\patle\\work\\projectkudu\\debug";
             if (Directory.Exists(path))
             {
                 // For users running Windows Azure Pack 2 (WAP2), %HOME% actually points to the site folder,
