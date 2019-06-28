@@ -17,6 +17,7 @@ using Kudu.Core.Settings;
 using Kudu.Core.SiteExtensions;
 using Kudu.Core.Tracing;
 using Kudu.Services.Arm;
+using Newtonsoft.Json;
 
 namespace Kudu.Services.SiteExtensions
 {
@@ -57,8 +58,9 @@ namespace Kudu.Services.SiteExtensions
         }
 
         [HttpGet]
-        public async Task<HttpResponseMessage> GetRemoteExtensions(string filter = null, bool allowPrereleaseVersions = false, string feedUrl = null, string version = null)
+        public async Task<HttpResponseMessage> GetRemoteExtensions(string filter = null, bool allowPrereleaseVersions = false, string feedUrl = null)
         {
+            var version = Request.RequestUri.ParseQueryString()["version"];
             return Request.CreateResponse(
                 HttpStatusCode.OK,
                 ArmUtils.AddEnvelopeOnArmRequest<SiteExtensionInfo>(await _manager.GetRemoteExtensions(filter, allowPrereleaseVersions, feedUrl, version), Request));
@@ -233,6 +235,8 @@ namespace Kudu.Services.SiteExtensions
         [HttpPut]
         public async Task<HttpResponseMessage> InstallExtension(string id, SiteExtensionInfo requestInfo)
         {
+            string jsonData = await Request.Content.ReadAsStringAsync();
+            var obj = JsonConvert.DeserializeObject<SiteExtensionInfo>(jsonData);
             var startTime = DateTime.UtcNow;
             var tracer = _traceFactory.GetTracer();
 

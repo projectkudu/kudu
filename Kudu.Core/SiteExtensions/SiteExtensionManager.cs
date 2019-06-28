@@ -78,34 +78,81 @@ namespace Kudu.Core.SiteExtensions
 
         public async Task<IEnumerable<SiteExtensionInfo>> GetRemoteExtensions(string filter, bool allowPrereleaseVersions, string feedUrl, string version)
         {
-            if (version != null && version.Equals("1.0"))
+            if (version != null && version.Equals("1"))
             {
-                
+                return await GetRemoteExtensions1(filter, allowPrereleaseVersions, feedUrl, version);
             }
             else
             {
-                ITracer tracer = _traceFactory.GetTracer();
-                var extensions = new List<SiteExtensionInfo>();
-                using (tracer.Step("Search site extensions by filter: {0}", filter))
+                return await GetRemoteExtensions2(filter, allowPrereleaseVersions, feedUrl, version);
+            }
+        }
+
+        public async Task<IEnumerable<SiteExtensionInfo>> GetRemoteExtensions1(string filter, bool allowPrereleaseVersions, string feedUrl, string version)
+        {
+            ITracer tracer = _traceFactory.GetTracer();
+            var extensions = new List<SiteExtensionInfo>();
+            IEnumerable<SourceRepository> remoteRepos = GetRemoteRepositories(feedUrl);
+
+            SearchFilter filterOptions = new SearchFilter();
+            filterOptions.IncludePrerelease = allowPrereleaseVersions;
+
+            IEnumerable<UIPackageMetadata> packages = new List<UIPackageMetadata>();
+
+            using (tracer.Step("Search site extensions by filter: {0}", filter))
+            {
+                foreach (SourceRepository remoteRepo in remoteRepos)
                 {
-                    feedUrl = getFeedUrl(feedUrl, filter);
-                    using (XmlReader reader = XmlReader.Create(feedUrl))
+                    var foundUIPackages = await remoteRepo.Search(string.IsNullOrWhiteSpace(filter) ? string.Empty : filter, filterOptions: filterOptions);
+                    if (null != foundUIPackages && foundUIPackages.Count() > 0)
                     {
-                        reader.ReadStartElement("feed");
-                        while (reader.Read())
+                        packages = packages.Concat(foundUIPackages);
+                    }
+                }
+                packages = packages.OrderByDescending(p => p.DownloadCount);
+            }
+
+            using (tracer.Step("Convert search result to SiteExtensionInfos with max concurrent requests: {0}", System.Environment.ProcessorCount))
+            {
+                // GetResourceAsync is not thread safe
+                var metadataResource = await _localRepository.GetResourceAndValidateAsync<UIMetadataResource>();
+                var convertedResult = await ConvertNuGetPackagesToSiteExtensionInfos(
+                    packages,
+                    async (uiPackage) =>
+                    {
+                            // this function is called in multiple threads simultaneously
+                            return await ConvertRemotePackageToSiteExtensionInfo(uiPackage, feedUrl, metadataResource);
+                    });
+
+                extensions.AddRange(convertedResult);
+            }
+
+            return extensions;
+        }
+
+        public async Task<IEnumerable<SiteExtensionInfo>> GetRemoteExtensions2(string filter, bool allowPrereleaseVersions, string feedUrl, string version)
+        {
+            ITracer tracer = _traceFactory.GetTracer();
+            var extensions = new List<SiteExtensionInfo>();
+            using (tracer.Step("Search site extensions by filter: {0}", filter))
+            {
+                feedUrl = getFeedUrl(feedUrl, filter);
+                using (XmlReader reader = XmlReader.Create(feedUrl))
+                {
+                    reader.ReadStartElement("feed");
+                    while (reader.Read())
+                    {
+                        if (reader.Name == "entry" && reader.IsStartElement())
                         {
-                            if (reader.Name == "entry" && reader.IsStartElement())
-                            {
-                                reader.ReadToDescendant("m:properties");
-                                NuGetValue nuVal = new NuGetValue((XElement)XNode.ReadFrom(reader));
-                                extensions.Add(new SiteExtensionInfo(nuVal));
-                            }
+                            reader.ReadToDescendant("m:properties");
+                            NuGetValue nuVal = new NuGetValue((XElement)XNode.ReadFrom(reader));
+                            extensions.Add(new SiteExtensionInfo(nuVal));
                         }
                     }
-                    await Task.Delay(0);
                 }
-                return extensions;
+                await Task.Delay(0);
             }
+            return extensions;
         }
 
         private string getFeedUrl(String feedUrl, string filter)

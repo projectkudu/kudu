@@ -18,12 +18,20 @@ namespace Kudu.Client.SiteExtensions
         {
         }
 
-        public async Task<HttpResponseMessage> GetRemoteExtensions(string filter = null, bool allowPrereleaseVersions = false, string feedUrl = null)
+        public async Task<HttpResponseMessage> GetRemoteExtensions(string filter = null, bool allowPrereleaseVersions = false, string feedUrl = null, string version = null)
         {
             var url = new StringBuilder(ServiceUrl);
             url.Append("extensionfeed");
 
             var separator = '?';
+            if (!String.IsNullOrEmpty(version))
+            {
+                url.Append(separator);
+                url.Append("version=");
+                url.Append(version);
+                separator = '&';
+            }
+
             if (!String.IsNullOrEmpty(filter))
             {
                 url.Append(separator);
@@ -57,14 +65,7 @@ namespace Kudu.Client.SiteExtensions
             url.Append(id);
 
             var separator = '?';
-            if (!String.IsNullOrEmpty(version))
-            {
-                url.Append(separator);
-                url.Append("version=");
-                url.Append(version);
-                separator = '&';
-            }
-
+            
             if (!string.IsNullOrWhiteSpace(feedUrl))
             {
                 url.Append(separator);

@@ -125,7 +125,10 @@
             contentType: 'application/json',
             data: JSON.stringify({feed_url: data.feed_url}),
             success: function (result) {
+                console.log("dataaaaaa");
+                console.log(data);
                 result = processExtensions(result);
+                //console.log(result);
                 context.$root.addInstalled(result);
                 $("#restartButton").attr("data-content", "<strong>" + result.title
                     + "</strong> is successfully installed. <strong>Restart Site </strong> to make it available.");
@@ -192,6 +195,11 @@
         }, restartText);
     });
 
+    $.urlParam = function (name) {
+        var results = new RegExp('[\?&]' + name + '=([^&#]*)').exec(window.location.href);
+        return results != null ? results[1] : "";
+    }
+
     var extensionsViewModel = function () {
         // Data
         var self = this;
@@ -204,14 +212,16 @@
         self.gallery = ko.observableArray();
         self.display = ko.observableArray();
 
-        // Operations
+        var version = $.urlParam('version')
+        console.log(version);
 
+        // Operations
         self.populateGallery = function (filter, completionCallback) {
             self.loadingGallery(true);
             
             $.ajax({
                 type: "GET",
-                url: appRoot + "api/extensionfeed?" + $.param({ "filter": filter }),
+                url: appRoot + "api/extensionfeed?" + $.param({ "filter" : filter, "version" : version }),
                 dataType: "json",
                 success: function (data) {
                     data.forEach(processExtensions);
@@ -237,7 +247,7 @@
 
             $.ajax({
                 type: "GET",
-                url: appRoot + "api/siteextensions?" + $.param({ "filter": filter }),
+                url: appRoot + "api/siteextensions?" + $.param({ "filter": filter, "version": version }),
                 dataType: "json",
                 success: function (data) {
                     data.forEach(processExtensions);
