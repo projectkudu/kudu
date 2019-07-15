@@ -9,6 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Web.Http;
 using Kudu.Contracts.Infrastructure;
+using Kudu.Contracts.Settings;
 using Kudu.Contracts.SiteExtensions;
 using Kudu.Contracts.Tracing;
 using Kudu.Core;
@@ -24,11 +25,13 @@ namespace Kudu.Services.SiteExtensions
     [EnsureRequestIdHandler]
     public class SiteExtensionController : ApiController
     {
-        private readonly ISiteExtensionManager _manager;
+        private readonly ISiteExtensionManager _v1Manager;
+        private readonly ISiteExtensionManagerV2 _v2Manager;
         private readonly IEnvironment _environment;
         private readonly ITraceFactory _traceFactory;
         private readonly IAnalytics _analytics;
         private readonly string _siteExtensionRoot;
+        private bool _isLegacyRequest = false;
 
         // List of packages that had to be renamed when moving to nuget.org because the siteextension.org id conflicted
         // with an existing nuget.org id
@@ -47,27 +50,46 @@ namespace Kudu.Services.SiteExtensions
             { "NewRelic.Azure.WebSites", "NewRelic.Azure.WebSites.Extension"}
         };
 
-        public SiteExtensionController(ISiteExtensionManager manager, IEnvironment environment, ITraceFactory traceFactory, IAnalytics analytics)
+        public SiteExtensionController(ISiteExtensionManager v1Manager, ISiteExtensionManagerV2 v2Manager, IEnvironment environment, ITraceFactory traceFactory, IAnalytics analytics)
         {
-            _manager = manager;
+            _v1Manager = v1Manager;
+            _v2Manager = v2Manager;
             _environment = environment;
             _traceFactory = traceFactory;
             _analytics = analytics;
             _siteExtensionRoot = Path.Combine(_environment.RootPath, "SiteExtensions");
+            //_isLegacyRequest = (System.Environment.GetEnvironmentVariable(SettingsKeys.EnableLegacySiteExtension)).Equals("true", StringComparison.OrdinalIgnoreCase) ? true : false;
         }
 
         [HttpGet]
         public async Task<HttpResponseMessage> GetRemoteExtensions(string filter = null, bool allowPrereleaseVersions = false, string feedUrl = null)
         {
-            return Request.CreateResponse(
-                HttpStatusCode.OK,
-                ArmUtils.AddEnvelopeOnArmRequest<SiteExtensionInfo>(await _manager.GetRemoteExtensions(filter, allowPrereleaseVersions, feedUrl), Request));
+            if (_isLegacyRequest)
+            {
+                return Request.CreateResponse(
+                    HttpStatusCode.OK,
+                    ArmUtils.AddEnvelopeOnArmRequest<SiteExtensionInfo>(await _v1Manager.GetRemoteExtensions(filter, allowPrereleaseVersions, feedUrl), Request));
+            }
+            else
+            {
+                return Request.CreateResponse(
+                    HttpStatusCode.OK,
+                    ArmUtils.AddEnvelopeOnArmRequest<SiteExtensionInfo>(_v2Manager.GetRemoteExtensions(filter, allowPrereleaseVersions, feedUrl), Request));
+            }
         }
 
         [HttpGet]
         public async Task<HttpResponseMessage> GetRemoteExtension(string id, string version = null, string feedUrl = null)
         {
-            SiteExtensionInfo extension = await _manager.GetRemoteExtension(id, version, feedUrl);
+            SiteExtensionInfo extension = null;
+            if (_isLegacyRequest)
+            {
+                extension = await _v1Manager.GetRemoteExtension(id, version, feedUrl);
+            }
+            else
+            {
+                extension = _v2Manager.GetRemoteExtension(id, version, feedUrl);
+            }
 
             if (extension == null)
             {
@@ -82,9 +104,19 @@ namespace Kudu.Services.SiteExtensions
         [HttpGet]
         public async Task<HttpResponseMessage> GetLocalExtensions(string filter = null, bool checkLatest = true)
         {
-            return Request.CreateResponse(
-                HttpStatusCode.OK,
-                ArmUtils.AddEnvelopeOnArmRequest<SiteExtensionInfo>(await _manager.GetLocalExtensions(filter, checkLatest), Request));
+            if (_isLegacyRequest)
+            {
+                return Request.CreateResponse(
+                    HttpStatusCode.OK,
+                    ArmUtils.AddEnvelopeOnArmRequest<SiteExtensionInfo>(await _v1Manager.GetLocalExtensions(filter, checkLatest), Request));
+
+            }
+            else
+            {
+                return Request.CreateResponse(
+                    HttpStatusCode.OK,
+                    ArmUtils.AddEnvelopeOnArmRequest<SiteExtensionInfo>(_v2Manager.GetLocalExtensions(filter, checkLatest), Request));
+            }
         }
 
         [HttpGet]
@@ -106,7 +138,7 @@ namespace Kudu.Services.SiteExtensions
                         && string.Equals(Constants.SiteExtensionProvisioningStateSucceeded, armSettings.ProvisioningState, StringComparison.OrdinalIgnoreCase))
                     {
                         tracer.Trace("Package {0} was just installed.", id);
-                        extension =  await ThrowsConflictIfIOException(_manager.GetLocalExtension(id, checkLatest));
+                        extension =  await ThrowsConflictIfIOException(_v1Manager.GetLocalExtension(id, checkLatest));
                         if (extension == null)
                         {
                             using (tracer.Step("Status indicate {0} installed, but not able to find it from local repo.", id))
@@ -185,7 +217,7 @@ namespace Kudu.Services.SiteExtensions
                 {
                     using (tracer.Step("ARM get : {0}", id))
                     {
-                        extension = await ThrowsConflictIfIOException(_manager.GetLocalExtension(id, checkLatest));
+                        extension = await ThrowsConflictIfIOException(_v1Manager.GetLocalExtension(id, checkLatest));
                     }
 
                     if (extension == null)
@@ -204,7 +236,7 @@ namespace Kudu.Services.SiteExtensions
             {
                 using (tracer.Step("Get: {0}, is not a ARM request.", id))
                 {
-                    extension = await ThrowsConflictIfIOException(_manager.GetLocalExtension(id, checkLatest));
+                    extension = await ThrowsConflictIfIOException(_v1Manager.GetLocalExtension(id, checkLatest));
                 }
 
                 if (extension == null)
@@ -292,7 +324,14 @@ namespace Kudu.Services.SiteExtensions
                         {
                             using (backgroundTracer.Step("Background thread started for {0} installation", id))
                             {
-                                _manager.InstallExtension(id, requestInfo.Version, requestInfo.FeedUrl, requestInfo.Type, backgroundTracer, requestInfo.InstallationArgs).Wait();
+                                if (_isLegacyRequest)
+                                {
+                                    _v1Manager.InstallExtension(id, requestInfo.Version, requestInfo.FeedUrl, requestInfo.Type, backgroundTracer, requestInfo.InstallationArgs).Wait();
+                                }
+                                else
+                                {
+                                    _v2Manager.InstallExtension(id, requestInfo.Version, requestInfo.FeedUrl, requestInfo.Type, backgroundTracer, requestInfo.InstallationArgs).Wait();
+                                }
                             }
                         }
                         finally
@@ -322,7 +361,15 @@ namespace Kudu.Services.SiteExtensions
             }
             else
             {
-                result = await _manager.InstallExtension(id, requestInfo.Version, requestInfo.FeedUrl, requestInfo.Type, tracer, requestInfo.InstallationArgs);
+
+                if (_isLegacyRequest)
+                {
+                    result = await _v1Manager.InstallExtension(id, requestInfo.Version, requestInfo.FeedUrl, requestInfo.Type, tracer, requestInfo.InstallationArgs);
+                }
+                else
+                {
+                    result = await _v2Manager.InstallExtension(id, requestInfo.Version, requestInfo.FeedUrl, requestInfo.Type, tracer, requestInfo.InstallationArgs);
+                }
 
                 if (string.Equals(Constants.SiteExtensionProvisioningStateFailed, result.ProvisioningState, StringComparison.OrdinalIgnoreCase))
                 {
@@ -344,7 +391,7 @@ namespace Kudu.Services.SiteExtensions
             try
             {
                 HttpResponseMessage response = null;
-                bool isUninstalled = await _manager.UninstallExtension(id);
+                bool isUninstalled = await _v1Manager.UninstallExtension(id);
                 if (ArmUtils.IsArmRequest(Request))
                 {
                     if (isUninstalled)

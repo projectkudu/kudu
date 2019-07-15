@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using Kudu.Contracts.Infrastructure;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
@@ -19,6 +20,65 @@ namespace Kudu.Contracts.SiteExtensions
 
         public SiteExtensionInfo()
         {
+        }
+
+        public SiteExtensionInfo(System.Xml.Linq.XElement xe)
+        {
+            Id = (xe.Elements().First(e => e.Name.LocalName.Equals("Id",StringComparison.OrdinalIgnoreCase))).Value;
+            Version = (xe.Elements().First(e => e.Name.LocalName.Equals("Version", StringComparison.OrdinalIgnoreCase))).Value;
+            Title = (xe.Elements().First(e => e.Name.LocalName.Equals("Title", StringComparison.OrdinalIgnoreCase))).Value;
+            Description = (xe.Elements().First(e => e.Name.LocalName.Equals("Description", StringComparison.OrdinalIgnoreCase))).Value;
+            Authors = new List<string>((xe.Elements().First(e => e.Name.LocalName.Equals("Authors", StringComparison.OrdinalIgnoreCase))).Value.Split(','));
+
+            try
+            {
+                IconUrl = (xe.Elements().First(e => e.Name.LocalName.Equals("IconUrl", StringComparison.OrdinalIgnoreCase))).Value;
+            }
+            catch (Exception)
+            {
+                // pass
+            }
+
+            try
+            {
+                LicenseUrl = (xe.Elements().First(e => e.Name.LocalName.Equals("LicenseUrl", StringComparison.OrdinalIgnoreCase))).Value;
+            }
+            catch (Exception)
+            {
+                // pass
+            }
+
+            try
+            {
+                DownloadCount = int.Parse((xe.Elements().First(e => e.Name.LocalName.Equals("DownloadCount", StringComparison.OrdinalIgnoreCase))).Value);
+            }
+            catch (Exception)
+            {
+                // pass
+            }
+
+            try
+            {
+                Summary = (xe.Elements().First(e => e.Name.LocalName.Equals("Summary", StringComparison.OrdinalIgnoreCase))).Value;
+            }
+            catch (Exception)
+            {
+                // pass
+            }
+
+            try
+            {
+                PublishedDateTime = DateTime.Parse((xe.Elements().First(e => e.Name.LocalName.Equals("Published", StringComparison.OrdinalIgnoreCase))).Value);
+            }
+            catch (Exception)
+            {
+                // pass
+            }
+
+            if (IconUrl == null)
+            {
+                IconUrl = "https://www.siteextensions.net/Content/Images/packageDefaultIcon-50x50.png";
+            }
         }
 
         public SiteExtensionInfo(SiteExtensionInfo info)

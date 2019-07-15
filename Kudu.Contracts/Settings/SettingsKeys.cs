@@ -47,5 +47,6 @@
         public const string RunFromZip = "WEBSITE_RUN_FROM_PACKAGE";
         public const string MaxZipPackageCount = "SCM_MAX_ZIP_PACKAGE_COUNT";
         public const string ZipDeployDoNotPreserveFileTime = "SCM_ZIPDEPLOY_DONOT_PRESERVE_FILETIME";
+        public const string EnableLegacySiteExtension = "ENABLE_V1_SITE_EXTENSION";
     }
 }
