@@ -329,6 +329,7 @@ namespace Kudu.Services.Web.App_Start
 
             // SiteExtensions
             kernel.Bind<ISiteExtensionManager>().To<SiteExtensionManager>().InRequestScope();
+            kernel.Bind<ISiteExtensionManagerV2>().To<SiteExtensionManagerV2>().InRequestScope();
 
             // Functions
             kernel.Bind<IFunctionManager>().To<FunctionManager>().InRequestScope();

@@ -234,4 +234,7 @@
   <data name="ReceivingChanges" xml:space="preserve">
     <value>Receiving changes.</value>
   </data>
+  <data name="Error_SiteExtensionNotFound" xml:space="preserve">
+    <value>SiteExtension id: {0} not installed locally. Searched directory : {1}</value>
+  </data>
 </root>

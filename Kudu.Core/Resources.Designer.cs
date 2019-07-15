@@ -19,7 +19,7 @@ namespace Kudu.Core {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "4.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "16.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class Resources {
@@ -228,6 +228,15 @@ namespace Kudu.Core {
         internal static string Error_ProjectNotDeployable {
             get {
                 return ResourceManager.GetString("Error_ProjectNotDeployable", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to SiteExtension id: {0} not installed locally. Searched directory : {1}.
+        /// </summary>
+        internal static string Error_SiteExtensionNotFound {
+            get {
+                return ResourceManager.GetString("Error_SiteExtensionNotFound", resourceCulture);
             }
         }
         

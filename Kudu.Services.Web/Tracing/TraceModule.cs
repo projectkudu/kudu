@@ -332,7 +332,7 @@ namespace Kudu.Services.Web.Tracing
                     var requestId = (string)httpContext.Items[Constants.RequestIdHeader];
                     KuduEventSource.Log.GenericEvent(
                         ServerConfiguration.GetApplicationName(),
-                        string.Format("StartupRequest pid:{0}, domain:{1}", Process.GetCurrentProcess().Id, AppDomain.CurrentDomain.Id),
+                        string.Format("StartupRequest pid:{0}, domain:{1}, UseSiteExtensionV2:{2}", Process.GetCurrentProcess().Id, AppDomain.CurrentDomain.Id, DeploymentSettingsExtension.UseSiteExtensionV2.Value),
                         requestId,
                         Environment.GetEnvironmentVariable(SettingsKeys.ScmType),
                         Environment.GetEnvironmentVariable(SettingsKeys.WebSiteSku),

@@ -87,6 +87,7 @@
       <HintPath>..\packages\Microsoft.Net.Http.2.2.29\lib\net45\System.Net.Http.Primitives.dll</HintPath>
     </Reference>
     <Reference Include="System.Net.Http.WebRequest" />
+    <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\Common\CommonAssemblyInfo.cs">
@@ -160,6 +161,7 @@
     <Compile Include="Settings\SettingsKeys.cs" />
     <Compile Include="SiteExtensions\InvalidEndpointException.cs" />
     <Compile Include="SiteExtensions\ISiteExtensionManager.cs" />
+    <Compile Include="SiteExtensions\ISiteExtensionManagerV2.cs" />
     <Compile Include="SiteExtensions\SiteExtensionInfo.cs" />
     <Compile Include="SourceControl\IFileFinder.cs" />
     <Compile Include="SourceControl\IRepositoryFactory.cs" />
