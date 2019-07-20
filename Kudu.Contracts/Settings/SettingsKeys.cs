@@ -17,6 +17,7 @@
         public const string GitEmail = "SCM_GIT_EMAIL";
         public const string ScmType = "ScmType";
         public const string UseShallowClone = "SCM_USE_SHALLOW_CLONE";
+        public const string UseSiteExtensionV1 = "SCM_USE_SITEEXTENSION_V1";
         public const string Command = "COMMAND";
         public const string Project = "PROJECT";
         public const string WorkerCommand = "WORKER_COMMAND";

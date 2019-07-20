@@ -252,6 +252,11 @@ namespace Kudu.Contracts.Settings
             return value == null || StringUtils.IsTrueLike(value);
         }
 
+        public static bool GetUseSiteExtensionV1(this IDeploymentSettingsManager settings)
+        {
+            return settings.GetValue(SettingsKeys.UseSiteExtensionV1) == "1";
+        }
+
         public static bool RunFromLocalZip(this IDeploymentSettingsManager settings)
         {
             return settings.GetFromFromZipAppSettingValue() == "1";

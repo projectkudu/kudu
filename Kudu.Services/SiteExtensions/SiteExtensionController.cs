@@ -31,7 +31,7 @@ namespace Kudu.Services.SiteExtensions
         private readonly ITraceFactory _traceFactory;
         private readonly IAnalytics _analytics;
         private readonly string _siteExtensionRoot;
-        private bool _isLegacyRequest = false;
+        private bool _useSiteExtensionV1;
 
         // List of packages that had to be renamed when moving to nuget.org because the siteextension.org id conflicted
         // with an existing nuget.org id
@@ -50,7 +50,7 @@ namespace Kudu.Services.SiteExtensions
             { "NewRelic.Azure.WebSites", "NewRelic.Azure.WebSites.Extension"}
         };
 
-        public SiteExtensionController(ISiteExtensionManager v1Manager, ISiteExtensionManagerV2 v2Manager, IEnvironment environment, ITraceFactory traceFactory, IAnalytics analytics)
+        public SiteExtensionController(ISiteExtensionManager v1Manager, ISiteExtensionManagerV2 v2Manager, IEnvironment environment, ITraceFactory traceFactory, IAnalytics analytics, IDeploymentSettingsManager settings)
         {
             _v1Manager = v1Manager;
             _v2Manager = v2Manager;
@@ -58,13 +58,13 @@ namespace Kudu.Services.SiteExtensions
             _traceFactory = traceFactory;
             _analytics = analytics;
             _siteExtensionRoot = Path.Combine(_environment.RootPath, "SiteExtensions");
-            //_isLegacyRequest = (System.Environment.GetEnvironmentVariable(SettingsKeys.EnableLegacySiteExtension)).Equals("true", StringComparison.OrdinalIgnoreCase) ? true : false;
+            _useSiteExtensionV1 = settings.GetUseSiteExtensionV1();
         }
 
         [HttpGet]
         public async Task<HttpResponseMessage> GetRemoteExtensions(string filter = null, bool allowPrereleaseVersions = false, string feedUrl = null)
         {
-            if (_isLegacyRequest)
+            if (_useSiteExtensionV1)
             {
                 return Request.CreateResponse(
                     HttpStatusCode.OK,
@@ -82,7 +82,7 @@ namespace Kudu.Services.SiteExtensions
         public async Task<HttpResponseMessage> GetRemoteExtension(string id, string version = null, string feedUrl = null)
         {
             SiteExtensionInfo extension = null;
-            if (_isLegacyRequest)
+            if (_useSiteExtensionV1)
             {
                 extension = await _v1Manager.GetRemoteExtension(id, version, feedUrl);
             }
@@ -104,7 +104,7 @@ namespace Kudu.Services.SiteExtensions
         [HttpGet]
         public async Task<HttpResponseMessage> GetLocalExtensions(string filter = null, bool checkLatest = true)
         {
-            if (_isLegacyRequest)
+            if (_useSiteExtensionV1)
             {
                 return Request.CreateResponse(
                     HttpStatusCode.OK,
@@ -324,7 +324,7 @@ namespace Kudu.Services.SiteExtensions
                         {
                             using (backgroundTracer.Step("Background thread started for {0} installation", id))
                             {
-                                if (_isLegacyRequest)
+                                if (_useSiteExtensionV1)
                                 {
                                     _v1Manager.InstallExtension(id, requestInfo.Version, requestInfo.FeedUrl, requestInfo.Type, backgroundTracer, requestInfo.InstallationArgs).Wait();
                                 }
@@ -362,7 +362,7 @@ namespace Kudu.Services.SiteExtensions
             else
             {
 
-                if (_isLegacyRequest)
+                if (_useSiteExtensionV1)
                 {
                     result = await _v1Manager.InstallExtension(id, requestInfo.Version, requestInfo.FeedUrl, requestInfo.Type, tracer, requestInfo.InstallationArgs);
                 }

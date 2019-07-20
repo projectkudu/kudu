@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Kudu.Client;
 using Kudu.Client.SiteExtensions;
 using Kudu.Contracts.Jobs;
+using Kudu.Contracts.Settings;
 using Kudu.Contracts.SiteExtensions;
 using Kudu.Core.Infrastructure;
 using Kudu.FunctionalTests.Infrastructure;
@@ -31,15 +32,22 @@ namespace Kudu.FunctionalTests.SiteExtensions
         };
 
         [Theory]
-        [InlineData(null, "sitereplicator", "site replicator")]    // default site extension endpoint (v2)
-        [InlineData("https://api.nuget.org/v3/index.json", "filecounter", "file counter")]    // v3 endpoint
-        public async Task SiteExtensionV2AndV3FeedTests(string feedEndpoint, string testPackageId, string searchString)
+        [InlineData(null, "sitereplicator", "site replicator", false)]    // default site extension endpoint (v2)
+        [InlineData("https://api.nuget.org/v3/index.json", "filecounter", "file counter", false)]    // v3 endpoint
+        [InlineData(null, "sitereplicator", "site replicator", true)]    // default site extension endpoint (v2)
+        [InlineData("https://api.nuget.org/v3/index.json", "filecounter", "file counter", true)]    // v3 endpoint
+        public async Task SiteExtensionV2AndV3FeedTests(string feedEndpoint, string testPackageId, string searchString, bool useSiteExtensionV1)
         {
             TestTracer.Trace("Testing against feed: '{0}'", feedEndpoint);
 
             const string appName = "SiteExtensionV2AndV3FeedTests";
             await ApplicationManager.RunAsync(appName, async appManager =>
             {
+                if (useSiteExtensionV1)
+                {
+                    await appManager.SettingsManager.SetValue(SettingsKeys.UseSiteExtensionV1, "1");
+                }
+
                 var manager = appManager.SiteExtensionManager;
                 await CleanSiteExtensions(manager);
 
@@ -76,14 +84,21 @@ namespace Kudu.FunctionalTests.SiteExtensions
             });
         }
 
-        [Fact]
-        public async Task SiteExtensionBasicTests()
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public async Task SiteExtensionBasicTests(bool useSiteExtensionV1)
         {
             const string appName = "SiteExtensionBasicTests";
             const string installationArgument = "arg0";
 
             await ApplicationManager.RunAsync(appName, async appManager =>
             {
+                if (useSiteExtensionV1)
+                {
+                    await appManager.SettingsManager.SetValue(SettingsKeys.UseSiteExtensionV1, "1");
+                }
+
                 var manager = appManager.SiteExtensionManager;
                 await CleanSiteExtensions(manager);
 
@@ -177,13 +192,20 @@ namespace Kudu.FunctionalTests.SiteExtensions
             });
         }
 
-        [Fact]
-        public async Task SiteExtensionShouldDeployWebJobs()
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public async Task SiteExtensionShouldDeployWebJobs(bool useSiteExtensionV1)
         {
             const string appName = "SiteExtensionShouldDeployWebJobs";
 
             await ApplicationManager.RunAsync(appName, async appManager =>
             {
+                if (useSiteExtensionV1)
+                {
+                    await appManager.SettingsManager.SetValue(SettingsKeys.UseSiteExtensionV1, "1");
+                }
+
                 var manager = appManager.SiteExtensionManager;
                 await CleanSiteExtensions(manager);
 
@@ -225,9 +247,11 @@ namespace Kudu.FunctionalTests.SiteExtensions
         }
 
         [Theory]
-        [InlineData(null, "sitereplicator")]    // default site extension endpoint (v2)
-        [InlineData("https://api.nuget.org/v3/index.json", "filecounter")]    // v3 endpoint
-        public async Task SiteExtensionInstallUninstallAsyncTest(string feedEndpoint, string testPackageId)
+        [InlineData(null, "sitereplicator", false)]    // default site extension endpoint (v2)
+        [InlineData("https://api.nuget.org/v3/index.json", "filecounter", false)]    // v3 endpoint
+        [InlineData(null, "sitereplicator", true)]    // default site extension endpoint (v2)
+        [InlineData("https://api.nuget.org/v3/index.json", "filecounter", true)]    // v3 endpoint
+        public async Task SiteExtensionInstallUninstallAsyncTest(string feedEndpoint, string testPackageId, bool useSiteExtensionV1)
         {
             TestTracer.Trace("Testing against feed: '{0}'", feedEndpoint);
 
@@ -235,6 +259,11 @@ namespace Kudu.FunctionalTests.SiteExtensions
 
             await ApplicationManager.RunAsync(appName, async appManager =>
             {
+                if (useSiteExtensionV1)
+                {
+                    await appManager.SettingsManager.SetValue(SettingsKeys.UseSiteExtensionV1, "1");
+                }
+
                 var manager = appManager.SiteExtensionManager;
                 await CleanSiteExtensions(manager);
 
@@ -304,8 +333,10 @@ namespace Kudu.FunctionalTests.SiteExtensions
             });
         }
 
-        [Fact]
-        public async Task SiteExtensionGetArmTest()
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public async Task SiteExtensionGetArmTest(bool useSiteExtensionV1)
         {
             const string appName = "SiteExtensionGetAsyncTest";
             const string searchString = "file counter";
@@ -315,6 +346,11 @@ namespace Kudu.FunctionalTests.SiteExtensions
 
             await ApplicationManager.RunAsync(appName, async appManager =>
             {
+                if (useSiteExtensionV1)
+                {
+                    await appManager.SettingsManager.SetValue(SettingsKeys.UseSiteExtensionV1, "1");
+                }
+
                 var manager = appManager.SiteExtensionManager;
                 await CleanSiteExtensions(manager);
 
@@ -375,14 +411,20 @@ namespace Kudu.FunctionalTests.SiteExtensions
         }
 
         [Theory]
-        [InlineData(null, "sitereplicator", "filecounter", "letsencrypt")]    // default site extension endpoint (v2)
+        [InlineData(null, "sitereplicator", "filecounter", "letsencrypt", false)]    // default site extension endpoint (v2)
+        [InlineData(null, "sitereplicator", "filecounter", "letsencrypt", true)]    // default site extension endpoint (v2)
         // [InlineData("https://api.nuget.org/v3/index.json", "bootstrap", "knockoutjs", "angularjs")]    // v3 endpoint
-        public async Task SiteExtensionParallelInstallationTest(string feedEndpoint, string testPackageId1, string testPackageId2, string testPackageId3)
+        public async Task SiteExtensionParallelInstallationTest(string feedEndpoint, string testPackageId1, string testPackageId2, string testPackageId3, bool useSiteExtensionV1)
         {
             const string appName = "SiteExtensionParallelInstallationTest";
             string[] packageIds = { testPackageId1, testPackageId2, testPackageId3 };
             await ApplicationManager.RunAsync(appName, async appManager =>
             {
+                if (useSiteExtensionV1)
+                {
+                    await appManager.SettingsManager.SetValue(SettingsKeys.UseSiteExtensionV1, "1");
+                }
+
                 var manager = appManager.SiteExtensionManager;
                 await CleanSiteExtensions(manager);
 
@@ -433,8 +475,10 @@ namespace Kudu.FunctionalTests.SiteExtensions
             });
         }
 
-        [Fact]
-        public async Task SiteExtensionShouldNotSeeButAbleToInstallUnlistedPackage()
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public async Task SiteExtensionShouldNotSeeButAbleToInstallUnlistedPackage(bool useSiteExtensionV1)
         {
             const string appName = "SiteExtensionShouldNotSeeUnlistPackage";
             const string externalPackageId = "SimpleSite";
@@ -444,6 +488,11 @@ namespace Kudu.FunctionalTests.SiteExtensions
 
             await ApplicationManager.RunAsync(appName, async appManager =>
             {
+                if (useSiteExtensionV1)
+                {
+                    await appManager.SettingsManager.SetValue(SettingsKeys.UseSiteExtensionV1, "1");
+                }
+
                 var manager = appManager.SiteExtensionManager;
                 await CleanSiteExtensions(manager);
 
@@ -509,8 +558,10 @@ namespace Kudu.FunctionalTests.SiteExtensions
             });
         }
 
-        [Fact]
-        public async Task SiteExtensionNormalizedVersionTests()
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public async Task SiteExtensionNormalizedVersionTests(bool useSiteExtensionV1)
         {
             const string appName = "SiteExtensionNormalizedVersionTests";
             const string externalPackageId = "SimpleSite";
@@ -521,6 +572,11 @@ namespace Kudu.FunctionalTests.SiteExtensions
 
             await ApplicationManager.RunAsync(appName, async appManager =>
             {
+                if (useSiteExtensionV1)
+                {
+                    await appManager.SettingsManager.SetValue(SettingsKeys.UseSiteExtensionV1, "1");
+                }
+
                 var manager = appManager.SiteExtensionManager;
                 await CleanSiteExtensions(manager);
 
@@ -537,8 +593,10 @@ namespace Kudu.FunctionalTests.SiteExtensions
             });
         }
 
-        [Fact]
-        public async Task SiteExtensionInstallPackageToWebRootTests()
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public async Task SiteExtensionInstallPackageToWebRootTests(bool useSiteExtensionV1)
         {
             const string appName = "SiteExtensionInstallPackageToWebRootTests";
             const string externalPackageId = "SimpleSvc";
@@ -550,6 +608,11 @@ namespace Kudu.FunctionalTests.SiteExtensions
 
             await ApplicationManager.RunAsync(appName, async appManager =>
             {
+                if (useSiteExtensionV1)
+                {
+                    await appManager.SettingsManager.SetValue(SettingsKeys.UseSiteExtensionV1, "1");
+                }
+
                 var manager = appManager.SiteExtensionManager;
                 await CleanSiteExtensions(manager);
 
@@ -609,8 +672,10 @@ namespace Kudu.FunctionalTests.SiteExtensions
             });
         }
 
-        [Fact]
-        public async Task SiteExtensionInstallPackageToWebRootAsyncTests()
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public async Task SiteExtensionInstallPackageToWebRootAsyncTests(bool useSiteExtensionV1)
         {
             const string appName = "SiteExtensionInstallPackageToWebRootAsyncTests";
             const string externalPackageId = "SimpleSvc";
@@ -622,6 +687,11 @@ namespace Kudu.FunctionalTests.SiteExtensions
 
             await ApplicationManager.RunAsync(appName, async appManager =>
             {
+                if (useSiteExtensionV1)
+                {
+                    await appManager.SettingsManager.SetValue(SettingsKeys.UseSiteExtensionV1, "1");
+                }
+
                 var manager = appManager.SiteExtensionManager;
                 await CleanSiteExtensions(manager);
 
@@ -704,8 +774,10 @@ namespace Kudu.FunctionalTests.SiteExtensions
             });
         }
 
-        [Fact]
-        public async Task SiteExtensionNugetOrgTest()
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public async Task SiteExtensionNugetOrgTest(bool useSiteExtensionV1)
         {
             const string appName = "SiteExtensionNugetOrgTest";
             const string nonSiteExtensionPackage = "NewRelic.Azure.WebSites";
@@ -714,6 +786,11 @@ namespace Kudu.FunctionalTests.SiteExtensions
 
             await ApplicationManager.RunAsync(appName, async appManager =>
             {
+                if (useSiteExtensionV1)
+                {
+                    await appManager.SettingsManager.SetValue(SettingsKeys.UseSiteExtensionV1, "1");
+                }
+
                 var manager = appManager.SiteExtensionManager;
                 await CleanSiteExtensions(manager);
 

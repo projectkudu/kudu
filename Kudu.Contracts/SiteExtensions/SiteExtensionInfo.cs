@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Xml.Linq;
 using Kudu.Contracts.Infrastructure;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
@@ -22,62 +23,25 @@ namespace Kudu.Contracts.SiteExtensions
         {
         }
 
-        public SiteExtensionInfo(System.Xml.Linq.XElement xe)
+        public SiteExtensionInfo(XElement element)
         {
-            Id = (xe.Elements().First(e => e.Name.LocalName.Equals("Id",StringComparison.OrdinalIgnoreCase))).Value;
-            Version = (xe.Elements().First(e => e.Name.LocalName.Equals("Version", StringComparison.OrdinalIgnoreCase))).Value;
-            Title = (xe.Elements().First(e => e.Name.LocalName.Equals("Title", StringComparison.OrdinalIgnoreCase))).Value;
-            Description = (xe.Elements().First(e => e.Name.LocalName.Equals("Description", StringComparison.OrdinalIgnoreCase))).Value;
-            Authors = new List<string>((xe.Elements().First(e => e.Name.LocalName.Equals("Authors", StringComparison.OrdinalIgnoreCase))).Value.Split(','));
-
-            try
+            var elements = element.Elements();
+            Id = GetElementValue(elements, "Id");
+            Version = GetElementValue(elements, "Version");
+            Title = GetElementValue(elements, "Title");
+            Description = GetElementValue(elements, "Description");
+            Authors = GetElementValue(elements, "Authors")?.Split(',').Select(n => n.Trim());
+            ProjectUrl = GetElementValue(elements, "ProjectUrl");
+            LicenseUrl = GetElementValue(elements, "LicenseUrl");
+            Summary = GetElementValue(elements, "Summary");
+            IconUrl = GetElementValue(elements, "IconUrl") ?? "https://www.siteextensions.net/Content/Images/packageDefaultIcon-50x50.png";
+            if (int.TryParse(GetElementValue(elements, "DownloadCount"), out int downloadCount))
             {
-                IconUrl = (xe.Elements().First(e => e.Name.LocalName.Equals("IconUrl", StringComparison.OrdinalIgnoreCase))).Value;
+                DownloadCount = downloadCount;
             }
-            catch (Exception)
+            if (DateTime.TryParse(GetElementValue(elements, "Published"), out DateTime publishedDateTime))
             {
-                // pass
-            }
-
-            try
-            {
-                LicenseUrl = (xe.Elements().First(e => e.Name.LocalName.Equals("LicenseUrl", StringComparison.OrdinalIgnoreCase))).Value;
-            }
-            catch (Exception)
-            {
-                // pass
-            }
-
-            try
-            {
-                DownloadCount = int.Parse((xe.Elements().First(e => e.Name.LocalName.Equals("DownloadCount", StringComparison.OrdinalIgnoreCase))).Value);
-            }
-            catch (Exception)
-            {
-                // pass
-            }
-
-            try
-            {
-                Summary = (xe.Elements().First(e => e.Name.LocalName.Equals("Summary", StringComparison.OrdinalIgnoreCase))).Value;
-            }
-            catch (Exception)
-            {
-                // pass
-            }
-
-            try
-            {
-                PublishedDateTime = DateTime.Parse((xe.Elements().First(e => e.Name.LocalName.Equals("Published", StringComparison.OrdinalIgnoreCase))).Value);
-            }
-            catch (Exception)
-            {
-                // pass
-            }
-
-            if (IconUrl == null)
-            {
-                IconUrl = "https://www.siteextensions.net/Content/Images/packageDefaultIcon-50x50.png";
+                PublishedDateTime = publishedDateTime;
             }
         }
 
@@ -271,6 +235,23 @@ namespace Kudu.Contracts.SiteExtensions
         {
             get;
             set;
+        }
+
+        private static string GetElementValue(IEnumerable<XElement> elements, string name)
+        {
+            var element = elements.FirstOrDefault(e => e.Name.LocalName.Equals(name, StringComparison.OrdinalIgnoreCase));
+            if (element == null)
+            {
+                return null;
+            }
+
+            var value = element.Value;
+            if (string.IsNullOrEmpty(value) && element.Attributes().Any(a => a.Name.LocalName.Equals("null", StringComparison.OrdinalIgnoreCase)))
+            {
+                return null;
+            }
+
+            return value;
         }
     }
 }

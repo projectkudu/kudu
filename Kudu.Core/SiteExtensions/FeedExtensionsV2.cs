@@ -1,21 +1,20 @@
-﻿using Ionic.Zip;
+﻿using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
+using System.Linq;
+using System.Net.Http;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Xml;
+using System.Xml.Linq;
+using Ionic.Zip;
 using Kudu.Contracts.SiteExtensions;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Tracing;
 using NuGet.Client;
 using NuGet.PackagingCore;
-using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.IO;
-using System.Linq;
-using System.Net.Http;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Xml;
-using System.Xml.Linq;
 
 namespace Kudu.Core.SiteExtensions
 {
@@ -65,23 +64,26 @@ namespace Kudu.Core.SiteExtensions
             int countEntries = 0;
             foreach (string extDir in installedPackages)
             {
-                string packageId = extDir.Substring(extDir.LastIndexOf("\\")+1);
-                if(countEntries++ > take)
+                string nupkgFile = Directory.GetFiles(extDir, "*.nupkg", SearchOption.TopDirectoryOnly).FirstOrDefault();
+                if (nupkgFile == null)
+                {
+                    continue;
+                }
+
+                if (skip > 0)
+                {
+                    --skip;
+                    continue;
+                }
+
+                string packageId = extDir.Substring(extDir.LastIndexOf("\\", StringComparison.OrdinalIgnoreCase) + 1);
+                if (countEntries++ > take)
                 {
                     break;
                 }
 
-                string nupkgFile = Directory.GetFiles(extDir, "*.nupkg", SearchOption.AllDirectories).First();
-                string nuspecFile = Directory.GetFiles(extDir, "*.nuspec", SearchOption.AllDirectories).First();
 
-                if(nupkgFile == null)
-                {
-                    // we ignore this site extension
-                    break;
-                }
-
-                DateTime installedTime = System.IO.File.GetLastWriteTime(nupkgFile);
-
+                string nuspecFile = Directory.GetFiles(extDir, "*.nuspec", SearchOption.TopDirectoryOnly).FirstOrDefault();
                 if (nuspecFile == null)
                 {
                     using (ZipFile nupkgZipFile = ZipFile.Read(nupkgFile))
@@ -91,11 +93,20 @@ namespace Kudu.Core.SiteExtensions
                         {
                             entry.Extract(extDir);
                         }
+                        else
+                        {
+                            if (nuspecFile == null)
+                            {
+                                throw new InvalidOperationException($"{packageId}.nuspec does not exist in {nupkgFile}!");
+                            }
+                        }
                     }
+
+                    nuspecFile = Directory.GetFiles(extDir, "*.nuspec", SearchOption.TopDirectoryOnly).First();
                 }
 
                 string data = FileSystemHelpers.ReadAllText(nuspecFile);
-                if ((searchTerm != null && data.Contains(searchTerm)) || searchTerm == null)
+                if (string.IsNullOrEmpty(searchTerm) || data.Contains(searchTerm))
                 {
                     using (XmlReader reader = XmlReader.Create(nuspecFile))
                     {
@@ -105,6 +116,7 @@ namespace Kudu.Core.SiteExtensions
                     }
                 }
             }
+
             return extensions;
         }
 
@@ -139,6 +151,7 @@ namespace Kudu.Core.SiteExtensions
         {
             return GetPackagesFromNugetAPI().First(a => a.Id != null && a.Id == packageId);
         }
+
         /// <summary>
         /// <para>Query source repository for a package base on given package id and version</para>
         /// <para>Will also query pre-release and unlisted packages</para>
