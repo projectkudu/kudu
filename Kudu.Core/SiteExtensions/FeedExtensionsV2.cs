@@ -218,7 +218,7 @@ namespace Kudu.Core.SiteExtensions
             }
         }
 
-        public static async Task UpdateLocalPackage(SourceRepository localRepo, string packageId, string packageVersion, string destinationFolder, string pathToLocalCopyOfNupkg, ITracer tracer)
+        public static async Task UpdateLocalPackage(string siteExntentionsRootPath, string packageId, string packageVersion, string destinationFolder, string pathToLocalCopyOfNupkg, ITracer tracer)
         {
             tracer.Trace("Performing incremental package update for {0}", packageId);
             using (var client = new HttpClient())
@@ -228,13 +228,15 @@ namespace Kudu.Core.SiteExtensions
                 using (Stream newPackageStream = await response.Content.ReadAsStreamAsync())
                 {
                     // update file
-                    var localPackage = await localRepo.GetLatestPackageByIdFromSrcRepo(packageId);
+                    var localPackage = FeedExtensionsV2.SearchLocalRepo(siteExntentionsRootPath, packageId).FirstOrDefault();
                     if (localPackage == null)
                     {
                         throw new FileNotFoundException(string.Format(CultureInfo.InvariantCulture, "Package {0} not found from local repo.", packageId));
                     }
-                    using (Stream oldPackageStream = await localRepo.GetPackageStream(localPackage.Identity))
-                    using (ZipFile oldPackageZip = ZipFile.Read(oldPackageStream))
+
+                    string nupkgFile = Directory.GetFiles(Path.Combine(siteExntentionsRootPath, packageId), "*.nupkg", SearchOption.TopDirectoryOnly).FirstOrDefault();
+
+                    using (ZipFile oldPackageZip = ZipFile.Read(nupkgFile))
                     using (ZipFile newPackageZip = ZipFile.Read(newPackageStream))
                     {
                         // we only care about stuff under "content" folder
@@ -333,14 +335,14 @@ namespace Kudu.Core.SiteExtensions
                     using (tracer.Step("Updating nupkg file."))
                     {
                         WriteStreamToFile(newPackageStream, pathToLocalCopyOfNupkg);
-                        if (!packageVersion.Equals(localPackage.Identity.Version))
+                        if (!packageVersion.Equals(localPackage.Version))
                         {
-                            using (tracer.Step("New package has difference version {0} from old package {1}. Remove old nupkg file.", packageVersion, localPackage.Identity.Version))
+                            using (tracer.Step("New package has difference version {0} from old package {1}. Remove old nupkg file.", packageVersion, localPackage.Version))
                             {
                                 // if version is difference, nupkg file name will be difference. will need to clean up the old one.
                                 var oldNupkg = pathToLocalCopyOfNupkg.Replace(
                                     string.Format(CultureInfo.InvariantCulture, "{0}.{1}.nupkg", packageId, packageVersion),
-                                    string.Format(CultureInfo.InvariantCulture, "{0}.{1}.nupkg", localPackage.Identity.Id, localPackage.Identity.Version.ToNormalizedString()));
+                                    string.Format(CultureInfo.InvariantCulture, "{0}.{1}.nupkg", localPackage.Id, localPackage.Version));
 
                                 FileSystemHelpers.DeleteFileSafe(oldNupkg);
                             }

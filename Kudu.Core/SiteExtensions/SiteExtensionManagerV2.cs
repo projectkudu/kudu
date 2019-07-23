@@ -425,7 +425,7 @@ namespace Kudu.Core.SiteExtensions
                     // Copy/update nupkg file for package list/lookup
                     if (packageExisted)
                     {
-                        await FeedExtensionsV2.UpdateLocalPackage(_localRepository, package.Id, package.Version, extractPath, packageLocalFilePath, tracer);
+                        await FeedExtensionsV2.UpdateLocalPackage(_rootPath, package.Id, package.Version, extractPath, packageLocalFilePath, tracer);
                     }
                     else
                     {
@@ -505,7 +505,7 @@ namespace Kudu.Core.SiteExtensions
                 throw;
             }
 
-            return FeedExtensionsV2.GetLatestPackageByIdFromSrcRepo(package.Id);
+            return FeedExtensionsV2.SearchLocalRepo(_rootPath, package.Id).FirstOrDefault();
         }
 
         /// <summary>
