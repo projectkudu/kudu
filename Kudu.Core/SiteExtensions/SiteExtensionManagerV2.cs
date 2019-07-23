@@ -649,12 +649,13 @@ namespace Kudu.Core.SiteExtensions
 
             string installationDirectory = GetInstallationDirectory(id);
 
+
             SiteExtensionInfo info = GetLocalExtension(id, checkLatest: false);
 
             if (info == null || !FileSystemHelpers.DirectoryExists(info.LocalPath))
             {
                 tracer.TraceError("Site extension {0} not found.", id);
-                throw new DirectoryNotFoundException(installationDirectory);
+                throw new DirectoryNotFoundException(String.Format(CultureInfo.CurrentCulture, Resources.Error_SiteExtensionNotFound, id, installationDirectory));
             }
 
             if (IsInstalledToWebRoot(id))
@@ -730,7 +731,7 @@ namespace Kudu.Core.SiteExtensions
 
         private string GetInstallationDirectory(string id)
         {
-            return Path.Combine(_localRepository.PackageSource.Source, id);
+            return Path.Combine(_rootPath, id);
         }
 
         private JsonSettings GetSettingManager(string id)
