@@ -218,6 +218,11 @@ namespace Kudu.Core.SiteExtensions
             }
         }
 
+        public static SiteExtensionInfo GetLocalPackageInfo(string siteExntentionsRootPath, string packageId)
+        {
+            return FeedExtensionsV2.SearchLocalRepo(siteExntentionsRootPath, packageId).FirstOrDefault();
+        }
+
         public static async Task UpdateLocalPackage(string siteExntentionsRootPath, string packageId, string packageVersion, string destinationFolder, string pathToLocalCopyOfNupkg, ITracer tracer)
         {
             tracer.Trace("Performing incremental package update for {0}", packageId);
@@ -348,78 +353,6 @@ namespace Kudu.Core.SiteExtensions
                             }
                         }
                     }
-                }
-            }
-        }
-
-        private static async Task<Stream> GetPackageStream(this SourceRepository srcRepo, PackageIdentity identity)
-        {
-            var downloadResource = await srcRepo.GetResourceAsync<DownloadResource>();
-            Stream sourceStream = null;
-            Stream packageStream = null;
-
-            try
-            {
-                sourceStream = await downloadResource.GetStream(identity, CancellationToken.None);
-                if (sourceStream == null)
-                {
-                    // package not exist from feed
-                    throw new FileNotFoundException(string.Format(CultureInfo.InvariantCulture, "Package {0} - {1} not found when try to download.", identity.Id, identity.Version.ToNormalizedString()));
-                }
-
-                packageStream = sourceStream;
-                if (!sourceStream.CanSeek)
-                {
-                    // V3 DownloadResource.GetStream does not support seek operations.
-                    // https://github.com/NuGet/NuGet.Protocol/issues/15
-
-                    MemoryStream memStream = new MemoryStream();
-
-                    try
-                    {
-                        byte[] buffer = new byte[2048];
-
-                        int bytesRead = 0;
-                        do
-                        {
-                            bytesRead = sourceStream.Read(buffer, 0, buffer.Length);
-                            memStream.Write(buffer, 0, bytesRead);
-                        } while (bytesRead != 0);
-
-                        await memStream.FlushAsync();
-                        memStream.Position = 0;
-
-                        packageStream = memStream;
-                    }
-                    catch
-                    {
-                        memStream.Dispose();
-                        throw;
-                    }
-                }
-
-                return packageStream;
-            }
-            catch
-            {
-                if (packageStream != null && packageStream != sourceStream)
-                {
-                    packageStream.Dispose();
-                }
-
-                if (sourceStream != null)
-                {
-                    sourceStream.Dispose();
-                }
-
-                throw;
-            }
-            finally
-            {
-                if (packageStream != null && sourceStream != null && !sourceStream.CanSeek)
-                {
-                    // packageStream is a copy of sourceStream, dispose sourceStream
-                    sourceStream.Dispose();
                 }
             }
         }

@@ -32,7 +32,6 @@ namespace Kudu.Core.SiteExtensions
         private static Lazy<IEnumerable<Lazy<INuGetResourceProvider, INuGetResourceProviderMetadata>>> _providers
             = new Lazy<IEnumerable<Lazy<INuGetResourceProvider, INuGetResourceProviderMetadata>>>(GetNugetProviders);
 
-        private readonly SourceRepository _localRepository;
         private readonly IEnvironment _environment;
         private readonly IDeploymentSettingsManager _settings;
         private readonly ITraceFactory _traceFactory;
@@ -60,8 +59,6 @@ namespace Kudu.Core.SiteExtensions
         {
             _rootPath = Path.Combine(environment.RootPath, "SiteExtensions");
             _baseUrl = context.Request.Url == null ? String.Empty : context.Request.Url.GetLeftPart(UriPartial.Authority).TrimEnd('/');
-
-            _localRepository = GetSourceRepository(_rootPath);
             _continuousJobManager = continuousJobManager;
             _triggeredJobManager = triggeredJobManager;
             _environment = environment;
@@ -249,7 +246,7 @@ namespace Kudu.Core.SiteExtensions
             try
             {
                 // Check if site extension already installed (id, version, feedUrl), if already install with correct installation arguments then return right away
-                if (await this.IsSiteExtensionInstalled(id, version, feedUrl, installationArgs))
+                if (IsSiteExtensionInstalled(id, version, feedUrl, installationArgs))
                 {
                     // package already installed, return package from local repo.
                     tracer.Trace("Package {0} with version {1} from {2} with installation arguments '{3}' already installed.", id, version, feedUrl, installationArgs);
@@ -299,6 +296,10 @@ namespace Kudu.Core.SiteExtensions
                             });
                         }
                     }
+                }
+                if(info != null)
+                {
+                    SetLocalInfo(info);
                 }
             }
             catch (FileNotFoundException ex)
@@ -561,15 +562,15 @@ namespace Kudu.Core.SiteExtensions
         /// <para>              Try to use feed from local package, if feed from local package also null, fallback to default feed</para>
         /// <para>              Check if version from query is same as local package</para>
         /// </summary>
-        private async Task<bool> IsSiteExtensionInstalled(string id, string version, string feedUrl, string installationArgs)
+        private bool IsSiteExtensionInstalled(string id, string version, string feedUrl, string installationArgs)
         {
             ITracer tracer = _traceFactory.GetTracer();
             JsonSettings siteExtensionSettings = GetSettingManager(id);
             string localPackageVersion = siteExtensionSettings.GetValue(_versionSetting);
             string localPackageFeedUrl = siteExtensionSettings.GetValue(_feedUrlSetting);
             string localPackageInstallationArgs = siteExtensionSettings.GetValue(_installationArgs);
-            NuGetVersion localPkgVer = null;
-            NuGetVersion lastFoundVer = null;
+            SemanticVersion localPkgVer = null;
+            SemanticVersion lastFoundVer = null;
             bool isInstalled = false;
 
             // Shortcircuit check: if the installation arguments do not match, then we should return false here to avoid other checks which are now unnecessary.
@@ -580,40 +581,7 @@ namespace Kudu.Core.SiteExtensions
 
             if (!string.IsNullOrEmpty(localPackageVersion))
             {
-                localPkgVer = NuGetVersion.Parse(localPackageVersion);
-            }
-
-            // Try to use given feed
-            // If given feed is null, try with feed that from local package
-            // And GetRemoteRepositories will fallback to use default feed if pass in feed param is null
-            IEnumerable<SourceRepository> remoteRepos = GetRemoteRepositories(feedUrl ?? localPackageFeedUrl);
-
-            foreach (SourceRepository rr in remoteRepos)
-            {
-                // case 1 and 2
-                if (!string.IsNullOrWhiteSpace(version)
-                    && version.Equals(localPackageVersion, StringComparison.OrdinalIgnoreCase)
-                    && rr.PackageSource.Source.Equals(localPackageFeedUrl, StringComparison.OrdinalIgnoreCase))
-                {
-                    isInstalled = true;
-                }
-                else if (string.IsNullOrWhiteSpace(version)
-                         && string.IsNullOrWhiteSpace(feedUrl)
-                         && string.Equals(localPackageInstallationArgs, installationArgs))
-                {
-                    // case 3
-                    UIPackageMetadata remotePackage = await rr.GetLatestPackageByIdFromSrcRepo(id);
-                    if (remotePackage != null)
-                    {
-                        tracer.Trace("Found version: {0} on feed: {1}",
-                                     remotePackage.Identity.Version.ToNormalizedString(),
-                                     rr.PackageSource.Source);
-                        if (lastFoundVer == null || lastFoundVer < remotePackage.Identity.Version)
-                        {
-                            lastFoundVer = remotePackage.Identity.Version;
-                        }
-                    }
-                }
+                SemanticVersion.TryParse(localPackageVersion, out localPkgVer);
             }
 
             if (lastFoundVer != null && localPkgVer != null && lastFoundVer <= localPkgVer)
