@@ -247,7 +247,7 @@ namespace Kudu.Core.SiteExtensions
             try
             {
                 // Check if site extension already installed (id, version, feedUrl), if already install with correct installation arguments then return right away
-                if (IsSiteExtensionInstalled(id, version, feedUrl, installationArgs))
+                if (IsSiteExtensionInstalled(id, installationArgs))
                 {
                     // package already installed, return package from local repo.
                     tracer.Trace("Package {0} with version {1} from {2} with installation arguments '{3}' already installed.", id, version, feedUrl, installationArgs);
@@ -574,12 +574,11 @@ namespace Kudu.Core.SiteExtensions
         /// <para>              Try to use feed from local package, if feed from local package also null, fallback to default feed</para>
         /// <para>              Check if version from query is same as local package</para>
         /// </summary>
-        private bool IsSiteExtensionInstalled(string id, string version, string feedUrl, string installationArgs)
+        private bool IsSiteExtensionInstalled(string id, string installationArgs)
         {
             ITracer tracer = _traceFactory.GetTracer();
             JsonSettings siteExtensionSettings = GetSettingManager(id);
             string localPackageVersion = siteExtensionSettings.GetValue(_versionSetting);
-            string localPackageFeedUrl = siteExtensionSettings.GetValue(_feedUrlSetting);
             string localPackageInstallationArgs = siteExtensionSettings.GetValue(_installationArgs);
             SemanticVersion localPkgVer = null;
             SemanticVersion lastFoundVer = null;
@@ -598,6 +597,7 @@ namespace Kudu.Core.SiteExtensions
 
             if (lastFoundVer != null && localPkgVer != null && lastFoundVer <= localPkgVer)
             {
+                tracer.Trace(string.Format("Site Extension with id {0} is already installed", id));
                 isInstalled = true;
             }
 
@@ -851,7 +851,7 @@ namespace Kudu.Core.SiteExtensions
             return new SourceRepository(source, _providers.Value);
         }
 
-        private void TryCheckLocalPackageLatestVersionFromRemote(SiteExtensionInfo info, bool checkLatest = true, ITracer tracer = null)
+        private static void TryCheckLocalPackageLatestVersionFromRemote(SiteExtensionInfo info, bool checkLatest = true, ITracer tracer = null)
         {
             if (checkLatest)
             {
