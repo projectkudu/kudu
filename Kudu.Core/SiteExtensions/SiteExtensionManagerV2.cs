@@ -21,8 +21,6 @@ using Kudu.Core.Settings;
 using Kudu.Core.Tracing;
 using Newtonsoft.Json.Linq;
 using NuGet.Client;
-using NuGet.Client.VisualStudio;
-using NuGet.Versioning;
 using NullLogger = Kudu.Core.Deployment.NullLogger;
 
 namespace Kudu.Core.SiteExtensions
@@ -152,6 +150,9 @@ namespace Kudu.Core.SiteExtensions
                 foreach (var ext in siteExtensionInfos)
                 {
                     SetLocalInfo(ext);
+                    TryCheckLocalPackageLatestVersionFromRemote(ext);
+                    SiteExtensionStatus armSettings = new SiteExtensionStatus(_environment.SiteExtensionSettingsPath, ext.Id, tracer);
+                    armSettings.FillSiteExtensionInfo(ext, defaultProvisionState: Constants.SiteExtensionProvisioningStateSucceeded);
                 }
             }
 
@@ -297,10 +298,21 @@ namespace Kudu.Core.SiteExtensions
                         }
                     }
                 }
-                if(info != null)
+
+                using (tracer.Step("Update arm settings for {0} installation. Status: {1}", id, status))
+                {
+                    SiteExtensionStatus armSettings = new SiteExtensionStatus(_environment.SiteExtensionSettingsPath, id, tracer);
+                    armSettings.ReadSiteExtensionInfo(info);
+                    armSettings.Status = status;
+                    armSettings.Operation = alreadyInstalled ? null : Constants.SiteExtensionOperationInstall;
+                }
+
+                if (info != null)
                 {
                     SetLocalInfo(info);
+                    TryCheckLocalPackageLatestVersionFromRemote(info);
                 }
+
             }
             catch (FileNotFoundException ex)
             {
@@ -837,6 +849,35 @@ namespace Kudu.Core.SiteExtensions
         {
             NuGet.Configuration.PackageSource source = new NuGet.Configuration.PackageSource(feedEndpoint);
             return new SourceRepository(source, _providers.Value);
+        }
+
+        private void TryCheckLocalPackageLatestVersionFromRemote(SiteExtensionInfo info, bool checkLatest = true, ITracer tracer = null)
+        {
+            if (checkLatest)
+            {
+                try
+                {
+                    // FindPackage gets back the latest version.
+                    SiteExtensionInfo latestPackage = FeedExtensionsV2.GetLatestPackageByIdFromSrcRepo(info.Id);
+                    if (latestPackage != null)
+                    {
+                        SemanticVersion currentVersion;
+                        SemanticVersion.TryParse(info.Version, out currentVersion);
+                        SemanticVersion latestVersion;
+                        SemanticVersion.TryParse(latestPackage.Version, out latestVersion);
+                        info.LocalIsLatestVersion = currentVersion.Equals(latestVersion);
+                        info.DownloadCount = latestPackage.DownloadCount;
+                        info.PublishedDateTime = latestPackage.PublishedDateTime;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    if (tracer != null)
+                    {
+                        tracer.TraceError(ex);
+                    }
+                }
+            }
         }
 
         private static IEnumerable<Lazy<INuGetResourceProvider, INuGetResourceProviderMetadata>> GetNugetProviders()

@@ -64,7 +64,7 @@ namespace Kudu.Services.SiteExtensions
         [HttpGet]
         public async Task<HttpResponseMessage> GetRemoteExtensions(string filter = null, bool allowPrereleaseVersions = false, string feedUrl = null)
         {
-            if (_useSiteExtensionV1)
+            if (_useSiteExtensionV1 || !string.IsNullOrEmpty(feedUrl))
             {
                 return Request.CreateResponse(
                     HttpStatusCode.OK,
@@ -82,7 +82,7 @@ namespace Kudu.Services.SiteExtensions
         public async Task<HttpResponseMessage> GetRemoteExtension(string id, string version = null, string feedUrl = null)
         {
             SiteExtensionInfo extension = null;
-            if (_useSiteExtensionV1)
+            if (_useSiteExtensionV1 || !string.IsNullOrEmpty(feedUrl))
             {
                 extension = await _v1Manager.GetRemoteExtension(id, version, feedUrl);
             }
@@ -324,7 +324,7 @@ namespace Kudu.Services.SiteExtensions
                         {
                             using (backgroundTracer.Step("Background thread started for {0} installation", id))
                             {
-                                if (_useSiteExtensionV1)
+                                if (_useSiteExtensionV1 || !string.IsNullOrEmpty(requestInfo.FeedUrl))
                                 {
                                     _v1Manager.InstallExtension(id, requestInfo.Version, requestInfo.FeedUrl, requestInfo.Type, backgroundTracer, requestInfo.InstallationArgs).Wait();
                                 }
@@ -362,7 +362,7 @@ namespace Kudu.Services.SiteExtensions
             else
             {
 
-                if (_useSiteExtensionV1)
+                if (_useSiteExtensionV1 || !string.IsNullOrEmpty(requestInfo.FeedUrl))
                 {
                     result = await _v1Manager.InstallExtension(id, requestInfo.Version, requestInfo.FeedUrl, requestInfo.Type, tracer, requestInfo.InstallationArgs);
                 }
