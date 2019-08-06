@@ -72,7 +72,7 @@ namespace Kudu.Services.SiteExtensions
         public async Task<HttpResponseMessage> GetRemoteExtension(string id, string version = null, string feedUrl = null)
         {
             var manager = GetSiteExtensionManager(forceUseV1: !string.IsNullOrEmpty(feedUrl));
-            SiteExtensionInfo extension = await _manager.GetRemoteExtension(id, version, feedUrl);
+            SiteExtensionInfo extension = await manager.GetRemoteExtension(id, version, feedUrl);
             if (extension == null)
             {
                 throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.NotFound, id));

@@ -50,7 +50,7 @@ namespace Kudu.Core.SiteExtensions
         // <summary>
         /// Query result by search term, always include pre-released
         /// </summary>
-        public static IEnumerable<SiteExtensionInfo> SearchLocalRepo(string siteExtensionRootPath, string searchTerm, SearchFilter filterOptions = null, int skip = 0, int take = 1000)
+        public static async Task<IEnumerable<SiteExtensionInfo>> SearchLocalRepo(string siteExtensionRootPath, string searchTerm, SearchFilter filterOptions = null, int skip = 0, int take = 1000)
         {
             List<SiteExtensionInfo> extensions = new List<SiteExtensionInfo>();
             // always include pre-release package
@@ -83,33 +83,31 @@ namespace Kudu.Core.SiteExtensions
                     break;
                 }
 
-
-                string nuspecFile = Directory.GetFiles(extDir, "*.nuspec", SearchOption.TopDirectoryOnly).FirstOrDefault();
-                if (nuspecFile == null)
+                string content = null;
+                using (ZipFile nupkgZipFile = ZipFile.Read(nupkgFile))
                 {
-                    using (ZipFile nupkgZipFile = ZipFile.Read(nupkgFile))
+                    ZipEntry entry = nupkgZipFile[string.Format("{0}.nuspec", packageId)];
+                    if (entry != null)
                     {
-                        ZipEntry entry = nupkgZipFile[string.Format("{0}.nuspec", packageId)];
-                        if (entry != null)
+                        using (var reader = new StreamReader(entry.OpenReader()))
                         {
-                            entry.Extract(extDir);
-                        }
-                        else
-                        {
-                            if (nuspecFile == null)
-                            {
-                                throw new InvalidOperationException($"{packageId}.nuspec does not exist in {nupkgFile}!");
-                            }
+                            content = await reader.ReadToEndAsync();
                         }
                     }
-
-                    nuspecFile = Directory.GetFiles(extDir, "*.nuspec", SearchOption.TopDirectoryOnly).First();
+                    else
+                    {
+                        throw new InvalidOperationException($"{packageId}.nuspec does not exist in {nupkgFile}!");
+                    }
                 }
 
-                string data = FileSystemHelpers.ReadAllText(nuspecFile);
-                if (string.IsNullOrEmpty(searchTerm) || data.Contains(searchTerm))
+                if (string.IsNullOrEmpty(content))
                 {
-                    using (XmlReader reader = XmlReader.Create(nuspecFile))
+                    throw new InvalidOperationException($"{packageId}.nuspec contains empty content!");
+                }
+
+                if (string.IsNullOrEmpty(searchTerm) || content.Contains(searchTerm))
+                {
+                    using (var reader = XmlReader.Create(new System.IO.StringReader(content)))
                     {
                         reader.ReadToDescendant("metadata");
                         var extInfo = new SiteExtensionInfo((XElement)XNode.ReadFrom(reader));
@@ -195,11 +193,6 @@ namespace Kudu.Core.SiteExtensions
             }
         }
 
-        public static SiteExtensionInfo GetLocalPackageInfo(string siteExntentionsRootPath, string packageId)
-        {
-            return FeedExtensionsV2.SearchLocalRepo(siteExntentionsRootPath, packageId).FirstOrDefault();
-        }
-
         public static async Task UpdateLocalPackage(string siteExntentionsRootPath, string packageId, string packageVersion, string destinationFolder, string pathToLocalCopyOfNupkg, ITracer tracer)
         {
             tracer.Trace("Performing incremental package update for {0}", packageId);
@@ -210,7 +203,7 @@ namespace Kudu.Core.SiteExtensions
                 using (Stream newPackageStream = await response.Content.ReadAsStreamAsync())
                 {
                     // update file
-                    var localPackage = FeedExtensionsV2.SearchLocalRepo(siteExntentionsRootPath, packageId).FirstOrDefault();
+                    var localPackage = (await FeedExtensionsV2.SearchLocalRepo(siteExntentionsRootPath, packageId)).FirstOrDefault();
                     if (localPackage == null)
                     {
                         throw new FileNotFoundException(string.Format(CultureInfo.InvariantCulture, "Package {0} not found from local repo.", packageId));

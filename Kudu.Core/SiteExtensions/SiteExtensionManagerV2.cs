@@ -142,7 +142,7 @@ namespace Kudu.Core.SiteExtensions
             IEnumerable<SiteExtensionInfo> siteExtensionInfos;
             using (tracer.Step("Search packages locally with filter: {0}", filter))
             {
-                siteExtensionInfos = FeedExtensionsV2.SearchLocalRepo(_rootPath, filter);
+                siteExtensionInfos = await FeedExtensionsV2.SearchLocalRepo(_rootPath, filter);
             }
 
             using (tracer.Step("Adding local metadata to site extensions"))
@@ -501,7 +501,7 @@ namespace Kudu.Core.SiteExtensions
                 throw;
             }
 
-            return FeedExtensionsV2.SearchLocalRepo(_rootPath, package.Id).FirstOrDefault();
+            return (await FeedExtensionsV2.SearchLocalRepo(_rootPath, package.Id)).FirstOrDefault();
         }
 
         /// <summary>
