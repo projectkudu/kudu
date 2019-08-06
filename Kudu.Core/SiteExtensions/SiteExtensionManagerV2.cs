@@ -25,7 +25,7 @@ using NullLogger = Kudu.Core.Deployment.NullLogger;
 
 namespace Kudu.Core.SiteExtensions
 {
-    public class SiteExtensionManagerV2 : ISiteExtensionManagerV2
+    public class SiteExtensionManagerV2 : ISiteExtensionManager
     {
         private static Lazy<IEnumerable<Lazy<INuGetResourceProvider, INuGetResourceProviderMetadata>>> _providers
             = new Lazy<IEnumerable<Lazy<INuGetResourceProvider, INuGetResourceProviderMetadata>>>(GetNugetProviders);
@@ -72,20 +72,20 @@ namespace Kudu.Core.SiteExtensions
         /// <param name="allowPrereleaseVersions">boolean flag to determine if results should include preview versions</param>
         /// <param name="feedUrl">NuGet feed URL</param>
         /// <returns></returns>
-        public IEnumerable<SiteExtensionInfo> GetRemoteExtensions(string filter, bool allowPrereleaseVersions, string feedUrl)
+        public async Task<IEnumerable<SiteExtensionInfo>> GetRemoteExtensions(string filter, bool allowPrereleaseVersions, string feedUrl)
         {
             ITracer tracer = _traceFactory.GetTracer();
             var extensions = new List<SiteExtensionInfo>();
 
             using (tracer.Step("Search site extensions directly from nuget api by filter: {0}", filter))
             {
-                extensions = FeedExtensionsV2.GetPackagesFromNugetAPI(filter, feedUrl);
+                extensions = await FeedExtensionsV2.PackageCacheInfo.GetPackagesFromNugetAPI(filter, feedUrl);
             }
 
 
             foreach (var ext in extensions)
             {
-                SetLocalInfo(ext);
+                await SetLocalInfo(ext);
             }
 
             return extensions;
@@ -95,7 +95,7 @@ namespace Kudu.Core.SiteExtensions
         /// Returns a remote site extension metadata for a particular id and version, null 
         /// if this id and version doesn't exist in the report repo
         /// </summary>
-        public SiteExtensionInfo GetRemoteExtension(string id, string version, string feedUrl)
+        public async Task<SiteExtensionInfo> GetRemoteExtension(string id, string version, string feedUrl)
         {
             ITracer tracer = _traceFactory.GetTracer();
             SiteExtensionInfo package = null;
@@ -104,14 +104,14 @@ namespace Kudu.Core.SiteExtensions
             {
                 using (tracer.Step("Version is null, search latest package by id: {0}", id))
                 {
-                    package = FeedExtensionsV2.GetLatestPackageByIdFromSrcRepo(id);
+                    package = await FeedExtensionsV2.GetLatestPackageByIdFromSrcRepo(id);
                 }
             }
             else
             {
                 using (tracer.Step("Search package by id: {0} and version: {1}", id, version))
                 {
-                    package = FeedExtensionsV2.GetPackageByIdentity(id, version);
+                    package = await FeedExtensionsV2.GetPackageByIdentity(id, version);
                 }
             }
 
@@ -123,7 +123,7 @@ namespace Kudu.Core.SiteExtensions
 
             if (package != null)
             {
-                SetLocalInfo(package);
+                await SetLocalInfo(package);
             }
 
             return package;
@@ -136,7 +136,7 @@ namespace Kudu.Core.SiteExtensions
         /// <param name="filter"></param>
         /// <param name="checkLatest"></param>
         /// <returns></returns>
-        public IEnumerable<SiteExtensionInfo> GetLocalExtensions(string filter, bool checkLatest = true)
+        public async Task<IEnumerable<SiteExtensionInfo>> GetLocalExtensions(string filter, bool checkLatest = true)
         {
             ITracer tracer = _traceFactory.GetTracer();
             IEnumerable<SiteExtensionInfo> siteExtensionInfos;
@@ -149,8 +149,8 @@ namespace Kudu.Core.SiteExtensions
             {
                 foreach (var ext in siteExtensionInfos)
                 {
-                    SetLocalInfo(ext);
-                    TryCheckLocalPackageLatestVersionFromRemote(ext);
+                    await SetLocalInfo(ext);
+                    await TryCheckLocalPackageLatestVersionFromRemote(ext);
                     SiteExtensionStatus armSettings = new SiteExtensionStatus(_environment.SiteExtensionSettingsPath, ext.Id, tracer);
                     armSettings.FillSiteExtensionInfo(ext, defaultProvisionState: Constants.SiteExtensionProvisioningStateSucceeded);
                 }
@@ -160,14 +160,14 @@ namespace Kudu.Core.SiteExtensions
         }
 
         // <inheritdoc />
-        public SiteExtensionInfo GetLocalExtension(string id, bool checkLatest = true)
+        public async Task<SiteExtensionInfo> GetLocalExtension(string id, bool checkLatest = true)
         {
             SiteExtensionInfo info;
             ITracer tracer = _traceFactory.GetTracer();
 
             using (tracer.Step("Now querying from local repo for package '{0}'.", id))
             {
-                info = GetLocalExtensions(id).FirstOrDefault();
+                info = (await GetLocalExtensions(id)).FirstOrDefault();
             }
 
             if (info == null)
@@ -247,11 +247,11 @@ namespace Kudu.Core.SiteExtensions
             try
             {
                 // Check if site extension already installed (id, version, feedUrl), if already install with correct installation arguments then return right away
-                if (IsSiteExtensionInstalled(id, installationArgs))
+                if (await IsSiteExtensionInstalled(id, installationArgs))
                 {
                     // package already installed, return package from local repo.
                     tracer.Trace("Package {0} with version {1} from {2} with installation arguments '{3}' already installed.", id, version, feedUrl, installationArgs);
-                    info = GetLocalExtension(id);
+                    info = await GetLocalExtension(id);
                     alreadyInstalled = true;
                 }
                 else
@@ -260,25 +260,18 @@ namespace Kudu.Core.SiteExtensions
                     feedUrl = (string.IsNullOrEmpty(feedUrl) ? siteExtensionSettings.GetValue(_feedUrlSetting) : feedUrl);
                     IEnumerable<SourceRepository> remoteRepos = GetRemoteRepositories(feedUrl);
 
-                    if (this.IsInstalledToWebRoot(id))
-                    {
-                        // override WebRoot type from setting
-                        // WebRoot is a special type that install package to wwwroot, when perform update we need to update new content to wwwroot even if type is not specified
-                        type = SiteExtensionInfo.SiteExtensionType.WebRoot;
-                    }
-
                     if (string.IsNullOrWhiteSpace(version))
                     {
                         using (tracer.Step("Version is null, search latest package by id: {0}, will not search for unlisted package.", id))
                         {
-                            info = FeedExtensionsV2.GetLatestPackageByIdFromSrcRepo(id);
+                            info = await FeedExtensionsV2.GetLatestPackageByIdFromSrcRepo(id);
                         }
                     }
                     else
                     {
                         using (tracer.Step("Search package by id: {0} and version: {1}, will also search for unlisted package.", id, version))
                         {
-                            info = FeedExtensionsV2.GetLatestPackageByIdFromSrcRepo(id);
+                            info = await FeedExtensionsV2.GetPackageByIdentity(id, version);
                         }
                     }
 
@@ -301,7 +294,7 @@ namespace Kudu.Core.SiteExtensions
 
                 if (info != null)
                 {
-                    SetLocalInfo(info);
+                    await SetLocalInfo(info);
                 }
             }
             catch (FileNotFoundException ex)
@@ -564,7 +557,7 @@ namespace Kudu.Core.SiteExtensions
         /// <para>              Try to use feed from local package, if feed from local package also null, fallback to default feed</para>
         /// <para>              Check if version from query is same as local package</para>
         /// </summary>
-        private bool IsSiteExtensionInstalled(string id, string installationArgs)
+        private async Task<bool> IsSiteExtensionInstalled(string id, string installationArgs)
         {
             ITracer tracer = _traceFactory.GetTracer();
             JsonSettings siteExtensionSettings = GetSettingManager(id);
@@ -572,6 +565,7 @@ namespace Kudu.Core.SiteExtensions
             string localPackageInstallationArgs = siteExtensionSettings.GetValue(_installationArgs);
             SemanticVersion localPkgVer = null;
             SemanticVersion lastFoundVer = null;
+            SiteExtensionInfo latestRemotePackage = await FeedExtensionsV2.GetLatestPackageByIdFromSrcRepo(id);
             bool isInstalled = false;
 
             // Shortcircuit check: if the installation arguments do not match, then we should return false here to avoid other checks which are now unnecessary.
@@ -582,7 +576,14 @@ namespace Kudu.Core.SiteExtensions
 
             if (!string.IsNullOrEmpty(localPackageVersion))
             {
+                tracer.Trace(string.Format("Site Extension {0} local version is {1}", id, localPackageVersion));
                 SemanticVersion.TryParse(localPackageVersion, out localPkgVer);
+            }
+
+            if (latestRemotePackage != null)
+            {
+                tracer.Trace(string.Format("Site Extension {0} remote version is {1}", id, latestRemotePackage.Version));
+                SemanticVersion.TryParse(latestRemotePackage.Version, out lastFoundVer);
             }
 
             if (lastFoundVer != null && localPkgVer != null && lastFoundVer <= localPkgVer)
@@ -619,8 +620,7 @@ namespace Kudu.Core.SiteExtensions
 
             string installationDirectory = GetInstallationDirectory(id);
 
-
-            SiteExtensionInfo info = GetLocalExtension(id, checkLatest: false);
+            SiteExtensionInfo info = await GetLocalExtension(id, checkLatest: false);
 
             if (info == null || !FileSystemHelpers.DirectoryExists(info.LocalPath))
             {
@@ -671,7 +671,7 @@ namespace Kudu.Core.SiteExtensions
                 await armSettings.RemoveStatus();
             }
 
-            return GetLocalExtension(id, checkLatest: false) == null;
+            return await GetLocalExtension(id, checkLatest: false) == null;
         }
 
         private IEnumerable<SourceRepository> GetRemoteRepositories(string feedUrl)
@@ -728,7 +728,7 @@ namespace Kudu.Core.SiteExtensions
             return String.Format(template, relativeUrl, physicalPath);
         }
 
-        private void SetLocalInfo(SiteExtensionInfo info)
+        private async Task SetLocalInfo(SiteExtensionInfo info)
         {
             string localPath = GetInstallationDirectory(info.Id);
             if (FileSystemHelpers.DirectoryExists(localPath))
@@ -736,7 +736,7 @@ namespace Kudu.Core.SiteExtensions
                 info.LocalPath = localPath;
                 info.InstalledDateTime = FileSystemHelpers.GetLastWriteTimeUtc(info.LocalPath);
 
-                TryCheckLocalPackageLatestVersionFromRemote(info);
+                await TryCheckLocalPackageLatestVersionFromRemote(info);
             }
 
             if (ExtensionRequiresApplicationHost(info))
@@ -766,6 +766,13 @@ namespace Kudu.Core.SiteExtensions
                 {
                     info.InstallationArgs = setting.Value.Value<string>();
                 }
+            }
+
+            if (IsInstalledToWebRoot(info.Id))
+            {
+                // override WebRoot type from setting
+                // WebRoot is a special type that install package to wwwroot, when perform update we need to update new content to wwwroot even if type is not specified
+                info.Type = SiteExtensionInfo.SiteExtensionType.WebRoot;
             }
         }
 
@@ -843,14 +850,14 @@ namespace Kudu.Core.SiteExtensions
             return new SourceRepository(source, _providers.Value);
         }
 
-        private static void TryCheckLocalPackageLatestVersionFromRemote(SiteExtensionInfo info, bool checkLatest = true, ITracer tracer = null)
+        private static async Task TryCheckLocalPackageLatestVersionFromRemote(SiteExtensionInfo info, bool checkLatest = true, ITracer tracer = null)
         {
             if (checkLatest)
             {
                 try
                 {
                     // FindPackage gets back the latest version.
-                    SiteExtensionInfo latestPackage = FeedExtensionsV2.GetLatestPackageByIdFromSrcRepo(info.Id);
+                    SiteExtensionInfo latestPackage = await FeedExtensionsV2.GetLatestPackageByIdFromSrcRepo(info.Id);
                     if (latestPackage != null)
                     {
                         if (SemanticVersion.TryParse(info.Version, out SemanticVersion currentVersion)

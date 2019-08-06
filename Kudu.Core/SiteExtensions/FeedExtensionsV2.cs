@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -120,36 +121,12 @@ namespace Kudu.Core.SiteExtensions
             return extensions;
         }
 
-        public static List<SiteExtensionInfo> GetPackagesFromNugetAPI(string filter = null, string feedUrl = null)
-        {
-            List<SiteExtensionInfo> extensions = new List<SiteExtensionInfo>();
-
-            if (feedUrl == null)
-            {
-                feedUrl = FeedExtensionsV2.GetFeedUrl(filter);
-            }
-
-            using (XmlReader reader = XmlReader.Create(feedUrl))
-            {
-                reader.ReadStartElement("feed");
-                while (reader.Read())
-                {
-                    if (reader.Name == "entry" && reader.IsStartElement())
-                    {
-                        reader.ReadToDescendant("m:properties");
-                        extensions.Add(new SiteExtensionInfo((XElement)XNode.ReadFrom(reader)));
-                    }
-                }
-            }
-            return extensions;
-        }
-
         /// <summary>
         /// Query source repository for latest package base given package id
         /// </summary>
-        internal static SiteExtensionInfo GetLatestPackageByIdFromSrcRepo(string packageId)
+        internal static async Task<SiteExtensionInfo> GetLatestPackageByIdFromSrcRepo(string packageId)
         {
-            return GetPackagesFromNugetAPI().First(a => a.Id != null && a.Id == packageId);
+            return (await PackageCacheInfo.GetPackagesFromNugetAPI()).FirstOrDefault(a => a.Id != null && a.Id == packageId);
         }
 
         /// <summary>
@@ -159,9 +136,9 @@ namespace Kudu.Core.SiteExtensions
         /// <param name="packageId">Package id, must not be null</param>
         /// <param name="version">Package version, must not be null</param>
         /// <returns>Package metadata</returns>
-        public static SiteExtensionInfo GetPackageByIdentity(string packageId, string version)
+        internal static async Task<SiteExtensionInfo> GetPackageByIdentity(string packageId, string version)
         {
-            return GetPackagesFromNugetAPI().First(a => a.Id != null && a.Version != null && a.Id == packageId && a.Version == version);
+            return (await PackageCacheInfo.GetPackagesFromNugetAPI()).FirstOrDefault(a => a.Id != null && a.Version != null && a.Id == packageId && a.Version == version);
         }
 
         /// <summary>
@@ -370,6 +347,68 @@ namespace Kudu.Core.SiteExtensions
 
                     stream.CopyTo(writeStream);
                 });
+            }
+        }
+
+        public class PackageCacheInfo
+        {
+            private static ConcurrentDictionary<string, PackageCacheInfo> PackageCaches = new ConcurrentDictionary<string, PackageCacheInfo>(StringComparer.OrdinalIgnoreCase);
+
+            public DateTime ExpiredUtc { get; set; }
+
+            public List<SiteExtensionInfo> Extensions { get; set; }
+
+            public static async Task<List<SiteExtensionInfo>> GetPackagesFromNugetAPI(string filter = null, string feedUrl = null)
+            {
+                var extensions = new List<SiteExtensionInfo>();
+
+                var key = string.Format("{0}:{1}", filter, feedUrl);
+                PackageCacheInfo info;
+                if (PackageCaches.TryGetValue(key, out info) && DateTime.UtcNow < info.ExpiredUtc)
+                {
+                    return info.Extensions;
+                }
+
+                if (string.IsNullOrEmpty(feedUrl))
+                {
+                    feedUrl = FeedExtensionsV2.GetFeedUrl(filter);
+                }
+
+                using (var client = new HttpClient())
+                {
+                    var response = await client.GetAsync(feedUrl);
+                    var content = await response.Content.ReadAsStringAsync();
+                    using (var reader = XmlReader.Create(new System.IO.StringReader(content)))
+                    {
+                        reader.ReadStartElement("feed");
+                        while (reader.Read())
+                        {
+                            if (reader.Name == "entry" && reader.IsStartElement())
+                            {
+                                reader.ReadToDescendant("m:properties");
+                                extensions.Add(new SiteExtensionInfo((XElement)XNode.ReadFrom(reader)));
+                            }
+                        }
+                    }
+                }
+
+                info = new PackageCacheInfo
+                {
+                    ExpiredUtc = DateTime.UtcNow.AddMinutes(10),
+                    Extensions = extensions
+                };
+
+                PackageCaches.AddOrUpdate(key, info, (k, i) => info);
+                if (PackageCaches.Count > 10)
+                {
+                    var toRemove = PackageCaches.OrderBy(p => p.Value.ExpiredUtc).FirstOrDefault();
+                    if (!string.IsNullOrWhiteSpace(toRemove.Key))
+                    {
+                        PackageCaches.TryRemove(toRemove.Key, out _);
+                    }
+                }
+
+                return info.Extensions;
             }
         }
     }

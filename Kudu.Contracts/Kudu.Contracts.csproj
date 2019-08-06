@@ -161,7 +161,6 @@
     <Compile Include="Settings\SettingsKeys.cs" />
     <Compile Include="SiteExtensions\InvalidEndpointException.cs" />
     <Compile Include="SiteExtensions\ISiteExtensionManager.cs" />
-    <Compile Include="SiteExtensions\ISiteExtensionManagerV2.cs" />
     <Compile Include="SiteExtensions\SiteExtensionInfo.cs" />
     <Compile Include="SourceControl\IFileFinder.cs" />
     <Compile Include="SourceControl\IRepositoryFactory.cs" />
