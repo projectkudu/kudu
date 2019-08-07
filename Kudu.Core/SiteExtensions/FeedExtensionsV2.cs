@@ -53,6 +53,11 @@ namespace Kudu.Core.SiteExtensions
         public static async Task<IEnumerable<SiteExtensionInfo>> SearchLocalRepo(string siteExtensionRootPath, string searchTerm, SearchFilter filterOptions = null, int skip = 0, int take = 1000)
         {
             List<SiteExtensionInfo> extensions = new List<SiteExtensionInfo>();
+            if (!Directory.Exists(siteExtensionRootPath))
+            {
+                return extensions;
+            }
+
             // always include pre-release package
             if (filterOptions == null)
             {
