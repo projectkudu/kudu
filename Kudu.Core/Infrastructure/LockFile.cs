@@ -189,7 +189,7 @@ namespace Kudu.Core.Infrastructure
             {
                 if (lockStream != null)
                 {
-                    lockStream.Close();
+                    OperationManager.CriticalExecute("LockFile.Lock.Finally", () => lockStream.Close());
                 }
             }
 
