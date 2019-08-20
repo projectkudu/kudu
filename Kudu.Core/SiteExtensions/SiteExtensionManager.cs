@@ -275,9 +275,10 @@ namespace Kudu.Core.SiteExtensions
                     // package already installed, return package from local repo.
                     tracer.Trace("Package {0} with version {1} from {2} with installation arguments '{3}' already installed.", id, version, feedUrl, installationArgs);
                     info = await GetLocalExtension(id);
-                    alreadyInstalled = true;
+                    alreadyInstalled = info != null;
                 }
-                else
+
+                if (!alreadyInstalled)
                 {
                     JsonSettings siteExtensionSettings = GetSettingManager(id);
                     feedUrl = (string.IsNullOrEmpty(feedUrl) ? siteExtensionSettings.GetValue(_feedUrlSetting) : feedUrl);
