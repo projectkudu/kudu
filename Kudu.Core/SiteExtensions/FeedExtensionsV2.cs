@@ -89,7 +89,7 @@ namespace Kudu.Core.SiteExtensions
                 }
 
                 string content = null;
-                using (ZipFile nupkgZipFile = ZipFile.Read(nupkgFile))
+                using (ZipFile nupkgZipFile = OperationManager.Attempt(() => ZipFile.Read(nupkgFile), delayBeforeRetry: 1000, shouldRetry: ex => ex is IOException))
                 {
                     ZipEntry entry = nupkgZipFile[string.Format("{0}.nuspec", packageId)];
                     if (entry != null)
