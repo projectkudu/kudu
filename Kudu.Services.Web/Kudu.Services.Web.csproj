@@ -143,6 +143,7 @@
     <Content Include="Content\Scripts\knockout-2.2.1.js" />
     <Content Include="Content\Scripts\knockout.mapping.js" />
     <Content Include="Content\Scripts\theme-github.js" />
+    <Content Include="Content\Scripts\NavigateToInstance.js" />
     <Content Include="Content\Styles\font-awesome.css" />
     <Content Include="Content\fonts\glyphicons-halflings-regular.svg" />
     <Content Include="Content\Images\collapse.gif" />
