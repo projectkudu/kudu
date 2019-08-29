@@ -11,6 +11,11 @@
     <link href="/Content/Styles/bootstrap.min.css" rel="stylesheet" />
     <script type="text/javascript" src="/Content/Scripts/jquery-2.1.0.min.js"></script>
     <script type="text/javascript" src="/Content/Scripts/bootstrap.min.js"></script>
+    @if (Kudu.Core.Environment.IsAzureEnvironment())
+    {
+        <script type="text/javascript" src="/Content/Scripts/NavigateToInstance.js"></script>
+    }
+
     @RenderSection("PageHead", required: false)
     <style type="text/css">
         body {
@@ -25,6 +30,12 @@
             }
         });
     </script>
+    @if (Kudu.Core.Environment.IsAzureEnvironment())
+    {
+        <script>
+            $.currInst = "@System.Environment.GetEnvironmentVariable("WEBSITE_INSTANCE_ID")";
+        </script>
+    }
 
     @if (Kudu.Core.Helpers.OSDetector.IsOnWindows())
     {
@@ -95,6 +106,14 @@
                                 <li><a href="~/DebugConsole/Default.cshtml">Bash</a></li>
                                 <li><a href="~/webssh/host">SSH</a></li>
                             </ul>
+                        </li>
+                    }
+
+                    @if (Kudu.Core.Environment.IsAzureEnvironment())
+                    {
+                        <li class="dropdown" id="instances-li">
+                            <a href="#" data-toggle="dropdown" class="dropdown-toggle"><span id="instance-drop-down-text"/><b class="caret"></b></a>
+                            <ul class="dropdown-menu instances_tab_options_cls" id='instances_tab_options'></ul>
                         </li>
                     }
                 </ul>
