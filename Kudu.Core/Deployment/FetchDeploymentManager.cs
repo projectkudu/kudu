@@ -346,7 +346,7 @@ namespace Kudu.Core.Deployment
                     {
                         if (tempDeployment != null)
                         {
-                            tempDeployment.Dispose();
+                            OperationManager.SafeExecute(() => tempDeployment.Dispose());
                         }
 
                         if (deployInfo.AllowDeferredDeployment)
