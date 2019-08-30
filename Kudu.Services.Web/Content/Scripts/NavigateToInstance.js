@@ -1,4 +1,8 @@
 ﻿$(document).ready(function () {
+    if (!$("#instances-li").length) {
+        return;
+    }
+    $("#instances-li").hide();
     $.ajax({
         type: "GET",
         url: '/instance/all',
@@ -12,12 +16,11 @@
                         instanceTabBtn.innerHTML = '<a href=\"#" onclick="NavigateToInstance(\'' + obj[i] + '\')">Instance: ' + obj[i].substring(0, 4) + '</a>';
                         instanceTabBtn.setAttribute("id", "inst-id-btn-" + obj[i]);
                         if (obj[i].trim().valueOf() === $.currInst) {
-                            $("#instance-drop-down-text").text("Instance: " + obj[i].substring(0, 4));
+                            $("#instance-drop-down-text").text("Instance: " + obj[i].substring(0, 4) + "  ");
                         }
                         ul.appendChild(instanceTabBtn);
                     }
-                } else {
-                    $("#instances-li").hide();
+                    $("#instances-li").show();
                 }
             }
             catch (err) {

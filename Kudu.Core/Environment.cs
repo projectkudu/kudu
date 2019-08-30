@@ -371,6 +371,14 @@ namespace Kudu.Core
             return !String.IsNullOrEmpty(System.Environment.GetEnvironmentVariable("WEBSITE_INSTANCE_ID"));
         }
 
+        public static bool ShouldShowInstanceUI()
+        {
+            var sku = System.Environment.GetEnvironmentVariable("WEBSITE_SKU");
+            return !string.IsNullOrEmpty(sku)
+                && !string.Equals(sku, "Free", StringComparison.OrdinalIgnoreCase)
+                && !string.Equals(sku, "Dynamic", StringComparison.OrdinalIgnoreCase);
+        }
+
         public static bool SkipSslValidation
         {
             get

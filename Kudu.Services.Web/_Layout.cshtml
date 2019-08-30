@@ -109,10 +109,10 @@
                         </li>
                     }
 
-                    @if (Kudu.Core.Environment.IsAzureEnvironment())
+                    @if (Kudu.Core.Environment.ShouldShowInstanceUI())
                     {
-                        <li class="dropdown" id="instances-li">
-                            <a href="#" data-toggle="dropdown" class="dropdown-toggle"><span id="instance-drop-down-text"/><b class="caret"></b></a>
+                        <li class="dropdown" id="instances-li" style="display:none">
+                            <a href="#" data-toggle="dropdown" class="dropdown-toggle"><span id="instance-drop-down-text"></span><b class="caret"></b></a>
                             <ul class="dropdown-menu instances_tab_options_cls" id='instances_tab_options'></ul>
                         </li>
                     }
