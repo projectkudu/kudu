@@ -12,8 +12,10 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Kudu.Contracts.Settings;
+using Kudu.Contracts.Tracing;
 using Kudu.Core.Deployment;
 using Kudu.Core.Infrastructure;
+using Kudu.Core.Tracing;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -75,18 +77,6 @@ namespace Kudu.Core.Helpers
             get { return System.Environment.ExpandEnvironmentVariables(@"%HOME%\site\wwwroot\" + Constants.LogicAppJson); }
         }
 
-        // WEBSITE_SKU = Dynamic
-        private static string WebSiteSku
-        {
-            get { return System.Environment.GetEnvironmentVariable(Constants.WebSiteSku); }
-        }
-
-        // WEBSITE_ELASTIC_SCALING_ENABLED = 1
-        private static string WebSiteElasticScaleEnabled
-        {
-            get { return System.Environment.GetEnvironmentVariable(Constants.WebSiteElasticScaleEnabled); }
-        }
-
         // WEBSITE_INSTANCE_ID not null or empty
         public static bool IsAzureEnvironment()
         {
@@ -132,13 +122,6 @@ namespace Kudu.Core.Helpers
             if (string.IsNullOrEmpty(FunctionRunTimeVersion))
             {
                 Trace(TraceEventType.Verbose, "Skip function trigger and logicapp sync because function is not enabled.");
-                return;
-            }
-
-            if (!string.Equals(Constants.DynamicSku, WebSiteSku, StringComparison.OrdinalIgnoreCase)
-                && !string.Equals(Constants.ElasticScaleEnabled, WebSiteElasticScaleEnabled, StringComparison.OrdinalIgnoreCase))
-            {
-                Trace(TraceEventType.Verbose, string.Format("Skip function trigger and logicapp sync because sku ({0}) is not dynamic (consumption plan).", WebSiteSku));
                 return;
             }
 
@@ -382,29 +365,7 @@ namespace Kudu.Core.Helpers
                 var functionName = Path.GetFileName(Path.GetDirectoryName(functionJson));
                 var json = JObject.Parse(File.ReadAllText(functionJson));
 
-                JToken value;
-                // https://github.com/Azure/azure-webjobs-sdk-script/blob/a9bafba78a3a8092bfd61a8c7093200dae867efb/src/WebJobs.Script/Host/ScriptHost.cs#L1476-L1498
-                if (json.TryGetValue("disabled", out value))
-                {
-                    string stringValue = value.ToString();
-                    bool disabled;
-                    // if "disabled" is not a boolean, we try to expend it as an environment variable
-                    if (!Boolean.TryParse(stringValue, out disabled))
-                    {
-                        string expandValue = System.Environment.GetEnvironmentVariable(stringValue);
-                        // "1"/"true" -> true, else false
-                        disabled = string.Equals(expandValue, "1", StringComparison.OrdinalIgnoreCase) ||
-                                   string.Equals(expandValue, "true", StringComparison.OrdinalIgnoreCase);
-                    }
-
-                    if (disabled)
-                    {
-                        Trace(TraceEventType.Verbose, "Function {0} is disabled", functionName);
-                        return Enumerable.Empty<JObject>();
-                    }
-                }
-
-                var excluded = json.TryGetValue("excluded", out value) && (bool)value;
+                var excluded = json.TryGetValue("excluded", out JToken value) && (bool)value;
                 if (excluded)
                 {
                     Trace(TraceEventType.Verbose, "Function {0} is excluded", functionName);
@@ -591,12 +552,12 @@ namespace Kudu.Core.Helpers
                 // create or update marker timestamp
                 OperationManager.SafeExecute(() => File.WriteAllText(markerFile, start.ToString("o")));
 
-                var cancelation = new CancellationTokenSource();
-                var delay = Task.Delay(DefaultUpdateMarkerIntervalMS, cancelation.Token);
+                var cancellation = new CancellationTokenSource();
+                var delay = Task.Delay(DefaultUpdateMarkerIntervalMS, cancellation.Token);
                 var completed = await Task.WhenAny(delay, task);
                 if (completed != delay)
                 {
-                    cancelation.Cancel();
+                    cancellation.Cancel();
                     break;
                 }
             }
@@ -722,11 +683,13 @@ namespace Kudu.Core.Helpers
             }
         }
 
-        public static async Task UpdateSiteVersion(ZipDeploymentInfo deploymentInfo, IEnvironment environment, ILogger logger)
+        public static async Task UpdateSiteVersion(ZipDeploymentInfo deploymentInfo, IEnvironment environment, ITracer tracer)
         {
             var siteVersionPath = Path.Combine(environment.SitePackagesPath, Constants.PackageNameTxt);
-            logger.Log($"Updating {siteVersionPath} with deployment {deploymentInfo.ZipName}");
-            await FileSystemHelpers.WriteAllTextToFileAsync(siteVersionPath, deploymentInfo.ZipName);
+            using (tracer.Step($"Updating {siteVersionPath} with deployment {deploymentInfo.ZipName}"))
+            {
+                await FileSystemHelpers.WriteAllTextToFileAsync(siteVersionPath, deploymentInfo.ZipName);
+            }
         }
     }
 }

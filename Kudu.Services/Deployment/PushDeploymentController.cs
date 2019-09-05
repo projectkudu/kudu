@@ -15,6 +15,7 @@ using Kudu.Core.Infrastructure;
 using Kudu.Core.SourceControl;
 using Kudu.Core.Tracing;
 using Kudu.Services.Arm;
+using Kudu.Services.ByteRanges;
 using Kudu.Services.Infrastructure;
 using Newtonsoft.Json.Linq;
 
@@ -130,15 +131,35 @@ namespace Kudu.Services.Deployment
             }
         }
 
-        private async Task<string> GetZipURLFromJSON()
+        private string GetZipURLFromARMJSON(JObject requestObject)
         {
-            // ARM template should have properties field and a packageUri field inside the properties field.
-            var requestObject = await Request.Content.ReadAsAsync<JObject>();
             using (_tracer.Step("Reading the zip URL from the request JSON"))
             {
                 try
                 {
+                    // ARM template should have properties field and a packageUri field inside the properties field.
                     string packageUri = requestObject.Value<JObject>("properties").Value<string>("packageUri");
+                    if (string.IsNullOrEmpty(packageUri))
+                    {
+                        throw new ArgumentException("Invalid Url in the JSON request");
+                    }
+                    return packageUri;
+                }
+                catch (Exception ex)
+                {
+                    _tracer.TraceError(ex, "Error reading the URL from the JSON {0}", requestObject.ToString());
+                    throw;
+                }
+            }
+        }
+
+        private string GetZipURLFromJSON(JObject requestObject)
+        {
+            using (_tracer.Step("Reading the zip URL from the request JSON"))
+            {
+                try
+                {
+                    string packageUri = requestObject.Value<string>("packageUri");
                     if (string.IsNullOrEmpty(packageUri))
                     {
                         throw new ArgumentException("Invalid Url in the JSON request");
@@ -157,11 +178,12 @@ namespace Kudu.Services.Deployment
         {
             var content = Request.Content;
             var isRequestJSON = content.Headers?.ContentType?.MediaType?.Equals("application/json", StringComparison.OrdinalIgnoreCase);
-            if (isRequestJSON == true && ArmUtils.IsArmRequest(Request))
+            if (isRequestJSON == true)
             {
                 try
                 {
-                    deploymentInfo.ZipURL = await GetZipURLFromJSON();
+                    var requestObject = await Request.Content.ReadAsAsync<JObject>();
+                    deploymentInfo.ZipURL = ArmUtils.IsArmRequest(Request) ? GetZipURLFromARMJSON(requestObject) : GetZipURLFromJSON(requestObject);
                 }
                 catch (Exception ex)
                 {
@@ -179,13 +201,11 @@ namespace Kudu.Services.Deployment
                     var zipFileName = Path.ChangeExtension(Path.GetRandomFileName(), "zip");
                     var zipFilePath = Path.Combine(_environment.ZipTempPath, zipFileName);
 
-                    using (_tracer.Step("Writing content to {0}", zipFilePath))
+                    using (_tracer.Step("Saving request content to {0}", zipFilePath))
                     {
-                        using (var file = FileSystemHelpers.CreateFile(zipFilePath))
-                        {
-                            await content.CopyToAsync(file);
-                        }
+                        await content.CopyToAsync(zipFilePath, _tracer);
                     }
+
                     deploymentInfo.RepositoryUrl = zipFilePath;
                 }
             }
@@ -280,7 +300,7 @@ namespace Kudu.Services.Deployment
                     await WriteSitePackageZip(zipDeploymentInfo, tracer, await DeploymentHelper.GetZipContentFromURL(zipDeploymentInfo, tracer));
                 }
                 // If this is a Run-From-Zip deployment, then we need to extract function.json
-                // from the zip file into path zipDeploymentInfo.SyncFunctionsTrigersPath
+                // from the zip file into path zipDeploymentInfo.SyncFunctionsTriggersPath
                 ExtractTriggers(repository, zipDeploymentInfo);
             }
             else
@@ -328,13 +348,11 @@ namespace Kudu.Services.Deployment
             var zipFileName = Path.ChangeExtension(Path.GetRandomFileName(), "zip");
             var zipFilePath = Path.Combine(_environment.ZipTempPath, zipFileName);
 
-            using (_tracer.Step("Writing content to {0}", zipFilePath))
+            using (_tracer.Step("Downloading content from {0} to {1}", zipDeploymentInfo.ZipURL.Split('?')[0], zipFilePath))
             {
-                using (var file = FileSystemHelpers.CreateFile(zipFilePath))
-                {
-                    await content.CopyToAsync(file);
-                }
+                await content.CopyToAsync(zipFilePath, _tracer);
             }
+
             zipDeploymentInfo.RepositoryUrl = zipFilePath;
             return zipFilePath;
         }
@@ -371,7 +389,10 @@ namespace Kudu.Services.Deployment
                 if (targetInfo.Exists)
                 {
                     var moveTarget = Path.Combine(targetInfo.Parent.FullName, Path.GetRandomFileName());
-                    targetInfo.MoveTo(moveTarget);
+                    using (tracer.Step(string.Format("Renaming extractTargetDirectory({0}) to tempDirectory({1})", targetInfo.FullName, moveTarget)))
+                    {
+                        targetInfo.MoveTo(moveTarget);
+                    }
                 }
 
                 var cleanTask = Task.Run(() => DeleteFilesAndDirsExcept(sourceZipFile, extractTargetDirectory, tracer));
@@ -382,7 +403,7 @@ namespace Kudu.Services.Deployment
                     using (var file = info.OpenRead())
                     using (var zip = new ZipArchive(file, ZipArchiveMode.Read))
                     {
-                        zip.Extract(extractTargetDirectory);
+                        zip.Extract(extractTargetDirectory, tracer, _settings.GetZipDeployDoNotPreserveFileTime());
                     }
                 });
 
@@ -396,7 +417,7 @@ namespace Kudu.Services.Deployment
         {
             // Needed in order for repository.GetChangeSet() to work.
             // Similar to what OneDriveHelper and DropBoxHelper do.
-            // We need to make to call respository.Commit() since deployment flow expects at
+            // We need to make to call repository.Commit() since deployment flow expects at
             // least 1 commit in the IRepository. Even though there is no repo per se in this
             // scenario, deployment pipeline still generates a NullRepository
             repository.Commit(zipDeploymentInfo.Message, zipDeploymentInfo.Author, zipDeploymentInfo.AuthorEmail);
@@ -409,13 +430,11 @@ namespace Kudu.Services.Deployment
             // Make sure D:\home\data\SitePackages exists
             FileSystemHelpers.EnsureDirectory(_environment.SitePackagesPath);
 
-            using (tracer.Step("Writing content to {0}", filePath))
+            using (tracer.Step("Saving request content to {0}", filePath))
             {
-                using (var file = FileSystemHelpers.CreateFile(filePath))
-                {
-                    await content.CopyToAsync(file);
-                }
+                await content.CopyToAsync(filePath, tracer);
             }
+
             DeploymentHelper.PurgeZipsIfNecessary(_environment.SitePackagesPath, tracer, _settings.GetMaxZipPackageCount());
         }
 

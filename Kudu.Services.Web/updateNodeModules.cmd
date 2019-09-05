@@ -21,7 +21,7 @@ goto retry
 
 :lastError
 popd
-echo An error has occured during npm install.
+echo An error has occurred during npm install.
 exit /b 1
 
 :end

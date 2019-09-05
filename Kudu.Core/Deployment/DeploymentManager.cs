@@ -275,6 +275,15 @@ namespace Kudu.Core.Deployment
                 {
                     throw new DeploymentFailedException(exception);
                 }
+
+                if (statusFile != null && statusFile.Status == DeployStatus.Success && _settings.RunFromLocalZip())
+                {
+                    var zipDeploymentInfo = deploymentInfo as ZipDeploymentInfo;
+                    if (zipDeploymentInfo != null)
+                    {
+                        await PostDeploymentHelper.UpdateSiteVersion(zipDeploymentInfo, _environment, tracer);
+                    }
+                }
             }
         }
 
@@ -347,7 +356,7 @@ namespace Kudu.Core.Deployment
                 status.MarkFailed();
             }
 
-            // Cleaup old deployments
+            // Cleanup old deployments
             PurgeAndGetDeployments();
         }
 
@@ -453,13 +462,13 @@ namespace Kudu.Core.Deployment
             return toDelete;
         }
 
-        private static string GenerateTemporaryId(int lenght = 8)
+        private static string GenerateTemporaryId(int length = 8)
         {
             const string HexChars = "0123456789abcdfe";
 
             var strb = new StringBuilder();
             strb.Append(TemporaryDeploymentIdPrefix);
-            for (int i = 0; i < lenght; ++i)
+            for (int i = 0; i < length; ++i)
             {
                 strb.Append(HexChars[_random.Next(HexChars.Length)]);
             }
@@ -663,14 +672,9 @@ namespace Kudu.Core.Deployment
 
                         await PostDeploymentHelper.SyncFunctionsTriggers(_environment.RequestId, new PostDeploymentTraceListener(tracer, logger), deploymentInfo?.SyncFunctionsTriggersPath);
 
-                        if (_settings.TouchWatchedFileAfterDeployment())
+                        if (!_settings.RunFromZip() && _settings.TouchWatchedFileAfterDeployment())
                         {
                             TryTouchWatchedFile(context, deploymentInfo);
-                        }
-
-                        if (_settings.RunFromLocalZip() && deploymentInfo is ZipDeploymentInfo)
-                        {
-                            await PostDeploymentHelper.UpdateSiteVersion(deploymentInfo as ZipDeploymentInfo, _environment, logger);
                         }
 
                         FinishDeployment(id, deployStep);
@@ -934,7 +938,7 @@ namespace Kudu.Core.Deployment
             string manifestPath = GetDeploymentManifestPath(id);
 
             // If the manifest file doesn't exist, don't return it as it could confuse kudusync.
-            // This can happen if the deployment was created with just metadata but no actualy deployment took place.
+            // This can happen if the deployment was created with just metadata but no actually deployment took place.
             if (!FileSystemHelpers.FileExists(manifestPath))
             {
                 return null;

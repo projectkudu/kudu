@@ -8,7 +8,7 @@
     // If Kudu home page gets requested with the api-version, we are likely dealing with a call
     // on the 'ARM bridge' to list 'extensions'. e.g.
     // /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Web/sites/{site}/extensions?api-version=2015-08-01
-    // Since we can't actually return a list of extensions, return [], which is enough to avoid ARM faliures
+    // Since we can't actually return a list of extensions, return [], which is enough to avoid ARM failures
     if (Request.QueryString["api-version"] != null)
     {
         Response.Write("[]");
@@ -90,6 +90,9 @@
             @Kudu.Services.Web.Tracing.TraceModule.UpTime.ToString(@"dd\.hh\:mm\:ss")
         </div>
     </div>
+
+    @if (!Kudu.Core.Helpers.EnvironmentHelper.IsWindowsContainers())
+    {
     <div class="row">
         <div class="col-xs-2">
             <strong>Site folder</strong>
@@ -106,6 +109,7 @@
             @Path.GetTempPath()
         </div>
     </div>
+    }
 
     <h3>REST API <small>(works best when using a JSON viewer extension)</small></h3>
     <ul>
@@ -121,7 +125,7 @@
         <li>
             <a href="api/vfs">Files</a>
         </li>
-        @if (Kudu.Core.Helpers.OSDetector.IsOnWindows())
+        @if (Kudu.Core.Helpers.OSDetector.IsOnWindows() && !Kudu.Core.Helpers.EnvironmentHelper.IsWindowsContainers())
         {
             <li>
                 <a href="api/logstream">Log streaming</a> (use curl, not browser!)
@@ -143,7 +147,16 @@
             </li>
             <li>
             Functions: <a href="api/functions">list</a> | <a href="api/functions/config">host config</a>
-        </li>
+            </li>
+        }
+        else if (Kudu.Core.Helpers.OSDetector.IsOnWindows() && Kudu.Core.Helpers.EnvironmentHelper.IsWindowsContainers())
+        {
+            <li>
+                <a href="api/logstream">Log streaming</a> (use curl, not browser!)
+            </li>
+            <li>
+                <a href="api/logs/docker">Current Container logs</a> (<a href="api/logs/docker/zip">Download as zip</a>)
+            </li>
         }
         else
         {

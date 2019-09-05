@@ -107,7 +107,7 @@ namespace Kudu.Core.Deployment
         }
 
         /// <summary>
-        /// StructuredTextDocument does pure File Append for each new message. This is not sufficient to replicate the behacior of XmlLogger
+        /// StructuredTextDocument does pure File Append for each new message. This is not sufficient to replicate the behavior of XmlLogger
         /// XmlLogger would set the Type of the parent LogEntry to be the Max of all the Types of the sub entries.
         /// Since this logger only does append, we don't have a change to update the parent while writing the file, so will do it on reading here.
         /// LogEntryType is an Enum with Message = 0, Warning = 1, and Error = 2.

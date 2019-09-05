@@ -16,6 +16,7 @@ using Kudu.Core.Deployment;
 using Kudu.Core.Helpers;
 using Kudu.Core.Tracing;
 using Microsoft.Win32.SafeHandles;
+using static Kudu.Core.Infrastructure.MiniDumpNativeMethods;
 
 namespace Kudu.Core.Infrastructure
 {
@@ -186,9 +187,50 @@ namespace Kudu.Core.Infrastructure
         {
             using (var fs = new FileStream(dumpFile, FileMode.Create, FileAccess.ReadWrite, FileShare.None))
             {
-                if (!MiniDumpNativeMethods.MiniDumpWriteDump(process.Handle, (uint)process.Id, fs.SafeFileHandle, dumpType, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero))
+                if (!MiniDumpWriteDump(process.Handle, (uint)process.Id, fs.SafeFileHandle, dumpType, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero))
                 {
                     throw new Win32Exception(Marshal.GetLastWin32Error());
+                }
+            }
+        }
+
+        public static void SnapshotAndDump(this Process process, string dumpFile, MINIDUMP_TYPE dumpType)
+        {
+            using (var fs = new FileStream(dumpFile, FileMode.Create, FileAccess.ReadWrite, FileShare.None))
+            {
+                using (var pssSnapshot = PssSnapshotSafeHandle.CaptureSnapshot(process.Handle))
+                {
+                    bool PssSnapshotMinidumpCallback(IntPtr unused, ref MINIDUMP_CALLBACK_INPUT input, ref MINIDUMP_CALLBACK_OUTPUT output)
+                    {
+                        const int S_OK = 0;
+                        const int S_FALSE = 1;
+
+                        switch (input.CallbackType)
+                        {
+                            case MINIDUMP_CALLBACK_TYPE.IsProcessSnapshotCallback:
+                                // The target is always a snapshot.
+                                output.Status = S_FALSE;
+                                break;
+
+                            case MINIDUMP_CALLBACK_TYPE.ReadMemoryFailureCallback:
+                                // Ignore any read failures during dump generation.
+                                output.Status = S_OK;
+                                break;
+                        }
+
+                        return true;
+                    }
+
+                    var callbackParam = new MINIDUMP_CALLBACK_INFORMATION
+                    {
+                        CallbackParam = IntPtr.Zero,
+                        CallbackRoutine = PssSnapshotMinidumpCallback
+                    };
+
+                    if (!MiniDumpWriteDump(pssSnapshot, (uint)process.Id, fs.SafeFileHandle, dumpType | MINIDUMP_TYPE.IgnoreInaccessibleMemory, IntPtr.Zero, IntPtr.Zero, ref callbackParam))
+                    {
+                        throw new Win32Exception(Marshal.GetLastWin32Error());
+                    }
                 }
             }
         }
@@ -379,7 +421,7 @@ namespace Kudu.Core.Infrastructure
                 var stdio = Task.WhenAll(tasks);
                 var completed = await Task.WhenAny(stdio, delay);
 
-                // if delay commpleted first (meaning timeout), check if activity and continue to wait
+                // if delay completed first (meaning timeout), check if activity and continue to wait
                 if (completed == delay)
                 {
                     var lastActivity = idleManager.LastActivity;
@@ -919,6 +961,22 @@ namespace Kudu.Core.Infrastructure
                 public ushort MaximumLength;
                 public int Buffer;
             }
+
+            [DllImport("kernel32")]
+            public static extern uint GetProcessId(IntPtr hProcess);
+
+            [DllImport("kernel32", SetLastError = true)]
+            public static extern IntPtr OpenProcess(uint dwDesiredAccess, [MarshalAs(UnmanagedType.Bool)] bool bInheritHandle, uint dwProcessId);
+
+            [DllImport("kernel32", SetLastError = true)]
+            [return: MarshalAs(UnmanagedType.Bool)]
+            public static extern bool TerminateProcess(IntPtr hProcess, uint uExitCode);
+
+            [DllImport("kernel32", SetLastError = true)]
+            [return: MarshalAs(UnmanagedType.Bool)]
+            public static extern bool CloseHandle(IntPtr handle);
+
+            public const uint PROCESS_TERMINATE = 0x0001;
         }
     }
 }

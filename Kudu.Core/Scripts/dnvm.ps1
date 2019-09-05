@@ -1222,7 +1222,7 @@ function dnvm-upgrade {
         [switch]$Global)
 
     if($OS -ne "win" -and ![String]::IsNullOrEmpty($OS)) {
-        #We could remove OS as an option from upgrade, but I want to take this opporunty to educate users about the difference between install and upgrade
+        #We could remove OS as an option from upgrade, but I want to take this opportunity to educate users about the difference between install and upgrade
         #It's possible we should just do install here instead.
          _WriteOut -ForegroundColor $ColorScheme.Error "You cannot upgrade to a non-windows runtime. Upgrade will download the latest version of the $RuntimeShortFriendlyName and also set it as your machines default. You cannot set the default $RuntimeShortFriendlyName to a non-windows version because you cannot use it to run an application. If you want to install a non-windows $RuntimeShortFriendlyName to package with your application then use 'dnvm install latest -OS:$OS' instead. Install will download the package but not set it as your default."
         $Script:ExitCode = $ExitCodes.OtherError

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.IO;
 using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.SourceControl;
 
@@ -8,7 +9,7 @@ namespace Kudu.Contracts.Settings
     public static class DeploymentSettingsExtension
     {
         public static readonly TimeSpan DefaultCommandIdleTimeout = TimeSpan.FromMinutes(1);
-        public static readonly TimeSpan DefaultLogStreamTimeout = TimeSpan.FromMinutes(30);
+        public static readonly TimeSpan DefaultLogStreamTimeout = TimeSpan.FromMinutes(120);  // remember to update help message
         public static readonly TimeSpan DefaultWebJobsRestartTime = TimeSpan.FromMinutes(1);
         public static readonly TimeSpan DefaultJobsIdleTimeout = TimeSpan.FromMinutes(2);
         public const TraceLevel DefaultTraceLevel = TraceLevel.Error;
@@ -19,6 +20,23 @@ namespace Kudu.Contracts.Settings
         //public static readonly string DefaultSiteExtensionFeedUrl = "https://www.siteextensions.net/api/v2/";
         public static readonly string NuGetSiteExtensionFeedUrl = "https://www.nuget.org/api/v2/";
 
+        // TODO, suwatch: this is temporary be able to turn on/of feature via rolepatcher
+        // in the future, it should come from HostingConfiguration (@sanmeht)
+        public static readonly Lazy<bool> UseSiteExtensionV2 = new Lazy<bool>(() =>
+        {
+            try
+            {
+                var path = Path.Combine(System.Environment.GetEnvironmentVariable("SystemRoot"), "temp", SettingsKeys.UseSiteExtensionV2);
+                return File.Exists(path);
+            }
+            catch (Exception)
+            {
+                // no-op
+            }
+
+            return false;
+        });
+        
         public static string GetValue(this IDeploymentSettingsManager settings, string key)
         {
             return settings.GetValue(key, onlyPerSite: false);
@@ -252,6 +270,17 @@ namespace Kudu.Contracts.Settings
             return value == null || StringUtils.IsTrueLike(value);
         }
 
+        public static bool GetUseSiteExtensionV2(this IDeploymentSettingsManager settings)
+        {
+            var value = settings.GetValue(SettingsKeys.UseSiteExtensionV2);
+            if (!string.IsNullOrEmpty(value))
+            {
+                return StringUtils.IsTrueLike(value);
+            }
+
+            return UseSiteExtensionV2.Value;
+        }
+
         public static bool RunFromLocalZip(this IDeploymentSettingsManager settings)
         {
             return settings.GetFromFromZipAppSettingValue() == "1";
@@ -291,6 +320,11 @@ namespace Kudu.Contracts.Settings
             }
 
             return DEFAULT_ALLOWED_ZIPS;
+        }
+
+        public static bool GetZipDeployDoNotPreserveFileTime(this IDeploymentSettingsManager settings)
+        {
+            return "1" == settings.GetValue(SettingsKeys.ZipDeployDoNotPreserveFileTime);
         }
     }
 }

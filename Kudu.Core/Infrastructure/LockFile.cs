@@ -118,7 +118,7 @@ namespace Kudu.Core.Infrastructure
                     // for write action, it will fail with UnauthorizedAccessException when perform actual write operation
                     //      There is one drawback, previously for write action, even acquire lock will fail with UnauthorizedAccessException,
                     //      there will be retry within given timeout. so if exception is temporary, previous`s implementation will still go thru.
-                    //      While right now will end up failure. But it is a extreem edge case, should be ok to ignore.
+                    //      While right now will end up failure. But it is a extreme edge case, should be ok to ignore.
                     return !FileSystemHelpers.IsFileSystemReadOnly();
                 }
                 catch (IOException ex)
@@ -168,7 +168,7 @@ namespace Kudu.Core.Infrastructure
                     // for write action, it will fail with UnauthorizedAccessException when perform actual write operation
                     //      There is one drawback, previously for write action, even acquire lock will fail with UnauthorizedAccessException,
                     //      there will be retry within given timeout. so if exception is temporary, previous`s implementation will still go thru.
-                    //      While right now will end up failure. But it is a extreem edge case, should be ok to ignore.
+                    //      While right now will end up failure. But it is a extreme edge case, should be ok to ignore.
                     return FileSystemHelpers.IsFileSystemReadOnly();
                 }
             }
@@ -189,7 +189,7 @@ namespace Kudu.Core.Infrastructure
             {
                 if (lockStream != null)
                 {
-                    lockStream.Close();
+                    OperationManager.CriticalExecute("LockFile.Lock.Finally", () => lockStream.Close());
                 }
             }
 

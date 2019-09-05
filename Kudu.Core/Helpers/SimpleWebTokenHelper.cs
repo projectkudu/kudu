@@ -20,7 +20,7 @@ namespace Kudu.Core.Helpers
         public static string CreateToken(DateTime validUntil) => Encrypt($"exp={validUntil.Ticks}");
 
         [SuppressMessage("Microsoft.Usage", "CA2202:Object 'cipherStream' and 'cryptoStream' can be disposed mo re than once",
-            Justification = "MemoeryStream, CryptoStream, and BinaryWriter handle multiple disposal correctly. The alternative is pretty ugly code for clearing each variable, checking for null, and manual dispose.")]
+            Justification = "MemoryStream, CryptoStream, and BinaryWriter handle multiple disposal correctly. The alternative is pretty ugly code for clearing each variable, checking for null, and manual dispose.")]
         private static string Encrypt(string value)
         {
             using (var aes = new AesManaged { Key = GetWebSiteAuthEncryptionKey() })

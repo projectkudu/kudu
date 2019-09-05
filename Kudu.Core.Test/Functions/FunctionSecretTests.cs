@@ -16,7 +16,7 @@ namespace Kudu.Core.Test.Functions
             string encryptedKey = keyPairs[0].Item2;
 
             Assert.Equal(unencryptedKey, SecurityUtility.DecryptSecretString(encryptedKey));
-            // try to decrypte an invalid encryptedkey will throw an error
+            // try to decrypt an invalid encryptedkey will throw an error
             string malformattedKey = encryptedKey.Substring(1);
             var exception = Assert.Throws<FormatException>(() => SecurityUtility.DecryptSecretString(malformattedKey));
 

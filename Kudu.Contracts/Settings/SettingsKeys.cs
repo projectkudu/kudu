@@ -17,6 +17,7 @@
         public const string GitEmail = "SCM_GIT_EMAIL";
         public const string ScmType = "ScmType";
         public const string UseShallowClone = "SCM_USE_SHALLOW_CLONE";
+        public const string UseSiteExtensionV2 = "SCM_USE_SITEEXTENSION_V2";
         public const string Command = "COMMAND";
         public const string Project = "PROJECT";
         public const string WorkerCommand = "WORKER_COMMAND";
@@ -46,5 +47,6 @@
         public const string RunFromZipOld = "WEBSITE_RUN_FROM_ZIP";  // Old name, will eventually go away
         public const string RunFromZip = "WEBSITE_RUN_FROM_PACKAGE";
         public const string MaxZipPackageCount = "SCM_MAX_ZIP_PACKAGE_COUNT";
+        public const string ZipDeployDoNotPreserveFileTime = "SCM_ZIPDEPLOY_DONOT_PRESERVE_FILETIME";
     }
 }

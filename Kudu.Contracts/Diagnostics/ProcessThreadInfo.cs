@@ -8,7 +8,7 @@ namespace Kudu.Core.Diagnostics
     public class ProcessThreadInfo : INamedObject
     {
         [JsonIgnore]
-        [SuppressMessage("Microsoft.Design", "CA1033:InterfaceMethodsShouldBeCallableByChildTypes", Justification = "to provide ARM spceific name")]
+        [SuppressMessage("Microsoft.Design", "CA1033:InterfaceMethodsShouldBeCallableByChildTypes", Justification = "to provide ARM specific name")]
         string INamedObject.Name { get { return Id.ToString(); } }
 
         [JsonProperty(PropertyName = "id")]

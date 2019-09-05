@@ -64,7 +64,7 @@ namespace Kudu.Services.Zip
                 // Hence it's more of a PATCH than a PUT. We should consider supporting both with the right semantic.
                 // Though a true PUT at the root would be scary as it would wipe all existing files!
                 var zipArchive = new ZipArchive(stream, ZipArchiveMode.Read);
-                zipArchive.Extract(localFilePath);
+                zipArchive.Extract(localFilePath, Tracer);
             }
 
             return Request.CreateResponse(HttpStatusCode.OK);

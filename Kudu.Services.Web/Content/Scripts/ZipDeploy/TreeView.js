@@ -23,7 +23,7 @@ function fetchDeploymentInfo(uri) {
 }
 
 
-//Do not call this passing in the root node's URL as the property names for child and root are different in the output returned from Kudu. Fetch the root seperately
+//Do not call this passing in the root node's URL as the property names for child and root are different in the output returned from Kudu. Fetch the root separately
 function fetchChildNodesFromURL(initialLoad, URI) {
 
     var deferred = $.Deferred();

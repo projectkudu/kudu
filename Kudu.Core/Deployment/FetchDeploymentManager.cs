@@ -248,7 +248,7 @@ namespace Kudu.Core.Deployment
                 IDeploymentStatusFile statusFile = _status.Open(lastChange.Id);
                 if (statusFile.Status == DeployStatus.Success)
                 {
-                    // if last change is not null and finish successfully, mean there was at least one deployoment happened
+                    // if last change is not null and finish successfully, mean there was at least one deployment happened
                     // since deployment is now done, trigger swap if enabled
                     await PostDeploymentHelper.PerformAutoSwap(_environment.RequestId, new PostDeploymentTraceListener(_tracer, _deploymentManager.GetLogger(lastChange.Id)));
                 }
@@ -346,7 +346,7 @@ namespace Kudu.Core.Deployment
                     {
                         if (tempDeployment != null)
                         {
-                            tempDeployment.Dispose();
+                            OperationManager.SafeExecute(() => tempDeployment.Dispose());
                         }
 
                         if (deployInfo.AllowDeferredDeployment)
@@ -385,7 +385,7 @@ namespace Kudu.Core.Deployment
             // is created before we return.
             if (waitForTempDeploymentCreation)
             {
-                // deploymentTask may return withoout creating the temp deployment (lock contention,
+                // deploymentTask may return without creating the temp deployment (lock contention,
                 // other exception), in which case just continue.
                 await Task.WhenAny(tempDeploymentCreatedTcs.Task, deploymentTask);
             }

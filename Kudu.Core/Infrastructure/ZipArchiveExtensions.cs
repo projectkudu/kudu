@@ -107,32 +107,62 @@ namespace Kudu.Core.Infrastructure
             return entry;
         }
 
-        public static void Extract(this ZipArchive archive, string directoryName)
+        public static void Extract(this ZipArchive archive, string directoryName, ITracer tracer, bool doNotPreserveFileTime = false)
         {
-            foreach (ZipArchiveEntry entry in archive.Entries)
+            const int MaxExtractTraces = 5;
+
+            var entries = archive.Entries;
+            var total = entries.Count;
+            var traces = 0;
+            using (tracer.Step(string.Format("Extracting {0} entries to {1} directory", entries.Count, directoryName)))
             {
-                string path = Path.Combine(directoryName, entry.FullName);
-                if (entry.Length == 0 && (path.EndsWith("/", StringComparison.Ordinal) || path.EndsWith("\\", StringComparison.Ordinal)))
+                foreach (ZipArchiveEntry entry in entries)
                 {
-                    // Extract directory
-                    FileSystemHelpers.CreateDirectory(path);
-                }
-                else
-                {
-                    FileInfoBase fileInfo = FileSystemHelpers.FileInfoFromFileName(path);
-
-                    if (!fileInfo.Directory.Exists)
+                    string path = Path.Combine(directoryName, entry.FullName);
+                    if (entry.Length == 0 && (path.EndsWith("/", StringComparison.Ordinal) || path.EndsWith("\\", StringComparison.Ordinal)))
                     {
-                        fileInfo.Directory.Create();
+                        // Extract directory
+                        FileSystemHelpers.CreateDirectory(path);
                     }
-
-                    using (Stream zipStream = entry.Open(),
-                                  fileStream = fileInfo.Open(FileMode.Create, FileAccess.Write))
+                    else
                     {
-                        zipStream.CopyTo(fileStream);
-                    }
+                        FileInfoBase fileInfo = FileSystemHelpers.FileInfoFromFileName(path);
 
-                    fileInfo.LastWriteTimeUtc = entry.LastWriteTime.ToUniversalTime().DateTime;
+                        string message = null;
+                        // tracing first/last N files
+                        if (traces < MaxExtractTraces || traces >= total - MaxExtractTraces)
+                        {
+                            message = string.Format("Extracting to {0} ...", fileInfo.FullName);
+                        }
+                        else if (traces == MaxExtractTraces)
+                        {
+                            message = "Omitting extracting file traces ...";
+                        }
+
+                        ++traces;
+
+                        using (!string.IsNullOrEmpty(message) ? tracer.Step(message) : null)
+                        {
+                            if (!fileInfo.Directory.Exists)
+                            {
+                                fileInfo.Directory.Create();
+                            }
+
+                            using (Stream zipStream = entry.Open(),
+                                          fileStream = fileInfo.Open(FileMode.Create, FileAccess.Write))
+                            {
+                                zipStream.CopyTo(fileStream);
+                            }
+
+                            // this is to allow, the file time to always be newer than destination
+                            // the outcome is always replacing the destination files.
+                            // it is non-optimized but workaround NPM reset file time issue (https://github.com/projectkudu/kudu/issues/2917).
+                            if (!doNotPreserveFileTime)
+                            {
+                                fileInfo.LastWriteTimeUtc = entry.LastWriteTime.ToUniversalTime().DateTime;
+                            }
+                        }
+                    }
                 }
             }
         }

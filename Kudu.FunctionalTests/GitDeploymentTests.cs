@@ -376,6 +376,17 @@ namespace Kudu.FunctionalTests
     }
 
     [KuduXunitTestClass]
+    public class ChakraMsieTests : GitDeploymentTests
+    {
+        [Fact]
+        [KuduXunitTest(PrivateOnly = true)]
+        public void PushAndDeployChakraMsieTest()
+        {
+            PushAndDeployApps("ChakraMsieTest", "master", "170 - 2 = 168", HttpStatusCode.OK, "Deployment successful");
+        }
+    }
+
+    [KuduXunitTestClass]
     public class AspNetCore21VS17WithLibTests : GitDeploymentTests
     {
         [Fact]

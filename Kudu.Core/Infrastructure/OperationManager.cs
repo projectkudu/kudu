@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Kudu.Core.Tracing;
 
 namespace Kudu.Core.Infrastructure
 {
@@ -102,6 +103,32 @@ namespace Kudu.Core.Infrastructure
             catch
             {
                 return default(T);
+            }
+        }
+
+        public static void CriticalExecute(string method, Action action)
+        {
+            try
+            {
+                action();
+            }
+            catch (Exception ex)
+            {
+                KuduEventSource.Log.KuduException(
+                    ServerConfiguration.GetApplicationName(),
+                    method,
+                    string.Empty,
+                    string.Empty,
+                    "Critical execution encounters an exception and will fail fast in 60s",
+                    ex.ToString());
+
+                ThreadPool.QueueUserWorkItem(_ =>
+                {
+                    Thread.Sleep(60000);
+                    System.Environment.FailFast($"Method {method} encounters critical exception {ex}");
+                });
+
+                throw;
             }
         }
     }

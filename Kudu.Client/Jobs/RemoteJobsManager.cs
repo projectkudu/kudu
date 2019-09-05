@@ -139,7 +139,7 @@ namespace Kudu.Client.Jobs
                 request.Method = HttpMethod.Put;
                 request.RequestUri = new Uri(urlPath, UriKind.Relative);
                 var content = new StreamContent(stream);
-                content.Headers.ContentDisposition = new ContentDispositionHeaderValue("attachement")
+                content.Headers.ContentDisposition = new ContentDispositionHeaderValue("attachment")
                 {
                     FileName = Path.GetFileName(filePath)
                 };

@@ -51,7 +51,7 @@ namespace Kudu.SiteManagement.Configuration
                 bool value;
                 bool.TryParse(_appSettings["enableCustomHostNames"], out value);
                 //NOTE: try parse will default the bool to false if it fails.
-                //      this will catch cases as null and invalid with the intented behavior.
+                //      this will catch cases as null and invalid with the intended behavior.
                 return value;
             }
         }
@@ -66,7 +66,7 @@ namespace Kudu.SiteManagement.Configuration
                 //                   @default = Environment.ExpandEnvironmentVariables(@default);
                 //      if(Directory.Exists(@default)) return @default;
                 //
-                //  - Do we wan't to do that, basically ignoring configuration?...
+                //  - Do we want to do that, basically ignoring configuration?...
 
                 return _section == null
                     ? PathRelativeToRoot(_appSettings["serviceSitePath"])

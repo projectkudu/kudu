@@ -142,7 +142,7 @@ namespace Kudu.Core.Deployment.Generator
 
                 string[] cacheKeyFileContent = File.ReadAllLines(cacheKeyFilePath).Where(line => !String.IsNullOrEmpty(line)).ToArray();
 
-                // Make sure the cache key file contains exacly 2 lines and the first one is the same as the current running kudu version
+                // Make sure the cache key file contains exactly 2 lines and the first one is the same as the current running kudu version
                 if (cacheKeyFileContent.Length != 2 || cacheKeyFileContent[0] != KuduVersion)
                 {
                     return false;

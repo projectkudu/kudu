@@ -184,7 +184,7 @@ namespace Kudu.Core.Jobs
                 {
                     using (var zipArchive = new ZipArchive(zipStream, ZipArchiveMode.Read))
                     {
-                        zipArchive.Extract(jobDirectory.FullName);
+                        zipArchive.Extract(jobDirectory.FullName, TraceFactory.GetTracer());
                     }
                 });
         }
@@ -502,6 +502,15 @@ namespace Kudu.Core.Jobs
             {
                 if (HttpContext.Current == null)
                 {
+                    if (string.IsNullOrEmpty(_lastKnownAppBaseUrlPrefix))
+                    {
+                        var httpHost = System.Environment.GetEnvironmentVariable(Constants.HttpHost);
+                        if (!string.IsNullOrEmpty(httpHost))
+                        {
+                            return "https://{0}".FormatInvariant(httpHost);
+                        }
+                    }
+
                     return _lastKnownAppBaseUrlPrefix;
                 }
 
@@ -616,7 +625,7 @@ namespace Kudu.Core.Jobs
         }
         protected virtual void Dispose(bool disposing)
         {
-            // HACK: Next if statement should be removed once ninject wlll not dispose this class
+            // HACK: Next if statement should be removed once ninject will not dispose this class
             // Since ninject automatically calls dispose we currently disable it
             if (disposing)
             {

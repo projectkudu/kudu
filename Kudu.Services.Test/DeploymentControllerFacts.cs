@@ -80,11 +80,11 @@ namespace Kudu.Services.Test
             controller.Request = GetRequest();
 
             // Act
-            var response = controller.GetLogEntryDetails("deplymentId", "logId");
+            var response = controller.GetLogEntryDetails("deploymentId", "logId");
 
             // Assert
             Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
-            Assert.Equal(@"{""Message"":""LogId 'logId' was not found in Deployment 'deplymentId'.""}", await response.Content.ReadAsStringAsync());
+            Assert.Equal(@"{""Message"":""LogId 'logId' was not found in Deployment 'deploymentId'.""}", await response.Content.ReadAsStringAsync());
         }
 
 

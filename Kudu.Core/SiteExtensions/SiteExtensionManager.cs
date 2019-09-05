@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel.Composition.Hosting;
 using System.Configuration;
@@ -22,7 +21,6 @@ using Kudu.Core.Helpers;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Settings;
 using Kudu.Core.Tracing;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using NuGet.Client;
 using NuGet.Client.VisualStudio;
@@ -105,7 +103,7 @@ namespace Kudu.Core.SiteExtensions
                     packages,
                     async (uiPackage) =>
                     {
-                        // this function is called in multiple threads simoutaneously
+                        // this function is called in multiple threads simultaneously
                         return await ConvertRemotePackageToSiteExtensionInfo(uiPackage, feedUrl, metadataResource);
                     });
 
@@ -277,9 +275,10 @@ namespace Kudu.Core.SiteExtensions
                     // package already installed, return package from local repo.
                     tracer.Trace("Package {0} with version {1} from {2} with installation arguments '{3}' already installed.", id, version, feedUrl, installationArgs);
                     info = await GetLocalExtension(id);
-                    alreadyInstalled = true;
+                    alreadyInstalled = info != null;
                 }
-                else
+
+                if (!alreadyInstalled)
                 {
                     JsonSettings siteExtensionSettings = GetSettingManager(id);
                     feedUrl = (string.IsNullOrEmpty(feedUrl) ? siteExtensionSettings.GetValue(_feedUrlSetting) : feedUrl);
@@ -452,7 +451,7 @@ namespace Kudu.Core.SiteExtensions
         {
             try
             {
-                EnsureInstallationEnviroment(installationDirectory, tracer);
+                EnsureInstallationEnvironment(installationDirectory, tracer);
 
                 string packageLocalFilePath = GetNuGetPackageFile(package.Identity.Id, package.Identity.Version.ToNormalizedString());
                 bool packageExisted = FileSystemHelpers.DirectoryExists(installationDirectory);
@@ -513,7 +512,7 @@ namespace Kudu.Core.SiteExtensions
                     }
                 }
 
-                // ignore below action if we install packge to wwwroot
+                // ignore below action if we install package to wwwroot
                 if (SiteExtensionInfo.SiteExtensionType.WebRoot != type)
                 {
                     using (tracer.Step("Check if applicationHost.xdt or scmApplicationHost.xdt file existed."))
@@ -554,11 +553,11 @@ namespace Kudu.Core.SiteExtensions
         }
 
         /// <summary>
-        /// <para>Check if there is damanged leftover data</para>
+        /// <para>Check if there is damaged leftover data</para>
         /// <para>If there is leftover data, will try to cleanup.</para>
         /// <para>If fail to cleanup, will move leftover data to Temp folder</para>
         /// </summary>
-        private static void EnsureInstallationEnviroment(string installationDir, ITracer tracer)
+        private static void EnsureInstallationEnvironment(string installationDir, ITracer tracer)
         {
             // folder is there but nupkg is gone, means previous uninstallation must encounter some error
             bool isInstalledPackageBroken = FileSystemHelpers.DirectoryExists(installationDir) && FileSystemHelpers.GetFiles(installationDir, "*.nupkg").Length == 0;
@@ -581,14 +580,14 @@ namespace Kudu.Core.SiteExtensions
 
                 FileSystemHelpers.EnsureDirectory(_toBeDeletedDirectoryPath);
                 DirectoryInfo dirInfo = new DirectoryInfo(installationDir);
-                string tmpFoder = Path.Combine(
+                string tmpFolder = Path.Combine(
                     _toBeDeletedDirectoryPath,
                     string.Format(CultureInfo.InvariantCulture, "{0}-{1}", dirInfo.Name, Guid.NewGuid().ToString("N").Substring(0, 8)));
 
-                using (tracer.Step("Failed to cleanup. Moving leftover data to {0}", tmpFoder))
+                using (tracer.Step("Failed to cleanup. Moving leftover data to {0}", tmpFolder))
                 {
                     // if failed, let exception bubble up to trigger bad request
-                    OperationManager.Attempt(() => FileSystemHelpers.MoveDirectory(installationDir, tmpFoder));
+                    OperationManager.Attempt(() => FileSystemHelpers.MoveDirectory(installationDir, tmpFolder));
                 }
             }
 

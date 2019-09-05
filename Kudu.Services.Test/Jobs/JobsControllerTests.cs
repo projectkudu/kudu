@@ -62,7 +62,7 @@ namespace Kudu.Services.Test.Jobs
         {
             var triggeredJobsManagerMock = new Mock<ITriggeredJobsManager>();
 
-            // simulate read-only enviroment
+            // simulate read-only environment
             triggeredJobsManagerMock
                 .Setup(t => t.InvokeTriggeredJob(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
                 .Throws<UnauthorizedAccessException>();

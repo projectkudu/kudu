@@ -12,7 +12,7 @@ namespace Kudu.Stress
     {
         public ApplicationManager appManager = null;
         public W3wpResourceMonitor resourceMonitor = null;
-        public TestRepository testRespository = null;
+        public TestRepository testRepository = null;
     }
 
     public class GitApplication
@@ -31,7 +31,7 @@ namespace Kudu.Stress
         static ConcurrentDictionary<string, TestArtifacts> testArtifactStore = new ConcurrentDictionary<string, TestArtifacts>();
         static object initializationLockObj = new object();
 
-        // default the app beign tested to AspNetWebApplication"
+        // default the app being tested to AspNetWebApplication"
         public GitApplication TestApplication = new GitApplication()
         {
             AppName = "AspNetWebApplication",
@@ -49,9 +49,9 @@ namespace Kudu.Stress
             TestArtifacts testArtifacts = GetTestArtifacts(TestApplication.AppName, TestApplication.GitUrl);
 
             // modify a file in the repository and push
-            ModifyFile(Path.Combine(testArtifacts.testRespository.PhysicalPath, TestApplication.FileToModify));
-            Git.Commit(testArtifacts.testRespository.PhysicalPath, "stress test change");
-            DoGitPush(testArtifacts.appManager, testArtifacts.testRespository, TestApplication.AppName, TestApplication.VerificationContent);
+            ModifyFile(Path.Combine(testArtifacts.testRepository.PhysicalPath, TestApplication.FileToModify));
+            Git.Commit(testArtifacts.testRepository.PhysicalPath, "stress test change");
+            DoGitPush(testArtifacts.appManager, testArtifacts.testRepository, TestApplication.AppName, TestApplication.VerificationContent);
             
             testArtifacts.resourceMonitor.CheckAndLogResourceUsage();
         }
@@ -134,7 +134,7 @@ namespace Kudu.Stress
 
                         TestRepository testRepository = Git.Clone(testName, gitUrl);
 
-                        testArtifactStore.TryAdd(testName, new TestArtifacts() { appManager = stressAppManager, resourceMonitor = counterManager, testRespository = testRepository});
+                        testArtifactStore.TryAdd(testName, new TestArtifacts() { appManager = stressAppManager, resourceMonitor = counterManager, testRepository = testRepository});
                     }
                 }
             }

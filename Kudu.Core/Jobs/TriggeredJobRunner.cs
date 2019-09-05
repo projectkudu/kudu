@@ -28,7 +28,7 @@ namespace Kudu.Core.Jobs
 
         public static LockFile BuildTriggeredJobRunnerLockFile(string jobDataPath, ITraceFactory traceFactory)
         {
-            return new LockFile(Path.Combine(jobDataPath, "triggeredJob.lock"), traceFactory);
+            return new LockFile(Path.Combine(jobDataPath, "triggeredJob.lock"), traceFactory, ensureLock: true);
         }
 
         protected override string JobEnvironmentKeyPrefix

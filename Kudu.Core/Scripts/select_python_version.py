@@ -19,6 +19,7 @@ import sys
 supported_runtime_list = [
     ('python-2.7', '2.7', 'python27', 'virtualenv'),
     ('python-3.4', '3.4', 'python34', 'venv'),
+    ('python-3.6', '3.6', 'python34', 'venv'),
 ]
 
 system_drive = getenv('SYSTEMDRIVE')

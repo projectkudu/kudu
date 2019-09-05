@@ -29,7 +29,7 @@ namespace Kudu.Services
         private const string CursorKey = "dropbox_cursor";
 
         /// <summary>
-        /// The duratio to wait between file download retries to avoid rate limiting.
+        /// The duration to wait between file download retries to avoid rate limiting.
         /// </summary>
         internal static TimeSpan RetryWaitToAvoidRateLimit = TimeSpan.FromSeconds(20);
 
@@ -137,7 +137,7 @@ namespace Kudu.Services
             ResetStats();
 
             // for Dropbox OAuth V2, the delta is collected and applied by SCM
-            // simply set OldCursoras current.
+            // simply set OldCursor as current.
             if (dropboxInfo.OAuthVersion == 2)
             {
                 deployInfo.OldCursor = _settings.GetValue(CursorKey);
@@ -209,7 +209,7 @@ namespace Kudu.Services
                 }
             }
 
-            // Save new dropboc cursor
+            // Save new dropbox cursor
             LogInfo("Update dropbox cursor");
             _settings.SetValue(CursorKey, deployInfo.NewCursor);
 

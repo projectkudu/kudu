@@ -328,7 +328,9 @@ namespace Kudu.Services.Web.App_Start
             kernel.Bind<IServiceHookHandler>().To<OneDriveHandler>().InRequestScope();
 
             // SiteExtensions
-            kernel.Bind<ISiteExtensionManager>().To<SiteExtensionManager>().InRequestScope();
+            kernel.Bind<SiteExtensionManager>().To<SiteExtensionManager>().InRequestScope();
+            kernel.Bind<SiteExtensionManagerV2>().To<SiteExtensionManagerV2>().InRequestScope();
+            kernel.Bind<ISiteExtensionManager>().ToMethod(context => GetSiteExtensionManager(context.Kernel)).InRequestScope();
 
             // Functions
             kernel.Bind<IFunctionManager>().To<FunctionManager>().InRequestScope();
@@ -578,7 +580,7 @@ namespace Kudu.Services.Web.App_Start
             }
 
             // catch all unregistered url to properly handle not found
-            // this is to work arounf the issue in TraceModule where we see double OnBeginRequest call
+            // this is to work around the issue in TraceModule where we see double OnBeginRequest call
             // for the same request (404 and then 200 statusCode).
             routes.MapHttpRoute("error-404", "{*path}", new { controller = "Error404", action = "Handle" });
         }
@@ -658,6 +660,19 @@ namespace Kudu.Services.Web.App_Start
                 string userProfile = System.Environment.GetEnvironmentVariable("USERPROFILE");
                 FileSystemHelpers.EnsureDirectory(userProfile);
             });
+        }
+
+        private static ISiteExtensionManager GetSiteExtensionManager(IKernel kernel)
+        {
+            var settings = kernel.Get<IDeploymentSettingsManager>();
+            if (settings.GetUseSiteExtensionV2())
+            {
+                return kernel.Get<SiteExtensionManagerV2>();
+            }
+            else
+            {
+                return kernel.Get<SiteExtensionManager>();
+            }
         }
 
         private static ITracer GetTracer(IKernel kernel)

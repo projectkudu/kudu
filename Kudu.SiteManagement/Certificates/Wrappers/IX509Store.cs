@@ -11,7 +11,7 @@ namespace Kudu.SiteManagement.Certificates.Wrappers
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1726:UsePreferredTerms", MessageId = "flags", 
             Justification = "The name 'flags' originate from the X509Store class, as this is meant to be an interface for a wrapper, "
-                            + "we wan't to keep the names intact.")]
+                            + "we want to keep the names intact.")]
         void Open(OpenFlags flags);
         void Close();
     }

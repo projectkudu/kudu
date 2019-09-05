@@ -262,7 +262,7 @@ namespace Kudu.Core.SiteExtensions
                         if (entry.IsDirectory)
                         {
                             // in case the two zip file was created from different tool. some tool will include folder as seperate entry, some don`t.
-                            // to be sure that foder is meant to be deleted, double check there is no files under it
+                            // to be sure that folder is meant to be deleted, double check there is no files under it
                             var entryNameInLower = entryFileName.ToLower();
                             if (!string.Equals(destinationFolder, fullPath, StringComparison.OrdinalIgnoreCase)
                                 && newContentEntries.FirstOrDefault(e => e.FileName.ToLowerInvariant().StartsWith(entryNameInLower)) == null)
