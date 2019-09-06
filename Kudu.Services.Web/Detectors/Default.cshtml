@@ -5,12 +5,6 @@
     var siteName = Environment.GetEnvironmentVariable("WEBSITE_SITE_NAME") ?? "";
     var hostName = Environment.GetEnvironmentVariable("HTTP_HOST") ?? "";
     var slotName = "";
-    var path = "";
-
-    if (Request.QueryString["type"] != null && Request.QueryString["name"] != null)
-    {
-        path = string.Format("{0}%2F{1}", Request.QueryString["type"].ToString(), Request.QueryString["name"].ToString());
-    }
 
     var index = ownerName.IndexOf('+');
     if (index >= 0)
@@ -19,20 +13,13 @@
     }
 
     string detectorPath;
-    if (!string.IsNullOrWhiteSpace(path))
+    if (Kudu.Core.Helpers.OSDetector.IsOnWindows())
     {
-        detectorPath = path;
+        detectorPath = "diagnostics%2Favailability%2Fanalysis";
     }
     else
     {
-        if (Kudu.Core.Helpers.OSDetector.IsOnWindows())
-        {
-            detectorPath = "analysis%2FappDownAnalysis";
-        }
-        else
-        {
-            detectorPath = "detectors%2FLinuxAppDown";
-        }
+        detectorPath = "detectors%2FLinuxAppDown";
     }
 
     var hostNameIndex = hostName.IndexOf('.');
