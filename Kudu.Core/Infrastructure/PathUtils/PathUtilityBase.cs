@@ -57,6 +57,11 @@ namespace Kudu.Core.Infrastructure
 
         internal abstract string ResolveMSBuildPath();
 
+        internal virtual string ResolveMSBuild16Dir()
+        {
+            return null;
+        }
+
         internal virtual string ResolveMSBuild15Dir()
         {
             return null;

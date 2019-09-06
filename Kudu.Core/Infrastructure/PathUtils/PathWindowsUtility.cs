@@ -99,6 +99,20 @@ namespace Kudu.Core.Infrastructure
             return Path.Combine(programFiles, "nodejs", npmCliPath);
         }
 
+        internal override string ResolveMSBuild16Dir()
+        {
+            string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);
+            string[] probPaths = new[]{
+                Path.Combine(programFiles, "Microsoft Visual Studio", "2019", "Enterprise", "MSBuild", "Current", "Bin"), // visual studio Enterprise
+                Path.Combine(programFiles, "Microsoft Visual Studio", "2019", "Professional", "MSBuild", "Current", "Bin"), // visual studio Professional
+                Path.Combine(programFiles, "Microsoft Visual Studio", "2019", "Community", "MSBuild", "Current", "Bin"), // visual studio Community
+                Path.Combine(programFiles, "Microsoft Visual Studio", "2019", "BuildTools", "MSBuild", "Current", "Bin"), // msbuild tools
+                // above is for public kudu, below is for azure
+                Path.Combine(programFiles, "MSBuild-16.2.37902.0", "MSBuild", "Current", "Bin")
+                };
+            return probPaths.FirstOrDefault(path => Directory.Exists(path));
+        }
+
         internal override string ResolveMSBuild15Dir()
         {
             string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);

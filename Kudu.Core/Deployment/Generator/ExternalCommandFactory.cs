@@ -73,6 +73,7 @@ namespace Kudu.Core.Deployment.Generator
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.WebRootPath, _environment.WebRootPath, logger);
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.MSBuildPath, PathUtilityFactory.Instance.ResolveMSBuildPath(), logger);
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.MSBuild15Dir, PathUtilityFactory.Instance.ResolveMSBuild15Dir(), logger);
+            UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.MSBuild16Dir, PathUtilityFactory.Instance.ResolveMSBuild16Dir(), logger);
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.KuduSyncCommandKey, KuduSyncCommand, logger);
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.NuGetExeCommandKey, NuGetExeCommand, logger);
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.NpmJsPathKey, PathUtilityFactory.Instance.ResolveNpmJsPath(), logger);
