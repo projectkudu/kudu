@@ -6,6 +6,7 @@ using System.Xml.Linq;
 using Kudu.Contracts.Infrastructure;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+using Newtonsoft.Json.Linq;
 using NuGet.Client.VisualStudio;
 
 namespace Kudu.Contracts.SiteExtensions
@@ -45,6 +46,19 @@ namespace Kudu.Contracts.SiteExtensions
             //{
             //    PublishedDateTime = publishedDateTime;
             //}
+        }
+
+        public SiteExtensionInfo(JObject json)
+        {
+            Id = json.Value<string>("id");
+            Version = json.Value<string>("version");
+            Title = json.Value<string>("title");
+            Description = json.Value<string>("description");
+            Authors = json.Value<string>("authors")?.Split(',').Select(n => n.Trim());
+            ProjectUrl = json.Value<string>("projectUrl");
+            LicenseUrl = json.Value<string>("licenseUrl");
+            Summary = json.Value<string>("description");
+            IconUrl = json.Value<string>("iconUrl") ?? "https://www.siteextensions.net/Content/Images/packageDefaultIcon-50x50.png";
         }
 
         public SiteExtensionInfo(SiteExtensionInfo info)

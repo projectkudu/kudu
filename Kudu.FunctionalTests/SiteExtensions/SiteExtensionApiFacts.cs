@@ -11,6 +11,7 @@ using Kudu.Contracts.Jobs;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.SiteExtensions;
 using Kudu.Core.Infrastructure;
+using Kudu.Core.SiteExtensions;
 using Kudu.FunctionalTests.Infrastructure;
 using Kudu.Services.Arm;
 using Kudu.TestHarness;
@@ -190,6 +191,35 @@ namespace Kudu.FunctionalTests.SiteExtensions
                 Assert.Equal(expectedInstallationArgs, result.InstallationArgs);
                 Assert.True(responseMessage.Headers.Contains(Constants.RequestIdHeader));
             });
+        }
+
+        [Theory]
+        [InlineData("filecounter", null, true)]
+        [InlineData("filecounter", "1.0.19", true)]
+        [InlineData("does.not.exists", null, false)]
+        [InlineData("filecounter", "1.0.0-does.not.exists", false)]
+        //[InlineData("AspNetCoreRuntime.3.0.x64", null, true)]
+        //[InlineData("AspNetCoreRuntime.3.0.x64", "3.0.0-does.not.exists", false)]
+        //[InlineData("AspNetCoreRuntime.3.0.x64", "3.0.0-preview8-19405-7", true)]
+        //[InlineData("AspNetCoreRuntime.3.0.x64", "3.0.0-preview6.19307.2", true)]
+        public async Task SiteExtensionPackageInfoTests(string packageId, string version, bool exists)
+        {
+            TestTracer.Trace($"Testing against feed: '{packageId}', verion: '{version}'");
+
+            var info = await FeedExtensionsV2.GetPackageByIdentity(packageId, version);
+            if (!exists)
+            {
+                Assert.Null(info);
+            }
+            else
+            {
+                Assert.NotNull(info);
+                Assert.Equal(packageId, info.Id);
+                if (!string.IsNullOrEmpty(version))
+                {
+                    Assert.Equal(version, info.Version);
+                }
+            }
         }
 
         [Theory]

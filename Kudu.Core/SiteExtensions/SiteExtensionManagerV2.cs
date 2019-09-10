@@ -100,19 +100,9 @@ namespace Kudu.Core.SiteExtensions
             ITracer tracer = _traceFactory.GetTracer();
             SiteExtensionInfo package = null;
 
-            if (string.IsNullOrWhiteSpace(version))
+            using (tracer.Step("Search package by id: {0} and version: {1}", id, version))
             {
-                using (tracer.Step("Version is null, search latest package by id: {0}", id))
-                {
-                    package = await FeedExtensionsV2.GetLatestPackageByIdFromSrcRepo(id);
-                }
-            }
-            else
-            {
-                using (tracer.Step("Search package by id: {0} and version: {1}", id, version))
-                {
-                    package = await FeedExtensionsV2.GetPackageByIdentity(id, version);
-                }
+                package = await FeedExtensionsV2.GetPackageByIdentity(id, version);
             }
 
             if (package == null)
@@ -260,19 +250,9 @@ namespace Kudu.Core.SiteExtensions
                     feedUrl = (string.IsNullOrEmpty(feedUrl) ? siteExtensionSettings.GetValue(_feedUrlSetting) : feedUrl);
                     IEnumerable<SourceRepository> remoteRepos = GetRemoteRepositories(feedUrl);
 
-                    if (string.IsNullOrWhiteSpace(version))
+                    using (tracer.Step("Search package by id: {0} and version: {1}, will also search for unlisted package.", id, version))
                     {
-                        using (tracer.Step("Version is null, search latest package by id: {0}, will not search for unlisted package.", id))
-                        {
-                            info = await FeedExtensionsV2.GetLatestPackageByIdFromSrcRepo(id);
-                        }
-                    }
-                    else
-                    {
-                        using (tracer.Step("Search package by id: {0} and version: {1}, will also search for unlisted package.", id, version))
-                        {
-                            info = await FeedExtensionsV2.GetPackageByIdentity(id, version);
-                        }
+                        info = await FeedExtensionsV2.GetPackageByIdentity(id, version);
                     }
 
                     if (info != null)
@@ -565,7 +545,7 @@ namespace Kudu.Core.SiteExtensions
             string localPackageInstallationArgs = siteExtensionSettings.GetValue(_installationArgs);
             SemanticVersion localPkgVer = null;
             SemanticVersion lastFoundVer = null;
-            SiteExtensionInfo latestRemotePackage = await FeedExtensionsV2.GetLatestPackageByIdFromSrcRepo(id);
+            SiteExtensionInfo latestRemotePackage = await FeedExtensionsV2.GetPackageByIdentity(id);
             bool isInstalled = false;
 
             // Shortcircuit check: if the installation arguments do not match, then we should return false here to avoid other checks which are now unnecessary.
@@ -857,7 +837,7 @@ namespace Kudu.Core.SiteExtensions
                 try
                 {
                     // FindPackage gets back the latest version.
-                    SiteExtensionInfo latestPackage = await FeedExtensionsV2.GetLatestPackageByIdFromSrcRepo(info.Id);
+                    SiteExtensionInfo latestPackage = await FeedExtensionsV2.GetPackageByIdentity(info.Id);
                     if (latestPackage != null)
                     {
                         if (SemanticVersion.TryParse(info.Version, out SemanticVersion currentVersion)

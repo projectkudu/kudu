@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -14,6 +15,7 @@ using Kudu.Contracts.SiteExtensions;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Tracing;
+using Newtonsoft.Json.Linq;
 using NuGet.Client;
 using NuGet.PackagingCore;
 
@@ -125,23 +127,72 @@ namespace Kudu.Core.SiteExtensions
         }
 
         /// <summary>
-        /// Query source repository for latest package base given package id
-        /// </summary>
-        internal static async Task<SiteExtensionInfo> GetLatestPackageByIdFromSrcRepo(string packageId)
-        {
-            return (await PackageCacheInfo.GetPackagesFromNugetAPI()).FirstOrDefault(a => a.Id != null && a.Id == packageId);
-        }
-
-        /// <summary>
         /// <para>Query source repository for a package base on given package id and version</para>
         /// <para>Will also query pre-release and unlisted packages</para>
         /// </summary>
         /// <param name="packageId">Package id, must not be null</param>
         /// <param name="version">Package version, must not be null</param>
         /// <returns>Package metadata</returns>
-        internal static async Task<SiteExtensionInfo> GetPackageByIdentity(string packageId, string version)
+        public static async Task<SiteExtensionInfo> GetPackageByIdentity(string packageId, string version = null)
         {
-            return (await PackageCacheInfo.GetPackagesFromNugetAPI()).FirstOrDefault(a => a.Id != null && a.Version != null && a.Id == packageId && a.Version == version);
+            if (string.IsNullOrEmpty(version))
+            {
+                return (await PackageCacheInfo.GetPackagesFromNugetAPI()).FirstOrDefault(a => a.Id != null && a.Id == packageId);
+            }
+            else
+            {
+                string address = null;
+                try
+                {
+                    JObject json = null;
+                    using (var client = new HttpClient(new HttpClientHandler { AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate }))
+                    {
+                        address = $"https://azuresearch-usnc.nuget.org/query?q=tags:AzureSiteExtension%20packageid:{packageId}&prerelease=true&semVerLevel=2.0.0";
+                        using (var response = await client.GetAsync(address))
+                        {
+                            response.EnsureSuccessStatusCode();
+                            json = JObject.Parse(await response.Content.ReadAsStringAsync());
+                        }
+
+                        json = (JObject)json.Value<JArray>("data").FirstOrDefault();
+                        if (json == null)
+                        {
+                            return null;
+                        }
+
+                        json = (JObject)json.Value<JArray>("versions").FirstOrDefault(j => j.Value<string>("version") == version);
+                        if (json == null)
+                        {
+                            return null;
+                        }
+
+                        address = json.Value<string>("@id");
+                        using (var response = await client.GetAsync(address))
+                        {
+                            response.EnsureSuccessStatusCode();
+                            json = JObject.Parse(await response.Content.ReadAsStringAsync());
+                        }
+
+                        address = json.Value<string>("catalogEntry");
+                        using (var response = await client.GetAsync(address))
+                        {
+                            response.EnsureSuccessStatusCode();
+                            json = JObject.Parse(await response.Content.ReadAsStringAsync());
+                        }
+
+                        return new SiteExtensionInfo(json);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    if (!string.IsNullOrEmpty(address))
+                    {
+                        throw;
+                    }
+
+                    throw new InvalidOperationException($"Http request to {address} failed with {ex.Message}", ex);
+                }
+            }
         }
 
         /// <summary>
