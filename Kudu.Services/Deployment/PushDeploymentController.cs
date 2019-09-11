@@ -223,7 +223,7 @@ namespace Kudu.Services.Deployment
                     {
                         DeployResult deployResult = new DeployResult();
                         response = Request.CreateResponse(HttpStatusCode.Accepted, ArmUtils.AddEnvelopeOnArmRequest(deployResult, Request));
-                        string statusURL = GetStatusUrl();
+                        string statusURL = GetStatusUrl(Request.Headers.Referrer ?? Request.RequestUri);
                         // Should not happen: If we couldn't make the URL, there must have been an error in the request
                         if (string.IsNullOrEmpty(statusURL))
                         {
@@ -275,16 +275,15 @@ namespace Kudu.Services.Deployment
             return response;
         }
 
-        private string GetStatusUrl()
+        public static string GetStatusUrl(Uri uri)
         {
-            Uri referrer = Request.Headers.Referrer;
-            var armID = referrer != null ? referrer.AbsoluteUri : Request.RequestUri.AbsoluteUri;
+            var armID = uri.AbsoluteUri;
             string[] idTokens = armID.Split('/');
             // The Absolute URI looks like https://management.azure.com/subscriptions/<sub-id>/resourcegroups/<rg-name>/providers/Microsoft.Web/sites/<site-name>/zipdeploy?api-version=2016-03-01
             // We need everything up until <site-name>, without the endpoint.
-            if (idTokens.Length > 10 && idTokens[8] == "Microsoft.Web")
+            if (idTokens.Length > 10 && string.Equals(idTokens[8], "Microsoft.Web", StringComparison.OrdinalIgnoreCase))
             {
-                return string.Join("/", idTokens.Take(11));
+                return string.Join("/", idTokens.Take(idTokens.Length - 1));
             }
             return null;
         }

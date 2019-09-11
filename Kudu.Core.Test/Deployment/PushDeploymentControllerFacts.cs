@@ -87,5 +87,24 @@ namespace Kudu.Core.Test.Deployment
 
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         }
+
+        [Theory]
+        [InlineData(
+            "https://management.azure.com/subscriptions/sub-id/resourcegroups/rg-name/providers/Microsoft.Web/sites/site-name/zipdeploy?api-version=2016-03-01",
+            "https://management.azure.com/subscriptions/sub-id/resourcegroups/rg-name/providers/Microsoft.Web/sites/site-name"
+            )]
+        [InlineData(
+            "https://management.azure.com/subscriptions/sub-id/resourcegroups/rg-name/providers/Microsoft.Web/sites/site-name/slots/staging/zipdeploy?api-version=2016-03-01",
+            "https://management.azure.com/subscriptions/sub-id/resourcegroups/rg-name/providers/Microsoft.Web/sites/site-name/slots/staging"
+            )]
+        [InlineData(
+            "https://management.azure.com/subscriptions/sub-id/resourcegroups/rg-name/providers/Microsoft.Web/sites",
+            null
+            )]
+        public void ZipDeployGetAsyncLocation(string referer, string expected)
+        {
+            var actual = PushDeploymentController.GetStatusUrl(new Uri(referer));
+            Assert.Equal(expected, actual);
+        }
     }
 }
