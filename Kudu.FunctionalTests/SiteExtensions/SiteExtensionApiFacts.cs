@@ -44,9 +44,9 @@ namespace Kudu.FunctionalTests.SiteExtensions
             const string appName = "SiteExtensionV2AndV3FeedTests";
             await ApplicationManager.RunAsync(appName, async appManager =>
             {
-                if (!useSiteExtensionV1)
+                if (useSiteExtensionV1)
                 {
-                    await appManager.SettingsManager.SetValue(SettingsKeys.UseSiteExtensionV2, "1");
+                    await appManager.SettingsManager.SetValue(SettingsKeys.UseSiteExtensionV1, "1");
                 }
 
                 var manager = appManager.SiteExtensionManager;
@@ -95,9 +95,9 @@ namespace Kudu.FunctionalTests.SiteExtensions
 
             await ApplicationManager.RunAsync(appName, async appManager =>
             {
-                if (!useSiteExtensionV1)
+                if (useSiteExtensionV1)
                 {
-                    await appManager.SettingsManager.SetValue(SettingsKeys.UseSiteExtensionV2, "1");
+                    await appManager.SettingsManager.SetValue(SettingsKeys.UseSiteExtensionV1, "1");
                 }
 
                 var manager = appManager.SiteExtensionManager;
@@ -231,9 +231,9 @@ namespace Kudu.FunctionalTests.SiteExtensions
 
             await ApplicationManager.RunAsync(appName, async appManager =>
             {
-                if (!useSiteExtensionV1)
+                if (useSiteExtensionV1)
                 {
-                    await appManager.SettingsManager.SetValue(SettingsKeys.UseSiteExtensionV2, "1");
+                    await appManager.SettingsManager.SetValue(SettingsKeys.UseSiteExtensionV1, "1");
                 }
 
                 var manager = appManager.SiteExtensionManager;
@@ -289,9 +289,9 @@ namespace Kudu.FunctionalTests.SiteExtensions
 
             await ApplicationManager.RunAsync(appName, async appManager =>
             {
-                if (!useSiteExtensionV1)
+                if (useSiteExtensionV1)
                 {
-                    await appManager.SettingsManager.SetValue(SettingsKeys.UseSiteExtensionV2, "1");
+                    await appManager.SettingsManager.SetValue(SettingsKeys.UseSiteExtensionV1, "1");
                 }
 
                 var manager = appManager.SiteExtensionManager;
@@ -376,9 +376,9 @@ namespace Kudu.FunctionalTests.SiteExtensions
 
             await ApplicationManager.RunAsync(appName, async appManager =>
             {
-                if (!useSiteExtensionV1)
+                if (useSiteExtensionV1)
                 {
-                    await appManager.SettingsManager.SetValue(SettingsKeys.UseSiteExtensionV2, "1");
+                    await appManager.SettingsManager.SetValue(SettingsKeys.UseSiteExtensionV1, "1");
                 }
 
                 var manager = appManager.SiteExtensionManager;
@@ -450,9 +450,9 @@ namespace Kudu.FunctionalTests.SiteExtensions
             string[] packageIds = { testPackageId1, testPackageId2, testPackageId3 };
             await ApplicationManager.RunAsync(appName, async appManager =>
             {
-                if (!useSiteExtensionV1)
+                if (useSiteExtensionV1)
                 {
-                    await appManager.SettingsManager.SetValue(SettingsKeys.UseSiteExtensionV2, "1");
+                    await appManager.SettingsManager.SetValue(SettingsKeys.UseSiteExtensionV1, "1");
                 }
 
                 var manager = appManager.SiteExtensionManager;
@@ -518,9 +518,9 @@ namespace Kudu.FunctionalTests.SiteExtensions
 
             await ApplicationManager.RunAsync(appName, async appManager =>
             {
-                if (!useSiteExtensionV1)
+                if (useSiteExtensionV1)
                 {
-                    await appManager.SettingsManager.SetValue(SettingsKeys.UseSiteExtensionV2, "1");
+                    await appManager.SettingsManager.SetValue(SettingsKeys.UseSiteExtensionV1, "1");
                 }
 
                 var manager = appManager.SiteExtensionManager;
@@ -602,9 +602,9 @@ namespace Kudu.FunctionalTests.SiteExtensions
 
             await ApplicationManager.RunAsync(appName, async appManager =>
             {
-                if (!useSiteExtensionV1)
+                if (useSiteExtensionV1)
                 {
-                    await appManager.SettingsManager.SetValue(SettingsKeys.UseSiteExtensionV2, "1");
+                    await appManager.SettingsManager.SetValue(SettingsKeys.UseSiteExtensionV1, "1");
                 }
 
                 var manager = appManager.SiteExtensionManager;
@@ -638,9 +638,9 @@ namespace Kudu.FunctionalTests.SiteExtensions
 
             await ApplicationManager.RunAsync(appName, async appManager =>
             {
-                if (!useSiteExtensionV1)
+                if (useSiteExtensionV1)
                 {
-                    await appManager.SettingsManager.SetValue(SettingsKeys.UseSiteExtensionV2, "1");
+                    await appManager.SettingsManager.SetValue(SettingsKeys.UseSiteExtensionV1, "1");
                 }
 
                 var manager = appManager.SiteExtensionManager;
@@ -717,9 +717,9 @@ namespace Kudu.FunctionalTests.SiteExtensions
 
             await ApplicationManager.RunAsync(appName, async appManager =>
             {
-                if (!useSiteExtensionV1)
+                if (useSiteExtensionV1)
                 {
-                    await appManager.SettingsManager.SetValue(SettingsKeys.UseSiteExtensionV2, "1");
+                    await appManager.SettingsManager.SetValue(SettingsKeys.UseSiteExtensionV1, "1");
                 }
 
                 var manager = appManager.SiteExtensionManager;
@@ -816,9 +816,9 @@ namespace Kudu.FunctionalTests.SiteExtensions
 
             await ApplicationManager.RunAsync(appName, async appManager =>
             {
-                if (!useSiteExtensionV1)
+                if (useSiteExtensionV1)
                 {
-                    await appManager.SettingsManager.SetValue(SettingsKeys.UseSiteExtensionV2, "1");
+                    await appManager.SettingsManager.SetValue(SettingsKeys.UseSiteExtensionV1, "1");
                 }
 
                 var manager = appManager.SiteExtensionManager;
