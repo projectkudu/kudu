@@ -27,9 +27,6 @@ namespace Kudu.Core.SiteExtensions
 {
     public class SiteExtensionManagerV2 : ISiteExtensionManager
     {
-        private static Lazy<IEnumerable<Lazy<INuGetResourceProvider, INuGetResourceProviderMetadata>>> _providers
-            = new Lazy<IEnumerable<Lazy<INuGetResourceProvider, INuGetResourceProviderMetadata>>>(GetNugetProviders);
-
         private readonly IEnvironment _environment;
         private readonly IDeploymentSettingsManager _settings;
         private readonly ITraceFactory _traceFactory;
@@ -248,7 +245,6 @@ namespace Kudu.Core.SiteExtensions
                 {
                     JsonSettings siteExtensionSettings = GetSettingManager(id);
                     feedUrl = (string.IsNullOrEmpty(feedUrl) ? siteExtensionSettings.GetValue(_feedUrlSetting) : feedUrl);
-                    IEnumerable<SourceRepository> remoteRepos = GetRemoteRepositories(feedUrl);
 
                     using (tracer.Step("Search package by id: {0} and version: {1}, will also search for unlisted package.", id, version))
                     {
@@ -654,31 +650,6 @@ namespace Kudu.Core.SiteExtensions
             return await GetLocalExtension(id, checkLatest: false) == null;
         }
 
-        private IEnumerable<SourceRepository> GetRemoteRepositories(string feedUrl)
-        {
-            List<SourceRepository> repos = new List<SourceRepository>();
-
-            if (!string.IsNullOrWhiteSpace(feedUrl))
-            {
-                repos.Add(GetSourceRepository(feedUrl));
-            }
-            else
-            {
-                // The remote feed URL can either be the default siteextensions.net, or some user override via
-                // SCM_SITEEXTENSIONS_FEED_URL. We only want to add nuget.org to the list if the user
-                // is *not* overriding the feed URL
-                // UPDATE 8/2018: we no longer use siteextension.net, per https://github.com/Azure/app-service-announcements/issues/87
-                // GetSiteExtensionRemoteUrl() now returns the NuGet feed by default
-                string remoteUrl = _settings.GetSiteExtensionRemoteUrl(out bool isDefault);
-                if (isDefault)
-                {
-                    //repos.Add(GetSourceRepository(DeploymentSettingsExtension.NuGetSiteExtensionFeedUrl));
-                }
-                repos.Add(GetSourceRepository(remoteUrl));
-            }
-            return repos;
-        }
-
         private string GetInstallationDirectory(string id)
         {
             return Path.Combine(_rootPath, id);
@@ -819,17 +790,6 @@ namespace Kudu.Core.SiteExtensions
                 && SiteExtensionInfo.SiteExtensionType.WebRoot == packageType);
         }
 
-        /// <summary>
-        /// Create SourceRepository from given feed endpoint
-        /// </summary>
-        /// <param name="feedEndpoint">V2 or V3 feed endpoint</param>
-        /// <returns>SourceRepository object</returns>
-        private static SourceRepository GetSourceRepository(string feedEndpoint)
-        {
-            NuGet.Configuration.PackageSource source = new NuGet.Configuration.PackageSource(feedEndpoint);
-            return new SourceRepository(source, _providers.Value);
-        }
-
         private static async Task TryCheckLocalPackageLatestVersionFromRemote(SiteExtensionInfo info, bool checkLatest = true, ITracer tracer = null)
         {
             if (checkLatest)
@@ -858,15 +818,6 @@ namespace Kudu.Core.SiteExtensions
                     }
                 }
             }
-        }
-
-        private static IEnumerable<Lazy<INuGetResourceProvider, INuGetResourceProviderMetadata>> GetNugetProviders()
-        {
-            var aggregateCatalog = new AggregateCatalog();
-            var directoryCatalog = new DirectoryCatalog(HttpRuntime.BinDirectory, "NuGet.Client*.dll");
-            aggregateCatalog.Catalogs.Add(directoryCatalog);
-            var container = new CompositionContainer(aggregateCatalog);
-            return container.GetExports<INuGetResourceProvider, INuGetResourceProviderMetadata>();
         }
     }
 }
