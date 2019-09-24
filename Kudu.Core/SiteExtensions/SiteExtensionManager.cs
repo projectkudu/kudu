@@ -7,6 +7,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
@@ -69,6 +70,13 @@ namespace Kudu.Core.SiteExtensions
             _settings = settings;
             _traceFactory = traceFactory;
             _analytics = analytics;
+        }
+
+        // This is for mock testing only
+        public static string BinDirectory
+        {
+            get;
+            set;
         }
 
         public async Task<IEnumerable<SiteExtensionInfo>> GetRemoteExtensions(string filter, bool allowPrereleaseVersions, string feedUrl)
@@ -988,7 +996,7 @@ namespace Kudu.Core.SiteExtensions
         /// </summary>
         /// <param name="feedEndpoint">V2 or V3 feed endpoint</param>
         /// <returns>SourceRepository object</returns>
-        private static SourceRepository GetSourceRepository(string feedEndpoint)
+        public static SourceRepository GetSourceRepository(string feedEndpoint)
         {
             NuGet.Configuration.PackageSource source = new NuGet.Configuration.PackageSource(feedEndpoint);
             return new SourceRepository(source, _providers.Value);
@@ -997,7 +1005,12 @@ namespace Kudu.Core.SiteExtensions
         private static IEnumerable<Lazy<INuGetResourceProvider, INuGetResourceProviderMetadata>> GetNugetProviders()
         {
             var aggregateCatalog = new AggregateCatalog();
-            var directoryCatalog = new DirectoryCatalog(HttpRuntime.BinDirectory, "NuGet.Client*.dll");
+            var path = BinDirectory;
+            if (string.IsNullOrEmpty(path))
+            {
+                path = HttpRuntime.BinDirectory;
+            }
+            var directoryCatalog = new DirectoryCatalog(path, "NuGet.Client*.dll");
             aggregateCatalog.Catalogs.Add(directoryCatalog);
             var container = new CompositionContainer(aggregateCatalog);
             return container.GetExports<INuGetResourceProvider, INuGetResourceProviderMetadata>();

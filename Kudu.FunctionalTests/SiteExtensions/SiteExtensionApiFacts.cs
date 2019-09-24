@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -197,7 +198,11 @@ namespace Kudu.FunctionalTests.SiteExtensions
         [InlineData("filecounter", null, true)]
         [InlineData("filecounter", "1.0.19", true)]
         [InlineData("does.not.exists", null, false)]
-        [InlineData("filecounter", "1.0.0-does.not.exists", false)]
+        [InlineData("filecounter", "1.0.0-does-not-exists", false)]
+        [InlineData("AspNetCoreRuntime", null, true)]
+        [InlineData("Microsoft.ApplicationInsights.AzureWebSites", null, true)]
+        [InlineData("SawExtension", null, false)]
+        [InlineData("Tinfoil", null, true)]
         //[InlineData("AspNetCoreRuntime.3.0.x64", null, true)]
         //[InlineData("AspNetCoreRuntime.3.0.x64", "3.0.0-does.not.exists", false)]
         //[InlineData("AspNetCoreRuntime.3.0.x64", "3.0.0-preview8-19405-7", true)]
@@ -206,19 +211,27 @@ namespace Kudu.FunctionalTests.SiteExtensions
         {
             TestTracer.Trace($"Testing against feed: '{packageId}', verion: '{version}'");
 
-            var info = await FeedExtensionsV2.GetPackageByIdentity(packageId, version);
-            if (!exists)
+            SiteExtensionManager.BinDirectory = Directory.GetCurrentDirectory();
+            try
             {
-                Assert.Null(info);
-            }
-            else
-            {
-                Assert.NotNull(info);
-                Assert.Equal(packageId, info.Id);
-                if (!string.IsNullOrEmpty(version))
+                var info = await SiteExtensionManagerV2.GetSiteExtensionInfoFromRemote(packageId, version);
+                if (!exists)
                 {
-                    Assert.Equal(version, info.Version);
+                    Assert.Null(info);
                 }
+                else
+                {
+                    Assert.NotNull(info);
+                    Assert.Equal(packageId, info.Id);
+                    if (!string.IsNullOrEmpty(version))
+                    {
+                        Assert.Equal(version, info.Version);
+                    }
+                }
+            }
+            finally
+            {
+                SiteExtensionManager.BinDirectory = null;
             }
         }
 
