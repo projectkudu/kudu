@@ -80,7 +80,6 @@ namespace Kudu.Core.SiteExtensions
                 extensions = await FeedExtensionsV2.PackageCacheInfo.GetPackagesFromNugetAPI(filter, feedUrl);
             }
 
-
             foreach (var ext in extensions)
             {
                 await SetLocalInfo(ext);
