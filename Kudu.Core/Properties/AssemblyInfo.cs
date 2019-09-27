@@ -5,3 +5,4 @@ using System.Runtime.CompilerServices;
 [assembly: AssemblyDescription("Core APIs for Kudu.")]
 [assembly: InternalsVisibleTo("Kudu.Core.Test")]
 [assembly: InternalsVisibleTo("Kudu.TestHarness")]
+[assembly: InternalsVisibleTo("Kudu.Services.Test")]

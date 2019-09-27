@@ -25,7 +25,7 @@ namespace Kudu.Core.Helpers
     {
         public const string AutoSwapLockFile = "autoswap.lock";
 
-        private static Lazy<ProductInfoHeaderValue> _userAgent = new Lazy<ProductInfoHeaderValue>(() =>
+        internal static Lazy<ProductInfoHeaderValue> UserAgent = new Lazy<ProductInfoHeaderValue>(() =>
         {
             var assembly = Assembly.GetExecutingAssembly();
             var fvi = FileVersionInfo.GetVersionInfo(assembly.Location);
@@ -48,7 +48,7 @@ namespace Kudu.Core.Helpers
         }
 
         // HTTP_HOST = site.scm.azurewebsites.net
-        private static string HttpHost
+        internal static string HttpHost
         {
             get { return System.Environment.GetEnvironmentVariable(Constants.HttpHost); }
         }
@@ -237,7 +237,7 @@ namespace Kudu.Core.Helpers
 
                 using (var client = HttpClientFactory())
                 {
-                    client.DefaultRequestHeaders.UserAgent.Add(_userAgent.Value);
+                    client.DefaultRequestHeaders.UserAgent.Add(UserAgent.Value);
                     client.DefaultRequestHeaders.Add(Constants.ClientRequestIdHeader, requestId);
 
                     var payload = new StringContent(content ?? string.Empty, Encoding.UTF8, "application/json");
@@ -435,7 +435,7 @@ namespace Kudu.Core.Helpers
                         client.DefaultRequestHeaders.Host = host;
                     }
 
-                    client.DefaultRequestHeaders.UserAgent.Add(_userAgent.Value);
+                    client.DefaultRequestHeaders.UserAgent.Add(UserAgent.Value);
                     client.DefaultRequestHeaders.Add(Constants.SiteRestrictedToken, SimpleWebTokenHelper.CreateToken(DateTime.UtcNow.AddMinutes(5)));
                     client.DefaultRequestHeaders.Add(Constants.RequestIdHeader, requestId);
 

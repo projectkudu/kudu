@@ -20,6 +20,11 @@ namespace Kudu.Core.Infrastructure
             "The last modification Kudu made to this file was at {0}, for the following reason: {1}.",
             System.Environment.NewLine);
 
+        public static string GetRestartFilePath(IEnvironment environment)
+        {
+            return Path.Combine(environment.SiteRootPath, CONFIG_DIR_NAME, TRIGGER_FILENAME);
+        }
+
         public static void RequestContainerRestart(IEnvironment environment, string reason)
         {
             if (OSDetector.IsOnWindows() && !EnvironmentHelper.IsWindowsContainers())
@@ -27,7 +32,7 @@ namespace Kudu.Core.Infrastructure
                 throw new NotSupportedException("RequestContainerRestart is only supported on Linux and Windows Containers");
             }
 
-            var restartTriggerPath = Path.Combine(environment.SiteRootPath, CONFIG_DIR_NAME, TRIGGER_FILENAME);
+            var restartTriggerPath = GetRestartFilePath(environment);
 
             FileSystemHelpers.CreateDirectory(Path.GetDirectoryName(restartTriggerPath));
 

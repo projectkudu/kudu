@@ -27,18 +27,6 @@ namespace Kudu.Core.Helpers
         // Is this a Windows Containers site?
         public static bool IsWindowsContainers()
         {
-            // OLD WAY: This can be removed after ANT84
-            string xenonVarString = System.Environment.GetEnvironmentVariable("XENON");
-            int xenonVarValue;
-            if (xenonVarString != null && int.TryParse(xenonVarString, out xenonVarValue))
-            {
-                if (xenonVarValue == 1)
-                {
-                    return true;
-                }
-            }
-
-            // NEW WAY
             string isolation = System.Environment.GetEnvironmentVariable("WEBSITE_ISOLATION");
             return isolation == "hyperv" || isolation == "process";
         }
