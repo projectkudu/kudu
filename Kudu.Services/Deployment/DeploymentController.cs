@@ -433,7 +433,14 @@ namespace Kudu.Services.Deployment
                 if (IsLatestPendingDeployment(ref id, out pending))
                 {
                     var response = Request.CreateResponse(HttpStatusCode.Accepted, ArmUtils.AddEnvelopeOnArmRequest(pending, Request));
-                    response.Headers.Location = Request.RequestUri;
+                    if (ArmUtils.IsArmRequest(Request) && Request.Headers.Referrer != null && Request.Headers.Referrer.AbsolutePath.EndsWith(Constants.LatestDeployment, StringComparison.OrdinalIgnoreCase))
+                    {
+                        response.Headers.Location = Request.Headers.Referrer;
+                    }
+                    else
+                    {
+                        response.Headers.Location = Request.RequestUri;
+                    }
                     return response;
                 }
 
