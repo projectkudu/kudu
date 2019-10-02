@@ -41,12 +41,21 @@
     {
         <script>
             $.serverOS = "windows";
+            $.isolation = "pico";
+        </script>
+    }
+    else if (Kudu.Core.Helpers.EnvironmentHelper.IsWindowsContainers())
+    {
+        <script>
+            $.serverOS = "windows";
+            $.isolation = "hyperv";
         </script>
     }
     else
     {
         <script>
             $.serverOS = "linux";
+            $.isolation = "none";
         </script>
     }
 </head>
@@ -91,12 +100,9 @@
                     }
                     else if (Kudu.Core.Helpers.OSDetector.IsOnWindows() && Kudu.Core.Helpers.EnvironmentHelper.IsWindowsContainers())
                     {
-                        <li class="dropdown">
-                            <a href="#" data-toggle="dropdown" class="dropdown-toggle">Debug console <b class="caret"></b></a>
-                            <ul class="dropdown-menu">
-                                <li><a href="~/webssh/host">SSH</a></li>
-                            </ul>
-                        </li>
+                        <li><a href="~/DebugConsole">Console</a></li>
+                        <li><a href="~/webssh/host">SSH</a></li>
+                        <li><a href="~/api/logstream">Log stream</a></li>
                     }
                     else
                     {
