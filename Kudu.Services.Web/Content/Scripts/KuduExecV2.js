@@ -7,7 +7,14 @@ function SwitchConsole() {
         LoadConsole();
     } else {
         window.$KuduExecConsole.replaceWith("<div id=\"KuduExecConsoleV2\" class=\"left-aligned\"></div>");
-        $('#SwitchConsoleLink').text("Use old console");
+        
+        if ($.isolation === "hyperv") {
+            $('#SwitchConsoleLink').text("");
+        }
+        else {
+            $('#SwitchConsoleLink').text("Use old console");
+        }
+
         LoadConsoleV2();
     }
 }

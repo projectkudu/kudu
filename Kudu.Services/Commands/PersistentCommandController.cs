@@ -106,7 +106,11 @@ namespace Kudu.Services
                 WorkingDirectory = _environment.RootPath
             };
 
-            if (shell.Equals("powershell", StringComparison.OrdinalIgnoreCase))
+            if (Kudu.Core.Helpers.EnvironmentHelper.IsWindowsContainers())
+            {
+                startInfo.FileName = System.Environment.ExpandEnvironmentVariables(@"%ProgramFiles%\IIS\Microsoft Web Hosting Framework\Containers\Diagnostics\Microsoft.Windows.Containers.Console.exe");
+            }
+            else if (shell.Equals("powershell", StringComparison.OrdinalIgnoreCase))
             {
                 startInfo.FileName = System.Environment.ExpandEnvironmentVariables(@"%windir%\System32\WindowsPowerShell\v1.0\powershell.exe");
                 startInfo.Arguments = "-ExecutionPolicy RemoteSigned -File -";
