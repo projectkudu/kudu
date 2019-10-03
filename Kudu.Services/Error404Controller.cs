@@ -9,6 +9,15 @@ namespace Kudu.Services
         [HttpGet, HttpPatch, HttpPost, HttpPut, HttpDelete]
         public HttpResponseMessage Handle()
         {
+            // Mock few paths. For development purposes only.
+            if (this.Request.RequestUri.IsLoopback)
+            {
+                if (this.Request.RequestUri.AbsolutePath.Equals(Constants.RestartApiPath, System.StringComparison.OrdinalIgnoreCase))
+                {
+                    return this.Request.CreateResponse(HttpStatusCode.OK);
+                }
+            }
+
             return Request.CreateResponse(HttpStatusCode.NotFound, "No route registered for '" + Request.RequestUri.PathAndQuery + "'");
         }
     }
