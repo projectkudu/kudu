@@ -279,11 +279,17 @@ namespace Kudu.Services.Deployment
         {
             var armID = uri.AbsoluteUri;
             string[] idTokens = armID.Split('/');
-            // The Absolute URI looks like https://management.azure.com/subscriptions/<sub-id>/resourcegroups/<rg-name>/providers/Microsoft.Web/sites/<site-name>/zipdeploy?api-version=2016-03-01
+            // The Absolute URI looks like https://management.azure.com/subscriptions/<sub-id>/resourcegroups/<rg-name>/providers/Microsoft.Web/sites/<site-name>/extensions/zipdeploy?api-version=2016-03-01
+            // or https://management.azure.com/subscriptions/<sub-id>/resourcegroups/<rg-name>/providers/Microsoft.Web/sites/<site-name>/slots/<slot-name>/extensions/zipdeploy?api-version=2016-03-01
             // We need everything up until <site-name>, without the endpoint.
             if (idTokens.Length > 10 && string.Equals(idTokens[8], "Microsoft.Web", StringComparison.OrdinalIgnoreCase))
             {
-                return string.Join("/", idTokens.Take(idTokens.Length - 1));
+                if (idTokens.Length > 12 && string.Equals(idTokens[11], "slots", StringComparison.OrdinalIgnoreCase))
+                {
+                    return string.Join("/", idTokens.Take(13));
+                }
+
+                return string.Join("/", idTokens.Take(11));
             }
             return null;
         }

@@ -667,12 +667,14 @@ namespace Kudu.Services.Web.App_Start
             var settings = kernel.Get<IDeploymentSettingsManager>();
             if (settings.GetUseSiteExtensionV2())
             {
-                return kernel.Get<SiteExtensionManagerV2>();
+                if (!string.IsNullOrEmpty(settings.GetSiteExtensionRemoteUrl(out bool isDefault))
+                    && isDefault)
+                {
+                    return kernel.Get<SiteExtensionManagerV2>();
+                }
             }
-            else
-            {
-                return kernel.Get<SiteExtensionManager>();
-            }
+
+            return kernel.Get<SiteExtensionManager>();
         }
 
         private static ITracer GetTracer(IKernel kernel)

@@ -21,15 +21,13 @@ using Kudu.Core.Settings;
 using Kudu.Core.Tracing;
 using Newtonsoft.Json.Linq;
 using NuGet.Client;
+using NuGet.Client.VisualStudio;
 using NullLogger = Kudu.Core.Deployment.NullLogger;
 
 namespace Kudu.Core.SiteExtensions
 {
     public class SiteExtensionManagerV2 : ISiteExtensionManager
     {
-        private static Lazy<IEnumerable<Lazy<INuGetResourceProvider, INuGetResourceProviderMetadata>>> _providers
-            = new Lazy<IEnumerable<Lazy<INuGetResourceProvider, INuGetResourceProviderMetadata>>>(GetNugetProviders);
-
         private readonly IEnvironment _environment;
         private readonly IDeploymentSettingsManager _settings;
         private readonly ITraceFactory _traceFactory;
@@ -82,7 +80,6 @@ namespace Kudu.Core.SiteExtensions
                 extensions = await FeedExtensionsV2.PackageCacheInfo.GetPackagesFromNugetAPI(filter, feedUrl);
             }
 
-
             foreach (var ext in extensions)
             {
                 await SetLocalInfo(ext);
@@ -98,12 +95,7 @@ namespace Kudu.Core.SiteExtensions
         public async Task<SiteExtensionInfo> GetRemoteExtension(string id, string version, string feedUrl)
         {
             ITracer tracer = _traceFactory.GetTracer();
-            SiteExtensionInfo package = null;
-
-            using (tracer.Step("Search package by id: {0} and version: {1}", id, version))
-            {
-                package = await FeedExtensionsV2.GetPackageByIdentity(id, version);
-            }
+            SiteExtensionInfo package = await GetSiteExtensionInfoFromRemote(id, version, tracer);
 
             if (package == null)
             {
@@ -248,12 +240,7 @@ namespace Kudu.Core.SiteExtensions
                 {
                     JsonSettings siteExtensionSettings = GetSettingManager(id);
                     feedUrl = (string.IsNullOrEmpty(feedUrl) ? siteExtensionSettings.GetValue(_feedUrlSetting) : feedUrl);
-                    IEnumerable<SourceRepository> remoteRepos = GetRemoteRepositories(feedUrl);
-
-                    using (tracer.Step("Search package by id: {0} and version: {1}, will also search for unlisted package.", id, version))
-                    {
-                        info = await FeedExtensionsV2.GetPackageByIdentity(id, version);
-                    }
+                    info = await GetSiteExtensionInfoFromRemote(id, version, tracer);
 
                     if (info != null)
                     {
@@ -545,7 +532,7 @@ namespace Kudu.Core.SiteExtensions
             string localPackageInstallationArgs = siteExtensionSettings.GetValue(_installationArgs);
             SemanticVersion localPkgVer = null;
             SemanticVersion lastFoundVer = null;
-            SiteExtensionInfo latestRemotePackage = await FeedExtensionsV2.GetPackageByIdentity(id);
+            SiteExtensionInfo latestRemotePackage = await GetSiteExtensionInfoFromRemote(id);
             bool isInstalled = false;
 
             // Shortcircuit check: if the installation arguments do not match, then we should return false here to avoid other checks which are now unnecessary.
@@ -652,31 +639,6 @@ namespace Kudu.Core.SiteExtensions
             }
 
             return await GetLocalExtension(id, checkLatest: false) == null;
-        }
-
-        private IEnumerable<SourceRepository> GetRemoteRepositories(string feedUrl)
-        {
-            List<SourceRepository> repos = new List<SourceRepository>();
-
-            if (!string.IsNullOrWhiteSpace(feedUrl))
-            {
-                repos.Add(GetSourceRepository(feedUrl));
-            }
-            else
-            {
-                // The remote feed URL can either be the default siteextensions.net, or some user override via
-                // SCM_SITEEXTENSIONS_FEED_URL. We only want to add nuget.org to the list if the user
-                // is *not* overriding the feed URL
-                // UPDATE 8/2018: we no longer use siteextension.net, per https://github.com/Azure/app-service-announcements/issues/87
-                // GetSiteExtensionRemoteUrl() now returns the NuGet feed by default
-                string remoteUrl = _settings.GetSiteExtensionRemoteUrl(out bool isDefault);
-                if (isDefault)
-                {
-                    //repos.Add(GetSourceRepository(DeploymentSettingsExtension.NuGetSiteExtensionFeedUrl));
-                }
-                repos.Add(GetSourceRepository(remoteUrl));
-            }
-            return repos;
         }
 
         private string GetInstallationDirectory(string id)
@@ -819,17 +781,6 @@ namespace Kudu.Core.SiteExtensions
                 && SiteExtensionInfo.SiteExtensionType.WebRoot == packageType);
         }
 
-        /// <summary>
-        /// Create SourceRepository from given feed endpoint
-        /// </summary>
-        /// <param name="feedEndpoint">V2 or V3 feed endpoint</param>
-        /// <returns>SourceRepository object</returns>
-        private static SourceRepository GetSourceRepository(string feedEndpoint)
-        {
-            NuGet.Configuration.PackageSource source = new NuGet.Configuration.PackageSource(feedEndpoint);
-            return new SourceRepository(source, _providers.Value);
-        }
-
         private static async Task TryCheckLocalPackageLatestVersionFromRemote(SiteExtensionInfo info, bool checkLatest = true, ITracer tracer = null)
         {
             if (checkLatest)
@@ -837,7 +788,7 @@ namespace Kudu.Core.SiteExtensions
                 try
                 {
                     // FindPackage gets back the latest version.
-                    SiteExtensionInfo latestPackage = await FeedExtensionsV2.GetPackageByIdentity(info.Id);
+                    SiteExtensionInfo latestPackage = await GetSiteExtensionInfoFromRemote(info.Id);
                     if (latestPackage != null)
                     {
                         if (SemanticVersion.TryParse(info.Version, out SemanticVersion currentVersion)
@@ -860,13 +811,44 @@ namespace Kudu.Core.SiteExtensions
             }
         }
 
-        private static IEnumerable<Lazy<INuGetResourceProvider, INuGetResourceProviderMetadata>> GetNugetProviders()
+        public static async Task<SiteExtensionInfo> GetSiteExtensionInfoFromRemote(string id, string version = null, ITracer tracer = null)
         {
-            var aggregateCatalog = new AggregateCatalog();
-            var directoryCatalog = new DirectoryCatalog(HttpRuntime.BinDirectory, "NuGet.Client*.dll");
-            aggregateCatalog.Catalogs.Add(directoryCatalog);
-            var container = new CompositionContainer(aggregateCatalog);
-            return container.GetExports<INuGetResourceProvider, INuGetResourceProviderMetadata>();
+            tracer = tracer ?? NullTracer.Instance;
+
+            SiteExtensionInfo info = null;
+            using (tracer.Step("FeedExtensionsV2 search package by id: {0} and version: {1}.", id, version))
+            {
+                info = await FeedExtensionsV2.GetPackageByIdentity(id, version);
+            }
+
+            if (info == null)
+            {
+                using (tracer.Step("Fallback to FeedExtensionsV1 search package by id: {0} and version: {1}.", id, version))
+                {
+                    UIPackageMetadata data;
+                    var remoteRepo = SiteExtensionManager.GetSourceRepository(DeploymentSettingsExtension.NuGetSiteExtensionFeedUrl);
+                    if (string.IsNullOrEmpty(version))
+                    {
+                        data = await remoteRepo.GetLatestPackageByIdFromSrcRepo(id);
+                    }
+                    else
+                    {
+                        data = await remoteRepo.GetPackageByIdentity(id, version);
+                    }
+
+                    if (data != null)
+                    {
+                        info = new SiteExtensionInfo(data);
+                    }
+                }
+            }
+
+            if (info == null)
+            {
+                tracer.TraceWarning("Cannot find search package by id: {0} and version: {1}.", id, version);
+            }
+
+            return info;
         }
     }
 }

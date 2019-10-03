@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -197,7 +198,12 @@ namespace Kudu.FunctionalTests.SiteExtensions
         [InlineData("filecounter", null, true)]
         [InlineData("filecounter", "1.0.19", true)]
         [InlineData("does.not.exists", null, false)]
-        [InlineData("filecounter", "1.0.0-does.not.exists", false)]
+        [InlineData("filecounter", "1.0.0-does-not-exists", false)]
+        [InlineData("AspNetCoreRuntime", null, true)]
+        [InlineData("Microsoft.ApplicationInsights.AzureWebSites", null, true)]
+        [InlineData("SawExtension", null, false)]
+        [InlineData("Tinfoil", null, true)]
+        [InlineData("NewRelic.Azure.WebSites", null, false)]
         //[InlineData("AspNetCoreRuntime.3.0.x64", null, true)]
         //[InlineData("AspNetCoreRuntime.3.0.x64", "3.0.0-does.not.exists", false)]
         //[InlineData("AspNetCoreRuntime.3.0.x64", "3.0.0-preview8-19405-7", true)]
@@ -206,19 +212,27 @@ namespace Kudu.FunctionalTests.SiteExtensions
         {
             TestTracer.Trace($"Testing against feed: '{packageId}', verion: '{version}'");
 
-            var info = await FeedExtensionsV2.GetPackageByIdentity(packageId, version);
-            if (!exists)
+            SiteExtensionManager.BinDirectory = Directory.GetCurrentDirectory();
+            try
             {
-                Assert.Null(info);
-            }
-            else
-            {
-                Assert.NotNull(info);
-                Assert.Equal(packageId, info.Id);
-                if (!string.IsNullOrEmpty(version))
+                var info = await SiteExtensionManagerV2.GetSiteExtensionInfoFromRemote(packageId, version);
+                if (!exists)
                 {
-                    Assert.Equal(version, info.Version);
+                    Assert.Null(info);
                 }
+                else
+                {
+                    Assert.NotNull(info);
+                    Assert.Equal(packageId, info.Id);
+                    if (!string.IsNullOrEmpty(version))
+                    {
+                        Assert.Equal(version, info.Version);
+                    }
+                }
+            }
+            finally
+            {
+                SiteExtensionManager.BinDirectory = null;
             }
         }
 
@@ -812,7 +826,6 @@ namespace Kudu.FunctionalTests.SiteExtensions
             const string appName = "SiteExtensionNugetOrgTest";
             const string nonSiteExtensionPackage = "NewRelic.Azure.WebSites";
             const string siteExtensionPackage = "filecounter";  // known-good entry on www.nuget.org
-            const string feedEndpoint = "https://www.nuget.org/api/v2";
 
             await ApplicationManager.RunAsync(appName, async appManager =>
             {
@@ -826,15 +839,15 @@ namespace Kudu.FunctionalTests.SiteExtensions
 
                 // Ensure we don't find non-AzureSiteExtension package on www.nuget.org
                 TestTracer.Trace("Search extensions by id: '{0}'", nonSiteExtensionPackage);
-                HttpResponseMessage responseMessage = await manager.GetRemoteExtensions(filter: nonSiteExtensionPackage, feedUrl: feedEndpoint);
+                HttpResponseMessage responseMessage = await manager.GetRemoteExtensions(filter: nonSiteExtensionPackage);
                 IEnumerable<SiteExtensionInfo> results = await responseMessage.Content.ReadAsAsync<IEnumerable<SiteExtensionInfo>>();
-                Assert.True(results.Count() == 0, string.Format("We shouldn't find package '{0}' on www.nuget.org", nonSiteExtensionPackage));
+                Assert.True(results.Count(r => string.Equals(r.Id, nonSiteExtensionPackage, StringComparison.OrdinalIgnoreCase)) == 0, string.Format("We shouldn't find package '{0}' on www.nuget.org", nonSiteExtensionPackage));
 
                 // Ensure we *do* find a known-AzureSiteExtension package on www.nuget.org
                 TestTracer.Trace("Search extensions by id: '{0}'", siteExtensionPackage);
-                responseMessage = await manager.GetRemoteExtensions(filter: siteExtensionPackage, feedUrl: feedEndpoint);
+                responseMessage = await manager.GetRemoteExtensions(filter: siteExtensionPackage);
                 results = await responseMessage.Content.ReadAsAsync<IEnumerable<SiteExtensionInfo>>();
-                Assert.True(results.Count() >= 0, string.Format("We should find package '{0}' on www.nuget.org", siteExtensionPackage));
+                Assert.True(results.Count(r => string.Equals(r.Id, siteExtensionPackage, StringComparison.OrdinalIgnoreCase)) >= 0, string.Format("We should find package '{0}' on www.nuget.org", siteExtensionPackage));
             });
         }
 

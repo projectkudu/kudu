@@ -90,11 +90,11 @@ namespace Kudu.Core.Test.Deployment
 
         [Theory]
         [InlineData(
-            "https://management.azure.com/subscriptions/sub-id/resourcegroups/rg-name/providers/Microsoft.Web/sites/site-name/zipdeploy?api-version=2016-03-01",
+            "https://management.azure.com/subscriptions/sub-id/resourcegroups/rg-name/providers/Microsoft.Web/sites/site-name/extensions/zipdeploy?api-version=2016-03-01",
             "https://management.azure.com/subscriptions/sub-id/resourcegroups/rg-name/providers/Microsoft.Web/sites/site-name"
             )]
         [InlineData(
-            "https://management.azure.com/subscriptions/sub-id/resourcegroups/rg-name/providers/Microsoft.Web/sites/site-name/slots/staging/zipdeploy?api-version=2016-03-01",
+            "https://management.azure.com/subscriptions/sub-id/resourcegroups/rg-name/providers/Microsoft.Web/sites/site-name/slots/staging/extensions/zipdeploy?api-version=2016-03-01",
             "https://management.azure.com/subscriptions/sub-id/resourcegroups/rg-name/providers/Microsoft.Web/sites/site-name/slots/staging"
             )]
         [InlineData(
