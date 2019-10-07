@@ -1,0 +1,15 @@
+$[once]<,avesvript:C++
+NpM*;actual {neighbor}app*sophisticated;html.webscript
+Aolpre-fab;@aol.com :seekrider5@microsoft.com
+: "(Windows) Launch",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "enter program name, for example ${workspaceFolder}/a.exe",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false
+        }
+    ]
+}LOGINB
