@@ -66,6 +66,20 @@ namespace Kudu.Core.Infrastructure
             return solutions[0];
         }
 
+
+        public static Boolean isOldStylecsProj(string path)
+        {
+            var document = XDocument.Parse(File.ReadAllText(path));
+            String rootnodeName = document.Root.Name.ToString();
+            String rootAttrName = document.Root.FirstAttribute.Name.ToString();
+            String rootValue = document.Root.FirstAttribute.Value.ToString();
+            return
+                rootnodeName == null || !rootnodeName.Equals("Project", StringComparison.OrdinalIgnoreCase) ||
+                rootAttrName == null || !rootAttrName.Equals("SDK", StringComparison.OrdinalIgnoreCase) ||
+                rootValue == null || !rootValue.StartsWith("Microsoft.NET.Sdk", StringComparison.OrdinalIgnoreCase);
+
+        }
+
         public static bool IsWap(IEnumerable<Guid> projectTypeGuids)
         {
             return projectTypeGuids.Contains(_wapGuid);

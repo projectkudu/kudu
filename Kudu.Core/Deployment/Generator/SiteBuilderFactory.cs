@@ -108,12 +108,24 @@ namespace Kudu.Core.Deployment.Generator
                 project = solution.Projects.Where(p => p.IsExecutable).FirstOrDefault();
                 if (project != null)
                 {
-                    return new DotNetConsoleBuilder(_environment,
-                                              settings,
-                                              _propertyProvider,
-                                              repositoryRoot,
-                                              project.AbsolutePath,
-                                              solution.Path);
+                    if (project.IsOldStyleCSProj)
+                    {
+                        return new MSBuildConsoleBuilder(_environment,
+                                                          settings,
+                                                          _propertyProvider,
+                                                          repositoryRoot,
+                                                          project.AbsolutePath,
+                                                          solution.Path);
+                    }
+                    else
+                    {
+                        return new DotNetConsoleBuilder(_environment,
+                                                          settings,
+                                                          _propertyProvider,
+                                                          repositoryRoot,
+                                                          project.AbsolutePath,
+                                                          solution.Path);
+                    }
                 }
 
                 logger.Log(Resources.Log_NoDeployableProjects, solution.Path);
@@ -153,12 +165,24 @@ namespace Kudu.Core.Deployment.Generator
                                       solution.Path);
             }
 
-            return new FunctionMsbuildBuilder(_environment,
-                                            settings,
-                                            _propertyProvider,
-                                            repositoryRoot,
-                                            project.AbsolutePath,
-                                            solution.Path);
+            if (FunctionAppHelper.IsCSharpFunctionFromProjectFile(project.AbsolutePath) && !VsHelper.isOldStylecsProj(project.AbsolutePath))
+            {
+                return new FunctionDotnetBuilder(_environment,
+                                      settings,
+                                      _propertyProvider,
+                                      repositoryRoot,
+                                      project.AbsolutePath,
+                                      solution.Path);
+            }
+            else
+            {
+                // csx or node function with extensions.csproj
+                return new FunctionBasicBuilder(_environment,
+                                        settings,
+                                        _propertyProvider,
+                                        repositoryRoot,
+                                        Path.GetDirectoryName(project.AbsolutePath));
+            }
         }
 
         private ISiteBuilder ResolveNonAspProject(string repositoryRoot, string projectPath, IDeploymentSettingsManager perDeploymentSettings)
@@ -324,7 +348,7 @@ namespace Kudu.Core.Deployment.Generator
                                             targetPath,
                                             solutionPath);
             }
-            else if (VsHelper.IsExecutableProject(targetPath))
+            else if (VsHelper.IsExecutableProject(targetPath) && !VsHelper.isOldStylecsProj(targetPath))
             {
                 // This is a console app
                 return new DotNetConsoleBuilder(_environment,
@@ -334,11 +358,21 @@ namespace Kudu.Core.Deployment.Generator
                                       targetPath,
                                       solutionPath);
             }
+            else if (VsHelper.IsExecutableProject(targetPath) && VsHelper.isOldStylecsProj(targetPath))
+            {
+                // This is a console app with old style cs proj
+                return new MSBuildConsoleBuilder(_environment,
+                                      perDeploymentSettings,
+                                      _propertyProvider,
+                                      repositoryRoot,
+                                      targetPath,
+                                      solutionPath);
+            }
             else if (FunctionAppHelper.LooksLikeFunctionApp())
             {
-                if (FunctionAppHelper.IsCSharpFunctionFromProjectFile(targetPath))
+                if (FunctionAppHelper.IsCSharpFunctionFromProjectFile(targetPath) && !VsHelper.isOldStylecsProj(targetPath))
                 {
-                    return new FunctionMsbuildBuilder(_environment,
+                    return new FunctionDotnetBuilder(_environment,
                                                     perDeploymentSettings,
                                                     _propertyProvider,
                                                     repositoryRoot,
@@ -354,7 +388,6 @@ namespace Kudu.Core.Deployment.Generator
                                                     repositoryRoot,
                                                     Path.GetDirectoryName(targetPath));
                 }
-
             }
 
             throw new InvalidOperationException(String.Format(CultureInfo.CurrentCulture,

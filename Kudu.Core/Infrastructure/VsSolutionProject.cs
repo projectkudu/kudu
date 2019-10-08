@@ -41,6 +41,7 @@ namespace Kudu.Core.Infrastructure
         private bool _isExecutable;
         private bool _isAspNetCore;
         private bool _isFunctionApp;
+        private bool _isOldStyleCSProj;
         private IEnumerable<Guid> _projectTypeGuids;
         private string _projectName;
         private string _absolutePath;
@@ -119,6 +120,15 @@ namespace Kudu.Core.Infrastructure
             }
         }
 
+        public bool IsOldStyleCSProj
+        {
+            get
+            {
+                EnsureProperties();
+                return _isOldStyleCSProj;
+            }
+        }
+
         public VsSolutionProject(string solutionPath, object project)
         {
             _solutionPath = solutionPath;
@@ -167,6 +177,7 @@ namespace Kudu.Core.Infrastructure
                 _isWap = VsHelper.IsWap(_projectTypeGuids);
                 _isExecutable = VsHelper.IsExecutableProject(_absolutePath);
                 _isFunctionApp = FunctionAppHelper.LooksLikeFunctionApp();
+                _isOldStyleCSProj = VsHelper.isOldStylecsProj(_absolutePath);
             }
             else
             {

@@ -214,7 +214,8 @@
     <Compile Include="Deployment\DeploymentStatusFileExtensions.cs" />
     <Compile Include="Deployment\DeploymentStatusManager.cs" />
     <Compile Include="Deployment\FetchDeploymentManager.cs" />
-    <Compile Include="Deployment\Generator\FunctionMsbuildBuilder.cs" />
+    <Compile Include="Deployment\Generator\FunctionDotnetBuilder.cs" />
+    <Compile Include="Deployment\Generator\MSBuildConsoleBuilder.cs" />
     <Compile Include="Deployment\Generator\DotNetConsoleBuilder.cs" />
     <Compile Include="Deployment\Generator\CustomGeneratorCommandSiteBuilder.cs" />
     <Compile Include="Deployment\Generator\ExternalCommandFactory.cs" />
