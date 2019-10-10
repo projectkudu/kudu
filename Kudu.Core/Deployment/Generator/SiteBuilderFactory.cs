@@ -108,6 +108,15 @@ namespace Kudu.Core.Deployment.Generator
                 project = solution.Projects.Where(p => p.IsExecutable).FirstOrDefault();
                 if (project != null)
                 {
+                    if (project.IsDotNetCore3)
+                    {
+                        return new DotNetCoreConsoleBuilder(_environment,
+                                              settings,
+                                              _propertyProvider,
+                                              repositoryRoot,
+                                              project.AbsolutePath,
+                                              solution.Path);
+                    }
                     return new DotNetConsoleBuilder(_environment,
                                               settings,
                                               _propertyProvider,
@@ -151,6 +160,16 @@ namespace Kudu.Core.Deployment.Generator
                                       repositoryRoot,
                                       project.AbsolutePath,
                                       solution.Path);
+            }
+
+            if (project.IsDotNetCore3)
+            {
+                return new FunctionDotNetCoreBuilder(_environment,
+                                            settings,
+                                            _propertyProvider,
+                                            repositoryRoot,
+                                            project.AbsolutePath,
+                                            solution.Path);
             }
 
             return new FunctionMsbuildBuilder(_environment,
@@ -327,6 +346,15 @@ namespace Kudu.Core.Deployment.Generator
             else if (VsHelper.IsExecutableProject(targetPath))
             {
                 // This is a console app
+                if (VsHelper.IsDotNetCore3(targetPath))
+                {
+                    return new DotNetCoreConsoleBuilder(_environment,
+                                          perDeploymentSettings,
+                                          _propertyProvider,
+                                          repositoryRoot,
+                                          targetPath,
+                                          solutionPath);
+                }
                 return new DotNetConsoleBuilder(_environment,
                                       perDeploymentSettings,
                                       _propertyProvider,
@@ -338,6 +366,15 @@ namespace Kudu.Core.Deployment.Generator
             {
                 if (FunctionAppHelper.IsCSharpFunctionFromProjectFile(targetPath))
                 {
+                    if (VsHelper.IsDotNetCore3(targetPath))
+                    {
+                        return new FunctionDotNetCoreBuilder(_environment,
+                                                    perDeploymentSettings,
+                                                    _propertyProvider,
+                                                    repositoryRoot,
+                                                    targetPath,
+                                                    solutionPath);
+                    }
                     return new FunctionMsbuildBuilder(_environment,
                                                     perDeploymentSettings,
                                                     _propertyProvider,
@@ -345,16 +382,12 @@ namespace Kudu.Core.Deployment.Generator
                                                     targetPath,
                                                     solutionPath);
                 }
-                else
-                {
-                    // csx or node function with extensions.csproj
-                    return new FunctionBasicBuilder(_environment,
-                                                    perDeploymentSettings,
-                                                    _propertyProvider,
-                                                    repositoryRoot,
-                                                    Path.GetDirectoryName(targetPath));
-                }
-
+                // csx or node function with extensions.csproj
+                return new FunctionBasicBuilder(_environment,
+                                                perDeploymentSettings,
+                                                _propertyProvider,
+                                                repositoryRoot,
+                                                Path.GetDirectoryName(targetPath));
             }
 
             throw new InvalidOperationException(String.Format(CultureInfo.CurrentCulture,

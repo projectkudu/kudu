@@ -3,6 +3,9 @@ using Kudu.Core.Infrastructure;
 
 namespace Kudu.Core.Deployment.Generator
 {
+    /// <summary>
+    /// Builds .Net Core 2.2 or less and .Net Frameworks Function apps using msbuild.exe
+    /// </summary>
     class FunctionMsbuildBuilder : MicrosoftSiteBuilder
     {
         // we want to fail early (before running msbuild) if the deployment environment mismatch with the target framework

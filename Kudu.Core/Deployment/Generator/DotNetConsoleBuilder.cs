@@ -5,7 +5,8 @@ using Kudu.Contracts.Settings;
 namespace Kudu.Core.Deployment.Generator
 {
     /// <summary>
-    /// Console worker consisting a .net console application project which is built and the artifact executable will run as the worker
+    /// Console worker consists of a console application project which is built and the executable will run on the worker
+    /// Build .Net Core 2.2 or less and .Net Frameworks applications using msbuild
     /// </summary>
     public class DotNetConsoleBuilder : MicrosoftSiteBuilder
     {

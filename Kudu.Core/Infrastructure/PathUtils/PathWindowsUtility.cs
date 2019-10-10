@@ -112,12 +112,11 @@ namespace Kudu.Core.Infrastructure
                 // above is for public kudu, below is for azure
             };
 
-            if (DeploymentSettingsExtension.UseMSBuild_15_9.Value)
+            if (DeploymentSettingsExtension.UseMSBuild_15_3.Value)
             {
-                probPaths.Add(Path.Combine(programFiles, "MSBuild-15.9.21.664", "MSBuild", "MSBuild", "15.0", "Bin"));
+                probPaths.Add(Path.Combine(programFiles, "MSBuild-15.3.409.57025", "MSBuild", "15.0", "Bin"));
             }
-
-            probPaths.Add(Path.Combine(programFiles, "MSBuild-15.3.409.57025", "MSBuild", "15.0", "Bin"));
+            probPaths.Add(Path.Combine(programFiles, "MSBuild-15.9.21.664", "MSBuild", "MSBuild", "15.0", "Bin"));
 
             return probPaths.FirstOrDefault(path => Directory.Exists(path));
         }
