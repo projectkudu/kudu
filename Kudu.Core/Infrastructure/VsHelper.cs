@@ -66,6 +66,28 @@ namespace Kudu.Core.Infrastructure
             return solutions[0];
         }
 
+        // Look for `<TargetFramework>netcoreapp3.X</TargetFramework>`
+        public static bool IsDotNetCore3(string path)
+        {
+            XDocument document = null;
+            try
+            {
+                document = XDocument.Parse(File.ReadAllText(path));
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+            
+            var targetFramework = document.Root.Descendants("TargetFramework");
+            var element = targetFramework.FirstOrDefault();
+            if (element == null || element.Value == null)
+            {
+                return false;
+            }
+            return element.Value.StartsWith("netcoreapp3", StringComparison.OrdinalIgnoreCase);
+        }
+
         public static bool IsWap(IEnumerable<Guid> projectTypeGuids)
         {
             return projectTypeGuids.Contains(_wapGuid);
