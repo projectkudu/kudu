@@ -27,3 +27,4 @@ Setup/WebPiCmdSetup.log
 Kudu.Services.Web/node_modules/
 .vs/
 Build/7zip/
+/package-lock.json

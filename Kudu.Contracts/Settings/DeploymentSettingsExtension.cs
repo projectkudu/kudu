@@ -25,7 +25,7 @@ namespace Kudu.Contracts.Settings
         {
             try
             {
-                var path = Path.Combine(System.Environment.GetEnvironmentVariable("SystemRoot"), "temp", SettingsKeys.UseSiteExtensionV1);
+                var path = Path.Combine(System.Environment.GetEnvironmentVariable("SystemRoot"), "Temp", SettingsKeys.UseSiteExtensionV1);
                 return File.Exists(path);
             }
             catch (Exception)
@@ -35,7 +35,24 @@ namespace Kudu.Contracts.Settings
 
             return false;
         });
-        
+
+        // in the future, it should come from HostingConfiguration (@patle)
+        // we use role patcher to place the file
+        private static Lazy<bool> UseMSBuild_15_9 = new Lazy<bool>(() =>
+        {
+            try
+            {
+                var path = Path.Combine(System.Environment.GetEnvironmentVariable("SystemRoot"), "Temp", SettingsKeys.UseMSBuild_15_9);
+                return File.Exists(path);
+            }
+            catch (Exception)
+            {
+                // no-op
+            }
+
+            return false;
+        });
+
         public static string GetValue(this IDeploymentSettingsManager settings, string key)
         {
             return settings.GetValue(key, onlyPerSite: false);
@@ -278,6 +295,11 @@ namespace Kudu.Contracts.Settings
             }
 
             return !UseSiteExtensionV1.Value;
+        }
+
+        public static bool GetUseMSBuild_15_9()
+        {
+            return UseMSBuild_15_9.Value;
         }
 
         public static bool RunFromLocalZip(this IDeploymentSettingsManager settings)

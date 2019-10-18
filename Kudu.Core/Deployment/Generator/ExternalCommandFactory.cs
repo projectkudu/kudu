@@ -156,6 +156,7 @@ namespace Kudu.Core.Deployment.Generator
             var value = _deploymentSettings.GetValue(key);
             if (string.IsNullOrEmpty(value))
             {
+                logger.Log("Using deployment setting for {0} default value is '{1}'.", key, defaultValue);
                 exe.EnvironmentVariables[key] = defaultValue;
             }
             else

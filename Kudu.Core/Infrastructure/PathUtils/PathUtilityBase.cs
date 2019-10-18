@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using SystemEnvironment = System.Environment;
+using Kudu.Core.Deployment;
 
 namespace Kudu.Core.Infrastructure
 {
