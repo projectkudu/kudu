@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using System;
+using System.Net;
 using System.Net.Http;
 using System.Web.Http;
 
@@ -10,7 +11,7 @@ namespace Kudu.Services
         public HttpResponseMessage Handle()
         {
             // Mock few paths. For development purposes only.
-            if (this.Request.RequestUri.IsLoopback)
+            if (this.Request.RequestUri.Host.Equals("localhost", StringComparison.OrdinalIgnoreCase))
             {
                 if (this.Request.RequestUri.AbsolutePath.Equals(Constants.RestartApiPath, System.StringComparison.OrdinalIgnoreCase))
                 {
