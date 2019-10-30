@@ -390,6 +390,7 @@ namespace Kudu.Services.Web.Tracing
                 if (!string.Equals("AlwaysOn", request.UserAgent, StringComparison.OrdinalIgnoreCase))
                 {
                     System.Environment.SetEnvironmentVariable(Constants.HttpHost, request.Url.Host);
+                    System.Environment.SetEnvironmentVariable(Constants.HttpAuthority, request.Url.Authority);
                 }
             }
             catch

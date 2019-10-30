@@ -113,7 +113,7 @@ namespace Kudu.Core.Infrastructure
                 };
             if (DeploymentSettingsExtension.GetUseMSBuild_15_9())
             {
-                probPaths.Add(Path.Combine(programFiles, "MSBuild-15.9.21.664", "MSBuild", "15.0", "Bin"));
+                probPaths.Add(Path.Combine(programFiles, "MSBuild-15.9.21.664", "MSBuild", "MSBuild", "15.0", "Bin"));
             }
 
             probPaths.Add(Path.Combine(programFiles, "MSBuild-15.3.409.57025", "MSBuild", "15.0", "Bin"));            

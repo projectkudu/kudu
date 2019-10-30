@@ -269,12 +269,20 @@ namespace Kudu.Contracts.Settings
             return StringUtils.IsTrueLike(value);
         }
 
-        public static bool RestartAppContainerOnGitDeploy(this IDeploymentSettingsManager settings)
+        public static bool RestartAppOnGitDeploy(this IDeploymentSettingsManager settings)
         {
-            string value = settings.GetValue(SettingsKeys.LinuxRestartAppContainerAfterDeployment);
+            string value = settings.GetValue(SettingsKeys.RestartAppAfterDeployment);
 
             // Default is true
             return value == null || StringUtils.IsTrueLike(value);
+        }
+
+        public static bool RecylePreviewEnabled(this IDeploymentSettingsManager settings)
+        {
+            string value = settings.GetValue(SettingsKeys.RecyclePreviewEnabled);
+
+            // Default value, if setting is not explicitly defined, is false
+            return StringUtils.IsTrueLike(value);
         }
 
         public static bool DoBuildDuringDeployment(this IDeploymentSettingsManager settings)

@@ -43,10 +43,18 @@
         public const string TouchWebConfigAfterDeployment = "SCM_TOUCH_WEBCONFIG_AFTER_DEPLOYMENT";
         public const string MaxRandomDelayInSec = "SCM_MAX_RANDOM_START_DELAY";
         public const string DockerCiEnabled = "DOCKER_ENABLE_CI";
-        public const string LinuxRestartAppContainerAfterDeployment = "SCM_RESTART_APP_CONTAINER_AFTER_DEPLOYMENT";
+
+        // This app-setting works for all kinds of apps, including classic Windows apps (not just container-based apps).
+        // To make it work for Windows apps, the app-setting WEBSITE_RECYCLE_PREVIEW_ENABLED=1 needs to be defined.
+        public const string RestartAppAfterDeployment = "SCM_RESTART_APP_CONTAINER_AFTER_DEPLOYMENT"; 
+
         public const string DoBuildDuringDeployment = "SCM_DO_BUILD_DURING_DEPLOYMENT";
         public const string RunFromZipOld = "WEBSITE_RUN_FROM_ZIP";  // Old name, will eventually go away
         public const string RunFromZip = "WEBSITE_RUN_FROM_PACKAGE";
+
+        // Temporary flag intended only for testing purposes. Will not be supported for too long.
+        public const string RecyclePreviewEnabled = "WEBSITE_RECYCLE_PREVIEW_ENABLED";
+
         public const string MaxZipPackageCount = "SCM_MAX_ZIP_PACKAGE_COUNT";
         public const string ZipDeployDoNotPreserveFileTime = "SCM_ZIPDEPLOY_DONOT_PRESERVE_FILETIME";
     }
