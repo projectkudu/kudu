@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Kudu.Contracts.Settings;
 using SystemEnvironment = System.Environment;
 
 namespace Kudu.Core.Infrastructure
@@ -102,14 +103,22 @@ namespace Kudu.Core.Infrastructure
         internal override string ResolveMSBuild15Dir()
         {
             string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);
-            string[] probPaths = new[]{
+            List<string> probPaths = new List<string>
+            {
                 Path.Combine(programFiles, "Microsoft Visual Studio", "2017", "Enterprise", "MSBuild", "15.0", "Bin"), // visual studio Enterprise
                 Path.Combine(programFiles, "Microsoft Visual Studio", "2017", "Professional", "MSBuild", "15.0", "Bin"), // visual studio Professional
                 Path.Combine(programFiles, "Microsoft Visual Studio", "2017", "Community", "MSBuild", "15.0", "Bin"), // visual studio Community
-                Path.Combine(programFiles, "Microsoft Visual Studio", "2017", "BuildTools", "MSBuild", "15.0", "Bin"), // msbuild tools
+                Path.Combine(programFiles, "Microsoft Visual Studio", "2017", "BuildTools", "MSBuild", "15.0", "Bin") // msbuild tools
                 // above is for public kudu, below is for azure
-                Path.Combine(programFiles, "MSBuild-15.3.409.57025", "MSBuild", "15.0", "Bin")
-                };
+            };
+
+            if (DeploymentSettingsExtension.UseMSBuild_15_9.Value)
+            {
+                probPaths.Add(Path.Combine(programFiles, "MSBuild-15.9.21.664", "MSBuild", "MSBuild", "15.0", "Bin"));
+            }
+
+            probPaths.Add(Path.Combine(programFiles, "MSBuild-15.3.409.57025", "MSBuild", "15.0", "Bin"));
+
             return probPaths.FirstOrDefault(path => Directory.Exists(path));
         }
 

@@ -35,7 +35,24 @@ namespace Kudu.Contracts.Settings
 
             return false;
         });
-        
+
+        // in the future, it should come from HostingConfiguration (@patle)
+        // we use role patcher to place the file
+        public static readonly Lazy<bool> UseMSBuild_15_9 = new Lazy<bool>(() =>
+        {
+            try
+            {
+                var path = Path.Combine(System.Environment.GetEnvironmentVariable("SystemRoot"), "temp", SettingsKeys.UseMSBuild_15_9);
+                return File.Exists(path);
+            }
+            catch (Exception)
+            {
+                // no-op
+            }
+
+            return false;
+        });
+
         public static string GetValue(this IDeploymentSettingsManager settings, string key)
         {
             return settings.GetValue(key, onlyPerSite: false);

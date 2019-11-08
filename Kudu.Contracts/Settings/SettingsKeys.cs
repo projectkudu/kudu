@@ -18,6 +18,7 @@
         public const string ScmType = "ScmType";
         public const string UseShallowClone = "SCM_USE_SHALLOW_CLONE";
         public const string UseSiteExtensionV1 = "SCM_USE_SITEEXTENSION_V1";
+        public const string UseMSBuild_15_9 = "SCM_USE_MSBUILD_15_9";
         public const string Command = "COMMAND";
         public const string Project = "PROJECT";
         public const string WorkerCommand = "WORKER_COMMAND";
