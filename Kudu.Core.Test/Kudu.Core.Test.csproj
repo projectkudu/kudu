@@ -109,6 +109,7 @@
     <Compile Include="Infrastructure\OperationManagerFacts.cs" />
     <Compile Include="Infrastructure\ServerConfigurationFacts.cs" />
     <Compile Include="Infrastructure\StringReaderFacts.cs" />
+    <Compile Include="Infrastructure\VsHelperTests.cs" />
     <Compile Include="Infrastructure\VsSolutionTest.cs" />
     <Compile Include="Infrastructure\XmlUtilityFacts.cs" />
     <Compile Include="DeploymentSettingsFacts.cs" />
