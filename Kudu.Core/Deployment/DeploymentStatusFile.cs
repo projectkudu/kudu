@@ -184,15 +184,18 @@ namespace Kudu.Core.Deployment
                     document.Save(stream);
                 }
 
-                // Used for ETAG
-                if (FileSystemHelpers.FileExists(_activeFile))
+                OperationManager.Attempt(() =>
                 {
-                    FileSystemHelpers.SetLastWriteTimeUtc(_activeFile, DateTime.UtcNow);
-                }
-                else
-                {
-                    FileSystemHelpers.WriteAllText(_activeFile, String.Empty);
-                }
+                    // Used for ETAG
+                    if (FileSystemHelpers.FileExists(_activeFile))
+                    {
+                        FileSystemHelpers.SetLastWriteTimeUtc(_activeFile, DateTime.UtcNow);
+                    }
+                    else
+                    {
+                        FileSystemHelpers.WriteAllText(_activeFile, String.Empty);
+                    }
+                });
             }, "Updating deployment status", DeploymentStatusManager.LockTimeout);
         }
 
