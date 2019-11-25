@@ -1,10 +1,30 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Kudu.Core.Infrastructure
 {
-    internal static class FunctionAppHelper
+    public static class FunctionAppHelper
     {
+        private static string _functionRunTimeVersion;
+
+        public static string FunctionRunTimeVersion
+        {
+            get
+            {
+                if (!string.IsNullOrEmpty(_functionRunTimeVersion))
+                {
+                    return _functionRunTimeVersion;
+                }
+
+                return System.Environment.GetEnvironmentVariable(Constants.FunctionRunTimeVersion);
+            }
+            set
+            {
+                _functionRunTimeVersion = value;
+            }
+        }
+
         public static bool LooksLikeFunctionApp()
         {
             return !string.IsNullOrEmpty(System.Environment.GetEnvironmentVariable(Constants.FunctionRunTimeVersion));
@@ -18,9 +38,19 @@ namespace Kudu.Core.Infrastructure
         public static void ThrowsIfVersionMismatch(string projectPath)
         {
             // "<AzureFunctionsVersion>v2</AzureFunctionsVersion>" exists in v2 csproj
-            var properties = VsHelper.GetPropertyValues(projectPath, "AzureFunctionsVersion", VsHelper.Csproj.newFormat);
-            var projectMajorVersion = String.Equals(properties.FirstOrDefault(), "v2", StringComparison.OrdinalIgnoreCase) ? FuncVersion.V2 : FuncVersion.V1;
+            ThrowsIfVersionMismatch(VsHelper.GetPropertyValues(projectPath, "AzureFunctionsVersion", VsHelper.Csproj.newFormat));
+        }
+
+        public static void ThrowsIfVersionMismatch(IEnumerable<string> properties)
+        {
+            // "<AzureFunctionsVersion>v2</AzureFunctionsVersion>" exists in v2 csproj
+            var projectMajorVersion = GetProjectMajorVersion(properties);
             var runtimeMajorVersion = GetFunctionRuntimeMajorVersion();
+
+            if (projectMajorVersion <= 0 || runtimeMajorVersion <= 0)
+            {
+                return;
+            }
 
             if (runtimeMajorVersion == projectMajorVersion)
             {
@@ -28,20 +58,30 @@ namespace Kudu.Core.Infrastructure
                 return;
             }
 
-            throw new InvalidOperationException($@"Your function app is targeting {projectMajorVersion}, but Azure host has function version {runtimeMajorVersion}, 
+            throw new InvalidOperationException($@"Your function app is targeting {properties.FirstOrDefault()}, but Azure host has function version {FunctionRunTimeVersion}, 
 please change the version using the portal or update your 'FUNCTIONS_EXTENSION_VERSION' appsetting and retry");
         }
 
-        public static FuncVersion GetFunctionRuntimeMajorVersion()
+        public static int GetProjectMajorVersion(IEnumerable<string> properties)
         {
-            // startswith "1." or is "~1" => function v1
-            // else => function v2
-            var environmentValue = System.Environment.GetEnvironmentVariable(Constants.FunctionRunTimeVersion);
-            return (environmentValue.StartsWith("1.", StringComparison.OrdinalIgnoreCase)
-                || String.Equals(environmentValue, "~1", StringComparison.OrdinalIgnoreCase))
-                ? FuncVersion.V1 : FuncVersion.V2;
+            var property = properties.FirstOrDefault();
+            if (string.IsNullOrEmpty(property))
+            {
+                return 0;
+            }
+
+            return int.TryParse(property.TrimStart('v').Split('.', '-').FirstOrDefault(), out int version) ? version : 0;
         }
 
-        public enum FuncVersion { V1, V2 };
+        public static int GetFunctionRuntimeMajorVersion()
+        {
+            var environmentValue = FunctionRunTimeVersion;
+            if (string.IsNullOrEmpty(environmentValue))
+            {
+                return 0;
+            }
+
+            return int.TryParse(environmentValue.TrimStart('~').Split('.', '-').FirstOrDefault(), out int version) ? version : 0;
+        }
     }
 }

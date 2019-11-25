@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Configuration;
 using System.IO;
 using System.IO.Abstractions;
@@ -82,6 +83,73 @@ namespace Kudu.Core.Test.Functions
             var dir = @"c:\functions";
             FileSystemHelpers.Instance = MockFileSystem(@"c:\functions", new string[] { "function.json", @"subDirectory\compiled.dll" });
             RunDeterminePrimaryScriptFileFunc(expect, functionConfigStr, dir);
+        }
+
+        [Theory, MemberData("ThrowsIfFunctionVersionMismatchData")]
+        public void ThrowsIfFunctionVersionMismatchTests(IEnumerable<string> projectProperties, string functionRuntimeVersion, bool success)
+        {
+            FunctionAppHelper.FunctionRunTimeVersion = functionRuntimeVersion;
+            try
+            {
+                FunctionAppHelper.ThrowsIfVersionMismatch(projectProperties);
+                Assert.True(success, "Expecting not successful");
+            }
+            catch (InvalidOperationException)
+            {
+                if (success)
+                {
+                    throw;
+                }
+            }
+            finally
+            {
+                FunctionAppHelper.FunctionRunTimeVersion = null;
+            }
+        }
+
+        public static IEnumerable<object[]> ThrowsIfFunctionVersionMismatchData
+        {
+            get
+            {
+                // happy cases
+                yield return new object[] { new[] { "v1" }, "~1", true };
+                yield return new object[] { new[] { "v1" }, "1", true };
+                yield return new object[] { new[] { "v1" }, "1.does.not.matter", true };
+                yield return new object[] { new[] { "v2" }, "~2", true };
+                yield return new object[] { new[] { "v2" }, "2", true };
+                yield return new object[] { new[] { "v2" }, "2.does.not.matter", true };
+                yield return new object[] { new[] { "v3" }, "~3", true };
+                yield return new object[] { new[] { "v3" }, "3", true };
+                yield return new object[] { new[] { "v3" }, "3.does.not.matter", true };
+                yield return new object[] { new[] { "v3-preview" }, "~3", true };
+                yield return new object[] { new[] { "v3-preview" }, "3", true };
+                yield return new object[] { new[] { "v3-preview" }, "3.does.not.matter", true };
+                yield return new object[] { new[] { "v3.does.not.matter-preview" }, "~3", true };
+                yield return new object[] { new[] { "v3.does.not.matter-preview" }, "3", true };
+                yield return new object[] { new[] { "v3.does.not.matter-preview" }, "3.does.not.matter", true };
+                yield return new object[] { new[] { "v13" }, "~13", true };
+                yield return new object[] { new[] { "v13" }, "13", true };
+                yield return new object[] { new[] { "v13" }, "13.does.not.matter", true };
+
+                // unhandled cases
+                yield return new object[] { new[] { "v1" }, "Beta", true };
+                yield return new object[] { new[] { "v2" }, "Latest", true };
+                yield return new object[] { new[] { "vx" }, "~4", true };
+
+                // unhappy cases
+                yield return new object[] { new[] { "v1" }, "~2", false };
+                yield return new object[] { new[] { "v1" }, "2", false };
+                yield return new object[] { new[] { "v1" }, "2.does.not.matter", false };
+                yield return new object[] { new[] { "v2" }, "~1", false };
+                yield return new object[] { new[] { "v2" }, "1", false };
+                yield return new object[] { new[] { "v2" }, "1.does.not.matter", false };
+                yield return new object[] { new[] { "v13" }, "~1", false };
+                yield return new object[] { new[] { "v13" }, "1", false };
+                yield return new object[] { new[] { "v13" }, "1.doesnotmatter", false };
+                yield return new object[] { new[] { "v1" }, "~13", false };
+                yield return new object[] { new[] { "v1" }, "13", false };
+                yield return new object[] { new[] { "v1" }, "13.does.not.matter", false };
+            }
         }
     }
 }
