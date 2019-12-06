@@ -552,6 +552,7 @@ namespace Kudu.Core.Jobs
                         jobType += "/SDK";
                     }
 
+                    // jobType can be triggered, continuous, triggered/SDK or continuous/SDK
                     _analytics.JobStarted(_job.Name, scriptFileExtension, jobType, _siteMode, Error, _trigger);
                 }
             }

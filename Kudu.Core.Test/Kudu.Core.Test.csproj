@@ -116,6 +116,7 @@
     <Compile Include="Jobs\BaseJobRunnerFacts.cs" />
     <Compile Include="Jobs\ContinuousJobRunnerFacts.cs" />
     <Compile Include="Jobs\ContinuousJobsManagerFacts.cs" />
+    <Compile Include="Jobs\JobsManagerBaseFacts.cs" />
     <Compile Include="Jobs\ScheduleFacts.cs">
       <SubType>Code</SubType>
     </Compile>
