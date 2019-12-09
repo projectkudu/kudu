@@ -42,6 +42,13 @@ namespace Kudu.Services.Web.Tracing
             new Regex(@"^/api/(processes|webjobs|triggeredwebjobs|continuouswebjobs)((/|$)([^/]*|$)){0,1}(/|$)$", RegexOptions.IgnoreCase),
         };
 
+        // list of paths returning potentially sensitive data
+        private static readonly HashSet<string> DisallowedPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "/api/functions/admin/masterkey",
+            "/api/functions/admin/token"
+        };
+
         public static TimeSpan UpTime
         {
             get { return DateTime.UtcNow - _startDateTime; }
@@ -153,7 +160,7 @@ namespace Kudu.Services.Web.Tracing
 
         public static bool IsRbacWhiteListPaths(string path)
         {
-            return _rbacWhiteListPaths.Any(r => r.IsMatch(path));
+            return !DisallowedPaths.Any(path.Contains) && _rbacWhiteListPaths.Any(r => r.IsMatch(path));
         }
 
         private static void OnEndRequest(object sender, EventArgs e)
