@@ -3,10 +3,22 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Xml.Linq;
+using Newtonsoft.Json;
 using Kudu.Core.SourceControl;
+using Kudu.Core.Tracing;
 
 namespace Kudu.Core.Infrastructure
 {
+    public class GlobalJson
+    {
+        public Sdk sdk { get; set; }
+    }
+
+    public class Sdk
+    {
+        public String version { get; set; }
+    }
+
     internal static class VsHelper
     {
         public static readonly string[] SolutionsLookupList = new string[] { "*.sln" };
@@ -97,6 +109,45 @@ namespace Kudu.Core.Infrastructure
             catch (Exception)
             {
                 return false;
+            }
+        }
+
+        public static void SniffGlobalJson(String path)
+        {
+            try
+            {
+                if (File.Exists(path))
+                {
+                    String json = File.ReadAllText(path);
+                    string version = SniffGlobalJsonContents(json);
+                    if (!String.IsNullOrEmpty(version))
+                    {
+                        KuduEventSource.Log.GenericEvent(
+                            ServerConfiguration.GetApplicationName(),
+                            string.Format("global.json found, pinned sdk version {0}", version),
+                            string.Empty,
+                            string.Empty,
+                            string.Empty,
+                            string.Empty);
+                    }
+                }
+            }
+            catch
+            {
+                // no op
+            }
+        }
+
+        public static string SniffGlobalJsonContents(String json)
+        {
+            try
+            {
+                GlobalJson obj = JsonConvert.DeserializeObject<GlobalJson>(json);
+                return obj.sdk.version;
+            }
+            catch
+            {
+                return string.Empty;
             }
         }
 
