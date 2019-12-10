@@ -101,7 +101,9 @@ namespace Kudu.Core.Deployment.Generator
             // TODO: Pick only 1 and throw if there's more than one
             // shunTODO need to implement this
             VsSolutionProject project = solution.Projects.Where(p => p.IsWap || p.IsWebSite || p.IsAspNetCore || p.IsFunctionApp).FirstOrDefault();
-
+            
+            VsHelper.SniffGlobalJson(repositoryRoot + "\\global.json");
+            
             if (project == null)
             {
                 // Try executable type project

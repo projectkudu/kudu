@@ -411,5 +411,18 @@ xcopy /s /y ""$(ProjectDir)..\packages\SqlServerCompact.4.0.8482.1\NativeBinarie
             // Assert
             Assert.Equal(result, false);
         }
+
+        [Theory]
+        [InlineData("{\"sdk\": {\"version\": \"2.2\"}}", "2.2")]
+        [InlineData("{\"sasdasddk\": {\"version\": \"2.2\"}}", "")]
+        [InlineData("abc{\"sdk\": {\"version\": \"2.2\"}}", "")]
+        public void SniffGlobalJson(string globalJsonContent, string expected)
+        {
+            // Act
+            var result = VsHelper.SniffGlobalJsonContents(globalJsonContent);
+
+            // Assert
+            Assert.Equal(result, expected);
+        }
     }
 }
