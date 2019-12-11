@@ -101,7 +101,7 @@ namespace Kudu.Core.Deployment.Generator
             // TODO: Pick only 1 and throw if there's more than one
             // shunTODO need to implement this
             VsSolutionProject project = solution.Projects.Where(p => p.IsWap || p.IsWebSite || p.IsAspNetCore || p.IsFunctionApp).FirstOrDefault();
-            
+
             VsHelper.SniffGlobalJson($"{repositoryRoot}\\global.json");
             
             if (project == null)
@@ -110,14 +110,15 @@ namespace Kudu.Core.Deployment.Generator
                 project = solution.Projects.Where(p => p.IsExecutable).FirstOrDefault();
                 if (project != null)
                 {
-                    if (project.IsDotNetCore3)
+                    if (VsHelper.IsDotNetCore3(project.TargetFramework))
                     {
                         return new DotNetCoreConsoleBuilder(_environment,
                                               settings,
                                               _propertyProvider,
                                               repositoryRoot,
                                               project.AbsolutePath,
-                                              solution.Path);
+                                              solution.Path,
+                                              project.TargetFramework);
                     }
                     return new DotNetConsoleBuilder(_environment,
                                               settings,
@@ -146,12 +147,18 @@ namespace Kudu.Core.Deployment.Generator
 
             if (project.IsAspNetCore)
             {
+                string targetFramework = project.TargetFramework;
+                if (!VsHelper.IsDotNetCore3(targetFramework))
+                {
+                    targetFramework = string.Empty;
+                }
                 return new AspNetCoreBuilder(_environment,
                                       settings,
                                       _propertyProvider,
                                       repositoryRoot,
                                       project.AbsolutePath,
-                                      solution.Path);
+                                      solution.Path,
+                                      targetFramework);
             }
 
             if (project.IsWebSite)
@@ -164,14 +171,15 @@ namespace Kudu.Core.Deployment.Generator
                                       solution.Path);
             }
 
-            if (project.IsDotNetCore3)
+            if (VsHelper.IsDotNetCore3(project.TargetFramework))
             {
                 return new FunctionDotNetCoreBuilder(_environment,
                                             settings,
                                             _propertyProvider,
                                             repositoryRoot,
                                             project.AbsolutePath,
-                                            solution.Path);
+                                            solution.Path,
+                                            project.TargetFramework);
             }
 
             return new FunctionMsbuildBuilder(_environment,
@@ -277,12 +285,18 @@ namespace Kudu.Core.Deployment.Generator
             string projectJson;
             if (AspNetCoreHelper.TryAspNetCoreWebProject(targetPath, fileFinder, out projectJson))
             {
+                string targetFramework = VsHelper.GetTargetFramework(targetPath);
+                if (!VsHelper.IsDotNetCore3(targetFramework))
+                {
+                    targetFramework = string.Empty;
+                }
                 return new AspNetCoreBuilder(_environment,
                                            perDeploymentSettings,
                                            _propertyProvider,
                                            repositoryRoot,
                                            projectJson,
-                                           null);
+                                           null,
+                                           targetFramework);
             }
 
             if (tryWebSiteProject)
@@ -327,6 +341,11 @@ namespace Kudu.Core.Deployment.Generator
             var solution = VsHelper.FindContainingSolution(repositoryRoot, targetPath, fileFinder);
             string solutionPath = solution?.Path;
             var projectTypeGuids = VsHelper.GetProjectTypeGuids(targetPath);
+            string targetFramework = VsHelper.GetTargetFramework(targetPath);
+            if (!VsHelper.IsDotNetCore3(targetFramework))
+            {
+                targetFramework = string.Empty;
+            }
             if (VsHelper.IsWap(projectTypeGuids))
             {
                 return new WapBuilder(_environment,
@@ -343,19 +362,21 @@ namespace Kudu.Core.Deployment.Generator
                                             _propertyProvider,
                                             repositoryRoot,
                                             targetPath,
-                                            solutionPath);
+                                            solutionPath,
+                                            targetFramework);
             }
             else if (VsHelper.IsExecutableProject(targetPath))
             {
                 // This is a console app
-                if (VsHelper.IsDotNetCore3(targetPath))
+                if (VsHelper.IsDotNetCore3(targetFramework))
                 {
                     return new DotNetCoreConsoleBuilder(_environment,
                                           perDeploymentSettings,
                                           _propertyProvider,
                                           repositoryRoot,
                                           targetPath,
-                                          solutionPath);
+                                          solutionPath,
+                                          targetFramework);
                 }
                 return new DotNetConsoleBuilder(_environment,
                                       perDeploymentSettings,
@@ -368,14 +389,15 @@ namespace Kudu.Core.Deployment.Generator
             {
                 if (FunctionAppHelper.IsCSharpFunctionFromProjectFile(targetPath))
                 {
-                    if (VsHelper.IsDotNetCore3(targetPath))
+                    if (VsHelper.IsDotNetCore3(targetFramework))
                     {
                         return new FunctionDotNetCoreBuilder(_environment,
                                                     perDeploymentSettings,
                                                     _propertyProvider,
                                                     repositoryRoot,
                                                     targetPath,
-                                                    solutionPath);
+                                                    solutionPath,
+                                                    targetFramework);
                     }
                     return new FunctionMsbuildBuilder(_environment,
                                                     perDeploymentSettings,

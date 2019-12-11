@@ -8,8 +8,8 @@ namespace Kudu.Core.Deployment.Generator
     {
         private readonly string _version;
 
-        public AspNetCoreBuilder(IEnvironment environment, IDeploymentSettingsManager settings, IBuildPropertyProvider propertyProvider, string sourcePath, string projectFilePath, string solutionPath)
-            : base(environment, settings, propertyProvider, sourcePath, projectFilePath, solutionPath, "--aspNetCore")
+        public AspNetCoreBuilder(IEnvironment environment, IDeploymentSettingsManager settings, IBuildPropertyProvider propertyProvider, string sourcePath, string projectFilePath, string solutionPath, string targetFramework)
+            : base(environment, settings, propertyProvider, sourcePath, projectFilePath, solutionPath, "--aspNetCore", targetFramework)
         {
             if (projectFilePath.EndsWith(".csproj", StringComparison.OrdinalIgnoreCase))
             {

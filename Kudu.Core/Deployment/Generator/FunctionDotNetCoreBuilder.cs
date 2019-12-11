@@ -8,8 +8,8 @@ namespace Kudu.Core.Deployment.Generator
     /// </summary>
     class FunctionDotNetCoreBuilder : MicrosoftSiteBuilder
     {
-        public FunctionDotNetCoreBuilder(IEnvironment environment, IDeploymentSettingsManager settings, IBuildPropertyProvider propertyProvider, string sourcePath, string projectFilePath, string solutionPath)
-            : base(environment, settings, propertyProvider, sourcePath, projectFilePath, solutionPath, "--dotNetCoreFunctionApp")
+        public FunctionDotNetCoreBuilder(IEnvironment environment, IDeploymentSettingsManager settings, IBuildPropertyProvider propertyProvider, string sourcePath, string projectFilePath, string solutionPath, string targetFramework)
+            : base(environment, settings, propertyProvider, sourcePath, projectFilePath, solutionPath, "--dotNetCoreFunctionApp", targetFramework)
         {
             FunctionAppHelper.ThrowsIfVersionMismatch(projectFilePath);
         }
