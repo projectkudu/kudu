@@ -13,13 +13,15 @@ namespace Kudu.Core.Deployment.Generator
 
         protected string ProjectFilePath { get; private set; }
 
+        protected string TargetFramework { get; private set; }
 
-        protected MicrosoftSiteBuilder(IEnvironment environment, IDeploymentSettingsManager settings, IBuildPropertyProvider propertyProvider, string sourcePath, string projectFilePath, string solutionPath, string commandArgument)
+        protected MicrosoftSiteBuilder(IEnvironment environment, IDeploymentSettingsManager settings, IBuildPropertyProvider propertyProvider, string sourcePath, string projectFilePath, string solutionPath, string commandArgument, string targetFramework="")
             : base(environment, settings, propertyProvider, sourcePath)
         {
             ProjectFilePath = CleanPath(projectFilePath);
             SolutionPath = CleanPath(solutionPath);
             CommandArgument = commandArgument;
+            TargetFramework = targetFramework;
         }
 
         protected override string ScriptGeneratorCommandArguments
@@ -36,6 +38,11 @@ namespace Kudu.Core.Deployment.Generator
                 else
                 {
                     commandArguments.AppendFormat(" --no-solution");
+                }
+
+                if (!String.IsNullOrEmpty(TargetFramework))
+                {
+                    commandArguments.AppendFormat(" --targetFramework \"{0}\"", TargetFramework);
                 }
 
                 return commandArguments.ToString();

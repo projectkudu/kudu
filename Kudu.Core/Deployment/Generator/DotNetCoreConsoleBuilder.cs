@@ -10,8 +10,8 @@ namespace Kudu.Core.Deployment.Generator
     /// </summary>
     public class DotNetCoreConsoleBuilder : MicrosoftSiteBuilder
     {
-        public DotNetCoreConsoleBuilder(IEnvironment environment, IDeploymentSettingsManager settings, IBuildPropertyProvider propertyProvider, string sourcePath, string projectFilePath, string solutionPath)
-            : base(environment, settings, propertyProvider, sourcePath, projectFilePath, solutionPath, "--dotNetCoreConsole")
+        public DotNetCoreConsoleBuilder(IEnvironment environment, IDeploymentSettingsManager settings, IBuildPropertyProvider propertyProvider, string sourcePath, string projectFilePath, string solutionPath, string targetFramework)
+            : base(environment, settings, propertyProvider, sourcePath, projectFilePath, solutionPath, "--dotNetCoreConsole", targetFramework)
         {
         }
 

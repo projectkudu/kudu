@@ -7,16 +7,21 @@ namespace Kudu.Core.Infrastructure.Test
 {
     public class VsHelperFacts
     {
-        [Fact]
-        public void IsDotNetCore3DetectsDotNetCore3_1()
+        [Theory]
+        [InlineData("netcoreapp3.1", "netcoreapp3.1")]
+        [InlineData("netcoreapp3.0", "netcoreapp3.0")]
+        [InlineData("netcoreapp2.2", "netcoreapp2.2")]
+        [InlineData("netstandard2.1", "netstandard2.1")]
+        [InlineData("netstandard2.0", "netstandard2.0")]
+        public void GetTargetFramework(string targetFramework, string expected)
         {
             // Arrange
-            var CsprojFileContent =
+            var CsprojFileContent = string.Format(
 @"<Project Sdk=""Microsoft.NET.Sdk"">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <TargetFramework>{0}</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
@@ -25,71 +30,47 @@ namespace Kudu.Core.Infrastructure.Test
     </Content>
   </ItemGroup>
 </Project>
-";
+", targetFramework);
 
             // Act
-            var result = VsHelper.IsDotNetCore3CsProj(CsprojFileContent);
+            var result = VsHelper.GetTargetFrameworkContents(CsprojFileContent);
 
             // Assert
-            Assert.Equal(result, true);
+            Assert.Equal(expected, result);
         }
 
-        [Fact]
-        public void IsDotNetCore3DetectsDotNetCore3_0()
+        [Theory]
+        [InlineData("netstandard2.0;netcoreapp2.2", "netstandard2.0")]
+        [InlineData("netcoreapp3.1;netstandard2.1", "netcoreapp3.1")]
+        [InlineData("netcoreapp2.1;netstandard3.1", "netcoreapp2.1")]
+        public void GetTargetFrameworks(string targetFrameworks, string expected)
         {
             // Arrange
-            var CsprojFileContent =
+            var CsprojFileContent = string.Format(
 @"<Project Sdk=""Microsoft.NET.Sdk"">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>netcoreapp3.0</TargetFramework>
+    <TargetFrameworks>{0}</TargetFrameworks>
   </PropertyGroup>
-  
+
   <ItemGroup>
     <Content Include=""run.bat"">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
 </Project>
-";
+", targetFrameworks);
 
             // Act
-            var result = VsHelper.IsDotNetCore3CsProj(CsprojFileContent);
+            var result = VsHelper.GetTargetFrameworkContents(CsprojFileContent);
 
             // Assert
-            Assert.Equal(result, true);
+            Assert.Equal(expected, result);
         }
 
         [Fact]
-        public void IsDotNetCore3DetectsDotNetCore2_2()
-        {
-            // Arrange
-            var CsprojFileContent =
-@"<Project Sdk=""Microsoft.NET.Sdk"">
-
-  <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <TargetFramework>netcoreapp2.2</TargetFramework>
-  </PropertyGroup>
-  
-  <ItemGroup>
-    <Content Include=""run.bat"">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
-</Project>
-";
-
-            // Act
-            var result = VsHelper.IsDotNetCore3CsProj(CsprojFileContent);
-
-            // Assert
-            Assert.Equal(result, false);
-        }
-
-        [Fact]
-        public void IsDotNetCore3DetectsDotNetFramework()
+        public void GetTargetFramework_DotNetFramework()
         {
             // Arrange
             var CsprojFileContent =
@@ -112,14 +93,14 @@ namespace Kudu.Core.Infrastructure.Test
 ";
 
             // Act
-            var result = VsHelper.IsDotNetCore3CsProj(CsprojFileContent);
+            var result = VsHelper.GetTargetFrameworkContents(CsprojFileContent);
 
             // Assert
-            Assert.Equal(result, false);
+            Assert.Equal(result, "net472");
         }
 
         [Fact]
-        public void IsDotNetCore3DetectsOldStyle()
+        public void GetTargetFramework_OldStyle()
         {
             // Arrange
             var CsprojFileContent =
@@ -406,10 +387,10 @@ xcopy /s /y ""$(ProjectDir)..\packages\SqlServerCompact.4.0.8482.1\NativeBinarie
 ";
 
             // Act
-            var result = VsHelper.IsDotNetCore3CsProj(CsprojFileContent);
+            var result = VsHelper.GetTargetFrameworkContents(CsprojFileContent);
 
             // Assert
-            Assert.Equal(result, false);
+            Assert.Equal(string.Empty, result);
         }
 
         [Theory]
@@ -422,7 +403,7 @@ xcopy /s /y ""$(ProjectDir)..\packages\SqlServerCompact.4.0.8482.1\NativeBinarie
             var result = VsHelper.SniffGlobalJsonContents(globalJsonContent);
 
             // Assert
-            Assert.Equal(result, expected);
+            Assert.Equal(expected, result);
         }
     }
 }

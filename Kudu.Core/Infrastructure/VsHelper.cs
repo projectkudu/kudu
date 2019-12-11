@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -78,38 +78,67 @@ namespace Kudu.Core.Infrastructure
             return solutions[0];
         }
 
-        // Look for `<TargetFramework>netcoreapp3.X</TargetFramework>`
-        public static bool IsDotNetCore3(string path)
+        public static string GetTargetFramework(string path)
         {
             string document = null;
             try
             {
                 document = File.ReadAllText(path);
-                return IsDotNetCore3CsProj(document);
+                return GetTargetFrameworkContents(document);
             }
             catch (Exception)
             {
-                return false;
+                return string.Empty;
             }
         }
 
-        public static bool IsDotNetCore3CsProj(string content)
+        public static string GetTargetFrameworkContents(string content)
         {
             try
             {
                 XDocument document = XDocument.Parse(content);
                 var targetFramework = document.Root.Descendants("TargetFramework");
-                var element = targetFramework.FirstOrDefault();
-                if (element == null || element.Value == null)
+                var targetFrameworkElement = targetFramework.FirstOrDefault();
+                if (targetFrameworkElement != null && targetFrameworkElement.Value != null)
                 {
-                    return false;
+                    KuduEventSource.Log.GenericEvent(
+                            ServerConfiguration.GetApplicationName(),
+                            string.Format("Dotnet target framework found: {0}", targetFrameworkElement.Value),
+                            string.Empty,
+                            string.Empty,
+                            string.Empty,
+                            string.Empty);
+                    return targetFrameworkElement.Value;
                 }
-                return element.Value.StartsWith("netcoreapp3", StringComparison.OrdinalIgnoreCase);
+
+                var targetFrameworks = document.Root.Descendants("TargetFrameworks");
+                var targetFrameworksElement = targetFrameworks.FirstOrDefault();
+                if (targetFrameworksElement != null && targetFrameworksElement.Value != null)
+                {
+                    KuduEventSource.Log.GenericEvent(
+                            ServerConfiguration.GetApplicationName(),
+                            string.Format("Multiple Dotnet target frameworks found: {0}. Using First", targetFrameworksElement.Value),
+                            string.Empty,
+                            string.Empty,
+                            string.Empty,
+                            string.Empty);
+                    return targetFrameworksElement.Value.Split(';').First();
+                }
+                // old-style .csproj
+                return string.Empty;
             }
             catch (Exception)
             {
-                return false;
+                return string.Empty;
             }
+        }
+
+        // Look for `<TargetFramework>` or `<TargetFrameworks>``
+        // netcoreapp3.X or netstandard2.1
+        public static bool IsDotNetCore3(string target)
+        {
+            return target.StartsWith("netcoreapp3", StringComparison.OrdinalIgnoreCase) ||
+                   target.Equals("netstandard2.1", StringComparison.OrdinalIgnoreCase);
         }
 
         public static void SniffGlobalJson(String path)
