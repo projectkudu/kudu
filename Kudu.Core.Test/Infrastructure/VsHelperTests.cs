@@ -394,6 +394,32 @@ xcopy /s /y ""$(ProjectDir)..\packages\SqlServerCompact.4.0.8482.1\NativeBinarie
         }
 
         [Theory]
+        [InlineData("<Project Sdk=\"Microsoft.NET.Sdk.Web\">", "Microsoft.NET.Sdk.Web")]
+        [InlineData("<Project Sdk=\"Microsoft.NET.Sdk\">", "Microsoft.NET.Sdk")]
+        [InlineData("parseerror<Project Sdk=\"Microsoft.NET.Sdk\">", "")]
+        [InlineData("<notfoundProject Sdk=\"Microsoft.NET.Sdk\">", "")]
+        [InlineData("<Project notfoundSdk=\"Microsoft.NET.Sdk\">", "")]
+        public void GetGetProjectSDKContent(string content, string expected)
+        {
+            // Arrange
+            var CsprojFileContent = string.Format(
+@"{0}
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+  </PropertyGroup>
+
+</Project>
+", content);
+
+            // Act
+            var result = VsHelper.GetProjectSDKContent(CsprojFileContent);
+
+            // Assert
+            Assert.Equal(expected, result);
+        }
+
+        [Theory]
         [InlineData("{\"sdk\": {\"version\": \"2.2\"}}", "2.2")]
         [InlineData("{\"sasdasddk\": {\"version\": \"2.2\"}}", "")]
         [InlineData("abc{\"sdk\": {\"version\": \"2.2\"}}", "")]

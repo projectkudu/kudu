@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -139,6 +139,46 @@ namespace Kudu.Core.Infrastructure
         {
             return target.StartsWith("netcoreapp3", StringComparison.OrdinalIgnoreCase) ||
                    target.Equals("netstandard2.1", StringComparison.OrdinalIgnoreCase);
+        }
+
+        public static string GetProjectSDK(string path)
+        {
+            string document = null;
+            try
+            {
+                document = File.ReadAllText(path);
+                return GetProjectSDKContent(document);
+            }
+            catch (Exception)
+            {
+                return string.Empty;
+            }
+        }
+
+        public static string GetProjectSDKContent(string content)
+        {
+            try
+            {
+                XDocument document = XDocument.Parse(content);
+                var projectElement = document.Root;
+                if (projectElement != null 
+                    && projectElement.Value != null
+                    && projectElement.Attribute("Sdk") != null
+                    && projectElement.Attribute("Sdk").Value != null)
+                {
+                    return projectElement.Attribute("Sdk").Value;
+                }
+                return string.Empty;
+            }
+            catch(Exception)
+            {
+                return string.Empty;
+            }
+        }
+
+        public static Boolean IsAspNetCoreSDK(string sdk)
+        {
+            return sdk.Equals("Microsoft.NET.Sdk.Web");
         }
 
         public static void SniffGlobalJson(String path)
