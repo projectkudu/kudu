@@ -47,18 +47,29 @@ namespace Kudu.Core.Infrastructure
             {
                 // for csproj, need to 1st make sure its dotnet core ==> !projectTypeGuids.Any()
                 // Common Project System-style no longer has projectTypeGuid
+                if (projectTypeGuids.Any())
+                {
+                    return false;
+                }
 
-                // 2ndly, look for sign of web project
+                // ASP.NET CORE 2.2 and lower requires these
                 // either <PackageReference Include="Microsoft.AspNetCore" Version="..." />
                 // for dotnet core project created with 2.0 toolings look for "Microsoft.AspNetCore.All"
                 // for dotnet core project created with 2.1 toolings look for "Microsoft.AspNetCore.App"
-                // for preview3 its web.config file
-                return !projectTypeGuids.Any() &&
-                       (VsHelper.IncludesAnyReferencePackage(projectPath,
-                       "Microsoft.AspNetCore",
-                       "Microsoft.AspNetCore.All",
-                       "Microsoft.AspNetCore.App") ||
-                       IsWebAppFromFolderStruct(projectPath));
+                if (VsHelper.IncludesAnyReferencePackage(projectPath, "Microsoft.AspNetCore", "Microsoft.AspNetCore.All", "Microsoft.AspNetCore.App"))
+                {
+                    return true;
+                }
+
+                // look for web.config or wwwroot
+                if (IsWebAppFromFolderStruct(projectPath))
+                {
+                    return true;
+                }
+
+                // if ASP.NET CORE 3.X check for <Project Sdk="Microsoft.NET.Sdk.Web"> 
+                return VsHelper.IsAspNetCoreSDK(VsHelper.GetProjectSDK(projectPath)) &&
+                        VsHelper.IsDotNetCore3(VsHelper.GetTargetFramework(projectPath));
             }
             else if (projectPath.EndsWith(".xproj", StringComparison.OrdinalIgnoreCase))
             {
