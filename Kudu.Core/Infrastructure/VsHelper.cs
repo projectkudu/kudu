@@ -247,6 +247,34 @@ namespace Kudu.Core.Infrastructure
             return packages.Any();
         }
 
+        public static bool IncludesAnyFrameworkReferenceContent(string content, string referenceNames)
+        {
+            try {
+                var packages = from frameworkReferences in XDocument.Parse(content).Descendants("FrameworkReference")
+                            let frameworkReferenceName = frameworkReferences.Attribute("Include")
+                            where frameworkReferenceName != null && referenceNames.Equals(frameworkReferenceName.Value)
+                            select frameworkReferenceName.Value;
+
+                return packages.Any();
+            }
+            catch(Exception)
+            {
+                return false;
+            }
+        }
+
+        public static bool IncludesAnyFrameworkReference(string path, string referenceNames)
+        {
+            try
+            {
+                return IncludesAnyFrameworkReferenceContent(File.ReadAllText(path), referenceNames);
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
         public static IEnumerable<string> GetPropertyValues(string path, string propertyName, Csproj projectFormat)
         {
             var document = XDocument.Parse(File.ReadAllText(path));

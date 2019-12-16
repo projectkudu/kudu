@@ -431,5 +431,31 @@ xcopy /s /y ""$(ProjectDir)..\packages\SqlServerCompact.4.0.8482.1\NativeBinarie
             // Assert
             Assert.Equal(expected, result);
         }
+
+        [Theory]
+        [InlineData("<FrameworkReference Include=\"Microsoft.AspNetCore.App\" />", true)]
+        [InlineData("<abcFrameworkReference Include=\"Microsoft.AspNetCore.App\" />", false)]
+        [InlineData("<FrameworkReference Include=\"abcMicrosoft.AspNetCore.App\" />", false)]
+        public void IncludesAnyFrameworkReferenceTest(string content, bool expected)
+        {
+            // Arrange
+            var CsprojFileContent = string.Format(
+@"<Project Sdk=""Microsoft.NET.Sdk"">
+ 
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+  </PropertyGroup>
+  <ItemGroup>
+    {0}
+  </ItemGroup>
+</Project>
+", content);
+
+            // Act
+            var result = VsHelper.IncludesAnyFrameworkReferenceContent(CsprojFileContent, "Microsoft.AspNetCore.App");
+
+            // Assert
+            Assert.Equal(expected, result);
+        }
     }
 }
