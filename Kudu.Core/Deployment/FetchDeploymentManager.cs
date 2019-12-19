@@ -136,6 +136,10 @@ namespace Kudu.Core.Deployment
                     return FetchDeploymentRequestResult.ConflictDeploymentInProgress;
                 }
             }
+            finally
+            {
+                PostDeploymentHelper.RemoveAppOfflineIfLeft(_environment, _deploymentLock, _tracer);
+            }
         }
 
         public async Task PerformDeployment(DeploymentInfoBase deploymentInfo, IDisposable tempDeployment = null, ChangeSet tempChangeSet = null)

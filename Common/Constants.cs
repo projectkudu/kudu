@@ -133,5 +133,7 @@ namespace Kudu
         public const string Extensions = "extensions";
         public const string SitePackages = "SitePackages";
         public const string PackageNameTxt = "packagename.txt";
+        public const string AppOfflineFileName = "app_offline.htm";
+        public const string AppOfflineKuduContent = "Created by kudu";
     }
 }

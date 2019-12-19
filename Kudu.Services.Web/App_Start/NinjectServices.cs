@@ -280,6 +280,8 @@ namespace Kudu.Services.Web.App_Start
 
             OperationManager.SafeExecute(continuousJobManager.CleanupDeletedJobs);
 
+            PostDeploymentHelper.RemoveAppOfflineIfLeft(environment, _deploymentLock, GetTracer(kernel));
+
             kernel.Bind<IContinuousJobsManager>().ToConstant(continuousJobManager)
                                  .InTransientScope();
 

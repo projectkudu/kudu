@@ -1,5 +1,7 @@
-﻿using Kudu.Contracts.Tracing;
+﻿using Kudu.Contracts.Infrastructure;
+using Kudu.Contracts.Tracing;
 using Kudu.Core.Deployment;
+using Kudu.Core.Helpers;
 using Kudu.Core.Infrastructure;
 using Moq;
 using System;
@@ -72,6 +74,74 @@ namespace Kudu.Core.Test.Deployment
             Assert.Contains("testFile2.zip", deletedFiles);
             Assert.Contains("testFile1.zip", deletedFiles);
             Assert.Equal(deletedFiles.Count, 3);
+        }
+
+        [Theory]
+        [InlineData(true, "<htm><head></head><body><!-- Created by kudu --!></body></html>", true)]
+        [InlineData(true, "<htm><head></head><body>Site offline</body></html>", false)]
+        [InlineData(false, null, false)]
+        public void LeftOverAppOffline_IsRemovedFact(bool appOfflineExists, string offlineContent, bool shouldRemove)
+        {
+            // Setup
+            var tracerMock = new Mock<ITracer>();
+            var fileSystemMock = new Mock<IFileSystem>();
+            var fileBaseMock = new Mock<FileBase>();
+            var directoryBaseMock = new Mock<DirectoryBase>();
+            var environmentMock = new Mock<IEnvironment>();
+            var operationLockMock = new Mock<IOperationLock>();
+
+            bool wasAppOfflineRemoved = false;
+            bool attemptToRead = false;
+            string testPath = Path.Combine("testroot", "testdir");
+            string appOfflinePath = Path.Combine(testPath, "app_offline.htm");
+
+            environmentMock
+                .SetupGet(e => e.WebRootPath)
+                .Returns(testPath);
+
+            fileBaseMock
+                .Setup(f => f.Exists(appOfflinePath))
+                .Returns(appOfflineExists);
+
+            fileBaseMock
+                .Setup(f => f.ReadAllText(appOfflinePath))
+                .Returns(() =>
+                {
+                    attemptToRead = true;
+                    return offlineContent;
+                });
+
+            fileBaseMock
+              .Setup(f => f.Delete(appOfflinePath))
+              .Callback(() => wasAppOfflineRemoved = true);
+
+            fileSystemMock.SetupGet(f => f.File).Returns(fileBaseMock.Object);
+            fileSystemMock.SetupGet(f => f.Directory).Returns(directoryBaseMock.Object);
+            FileSystemHelpers.Instance = fileSystemMock.Object;
+
+            // Test -- if no deployment ongoing
+            operationLockMock
+                .SetupGet(l => l.IsHeld)
+                .Returns(false);
+
+            PostDeploymentHelper.RemoveAppOfflineIfLeft(environmentMock.Object, operationLockMock.Object, tracerMock.Object);
+
+            Assert.Equal(shouldRemove, wasAppOfflineRemoved);
+            Assert.Equal(appOfflineExists, attemptToRead);
+
+            // Test -- if deployment lock is held
+            operationLockMock
+                .SetupGet(l => l.IsHeld)
+                .Returns(true);
+
+            wasAppOfflineRemoved = false;
+            attemptToRead = false;
+
+            PostDeploymentHelper.RemoveAppOfflineIfLeft(environmentMock.Object, operationLockMock.Object, tracerMock.Object);
+
+            // If deployment lock was held, it shouldn't remove or even attempt to read the app_offline
+            Assert.False(wasAppOfflineRemoved);
+            Assert.False(attemptToRead);
         }
     }
 }

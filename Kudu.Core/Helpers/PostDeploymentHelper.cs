@@ -11,6 +11,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Deployment;
@@ -738,6 +739,34 @@ namespace Kudu.Core.Helpers
             using (tracer.Step($"Updating {siteVersionPath} with deployment {deploymentInfo.ZipName}"))
             {
                 await FileSystemHelpers.WriteAllTextToFileAsync(siteVersionPath, deploymentInfo.ZipName);
+            }
+        }
+
+        public static void RemoveAppOfflineIfLeft(IEnvironment environment, IOperationLock deploymentLock, ITracer tracer)
+        {
+            try
+            {
+                var appOfflineFile = Path.Combine(environment.WebRootPath, Constants.AppOfflineFileName);
+                if (FileSystemHelpers.FileExists(appOfflineFile))
+                {
+                    if (deploymentLock.IsHeld)
+                    {
+                        tracer.Trace($"Deployment lock is held, will not remove {Constants.AppOfflineFileName}");
+                        return;
+                    }
+
+                    var appOfflineContent = OperationManager.Attempt(() => FileSystemHelpers.ReadAllText(appOfflineFile));
+                    if (appOfflineContent.Contains(Constants.AppOfflineKuduContent))
+                    {
+                        tracer.Trace($"Removing {appOfflineFile}");
+                        OperationManager.Attempt(() => FileSystemHelpers.DeleteFile(appOfflineFile));
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                tracer.TraceError($"Error trying to clean {Constants.AppOfflineFileName}");
+                tracer.TraceError(ex);
             }
         }
     }
