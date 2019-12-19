@@ -280,6 +280,8 @@ namespace Kudu.Services.Web.App_Start
 
             OperationManager.SafeExecute(continuousJobManager.CleanupDeletedJobs);
 
+            PostDeploymentHelper.RemoveAppOfflineIfLeft(environment, _deploymentLock, GetTracer(kernel));
+
             kernel.Bind<IContinuousJobsManager>().ToConstant(continuousJobManager)
                                  .InTransientScope();
 
@@ -339,12 +341,8 @@ namespace Kudu.Services.Web.App_Start
             kernel.Bind<ICommandExecutor>().To<CommandExecutor>().InRequestScope();
 
             MigrateSite(environment, noContextDeploymentsSettingsManager);
-            RemoveOldTracePath(environment);
-            RemoveTempFileFromUserDrive(environment);
 
-            // Temporary fix for https://github.com/npm/npm/issues/5905
-            EnsureNpmGlobalDirectory();
-            EnsureUserProfileDirectory();
+            CleanupOrEnsureDirectories(environment);
 
             // Skip SSL Certificate Validate
             if (Kudu.Core.Environment.SkipSslValidation)
@@ -372,6 +370,16 @@ namespace Kudu.Services.Web.App_Start
                     kernel.Get<IAnalytics>(),
                     kernel.Get<ITraceFactory>()));
             GlobalConfiguration.Configuration.Filters.Add(new EnsureRequestIdHandlerAttribute());
+        }
+
+        private static void CleanupOrEnsureDirectories(IEnvironment environment)
+        {
+            RemoveOldTracePath(environment);
+            RemoveTempFileFromUserDrive(environment);
+
+            // Temporary fix for https://github.com/npm/npm/issues/5905
+            EnsureNpmGlobalDirectory();
+            EnsureUserProfileDirectory();
         }
 
         public static class SignalRStartup

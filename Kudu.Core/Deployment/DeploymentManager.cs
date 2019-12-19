@@ -261,6 +261,9 @@ namespace Kudu.Core.Deployment
                     }
                 }
 
+                // Remove leftover AppOffline file
+                PostDeploymentHelper.RemoveAppOfflineIfLeft(_environment, null, tracer);
+
                 // Reload status file with latest updates
                 statusFile = _status.Open(id);
                 if (statusFile != null)
