@@ -199,7 +199,7 @@
                         <th>Port</th>
                         <th></th>
                     </tr>
-                    @foreach (string siteBinding in Model.SiteUrls.Skip(1))
+                    @foreach (string siteBinding in Model.SiteUrls)
                     {
                         var uri = new Uri(siteBinding);
                         
@@ -248,7 +248,7 @@
                         <th>Port</th>
                         <th></th>
                     </tr>
-                    @foreach (string siteBinding in Model.ServiceUrls.Skip(1))
+                    @foreach (string siteBinding in Model.ServiceUrls)
                     {
                         var uri = new Uri(siteBinding);
                         

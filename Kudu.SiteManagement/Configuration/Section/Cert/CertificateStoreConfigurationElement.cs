@@ -6,9 +6,9 @@ namespace Kudu.SiteManagement.Configuration.Section.Cert
     public class CertificateStoreConfigurationElement : NamedConfigurationElement
     {
         [ConfigurationProperty("name", IsRequired = true)]
-        public StoreName Name
+        public string Name
         {
-            get { return (StoreName)this["name"]; }
+            get { return (string)this["name"]; }
         }
     }
 }

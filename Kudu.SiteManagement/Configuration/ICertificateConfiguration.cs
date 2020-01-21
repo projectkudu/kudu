@@ -6,19 +6,19 @@ namespace Kudu.SiteManagement.Configuration
 {
     public interface ICertificateStoreConfiguration
     {
-        StoreName Name { get; }
+        string Name { get; }
     }
 
     public class CertificateStoreConfiguration : ICertificateStoreConfiguration
     {
-        public StoreName Name { get; private set; }
+        public string Name { get; private set; }
 
         public CertificateStoreConfiguration(CertificateStoreConfigurationElement store)
             : this(store.Name)
         {
         }
 
-        public CertificateStoreConfiguration(StoreName name)
+        public CertificateStoreConfiguration(string name)
         {
             Name = name;
         }

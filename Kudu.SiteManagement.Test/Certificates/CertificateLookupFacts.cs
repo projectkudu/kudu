@@ -22,7 +22,7 @@ namespace Kudu.SiteManagement.Test.Certificates
             };
             storeMock.Setup(mock => mock.Certificates).Returns(collectionFake);
             
-            Certificate result = new CertificateLookup("FindMe", new[] { StoreName.My }, name => storeMock.Object)
+            Certificate result = new CertificateLookup("FindMe", new[] { nameof(StoreName.My) }, name => storeMock.Object)
                 .ByThumbprint();
 
             Assert.Equal(result.FriendlyName, "FindMe");
@@ -40,7 +40,7 @@ namespace Kudu.SiteManagement.Test.Certificates
                 new X509Certificate2Fake(friendlyName: "FindMe", thumbprint: "FindMe")
             });
 
-            Certificate result = new CertificateLookup("FindMe", new[] { StoreName.My }, name => storeMock.Object)
+            Certificate result = new CertificateLookup("FindMe", new[] { nameof(StoreName.My) }, name => storeMock.Object)
                 .ByFriendlyName();
 
             Assert.Equal(result.FriendlyName, "FindMe");
@@ -54,7 +54,7 @@ namespace Kudu.SiteManagement.Test.Certificates
             IX509Certificate2Collection collectionFake = new X509Certificate2CollectionFake { new X509Certificate2Fake() };
             storeMock.Setup(mock => mock.Certificates).Returns(collectionFake);
 
-            Certificate result = new CertificateLookup("FindMe", new[] { StoreName.My }, name => storeMock.Object)
+            Certificate result = new CertificateLookup("FindMe", new[] { nameof(StoreName.My) }, name => storeMock.Object)
                 .ByThumbprint();
 
             Assert.Null(result);
@@ -66,7 +66,7 @@ namespace Kudu.SiteManagement.Test.Certificates
             Mock<IX509Store> storeMock = new Mock<IX509Store>();
             storeMock.Setup(mock => mock.Certificates).Returns(new X509Certificate2CollectionFake { new X509Certificate2Fake() });
 
-            Certificate result = new CertificateLookup("FindMe", new[] { StoreName.My }, name => storeMock.Object)
+            Certificate result = new CertificateLookup("FindMe", new[] { nameof(StoreName.My) }, name => storeMock.Object)
                 .ByFriendlyName();
 
             Assert.Null(result);
@@ -83,7 +83,7 @@ namespace Kudu.SiteManagement.Test.Certificates
                 new X509Certificate2Fake(friendlyName: "NotMe", thumbprint: "FindMe")
             });
 
-            Certificate result = new CertificateLookup("FindMe", new[] { StoreName.My }, name => storeMock.Object)
+            Certificate result = new CertificateLookup("FindMe", new[] { nameof(StoreName.My) }, name => storeMock.Object)
                 .ByThumbprint();
 
             Assert.Equal(result.FriendlyName, "FindMe");
@@ -101,7 +101,7 @@ namespace Kudu.SiteManagement.Test.Certificates
                 new X509Certificate2Fake(friendlyName: "FindMe", thumbprint: "NotMe")
             });
 
-            Certificate result = new CertificateLookup("FindMe", new[] { StoreName.My }, name => storeMock.Object)
+            Certificate result = new CertificateLookup("FindMe", new[] { nameof(StoreName.My) }, name => storeMock.Object)
                 .ByFriendlyName();
 
             Assert.Equal(result.FriendlyName, "FindMe");
@@ -111,19 +111,19 @@ namespace Kudu.SiteManagement.Test.Certificates
         [Fact]
         public void ByThumbprint_OneMatchingInSecondaryStore_ReturnsCertificate()
         {
-            Dictionary<StoreName, Mock<IX509Store>> storeMocks = new Dictionary<StoreName, Mock<IX509Store>>();
-            storeMocks[StoreName.My] = CreateX509StoreMock(new X509Certificate2CollectionFake
+            Dictionary<string, Mock<IX509Store>> storeMocks = new Dictionary<string, Mock<IX509Store>>();
+            storeMocks[nameof(StoreName.My)] = CreateX509StoreMock(new X509Certificate2CollectionFake
             {
                 new X509Certificate2Fake(),
                 new X509Certificate2Fake()
             });
-            storeMocks[StoreName.Root] = CreateX509StoreMock(new X509Certificate2CollectionFake
+            storeMocks[nameof(StoreName.Root)] = CreateX509StoreMock(new X509Certificate2CollectionFake
             {
                 new X509Certificate2Fake(),
                 new X509Certificate2Fake(friendlyName: "FindMe", thumbprint: "FindMe")
             });
 
-            Certificate result = new CertificateLookup("FindMe", new[] { StoreName.My, StoreName.Root }, name => storeMocks[name].Object)
+            Certificate result = new CertificateLookup("FindMe", new[] { nameof(StoreName.My), nameof(StoreName.Root) }, name => storeMocks[name].Object)
                 .ByThumbprint();
 
             Assert.Equal(result.FriendlyName, "FindMe");
@@ -133,19 +133,19 @@ namespace Kudu.SiteManagement.Test.Certificates
         [Fact]
         public void ByFriendlyName_OneMatchingInSecondaryStore_ReturnsCertificate()
         {
-            Dictionary<StoreName, Mock<IX509Store>> storeMocks = new Dictionary<StoreName, Mock<IX509Store>>();
-            storeMocks[StoreName.My] = CreateX509StoreMock(new X509Certificate2CollectionFake
+            Dictionary<string, Mock<IX509Store>> storeMocks = new Dictionary<string, Mock<IX509Store>>();
+            storeMocks[nameof(StoreName.My)] = CreateX509StoreMock(new X509Certificate2CollectionFake
             {
                 new X509Certificate2Fake(),
                 new X509Certificate2Fake()
             });
-            storeMocks[StoreName.Root] = CreateX509StoreMock(new X509Certificate2CollectionFake
+            storeMocks[nameof(StoreName.Root)] = CreateX509StoreMock(new X509Certificate2CollectionFake
             {
                 new X509Certificate2Fake(),
                 new X509Certificate2Fake(friendlyName: "FindMe", thumbprint: "FindMe")
             });
 
-            Certificate result = new CertificateLookup("FindMe", new[] { StoreName.My, StoreName.Root }, name => storeMocks[name].Object)
+            Certificate result = new CertificateLookup("FindMe", new[] { nameof(StoreName.My), nameof(StoreName.Root) }, name => storeMocks[name].Object)
                 .ByFriendlyName();
 
             Assert.Equal(result.FriendlyName, "FindMe");

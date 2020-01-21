@@ -122,7 +122,7 @@ namespace Kudu.SiteManagement.Configuration
             {
                 if (_section == null || _section.CertificateStores == null || !_section.CertificateStores.Items.Any())
                 {
-                    return new[] { new CertificateStoreConfiguration(StoreName.My) };
+                    return new[] { new CertificateStoreConfiguration(nameof(StoreName.My)) };
                 }
 
                 return _section.CertificateStores.Items.Select(store => new CertificateStoreConfiguration(store));

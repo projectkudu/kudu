@@ -10,7 +10,7 @@ namespace Kudu.SiteManagement.Certificates
     public class CertificateSearcher : ICertificateSearcher
     {
         private readonly IKuduConfiguration _configuration;
-        private readonly Func<StoreName, IX509Store> _storeFactory;
+        private readonly Func<string, IX509Store> _storeFactory;
 
         public CertificateSearcher(IKuduConfiguration configuration)
             : this(configuration, (name) => new X509StoreWrapper(new X509Store(name, StoreLocation.LocalMachine)))
@@ -18,7 +18,7 @@ namespace Kudu.SiteManagement.Certificates
         }
 
         //Note: Constructor mainly here for testing
-        public CertificateSearcher(IKuduConfiguration configuration, Func<StoreName, IX509Store> storeFactory)
+        public CertificateSearcher(IKuduConfiguration configuration, Func<string, IX509Store> storeFactory)
         {
             _configuration = configuration;
             _storeFactory = storeFactory;

@@ -189,7 +189,7 @@ namespace Kudu.SiteManagement.Test.Configuration
         public void CertificateStores_WithoutStoresConfiguration_DefaultsToSingleStoreMy()
         {
             IKuduConfiguration config = CreateConfiguration(null, new NameValueCollection());
-            Assert.Equal(StoreName.My, config.CertificateStores.Single().Name);
+            Assert.Equal(nameof(StoreName.My), config.CertificateStores.Single().Name);
         }
 
         [Fact]
@@ -200,7 +200,7 @@ namespace Kudu.SiteManagement.Test.Configuration
             configFake.SetFake("certificateStores", storesFake);
 
             IKuduConfiguration config = CreateConfiguration(configFake, new NameValueCollection());
-            Assert.Equal(StoreName.My, config.CertificateStores.Single().Name);
+            Assert.Equal(nameof(StoreName.My), config.CertificateStores.Single().Name);
         }
 
         [Fact]
@@ -214,7 +214,7 @@ namespace Kudu.SiteManagement.Test.Configuration
             configFake.SetFake("certificateStores", storesFake);
 
             IKuduConfiguration config = CreateConfiguration(configFake, new NameValueCollection());
-            Assert.Equal(StoreName.Root, config.CertificateStores.Single().Name);
+            Assert.Equal(nameof(StoreName.Root), config.CertificateStores.Single().Name);
         }
 
         [Fact]
@@ -223,16 +223,16 @@ namespace Kudu.SiteManagement.Test.Configuration
             var configFake = new KuduConfigurationSectionFake();
             var storesFake = new CertificateStoresConfigurationElementCollectionFake();
             storesFake.Add(new CertificateStoreConfigurationElementFake()
-                .SetFake("name", StoreName.Root));
+                .SetFake("name", nameof(StoreName.Root)));
             storesFake.Add(new CertificateStoreConfigurationElementFake()
-                .SetFake("name", StoreName.My));
+                .SetFake("name", nameof(StoreName.My)));
 
             configFake.SetFake("certificateStores", storesFake);
 
             IKuduConfiguration config = CreateConfiguration(configFake, new NameValueCollection());
             Assert.Equal(2, config.CertificateStores.Count());
-            Assert.Equal(StoreName.Root, config.CertificateStores.ElementAt(0).Name);
-            Assert.Equal(StoreName.My, config.CertificateStores.ElementAt(1).Name);
+            Assert.Equal(nameof(StoreName.Root), config.CertificateStores.ElementAt(0).Name);
+            Assert.Equal(nameof(StoreName.My), config.CertificateStores.ElementAt(1).Name);
         }
 
         private IKuduConfiguration CreateConfiguration(KuduConfigurationSectionFake configFake, NameValueCollection appSettingsFake)

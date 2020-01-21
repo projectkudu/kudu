@@ -15,10 +15,10 @@ namespace Kudu.SiteManagement.Certificates
     public sealed class CertificateLookup : ICertificateLookup
     {
         private readonly string _value;
-        private readonly IEnumerable<StoreName> _stores;
-        private readonly Func<StoreName, IX509Store> _storeFactory;
+        private readonly IEnumerable<string> _stores;
+        private readonly Func<string, IX509Store> _storeFactory;
 
-        public CertificateLookup(string value, IEnumerable<StoreName> stores, Func<StoreName, IX509Store> storeFactory)
+        public CertificateLookup(string value, IEnumerable<string> stores, Func<string, IX509Store> storeFactory)
         {
             _value = value;
             _stores = stores;

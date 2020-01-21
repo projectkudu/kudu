@@ -17,15 +17,15 @@ namespace Kudu.SiteManagement.Test.Certificates
         {
             Mock<IKuduConfiguration> configMock = new Mock<IKuduConfiguration>();
             configMock.Setup(mock => mock.CertificateStores)
-                .Returns(new[] { new CertificateStoreConfiguration(StoreName.My), new CertificateStoreConfiguration(StoreName.Root) });
+                .Returns(new[] { new CertificateStoreConfiguration(nameof(StoreName.My)), new CertificateStoreConfiguration(nameof(StoreName.Root)) });
             
-            Dictionary<StoreName, Mock<IX509Store>> storeMocks = new Dictionary<StoreName, Mock<IX509Store>>();
-            storeMocks[StoreName.My] = CreateX509StoreMock(new X509Certificate2CollectionFake
+            Dictionary<string, Mock<IX509Store>> storeMocks = new Dictionary<string, Mock<IX509Store>>();
+            storeMocks[nameof(StoreName.My)] = CreateX509StoreMock(new X509Certificate2CollectionFake
             {
                 new X509Certificate2Fake(friendlyName: "My_CertA"),
                 new X509Certificate2Fake(friendlyName: "My_CertB")
             });
-            storeMocks[StoreName.Root] = CreateX509StoreMock(new X509Certificate2CollectionFake
+            storeMocks[nameof(StoreName.Root)] = CreateX509StoreMock(new X509Certificate2CollectionFake
             {
                 new X509Certificate2Fake(friendlyName: "Root_CertA"),
                 new X509Certificate2Fake(friendlyName: "Root_CertB")
@@ -45,7 +45,7 @@ namespace Kudu.SiteManagement.Test.Certificates
         public void Lookup_ReturnsCertificateLookupObject()
         {
             Mock<IKuduConfiguration> configMock = new Mock<IKuduConfiguration>();
-            configMock.Setup(mock => mock.CertificateStores).Returns(new[] { new CertificateStoreConfiguration(StoreName.My) });
+            configMock.Setup(mock => mock.CertificateStores).Returns(new[] { new CertificateStoreConfiguration(nameof(StoreName.My)) });
 
             ICertificateSearcher searcher = new CertificateSearcher(configMock.Object, null);
             ICertificateLookup result = searcher.Lookup("FindMe");
