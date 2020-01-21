@@ -38,7 +38,7 @@
     <Target Name="UpdateVersion" Condition="'$(BUILD_NUMBER)' != ''">
         <RegexTransform Items="@(RegexTransform)" />
     </Target>
-    <Target Name="RunAll" DependsOnTargets="UpdateVersion; Ensure7Zip; RestorePackages; Build; ReportFxCopResults; RunTests; BuildSites; BuildZips; CopySymbols; BuildNuget" />
+    <Target Name="RunAll" DependsOnTargets="UpdateVersion; Ensure7Zip; RestorePackages; Build; ReportFxCopResults; BuildSites; BuildZips; CopySymbols; BuildNuget" />
     <Target Name="CreateOutputPath">
         <MakeDir Directories="$(ArtifactsPath)\symbols" Condition="!Exists('$(ArtifactsPath)\symbols')" />
         <MakeDir Directories="$(TestResultsPath)" Condition="!Exists('$(TestResultsPath)')" />
