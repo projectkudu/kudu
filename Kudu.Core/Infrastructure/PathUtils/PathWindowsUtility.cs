@@ -111,12 +111,23 @@ namespace Kudu.Core.Infrastructure
                 Path.Combine(programFiles, "Microsoft Visual Studio", "2017", "BuildTools", "MSBuild", "15.0", "Bin") // msbuild tools
                 // above is for public kudu, below is for azure
             };
-
-            if (DeploymentSettingsExtension.UseMSBuild_15_3.Value)
-            {
-                probPaths.Add(Path.Combine(programFiles, "MSBuild-15.3.409.57025", "MSBuild", "15.0", "Bin"));
-            }
             probPaths.Add(Path.Combine(programFiles, "MSBuild-15.9.21.664", "MSBuild", "MSBuild", "15.0", "Bin"));
+
+            return probPaths.FirstOrDefault(path => Directory.Exists(path));
+        }
+
+        internal override string ResolveMSBuild16Dir()
+        {
+            string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);
+            List<string> probPaths = new List<string>
+            {
+                Path.Combine(programFiles, "Microsoft Visual Studio", "2019", "Enterprise",   "MSBuild", "16.0", "Bin", "Current", "Bin"), // visual studio Enterprise
+                Path.Combine(programFiles, "Microsoft Visual Studio", "2019", "Professional", "MSBuild", "16.0", "Bin", "Current", "Bin"), // visual studio Professional
+                Path.Combine(programFiles, "Microsoft Visual Studio", "2019", "Community",    "MSBuild", "16.0", "Bin", "Current", "Bin"), // visual studio Community
+                Path.Combine(programFiles, "Microsoft Visual Studio", "2019", "BuildTools",   "MSBuild", "16.0", "Bin", "Current", "Bin"), // msbuild tools
+                // above is for public kudu, below is for azure
+            };
+            probPaths.Add(Path.Combine(programFiles, "MSBuild-16.4", "MSBuild", "Current", "Bin"));
 
             return probPaths.FirstOrDefault(path => Directory.Exists(path));
         }

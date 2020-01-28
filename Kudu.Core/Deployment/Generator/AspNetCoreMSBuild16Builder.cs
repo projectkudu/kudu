@@ -4,12 +4,12 @@ using System.Globalization;
 
 namespace Kudu.Core.Deployment.Generator
 {
-    class AspNetCoreBuilder : MicrosoftSiteBuilder
+    class AspNetCoreMSBuild16Builder : MicrosoftSiteBuilder
     {
         private readonly string _version;
 
-        public AspNetCoreBuilder(IEnvironment environment, IDeploymentSettingsManager settings, IBuildPropertyProvider propertyProvider, string sourcePath, string projectFilePath, string solutionPath)
-            : base(environment, settings, propertyProvider, sourcePath, projectFilePath, solutionPath, "--aspNetCore")
+        public AspNetCoreMSBuild16Builder(IEnvironment environment, IDeploymentSettingsManager settings, IBuildPropertyProvider propertyProvider, string sourcePath, string projectFilePath, string solutionPath)
+            : base(environment, settings, propertyProvider, sourcePath, projectFilePath, solutionPath, "--aspNetCoreMSBuild16")
         {
             if (projectFilePath.EndsWith(".csproj", StringComparison.OrdinalIgnoreCase))
             {
@@ -29,7 +29,7 @@ For more information, please visit https://go.microsoft.com/fwlink/?linkid=85096
 
         public override string ProjectType
         {
-            get { return $"ASP.NET CORE {_version}"; }
+            get { return $"ASP.NET CORE {_version} MSBUILD 16"; }
         }
     }
 }

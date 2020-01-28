@@ -36,22 +36,6 @@ namespace Kudu.Contracts.Settings
             return false;
         });
 
-        // to be removed once dotnetcore 3.0 confirmed successful
-        public static readonly Lazy<bool> UseMSBuild_15_3 = new Lazy<bool>(() =>
-        {
-            try
-            {
-                var path = Path.Combine(System.Environment.GetEnvironmentVariable("SystemRoot"), "temp", SettingsKeys.UseMSBuild_15_3);
-                return File.Exists(path);
-            }
-            catch (Exception)
-            {
-                // no-op
-            }
-
-            return false;
-        });
-
         public static string GetValue(this IDeploymentSettingsManager settings, string key)
         {
             return settings.GetValue(key, onlyPerSite: false);

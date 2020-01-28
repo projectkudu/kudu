@@ -18,7 +18,6 @@
         public const string ScmType = "ScmType";
         public const string UseShallowClone = "SCM_USE_SHALLOW_CLONE";
         public const string UseSiteExtensionV1 = "SCM_USE_SITEEXTENSION_V1";
-        public const string UseMSBuild_15_3 = "SCM_USE_MSBUILD_15_3";
         public const string Command = "COMMAND";
         public const string Project = "PROJECT";
         public const string WorkerCommand = "WORKER_COMMAND";
@@ -57,5 +56,7 @@
 
         public const string MaxZipPackageCount = "SCM_MAX_ZIP_PACKAGE_COUNT";
         public const string ZipDeployDoNotPreserveFileTime = "SCM_ZIPDEPLOY_DONOT_PRESERVE_FILETIME";
+
+        public const string UseMSBuild16 = "SCM_USE_MSBUILD_16";
     }
 }

@@ -67,9 +67,8 @@ namespace Kudu.Core.Infrastructure
                     return true;
                 }
 
-                // if ASP.NET CORE 3.X check for <Project Sdk="Microsoft.NET.Sdk.Web"> 
-                return VsHelper.IsAspNetCoreSDK(VsHelper.GetProjectSDK(projectPath)) &&
-                        VsHelper.IsDotNetCore3(VsHelper.GetTargetFramework(projectPath));
+                // check for <Project Sdk="Microsoft.NET.Sdk.Web"> 
+                return VsHelper.IsAspNetCoreSDK(VsHelper.GetProjectSDK(projectPath));
             }
             else if (projectPath.EndsWith(".xproj", StringComparison.OrdinalIgnoreCase))
             {

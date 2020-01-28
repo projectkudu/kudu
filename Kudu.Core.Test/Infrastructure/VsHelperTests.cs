@@ -40,30 +40,22 @@ namespace Kudu.Core.Infrastructure.Test
         }
 
         [Theory]
-        [InlineData("netstandard2.0;netcoreapp2.2", "netstandard2.0")]
-        [InlineData("netcoreapp3.1;netstandard2.1", "netcoreapp3.1")]
-        [InlineData("netcoreapp2.1;netstandard3.1", "netcoreapp2.1")]
-        public void GetTargetFrameworks(string targetFrameworks, string expected)
+        [InlineData("netcoreapp3.1", "netcoreapp3.1")]
+        [InlineData("netcoreapp3.0", "netcoreapp3.0")]
+        [InlineData("netcoreapp2.2", "netcoreapp2.2")]
+        [InlineData("netstandard2.1", "netstandard2.1")]
+        [InlineData("netstandard2.0", "netstandard2.0")]
+        public void GetTargetFrameworkJson(string targetFramework, string expected)
         {
             // Arrange
-            var CsprojFileContent = string.Format(
-@"<Project Sdk=""Microsoft.NET.Sdk"">
-
-  <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <TargetFrameworks>{0}</TargetFrameworks>
-  </PropertyGroup>
-
-  <ItemGroup>
-    <Content Include=""run.bat"">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
-</Project>
-", targetFrameworks);
+            var jsonFileContent = string.Format(
+@"{{
+  ""frameworks"":
+    {{""{0}"": {{}}}}
+  }}", targetFramework);
 
             // Act
-            var result = VsHelper.GetTargetFrameworkContents(CsprojFileContent);
+            var result = VsHelper.GetTargetFrameworkJsonContents(jsonFileContent);
 
             // Assert
             Assert.Equal(expected, result);
@@ -399,34 +391,19 @@ xcopy /s /y ""$(ProjectDir)..\packages\SqlServerCompact.4.0.8482.1\NativeBinarie
         [InlineData("parseerror<Project Sdk=\"Microsoft.NET.Sdk\">", "")]
         [InlineData("<notfoundProject Sdk=\"Microsoft.NET.Sdk\">", "")]
         [InlineData("<Project notfoundSdk=\"Microsoft.NET.Sdk\">", "")]
-        public void GetGetProjectSDKContent(string content, string expected)
+        public void GetProjectSDKContent(string content, string expected)
         {
             // Arrange
             var CsprojFileContent = string.Format(
 @"{0}
-
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
   </PropertyGroup>
-
 </Project>
 ", content);
 
             // Act
             var result = VsHelper.GetProjectSDKContent(CsprojFileContent);
-
-            // Assert
-            Assert.Equal(expected, result);
-        }
-
-        [Theory]
-        [InlineData("{\"sdk\": {\"version\": \"2.2\"}}", "2.2")]
-        [InlineData("{\"sasdasddk\": {\"version\": \"2.2\"}}", "")]
-        [InlineData("abc{\"sdk\": {\"version\": \"2.2\"}}", "")]
-        public void SniffGlobalJson(string globalJsonContent, string expected)
-        {
-            // Act
-            var result = VsHelper.SniffGlobalJsonContents(globalJsonContent);
 
             // Assert
             Assert.Equal(expected, result);

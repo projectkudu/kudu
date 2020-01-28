@@ -4,21 +4,16 @@ using System.IO;
 using System.Linq;
 using System.Xml.Linq;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using Kudu.Contracts.Infrastructure;
+using Kudu.Contracts.Tracing;
+using Kudu.Contracts.Settings;
+using Kudu.Core.Settings;
 using Kudu.Core.SourceControl;
 using Kudu.Core.Tracing;
 
 namespace Kudu.Core.Infrastructure
 {
-    public class GlobalJson
-    {
-        public Sdk sdk { get; set; }
-    }
-
-    public class Sdk
-    {
-        public String version { get; set; }
-    }
-
     internal static class VsHelper
     {
         public static readonly string[] SolutionsLookupList = new string[] { "*.sln" };
@@ -80,10 +75,9 @@ namespace Kudu.Core.Infrastructure
 
         public static string GetTargetFramework(string path)
         {
-            string document = null;
             try
             {
-                document = File.ReadAllText(path);
+                string document = File.ReadAllText(path);
                 return GetTargetFrameworkContents(document);
             }
             catch (Exception)
@@ -99,33 +93,22 @@ namespace Kudu.Core.Infrastructure
                 XDocument document = XDocument.Parse(content);
                 var targetFramework = document.Root.Descendants("TargetFramework");
                 var targetFrameworkElement = targetFramework.FirstOrDefault();
-                if (targetFrameworkElement != null && targetFrameworkElement.Value != null)
+                if (targetFrameworkElement == null || targetFrameworkElement.Value == null)
+                {
+                    // old-style .csproj
+                    return string.Empty;
+                }
+                else
                 {
                     KuduEventSource.Log.GenericEvent(
                             ServerConfiguration.GetApplicationName(),
-                            string.Format("Dotnet target framework found: {0}", targetFrameworkElement.Value),
+                            string.Format("Dotnet target framework found: {0}", targetFramework),
                             string.Empty,
                             string.Empty,
                             string.Empty,
                             string.Empty);
                     return targetFrameworkElement.Value;
                 }
-
-                var targetFrameworks = document.Root.Descendants("TargetFrameworks");
-                var targetFrameworksElement = targetFrameworks.FirstOrDefault();
-                if (targetFrameworksElement != null && targetFrameworksElement.Value != null)
-                {
-                    KuduEventSource.Log.GenericEvent(
-                            ServerConfiguration.GetApplicationName(),
-                            string.Format("Multiple Dotnet target frameworks found: {0}. Using First", targetFrameworksElement.Value),
-                            string.Empty,
-                            string.Empty,
-                            string.Empty,
-                            string.Empty);
-                    return targetFrameworksElement.Value.Split(';').First();
-                }
-                // old-style .csproj
-                return string.Empty;
             }
             catch (Exception)
             {
@@ -133,7 +116,7 @@ namespace Kudu.Core.Infrastructure
             }
         }
 
-        // Look for `<TargetFramework>` or `<TargetFrameworks>``
+        // Look for `<TargetFramework>`
         // netcoreapp3.X or netstandard2.1
         public static bool IsDotNetCore3(string target)
         {
@@ -143,10 +126,9 @@ namespace Kudu.Core.Infrastructure
 
         public static string GetProjectSDK(string path)
         {
-            string document = null;
             try
             {
-                document = File.ReadAllText(path);
+                string document = File.ReadAllText(path);
                 return GetProjectSDKContent(document);
             }
             catch (Exception)
@@ -161,14 +143,17 @@ namespace Kudu.Core.Infrastructure
             {
                 XDocument document = XDocument.Parse(content);
                 var projectElement = document.Root;
-                if (projectElement != null 
-                    && projectElement.Value != null
-                    && projectElement.Attribute("Sdk") != null
-                    && projectElement.Attribute("Sdk").Value != null)
+                if (projectElement == null 
+                    || projectElement.Value == null
+                    || projectElement.Attribute("Sdk") == null
+                    || projectElement.Attribute("Sdk").Value == null)
+                {
+                    return string.Empty;
+                }
+                else
                 {
                     return projectElement.Attribute("Sdk").Value;
                 }
-                return string.Empty;
             }
             catch(Exception)
             {
@@ -179,45 +164,6 @@ namespace Kudu.Core.Infrastructure
         public static Boolean IsAspNetCoreSDK(string sdk)
         {
             return sdk.Equals("Microsoft.NET.Sdk.Web");
-        }
-
-        public static void SniffGlobalJson(String path)
-        {
-            try
-            {
-                if (File.Exists(path))
-                {
-                    String json = File.ReadAllText(path);
-                    string version = SniffGlobalJsonContents(json);
-                    if (!String.IsNullOrEmpty(version))
-                    {
-                        KuduEventSource.Log.GenericEvent(
-                            ServerConfiguration.GetApplicationName(),
-                            string.Format("global.json found, pinned sdk version {0}", version),
-                            string.Empty,
-                            string.Empty,
-                            string.Empty,
-                            string.Empty);
-                    }
-                }
-            }
-            catch
-            {
-                // no op
-            }
-        }
-
-        public static string SniffGlobalJsonContents(String json)
-        {
-            try
-            {
-                GlobalJson obj = JsonConvert.DeserializeObject<GlobalJson>(json);
-                return obj.sdk.version;
-            }
-            catch
-            {
-                return string.Empty;
-            }
         }
 
         public static bool IsWap(IEnumerable<Guid> projectTypeGuids)
@@ -293,9 +239,69 @@ namespace Kudu.Core.Infrastructure
                     select p).Any();
         }
 
+        public static string GetTargetFrameworkJson(string path)
+        {
+            try
+            {
+                string document = File.ReadAllText(path);
+                return GetTargetFrameworkJsonContents(document);
+            }
+            catch (Exception)
+            {
+                return string.Empty;
+            }
+        }
+
+        public static string GetTargetFrameworkJsonContents(string content)
+        {
+            try
+            {
+                var document = JObject.Parse(content);
+                string targetFramework = (string)document["frameworks"].First.ToString()
+                    .Replace("\"", "")
+                    .Replace(":", "")
+                    .Replace("{", "")
+                    .Replace("}", "")
+                    .Trim();
+                if (String.IsNullOrEmpty(targetFramework))
+                {
+                    // old-style .csproj
+                    return string.Empty;
+                }
+                else
+                {
+                    KuduEventSource.Log.GenericEvent(
+                            ServerConfiguration.GetApplicationName(),
+                            string.Format("Dotnet target framework found: {0}", targetFramework),
+                            string.Empty,
+                            string.Empty,
+                            string.Empty,
+                            string.Empty);
+                    return targetFramework;
+                }
+            }
+            catch (Exception)
+            {
+                return string.Empty;
+            }
+        }
+
         private static XName GetName(string name)
         {
             return XName.Get(name, "http://schemas.microsoft.com/developer/msbuild/2003");
+        }
+
+        public static bool UseMSBuild16()
+        {
+            String var = System.Environment.GetEnvironmentVariable(String.Format("APPSETTING_{0}", SettingsKeys.UseMSBuild16));
+            if (string.IsNullOrEmpty(var))
+            {
+                return StringUtils.IsTrueLike(ScmHostingConfigurations.GetValue(SettingsKeys.UseMSBuild16, "false"));
+            }
+            else
+            {
+                return StringUtils.IsTrueLike(var);
+            }
         }
 
         // 01, 10, 11 in binares
