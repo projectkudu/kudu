@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.IO;
 using System.IO.Abstractions;
+using System.Linq;
 using Kudu.Core.Functions;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Tracing;
@@ -45,30 +46,40 @@ namespace Kudu.Core.Test.Functions
             traceFactoryMock.Setup(tf => tf.GetTracer()).Returns(NullTracer.Instance);
 
             var functionManager = new FunctionManager(new Mock<IEnvironment>().Object, traceFactoryMock.Object);
-            if (expect == null)
+            string[] functionFiles = FileSystemHelpers.GetFiles(dir, "*.*", SearchOption.TopDirectoryOnly)
+                   .Where(p => !String.Equals(Path.GetFileName(p), Constants.FunctionsConfigFile, StringComparison.OrdinalIgnoreCase))
+                   .ToArray();
+            string scriptFile = (string)functionConfig["scriptFile"];
+            string scriptPath = string.IsNullOrEmpty(scriptFile) ? null : Path.Combine(dir, scriptFile);
+
+            if ((string.IsNullOrEmpty(scriptFile) && functionFiles.Length == 0) || expect == null)
             {
-                Assert.Throws<ConfigurationErrorsException>(() => functionManager.DeterminePrimaryScriptFile(functionConfig, dir));
+                Assert.Null(functionManager.DeterminePrimaryScriptFile((string)functionConfig["scriptFile"], dir));
+                return;
+            }
+            if (!string.IsNullOrEmpty(scriptPath) && !FileSystemHelpers.FileExists(scriptPath))
+            {
+                Assert.Throws<ConfigurationErrorsException>(() => functionManager.DeterminePrimaryScriptFile((string)functionConfig["scriptFile"], dir));
             }
             else
             {
-                Assert.Equal(expect, functionManager.DeterminePrimaryScriptFile(functionConfig, dir), StringComparer.OrdinalIgnoreCase);
+                Assert.Equal(expect, functionManager.DeterminePrimaryScriptFile((string)functionConfig["scriptFile"], dir), StringComparer.OrdinalIgnoreCase);
             }
         }
 
         [Theory]
         // missing script files
-        [InlineData(null, new[] { "function.json" })]
+        [InlineData(null, new[] { "function.json" }, "{}")]
         // unable to determine primary
-        [InlineData(null, new[] { "function.json", "randomFileA.txt", "randomFileB.txt" })]
+        [InlineData(null, new[] { "function.json", "randomFileA.txt", "randomFileB.txt" }, "{}")]
         // only one file left in function directory
-        [InlineData(@"c:\functions\functionScript.py", new[] { "function.json", "functionScript.py" })]
+        [InlineData(@"c:\functions\functionScript.py", new[] { "function.json", "functionScript.py" }, "{}")]
         // with datafiles in function directory
-        [InlineData(@"c:\functions\index.js", new[] { "function.json", "index.js", "test1.dat", "test2.dat" })]
-        [InlineData(@"c:\functions\run.csx", new[] { "function.json", "run.csx", "test.dat" })]
-        public void DeterminePrimaryScriptFileNotSpecifiedTests(string expect, string[] files)
+        [InlineData(@"c:\functions\index.js", new[] { "function.json", "index.js", "test1.dat", "test2.dat" }, "{}")]
+        [InlineData(@"c:\functions\run.csx", new[] { "function.json", "run.csx", "test.dat" }, "{}")]
+        public void DeterminePrimaryScriptFileNotSpecifiedTests(string expect, string[] files, string functionConfigStr)
         {
             var dir = @"c:\functions";
-            var functionConfigStr = "{}";
             FileSystemHelpers.Instance = MockFileSystem(dir, files);
             RunDeterminePrimaryScriptFileFunc(expect, functionConfigStr, dir);
         }
@@ -77,7 +88,7 @@ namespace Kudu.Core.Test.Functions
         // https://github.com/projectkudu/kudu/issues/2334
         [InlineData("{\"scriptFile\": \"subDirectory\\\\compiled.dll\"}", @"c:\functions\subDirectory\compiled.dll")]
         // cannot find script file specified
-        [InlineData("{\"scriptFile\": \"random.text\"}", null)]
+        [InlineData("{\"scriptFile\": \"random.text\"}", "{\"scriptFile\": \"random.text\"}")]
         public void DeterminePrimaryScriptFileSpecifiedTests(string functionConfigStr, string expect)
         {
             var dir = @"c:\functions";
