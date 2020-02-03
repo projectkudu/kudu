@@ -286,12 +286,13 @@ namespace Kudu.Core.Functions
         {
             var functionConfig = JObject.Parse(configContent);
             var functionPath = GetFuncPathAndCheckExistence(functionName);
+            string functionPrimaryScriptFile = DeterminePrimaryScriptFile((string)functionConfig["scriptFile"], functionPath);
 
             return new FunctionEnvelope
             {
                 Name = functionName,
                 ScriptRootPathHref = FilePathToVfsUri(functionPath, isDirectory: true),
-                ScriptHref = FilePathToVfsUri(DeterminePrimaryScriptFile(functionConfig, functionPath)),
+                ScriptHref = string.IsNullOrEmpty(functionPrimaryScriptFile) ? null : FilePathToVfsUri(functionPrimaryScriptFile),
                 ConfigHref = FilePathToVfsUri(GetFunctionConfigPath(functionName)),
                 SecretsFileHref = FilePathToVfsUri(GetFunctionSecretsFilePath(functionName)),
                 Href = GetFunctionHref(functionName),
@@ -308,19 +309,17 @@ namespace Kudu.Core.Functions
         }
 
         // Logic for this function is copied from here:
-        // https://github.com/Azure/azure-webjobs-sdk-script/blob/dev/src/WebJobs.Script/Host/ScriptHost.cs
+        // https://github.com/Azure/azure-functions-host/blob/dev/src/WebJobs.Script/Host/FunctionMetadataProvider.cs
         // These two implementations must stay in sync!
 
         /// <summary>
-        /// Determines which script should be considered the "primary" entry point script.
+        /// Determines which script should be considered the "primary" entry point script. Returns null if Primary script file cannot be determined
         /// </summary>
-        /// <exception cref="ConfigurationErrorsException">Thrown if the function metadata points to an invalid script file, or no script files are present.</exception>
-        internal string DeterminePrimaryScriptFile(JObject functionConfig, string scriptDirectory)
+        internal string DeterminePrimaryScriptFile(string scriptFile, string scriptDirectory)
         {
             // First see if there is an explicit primary file indicated
             // in config. If so use that.
             string functionPrimary = null;
-            string scriptFile = (string)functionConfig["scriptFile"];
 
             if (!string.IsNullOrEmpty(scriptFile))
             {
@@ -335,12 +334,12 @@ namespace Kudu.Core.Functions
             else
             {
                 string[] functionFiles = FileSystemHelpers.GetFiles(scriptDirectory, "*.*", SearchOption.TopDirectoryOnly)
-                    .Where(p => !String.Equals(Path.GetFileName(p), "function.json", StringComparison.OrdinalIgnoreCase))
+                    .Where(p => !String.Equals(Path.GetFileName(p), Constants.FunctionsConfigFile, StringComparison.OrdinalIgnoreCase))
                     .ToArray();
 
                 if (functionFiles.Length == 0)
                 {
-                    TraceAndThrowError(new ConfigurationErrorsException("No function script files present."));
+                    return null;
                 }
 
                 if (functionFiles.Length == 1)
@@ -358,12 +357,11 @@ namespace Kudu.Core.Functions
                 }
             }
 
+            // Primary script file is not required for HttpWorker or any custom language worker
             if (string.IsNullOrEmpty(functionPrimary))
             {
-                TraceAndThrowError(new ConfigurationErrorsException("Unable to determine the primary function script. Try renaming your entry point script to 'run' (or 'index' in the case of Node), " +
-                    "or alternatively you can specify the name of the entry point script explicitly by adding a 'scriptFile' property to your function metadata."));
+                return null;
             }
-
             return Path.GetFullPath(functionPrimary);
         }
 

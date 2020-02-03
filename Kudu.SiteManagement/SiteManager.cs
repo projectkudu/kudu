@@ -61,11 +61,18 @@ namespace Kudu.SiteManagement
         {
             using (var iis = GetServerManager())
             {
-                // The app pool is the app name
-                return iis.Sites.Where(x => x.Name.StartsWith("kudu_", StringComparison.OrdinalIgnoreCase))
-                                .Select(x => x.Applications[0].ApplicationPoolName)
-                                .Distinct()
-                                .ToList();
+                try
+                {
+                    // The app pool is the app name
+                    return iis.Sites.Where(x => x.Name.StartsWith("kudu_", StringComparison.OrdinalIgnoreCase))
+                                    .Select(x => x.Applications[0].ApplicationPoolName)
+                                    .Distinct()
+                                    .ToList();
+                }
+                catch
+                {
+                    return new List<string>();
+                }
             }
         }
 
