@@ -280,8 +280,8 @@ namespace Kudu.Contracts.Settings
         {
             string value = settings.GetValue(SettingsKeys.RecyclePreviewEnabled);
 
-            // Default value, if setting is not explicitly defined, is false
-            return StringUtils.IsTrueLike(value);
+            // Default value, if setting is not explicitly defined, is True
+            return value == null || StringUtils.IsTrueLike(value);
         }
 
         public static bool DoBuildDuringDeployment(this IDeploymentSettingsManager settings)

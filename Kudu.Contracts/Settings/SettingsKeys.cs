@@ -45,7 +45,7 @@
         public const string DockerCiEnabled = "DOCKER_ENABLE_CI";
 
         // This app-setting works for all kinds of apps, including classic Windows apps (not just container-based apps).
-        // To make it work for Windows apps, the app-setting WEBSITE_RECYCLE_PREVIEW_ENABLED=1 needs to be defined.
+        // To disable its effect on classic Windows apps, set WEBSITE_RECYCLE_PREVIEW_ENABLED=0.
         public const string RestartAppAfterDeployment = "SCM_RESTART_APP_CONTAINER_AFTER_DEPLOYMENT"; 
 
         public const string DoBuildDuringDeployment = "SCM_DO_BUILD_DURING_DEPLOYMENT";
