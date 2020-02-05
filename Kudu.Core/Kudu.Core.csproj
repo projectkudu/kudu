@@ -356,6 +356,7 @@
     <Compile Include="Settings\DeploymentSettingsManager.cs" />
     <Compile Include="Settings\JsonSettings.cs" />
     <Compile Include="Settings\SettingsProvidersPriority.cs" />
+    <Compile Include="Settings\ScmHostingConfigurations.cs" />
     <Compile Include="SourceControl\NullRepository.cs" />
     <Compile Include="SourceControl\Git\KnownEnvironment.cs" />
     <Compile Include="SourceControl\RepositoryExtensions.cs" />

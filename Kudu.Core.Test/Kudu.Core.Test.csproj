@@ -137,6 +137,7 @@
     <Compile Include="Settings\DeploymentSettingsPrioritiesTests.cs" />
     <Compile Include="Settings\DiagnosticsSettingsManagerTests.cs" />
     <Compile Include="Settings\SettingsProvidersTests.cs" />
+    <Compile Include="Settings\ScmHostingConfigurationsTests.cs" />
     <Compile Include="SSHKeyManagerFacts.cs" />
     <Compile Include="StructuredTextDocumentFacts.cs" />
     <Compile Include="StructuredTextLoggerFacts.cs" />
