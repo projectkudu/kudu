@@ -280,8 +280,12 @@ namespace Kudu.Contracts.Settings
         {
             string value = settings.GetValue(SettingsKeys.RecyclePreviewEnabled);
 
-            // Default value, if setting is not explicitly defined, is True
-            return value == null || StringUtils.IsTrueLike(value);
+            if (!string.IsNullOrEmpty(value))
+            {
+                return StringUtils.IsTrueLike(value);
+            }
+
+            return "1" == settings.GetHostingConfiguration(SettingsKeys.RecyclePreviewEnabled, defaultValue: null);
         }
 
         public static bool DoBuildDuringDeployment(this IDeploymentSettingsManager settings)

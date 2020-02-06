@@ -321,8 +321,8 @@ namespace Kudu.Core.Helpers
             }
             catch
             {
-                Trace(tracer, TraceEventType.Information, $"Failed to request a restart. Number of attempts: {attemptCount}");
-                throw;
+                // failed to restart, we will just trace not breaking deployment
+                Trace(tracer, TraceEventType.Warning, $"Failed to request a restart. Number of attempts: {attemptCount}");
             }
         }
 

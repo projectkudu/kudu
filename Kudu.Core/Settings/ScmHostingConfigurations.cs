@@ -15,7 +15,7 @@ namespace Kudu.Core.Settings
         private static Dictionary<string, string> _configs;
         private static DateTime _configsTTL;
 
-        public static string GetValue(string key, string defaultValue = null, ITracer tracer = null)
+        public static string GetValue(string key, string defaultValue = null)
         {
             var configs = _configs;
             if (configs == null || DateTime.UtcNow > _configsTTL)
@@ -27,20 +27,27 @@ namespace Kudu.Core.Settings
                     var settings = FileSystemHelpers.FileExists(_configsFile) 
                         ? FileSystemHelpers.ReadAllText(_configsFile) 
                         : null;
-                    if (tracer != null)
-                    {
-                        tracer.Trace($"Update ScmHostingConfigurations: {settings}");
-                    }
+
+                    KuduEventSource.Log.GenericEvent(
+                        ServerConfiguration.GetApplicationName(),
+                        $"ScmHostingConfigurations: Update value '{settings}'",
+                        string.Empty,
+                        string.Empty,
+                        string.Empty,
+                        string.Empty);
 
                     configs = Parse(settings);
                     _configs = configs;
                 }
                 catch (Exception ex)
                 {
-                    if (tracer != null)
-                    {
-                        tracer.TraceError(ex);
-                    }
+                    KuduEventSource.Log.KuduException(
+                        ServerConfiguration.GetApplicationName(),
+                        "ScmHostingConfigurations.GetValue",
+                        string.Empty,
+                        string.Empty,
+                        $"ScmHostingConfigurations: Fail to GetValue('{key}')",
+                        ex.ToString());
                 }
             }
 
