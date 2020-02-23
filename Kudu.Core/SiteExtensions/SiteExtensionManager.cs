@@ -765,16 +765,7 @@ namespace Kudu.Core.SiteExtensions
             }
             else
             {
-                // The remote feed URL can either be the default siteextensions.net, or some user override via
-                // SCM_SITEEXTENSIONS_FEED_URL. We only want to add nuget.org to the list if the user
-                // is *not* overriding the feed URL
-                // UPDATE 8/2018: we no longer use siteextension.net, per https://github.com/Azure/app-service-announcements/issues/87
-                // GetSiteExtensionRemoteUrl() now returns the NuGet feed by default
-                string remoteUrl = _settings.GetSiteExtensionRemoteUrl(out bool isDefault);
-                if (isDefault)
-                {
-                    //repos.Add(GetSourceRepository(DeploymentSettingsExtension.NuGetSiteExtensionFeedUrl));
-                }
+                string remoteUrl = _settings.GetSiteExtensionRemoteUrl(out _);
                 repos.Add(GetSourceRepository(remoteUrl));
             }
             return repos;

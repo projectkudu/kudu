@@ -35,7 +35,7 @@ namespace Kudu.Contracts.SiteExtensions
             ProjectUrl = GetElementValue(elements, "ProjectUrl");
             LicenseUrl = GetElementValue(elements, "LicenseUrl");
             Summary = GetElementValue(elements, "Summary");
-            IconUrl = GetElementValue(elements, "IconUrl") ?? "https://www.siteextensions.net/Content/Images/packageDefaultIcon-50x50.png";
+            IconUrl = GetElementValue(elements, "IconUrl") ?? "https://www.nuget.org/Content/Images/packageDefaultIcon-50x50.png";
 
             // this is to maintain the same behavior as V1
             //if (int.TryParse(GetElementValue(elements, "DownloadCount"), out int downloadCount))
@@ -58,7 +58,7 @@ namespace Kudu.Contracts.SiteExtensions
             ProjectUrl = json.Value<string>("projectUrl");
             LicenseUrl = json.Value<string>("licenseUrl");
             Summary = json.Value<string>("description");
-            IconUrl = json.Value<string>("iconUrl") ?? "https://www.siteextensions.net/Content/Images/packageDefaultIcon-50x50.png";
+            IconUrl = json.Value<string>("iconUrl") ?? "https://www.nuget.org/Content/Images/packageDefaultIcon-50x50.png";
         }
 
         public SiteExtensionInfo(SiteExtensionInfo info)
@@ -92,7 +92,7 @@ namespace Kudu.Contracts.SiteExtensions
             Description = data.Description;
             Version = data.Identity.Version.ToNormalizedString();
             ProjectUrl = data.ProjectUrl == null ? null : data.ProjectUrl.ToString();
-            IconUrl = data.IconUrl == null ? "https://www.siteextensions.net/Content/Images/packageDefaultIcon-50x50.png" : data.IconUrl.ToString();
+            IconUrl = data.IconUrl == null ? "https://www.nuget.org/Content/Images/packageDefaultIcon-50x50.png" : data.IconUrl.ToString();
             LicenseUrl = data.LicenseUrl == null ? null : data.LicenseUrl.ToString();
             Authors = data.Authors.Split(new string[] { "  " }, StringSplitOptions.RemoveEmptyEntries);
             PublishedDateTime = data.Published;

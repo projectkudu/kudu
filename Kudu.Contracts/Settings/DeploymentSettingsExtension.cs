@@ -16,8 +16,6 @@ namespace Kudu.Contracts.Settings
 
         public const int DefaultMaxJobRunsHistoryCount = 50;
 
-        // The siteextensions.net feed is no longer used
-        //public static readonly string DefaultSiteExtensionFeedUrl = "https://www.siteextensions.net/api/v2/";
         public static readonly string NuGetSiteExtensionFeedUrl = "https://www.nuget.org/api/v2/";
 
         // in the future, it should come from HostingConfiguration (@sanmeht)
