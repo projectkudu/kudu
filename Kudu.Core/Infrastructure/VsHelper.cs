@@ -73,57 +73,6 @@ namespace Kudu.Core.Infrastructure
             return solutions[0];
         }
 
-        public static string GetTargetFramework(string path)
-        {
-            try
-            {
-                string document = File.ReadAllText(path);
-                return GetTargetFrameworkContents(document);
-            }
-            catch (Exception)
-            {
-                return string.Empty;
-            }
-        }
-
-        public static string GetTargetFrameworkContents(string content)
-        {
-            try
-            {
-                XDocument document = XDocument.Parse(content);
-                var targetFramework = document.Root.Descendants("TargetFramework");
-                var targetFrameworkElement = targetFramework.FirstOrDefault();
-                if (targetFrameworkElement == null || targetFrameworkElement.Value == null)
-                {
-                    // old-style .csproj
-                    return string.Empty;
-                }
-                else
-                {
-                    KuduEventSource.Log.GenericEvent(
-                            ServerConfiguration.GetApplicationName(),
-                            string.Format("Dotnet target framework found: {0}", targetFramework),
-                            string.Empty,
-                            string.Empty,
-                            string.Empty,
-                            string.Empty);
-                    return targetFrameworkElement.Value;
-                }
-            }
-            catch (Exception)
-            {
-                return string.Empty;
-            }
-        }
-
-        // Look for `<TargetFramework>`
-        // netcoreapp3.X or netstandard2.1
-        public static bool IsDotNetCore3(string target)
-        {
-            return target.StartsWith("netcoreapp3", StringComparison.OrdinalIgnoreCase) ||
-                   target.Equals("netstandard2.1", StringComparison.OrdinalIgnoreCase);
-        }
-
         public static string GetProjectSDK(string path)
         {
             try
@@ -296,7 +245,7 @@ namespace Kudu.Core.Infrastructure
             String var = System.Environment.GetEnvironmentVariable(String.Format("APPSETTING_{0}", SettingsKeys.UseMSBuild16));
             if (string.IsNullOrEmpty(var))
             {
-                return StringUtils.IsTrueLike(ScmHostingConfigurations.GetValue(SettingsKeys.UseMSBuild16, "false"));
+                return StringUtils.IsTrueLike(ScmHostingConfigurations.GetValue(SettingsKeys.UseMSBuild16, "true"));
             }
             else
             {
