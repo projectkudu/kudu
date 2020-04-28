@@ -10,6 +10,7 @@ namespace Kudu.Contracts.Settings
     {
         public static readonly TimeSpan DefaultCommandIdleTimeout = TimeSpan.FromMinutes(1);
         public static readonly TimeSpan DefaultLogStreamTimeout = TimeSpan.FromMinutes(120);  // remember to update help message
+        public static readonly TimeSpan DefaultHttpClientTimeout = TimeSpan.FromSeconds(100);
         public static readonly TimeSpan DefaultWebJobsRestartTime = TimeSpan.FromMinutes(1);
         public static readonly TimeSpan DefaultJobsIdleTimeout = TimeSpan.FromMinutes(2);
         public const TraceLevel DefaultTraceLevel = TraceLevel.Error;
@@ -70,6 +71,11 @@ namespace Kudu.Contracts.Settings
         public static TimeSpan GetLogStreamTimeout(this IDeploymentSettingsManager settings)
         {
             return GetTimeSpan(settings, SettingsKeys.LogStreamTimeout, DefaultLogStreamTimeout);
+        }
+
+        public static TimeSpan GetHttpClientTimeout(this IDeploymentSettingsManager settings)
+        {
+            return GetTimeSpan(settings, SettingsKeys.HttpClientTimeout, DefaultHttpClientTimeout);
         }
 
         public static string GetPostDeploymentActionsDir(this IDeploymentSettingsManager settings, string defaultPath)

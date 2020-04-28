@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel.Composition.Hosting;
 using System.Configuration;
 using System.Globalization;
 using System.IO;
@@ -20,7 +19,6 @@ using Kudu.Core.Infrastructure;
 using Kudu.Core.Settings;
 using Kudu.Core.Tracing;
 using Newtonsoft.Json.Linq;
-using NuGet.Client;
 using NuGet.Client.VisualStudio;
 using NullLogger = Kudu.Core.Deployment.NullLogger;
 
@@ -61,6 +59,8 @@ namespace Kudu.Core.SiteExtensions
             _settings = settings;
             _traceFactory = traceFactory;
             _analytics = analytics;
+
+            FeedExtensionsV2.HttpClientTimeout = _settings.GetHttpClientTimeout();
         }
 
         /// <summary>

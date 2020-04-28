@@ -6,23 +6,27 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Linq;
 using Ionic.Zip;
+using Kudu.Contracts.Settings;
 using Kudu.Contracts.SiteExtensions;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Tracing;
 using Newtonsoft.Json.Linq;
 using NuGet.Client;
-using NuGet.PackagingCore;
 
 namespace Kudu.Core.SiteExtensions
 {
     public static class FeedExtensionsV2
     {
+        /// <summary>
+        /// HttpClient timeout
+        /// </summary>
+        public static TimeSpan HttpClientTimeout { get; set; } = DeploymentSettingsExtension.DefaultHttpClientTimeout;
+
         /// <summary>
         /// Return the feed URL to directly query nuget v2 api by search term, 
         /// always include pre-released
@@ -145,7 +149,7 @@ namespace Kudu.Core.SiteExtensions
                 try
                 {
                     JObject json = null;
-                    using (var client = new HttpClient(new HttpClientHandler { AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate }))
+                    using (var client = new HttpClient(new HttpClientHandler { AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate }) { Timeout = HttpClientTimeout })
                     {
                         address = $"https://azuresearch-usnc.nuget.org/query?q=tags:AzureSiteExtension%20packageid:{packageId}&prerelease=true&semVerLevel=2.0.0";
                         using (var response = await client.GetAsync(address))
@@ -204,7 +208,7 @@ namespace Kudu.Core.SiteExtensions
         /// <returns></returns>
         public static async Task DownloadPackageToFolder(string packageId, string packageVersion, string destinationFolder, string pathToLocalCopyOfNupkg)
         {
-            using (var client = new HttpClient())
+            using (var client = new HttpClient { Timeout = HttpClientTimeout })
             {
                 var uri = new Uri(String.Format("https://www.nuget.org/api/v2/package/{0}/{1}", packageId, packageVersion));
 
@@ -252,7 +256,7 @@ namespace Kudu.Core.SiteExtensions
         public static async Task UpdateLocalPackage(string siteExntentionsRootPath, string packageId, string packageVersion, string destinationFolder, string pathToLocalCopyOfNupkg, ITracer tracer)
         {
             tracer.Trace("Performing incremental package update for {0}", packageId);
-            using (var client = new HttpClient())
+            using (var client = new HttpClient { Timeout = HttpClientTimeout })
             {
                 var uri = new Uri(String.Format("https://www.nuget.org/api/v2/package/{0}/{1}", packageId, packageVersion));
                 var response = await client.GetAsync(uri);
@@ -423,7 +427,7 @@ namespace Kudu.Core.SiteExtensions
                     feedUrl = FeedExtensionsV2.GetFeedUrl(filter);
                 }
 
-                using (var client = new HttpClient())
+                using (var client = new HttpClient { Timeout = HttpClientTimeout })
                 {
                     var response = await client.GetAsync(feedUrl);
                     var content = await response.Content.ReadAsStringAsync();
