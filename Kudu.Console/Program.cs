@@ -13,7 +13,6 @@ using Kudu.Contracts.Tracing;
 using Kudu.Core;
 using Kudu.Core.Deployment;
 using Kudu.Core.Deployment.Generator;
-using Kudu.Core.Functions;
 using Kudu.Core.Helpers;
 using Kudu.Core.Hooks;
 using Kudu.Core.Infrastructure;
@@ -58,6 +57,9 @@ namespace Kudu.Console
             string wapTargets = args[1];
             string deployer = args.Length == 2 ? null : args[2];
             string requestId = System.Environment.GetEnvironmentVariable(Constants.RequestIdHeader);
+
+            // signify the deployment is done by git push
+            System.Environment.SetEnvironmentVariable(Constants.ScmDeploymentKind, "GitPush");
 
             IEnvironment env = GetEnvironment(appRoot, requestId);
             ISettings settings = new XmlSettings.Settings(GetSettingsPath(env));

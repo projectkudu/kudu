@@ -109,7 +109,7 @@ namespace Kudu.Core.Helpers
         /// It is written to require least dependencies but framework assemblies.
         /// Caller is responsible for synchronization.
         /// </summary>
-        [SuppressMessage("Microsoft.Usage", "CA1801:Parameter 'siteRestrictedJwt' is never used", 
+        [SuppressMessage("Microsoft.Usage", "CA1801:Parameter 'siteRestrictedJwt' is never used",
             Justification = "Method signature has to be the same because it's called via reflections from web-deploy")]
         public static async Task Run(string requestId, string siteRestrictedJwt, TraceListener tracer)
         {
@@ -128,6 +128,27 @@ namespace Kudu.Core.Helpers
             await SyncFunctionsTriggers(requestId, tracer);
 
             await PerformAutoSwap(requestId, tracer);
+        }
+
+        /// <summary>
+        /// This common codes is to invoke post deployment operations.
+        /// It is written to require least dependencies but framework assemblies.
+        /// Caller is responsible for synchronization.
+        /// </summary>
+        /// <param name="siteName">WEBSITE_SITE_NAME env</param>
+        /// <param name="kind">MSDeploy, ZipDeploy, Git, ..</param>
+        /// <param name="requestId">for correlation</param>
+        /// <param name="status">Success or fail</param>
+        /// <param name="details">deployment specific json</param>
+        /// <param name="tracer">tracing</param>
+        public static async Task InvokeWithDetails(string kind, string requestId, string status, string details, TraceListener tracer)
+        {
+            DeploymentCompletedInfo.Persist(System.Environment.GetEnvironmentVariable("WEBSITE_SITE_NAME"), kind, requestId, status, details);
+
+            if (string.Equals("Success", status, StringComparison.OrdinalIgnoreCase))
+            {
+                await Invoke(requestId, tracer);
+            }
         }
 
         public static async Task SyncFunctionsTriggers(string requestId, TraceListener tracer, string functionsPath = null)
