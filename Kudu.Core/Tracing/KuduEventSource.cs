@@ -81,5 +81,23 @@ namespace Kudu.Core.Tracing
                 WriteEvent(65515, siteName, Message, address, verb, requestId, statusCode, latencyInMilliseconds, userAgent);
             }
         }
+
+        /// <summary>
+        /// DeploymentCompleted event
+        /// </summary>
+        /// <param name="siteName">WEBSITE_SITE_NAME</param>
+        /// <param name="kind">MSDeploy, ZipDeploy, Git, ...</param>
+        /// <param name="requestId">requestId</param>
+        /// <param name="status">Success, Failed</param>
+        /// <param name="details">deployment-specific json</param>
+        [SuppressMessage("Microsoft.Performance", "CA1801:ReviewUnusedParameters")]
+        [Event(65516, Level = EventLevel.Informational, Message = "Deployment completed for site {0}", Channel = EventChannel.Operational)]
+        public void DeploymentCompleted(string siteName, string kind, string requestId, string status, string details)
+        {
+            if (IsEnabled())
+            {
+                WriteEvent(65516, siteName, kind, requestId, status, details);
+            }
+        }
     }
 }
