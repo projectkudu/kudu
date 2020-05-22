@@ -529,6 +529,11 @@ namespace Kudu.Core.Helpers
         {
             try
             {
+                if (!IsLocalHost && IPAddress.TryParse(System.Environment.GetEnvironmentVariable(SettingsKeys.ILBVip), out IPAddress ilbAddress))
+                {
+                    return ilbAddress;
+                }
+
                 // if resolved successfully, return null to not use alternative ipAddress
                 await Dns.GetHostEntryAsync(host);
                 return null;

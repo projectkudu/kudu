@@ -59,5 +59,7 @@
         public const string ZipDeployDoNotPreserveFileTime = "SCM_ZIPDEPLOY_DONOT_PRESERVE_FILETIME";
 
         public const string UseMSBuild16 = "SCM_USE_MSBUILD_16";
+
+        public const string ILBVip = "SCM_ILB_VIP";
     }
 }
