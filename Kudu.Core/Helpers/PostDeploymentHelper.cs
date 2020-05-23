@@ -764,7 +764,7 @@ namespace Kudu.Core.Helpers
             var siteVersionPath = Path.Combine(environment.SitePackagesPath, Constants.PackageNameTxt);
             using (tracer.Step($"Updating {siteVersionPath} with deployment {deploymentInfo.ZipName}"))
             {
-                await FileSystemHelpers.WriteAllTextToFileAsync(siteVersionPath, deploymentInfo.ZipName);
+                await OperationManager.AttemptAsync(() => FileSystemHelpers.WriteAllTextToFileAsync(siteVersionPath, deploymentInfo.ZipName));
             }
         }
 
