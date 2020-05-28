@@ -20,7 +20,7 @@ namespace Kudu.FunctionalTests
     [KuduXunitTestClass]
     public class ZipDeploymentTests
     {
-        public const string DefaultPushDeployer = "Push-Deployer";
+        public const string ZipDeployer = "ZipDeploy";
 
         [Fact]
         public Task TestSimpleZipDeployment()
@@ -131,7 +131,7 @@ namespace Kudu.FunctionalTests
                 do
                 {
                     result = await appManager.DeploymentManager.GetResultAsync("latest");
-                    Assert.Equal(DefaultPushDeployer, result.Deployer);
+                    Assert.Equal(ZipDeployer, result.Deployer);
                     await Task.Delay(TimeSpan.FromSeconds(2));
                 } while (!new[] { DeployStatus.Failed, DeployStatus.Success }.Contains(result.Status));
 
@@ -174,7 +174,7 @@ namespace Kudu.FunctionalTests
                 do
                 {
                     result = await appManager.DeploymentManager.GetResultAsync("latest");
-                    Assert.Equal(DefaultPushDeployer, result.Deployer);
+                    Assert.Equal(ZipDeployer, result.Deployer);
                     await Task.Delay(TimeSpan.FromSeconds(2));
                 } while (!new[] { DeployStatus.Failed, DeployStatus.Success }.Contains(result.Status));
 
@@ -201,7 +201,7 @@ namespace Kudu.FunctionalTests
                 do
                 {
                     result = await appManager.DeploymentManager.GetResultAsync("latest");
-                    Assert.Equal(DefaultPushDeployer, result.Deployer);
+                    Assert.Equal(ZipDeployer, result.Deployer);
                     await Task.Delay(TimeSpan.FromSeconds(2));
                 } while (!new[] { DeployStatus.Failed, DeployStatus.Success }.Contains(result.Status));
 
@@ -439,7 +439,7 @@ namespace Kudu.FunctionalTests
             var deployment = await appManager.DeploymentManager.GetResultAsync("latest");
 
             Assert.Equal(DeployStatus.Success, deployment.Status);
-            Assert.Equal(DefaultPushDeployer, deployment.Deployer);
+            Assert.Equal(ZipDeployer, deployment.Deployer);
 
             var entries = await appManager.VfsWebRootManager.ListAsync(null);
             var deployedFilenames = entries.Select(e => e.Name);
