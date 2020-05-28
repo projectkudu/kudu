@@ -135,5 +135,7 @@ namespace Kudu
         public const string PackageNameTxt = "packagename.txt";
         public const string AppOfflineFileName = "app_offline.htm";
         public const string AppOfflineKuduContent = "Created by kudu";
+
+        public const string ScmDeploymentIdHeader = "SCM-DEPLOYMENT-ID";
     }
 }

@@ -184,7 +184,7 @@ namespace Kudu.Core.Deployment
                     }
                 }
 
-                string id = changeSet.Id;
+                string id = deploymentInfo.FixedDeploymentId ?? changeSet.Id;
                 IDeploymentStatusFile statusFile = null;
                 try
                 {

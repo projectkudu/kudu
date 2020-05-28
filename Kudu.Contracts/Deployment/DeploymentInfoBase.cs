@@ -68,5 +68,9 @@ namespace Kudu.Core.Deployment
         // won't update until after a process restart. Therefore, we copy the needed
         // files into a separate folders and run sync triggers from there.
         public string SyncFunctionsTriggersPath { get; set; } = null;
+
+        // Allows the use of a caller-provided GUID for the deployment, rather than
+        // a commit hash or a randomly-generated identifier.
+        public string FixedDeploymentId { get; set; } = null;
     }
 }

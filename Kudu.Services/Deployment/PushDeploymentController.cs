@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
@@ -11,6 +12,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Web;
 using System.Web.Http;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
@@ -63,6 +65,14 @@ namespace Kudu.Services.Deployment
         {
             using (_tracer.Step("ZipPushDeploy"))
             {
+                string deploymentId = null;
+                IEnumerable<string> idValues;
+
+                if (Request.Headers.TryGetValues(Constants.ScmDeploymentIdHeader, out idValues) && idValues.Count() > 0)
+                {
+                    deploymentId = idValues.ElementAt(0);
+                }
+
                 var deploymentInfo = new ZipDeploymentInfo(_environment, _traceFactory)
                 {
                     AllowDeploymentWhileScmDisabled = true,
@@ -72,6 +82,7 @@ namespace Kudu.Services.Deployment
                     IsReusable = false,
                     TargetChangeset = DeploymentManager.CreateTemporaryChangeSet(message: "Deploying from pushed zip file"),
                     CommitId = null,
+                    FixedDeploymentId = deploymentId,
                     RepositoryType = RepositoryType.None,
                     Fetch = LocalZipHandler,
                     DoFullBuildByDefault = false,
@@ -106,6 +117,14 @@ namespace Kudu.Services.Deployment
         {
             using (_tracer.Step("WarPushDeploy"))
             {
+                string deploymentId = null;
+                IEnumerable<string> idValues;
+
+                if (Request.Headers.TryGetValues(Constants.ScmDeploymentIdHeader, out idValues) && idValues.Count() > 0)
+                {
+                    deploymentId = idValues.ElementAt(0);
+                }
+
                 var appName = Request.RequestUri.ParseQueryString()["name"];
 
                 if (string.IsNullOrWhiteSpace(appName))
@@ -125,6 +144,7 @@ namespace Kudu.Services.Deployment
                     CleanupTargetDirectory = true, // For now, always cleanup the target directory. If needed, make it configurable
                     TargetChangeset = DeploymentManager.CreateTemporaryChangeSet(message: "Deploying from pushed war file"),
                     CommitId = null,
+                    FixedDeploymentId = deploymentId,
                     RepositoryType = RepositoryType.None,
                     Fetch = LocalZipFetch,
                     DoFullBuildByDefault = false,
