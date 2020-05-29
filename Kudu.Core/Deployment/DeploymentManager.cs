@@ -181,7 +181,21 @@ namespace Kudu.Core.Deployment
                     }
                 }
 
-                string id = deploymentInfo.FixedDeploymentId ?? changeSet.Id;
+                if (!string.IsNullOrEmpty(deploymentInfo.FixedDeploymentId))
+                {
+                    changeSet = new ChangeSet(
+                        id: deploymentInfo.FixedDeploymentId,
+                        authorName: changeSet.AuthorName,
+                        authorEmail: changeSet.AuthorEmail,
+                        message: changeSet.Message,
+                        timestamp: changeSet.Timestamp)
+                    {
+                        IsTemporary = changeSet.IsTemporary,
+                        IsReadOnly = changeSet.IsReadOnly
+                    };
+                }
+
+                string id = changeSet.Id;
                 IDeploymentStatusFile statusFile = null;
                 try
                 {
