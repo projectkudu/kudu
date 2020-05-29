@@ -31,7 +31,8 @@ namespace Kudu.Services.Deployment
 {
     public class PushDeploymentController : ApiController
     {
-        private const string DefaultDeployer = "Push-Deployer";
+        private const string ZipDeploy = "ZipDeploy";
+        private const string WarDeploy = "WarDeploy";
         private const string DefaultMessage = "Created via a push deployment";
 
         private readonly IEnvironment _environment;
@@ -60,7 +61,7 @@ namespace Kudu.Services.Deployment
             [FromUri] bool isAsync = false,
             [FromUri] string author = null,
             [FromUri] string authorEmail = null,
-            [FromUri] string deployer = DefaultDeployer,
+            [FromUri] string deployer = ZipDeploy,
             [FromUri] string message = DefaultMessage)
         {
             using (_tracer.Step("ZipPushDeploy"))
@@ -112,7 +113,7 @@ namespace Kudu.Services.Deployment
             [FromUri] bool isAsync = false,
             [FromUri] string author = null,
             [FromUri] string authorEmail = null,
-            [FromUri] string deployer = DefaultDeployer,
+            [FromUri] string deployer = WarDeploy,
             [FromUri] string message = DefaultMessage)
         {
             using (_tracer.Step("WarPushDeploy"))

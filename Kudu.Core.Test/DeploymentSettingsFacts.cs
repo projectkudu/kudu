@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Net.Http;
 using Kudu.Contracts.Settings;
 using Kudu.Core.Settings;
 using Moq;
@@ -33,6 +34,28 @@ namespace Kudu.Core.Test
 
             // Assert
             Assert.Equal(TimeSpan.FromSeconds(expected), settings.GetLogStreamTimeout());
+        }
+
+        [Theory]
+        [InlineData(null, -1)]
+        [InlineData(60, 60)]
+        public void HttpClientTimeoutTests(string value, int sec)
+        {
+            // Act
+            MockDeploymentSettingsManager settings = new MockDeploymentSettingsManager();
+            TimeSpan expected;
+            if (!string.IsNullOrEmpty(value))
+            {
+                settings.SetValue(SettingsKeys.HttpClientTimeout, value);
+                expected = TimeSpan.FromSeconds(sec);
+            }
+            else
+            {
+                expected = (new HttpClient()).Timeout;
+            }
+
+            // Assert
+            Assert.Equal(expected, settings.GetHttpClientTimeout());
         }
 
         [Theory, MemberData("TraceLevelData")]

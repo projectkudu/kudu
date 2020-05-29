@@ -124,7 +124,7 @@ namespace Kudu.Core.Deployment.Generator
                 project = solution.Projects.Where(p => p.IsExecutable).FirstOrDefault();
                 if (project != null)
                 {
-                    if (VsHelper.IsDotNetCore3(project.TargetFramework) || VsHelper.UseMSBuild16())
+                    if (VsHelper.UseMSBuild16())
                     {
                         return new DotNetCoreConsoleMSBuild16Builder(_environment,
                                                                      settings,
@@ -163,7 +163,7 @@ namespace Kudu.Core.Deployment.Generator
 
             if (project.IsAspNetCore)
             {
-                if (VsHelper.IsDotNetCore3(project.TargetFramework) || VsHelper.UseMSBuild16())
+                if (VsHelper.UseMSBuild16())
                 {
                     return new AspNetCoreMSBuild16Builder(_environment,
                                                           settings,
@@ -194,7 +194,7 @@ namespace Kudu.Core.Deployment.Generator
                                           solution.Path);
             } 
  
-            if (VsHelper.IsDotNetCore3(project.TargetFramework) || VsHelper.UseMSBuild16())
+            if (VsHelper.UseMSBuild16())
             {
                 return new FunctionMSBuild16Builder(_environment,
                                                     settings,
@@ -309,8 +309,7 @@ namespace Kudu.Core.Deployment.Generator
             string projectJson;
             if (AspNetCoreHelper.TryAspNetCoreWebProject(targetPath, fileFinder, out projectJson))
             {
-                string targetFramework = VsHelper.GetTargetFrameworkJson(projectJson);
-                if (VsHelper.IsDotNetCore3(targetFramework) || VsHelper.UseMSBuild16())
+                if (VsHelper.UseMSBuild16())
                 {
                     return new AspNetCoreMSBuild16Builder(_environment,
                                                  perDeploymentSettings,
@@ -372,7 +371,6 @@ namespace Kudu.Core.Deployment.Generator
             var solution = VsHelper.FindContainingSolution(repositoryRoot, targetPath, fileFinder);
             string solutionPath = solution?.Path;
             var projectTypeGuids = VsHelper.GetProjectTypeGuids(targetPath);
-            var targetFramework = VsHelper.GetTargetFramework(targetPath);
 
             if (VsHelper.IsWap(projectTypeGuids))
             {
@@ -385,7 +383,7 @@ namespace Kudu.Core.Deployment.Generator
             }
             else if (AspNetCoreHelper.IsDotnetCoreFromProjectFile(targetPath, projectTypeGuids))
             {
-                if (VsHelper.IsDotNetCore3(targetFramework) || VsHelper.UseMSBuild16())
+                if (VsHelper.UseMSBuild16())
                 {
                     return new AspNetCoreMSBuild16Builder(_environment,
                                                           perDeploymentSettings,
@@ -406,7 +404,7 @@ namespace Kudu.Core.Deployment.Generator
             }
             else if (VsHelper.IsExecutableProject(targetPath))
             {
-                if (VsHelper.IsDotNetCore3(targetFramework) || VsHelper.UseMSBuild16())
+                if (VsHelper.UseMSBuild16())
                 {
                     return new DotNetCoreConsoleMSBuild16Builder(_environment,
                                                              perDeploymentSettings,
@@ -430,7 +428,7 @@ namespace Kudu.Core.Deployment.Generator
             {
                 if (FunctionAppHelper.IsCSharpFunctionFromProjectFile(targetPath))
                 {
-                    if (VsHelper.IsDotNetCore3(targetFramework) || VsHelper.UseMSBuild16())
+                    if (VsHelper.UseMSBuild16())
                     {
                         return new FunctionMSBuild16Builder(_environment,
                                                             perDeploymentSettings,
@@ -458,7 +456,6 @@ namespace Kudu.Core.Deployment.Generator
                                                     repositoryRoot,
                                                     Path.GetDirectoryName(targetPath));
                 }
-
             }
 
             throw new InvalidOperationException(String.Format(CultureInfo.CurrentCulture,

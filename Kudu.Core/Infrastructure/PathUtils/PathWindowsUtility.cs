@@ -121,10 +121,10 @@ namespace Kudu.Core.Infrastructure
             string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);
             List<string> probPaths = new List<string>
             {
-                Path.Combine(programFiles, "Microsoft Visual Studio", "2019", "Enterprise",   "MSBuild", "16.0", "Bin", "Current", "Bin"), // visual studio Enterprise
-                Path.Combine(programFiles, "Microsoft Visual Studio", "2019", "Professional", "MSBuild", "16.0", "Bin", "Current", "Bin"), // visual studio Professional
-                Path.Combine(programFiles, "Microsoft Visual Studio", "2019", "Community",    "MSBuild", "16.0", "Bin", "Current", "Bin"), // visual studio Community
-                Path.Combine(programFiles, "Microsoft Visual Studio", "2019", "BuildTools",   "MSBuild", "16.0", "Bin", "Current", "Bin"), // msbuild tools
+                Path.Combine(programFiles, "Microsoft Visual Studio", "2019", "Enterprise",   "MSBuild", "Current", "Bin"), // visual studio Enterprise
+                Path.Combine(programFiles, "Microsoft Visual Studio", "2019", "Professional", "MSBuild", "Current", "Bin"), // visual studio Professional
+                Path.Combine(programFiles, "Microsoft Visual Studio", "2019", "Community",    "MSBuild", "Current", "Bin"), // visual studio Community
+                Path.Combine(programFiles, "Microsoft Visual Studio", "2019", "BuildTools",   "MSBuild", "Current", "Bin"), // msbuild tools
                 // above is for public kudu, below is for azure
             };
             probPaths.Add(Path.Combine(programFiles, "MSBuild-16.4", "MSBuild", "Current", "Bin"));

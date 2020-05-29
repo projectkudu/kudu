@@ -77,6 +77,7 @@ namespace Kudu
         public const string RequestIdHeader = "x-ms-request-id";
         public const string ClientRequestIdHeader = "x-ms-client-request-id";
         public const string RequestDateTimeUtc = "RequestDateTimeUtc";
+        public const string ScmDeploymentKind = "ScmDeploymentKind";
 
         public const string SiteOperationHeaderKey = "X-MS-SITE-OPERATION";
         public const string SiteOperationRestart = "restart";

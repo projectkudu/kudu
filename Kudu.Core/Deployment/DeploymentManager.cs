@@ -4,9 +4,6 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using Kudu.Contracts.Infrastructure;
@@ -382,6 +379,9 @@ namespace Kudu.Core.Deployment
 
             // Cleanup old deployments
             PurgeAndGetDeployments();
+
+            // Report deployment completion
+            DeploymentCompletedInfo.Persist(_environment.RequestId, status);
         }
 
         // since the expensive part (reading all files) is done,
