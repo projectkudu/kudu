@@ -33,6 +33,15 @@ namespace Kudu.FunctionalTests.SiteExtensions
             {"RemoveCustomHeaders", "headers"},
         };
 
+        public SiteExtensionApiFacts()
+        {
+            if ((ServicePointManager.SecurityProtocol & SecurityProtocolType.Tls12) != SecurityProtocolType.Tls12)
+            {
+                // www.nuget.org requires Tls12+
+                ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+            }
+        }
+
         [Theory]
         [InlineData(null, "sitereplicator", "site replicator", false)]    // default site extension endpoint (v2)
         [InlineData("https://api.nuget.org/v3/index.json", "filecounter", "file counter", false)]    // v3 endpoint
