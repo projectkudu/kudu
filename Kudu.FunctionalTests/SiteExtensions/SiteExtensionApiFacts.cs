@@ -860,6 +860,94 @@ namespace Kudu.FunctionalTests.SiteExtensions
             });
         }
 
+        [Fact]
+        public async Task SiteExtensionPackageUriTests()
+        {
+            const string appName = "SiteExtensionPackageUriTests";
+
+            await ApplicationManager.RunAsync(appName, async appManager =>
+            {
+                var manager = appManager.SiteExtensionManager;
+                await CleanSiteExtensions(manager);
+
+                // clear local extensions
+                TestTracer.Trace("Clear all installed extensions.");
+                var results = await (await manager.GetLocalExtensions()).Content.ReadAsAsync<List<SiteExtensionInfo>>();
+                HttpResponseMessage deleteResponseMessage = null;
+                foreach (var ext in results)
+                {
+                    using (deleteResponseMessage = await manager.UninstallExtension(ext.Id))
+                    {
+                        Assert.True(await deleteResponseMessage.Content.ReadAsAsync<bool>(), "Delete must return true");
+                        Assert.True(deleteResponseMessage.Headers.Contains(Constants.RequestIdHeader));
+                    }
+                }
+
+                // install/update
+                var packageId = "filecounter";
+                var packageVersion = "1.0.19";
+                var packageUri = $"https://globalcdn.nuget.org/packages/{packageId}.{packageVersion}.nupkg";
+                TestTracer.Trace($"Perform InstallExtension with '{packageUri}'");
+                using (var responseMessage = await manager.InstallExtension(packageId, packageUri: packageUri))
+                {
+                    var result = await responseMessage.Content.ReadAsAsync<SiteExtensionInfo>();
+                    Assert.Equal(packageId, result.Id);
+                    Assert.Equal(packageVersion, result.Version);
+                    Assert.Equal(packageUri, result.PackageUri);
+                    Assert.True(responseMessage.Headers.Contains(Constants.RequestIdHeader));
+                }
+
+                // list
+                TestTracer.Trace("Perform GetLocalExtensions with no parameter");
+                results = await (await manager.GetLocalExtensions()).Content.ReadAsAsync<List<SiteExtensionInfo>>();
+                Assert.True(results.Any(), "GetLocalExtensions expects results > 0");
+
+                // get
+                TestTracer.Trace("Perform GetLocalExtension with id '{0}' only.", packageId);
+                using (var responseMessage = await manager.GetLocalExtension(packageId))
+                {
+                    var result = await responseMessage.Content.ReadAsAsync<SiteExtensionInfo>();
+                    Assert.Equal(packageId, result.Id);
+                    Assert.Equal(packageVersion, result.Version);
+                    Assert.Equal(packageUri, result.PackageUri);
+                    Assert.True(responseMessage.Headers.Contains(Constants.RequestIdHeader));
+                }
+
+                // update site extension
+                packageVersion = "1.0.20";
+                packageUri = $"https://globalcdn.nuget.org/packages/{packageId}.{packageVersion}.nupkg";
+                TestTracer.Trace($"Perform InstallExtension with '{packageUri}'");
+                using (var responseMessage = await manager.InstallExtension(packageId, packageUri: packageUri))
+                {
+                    var result = await responseMessage.Content.ReadAsAsync<SiteExtensionInfo>();
+                    Assert.Equal(packageId, result.Id);
+                    Assert.Equal(packageVersion, result.Version);
+                    Assert.Equal(packageUri, result.PackageUri);
+                    Assert.True(responseMessage.Headers.Contains(Constants.RequestIdHeader));
+                }
+
+                // get
+                TestTracer.Trace("Perform GetLocalExtension with id '{0}' only.", packageId);
+                using (var responseMessage = await manager.GetLocalExtension(packageId))
+                {
+                    var result = await responseMessage.Content.ReadAsAsync<SiteExtensionInfo>();
+                    Assert.Equal(packageId, result.Id);
+                    Assert.Equal(packageVersion, result.Version);
+                    Assert.Equal(packageUri, result.PackageUri);
+                    Assert.True(responseMessage.Headers.Contains(Constants.RequestIdHeader));
+                }
+
+                // delete
+                TestTracer.Trace("Perform UninstallExtension with id '{0}' only.", packageId);
+                using (var responseMessage = await manager.UninstallExtension(packageId))
+                {
+                    bool deleteResult = await responseMessage.Content.ReadAsAsync<bool>();
+                    Assert.True(deleteResult, "Delete must return true");
+                    Assert.True(responseMessage.Headers.Contains(Constants.RequestIdHeader));
+                }
+            });
+        }
+
         private async Task<HttpResponseMessage> PollAndVerifyAfterArmInstallation(RemoteSiteExtensionManager manager, string packageId)
         {
             TestTracer.Trace("Polling for status for '{0}'", packageId);
