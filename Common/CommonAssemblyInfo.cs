@@ -8,8 +8,8 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 
 // If you change this version, make sure to change Build\build.proj accordingly
-[assembly: AssemblyVersion("87.0.0.0")]
-[assembly: AssemblyFileVersion("87.0.0.0")]
+[assembly: AssemblyVersion("88.0.0.0")]
+[assembly: AssemblyFileVersion("88.0.0.0")]
 
 [assembly: ComVisible(false)]
 [assembly: CLSCompliant(false)]

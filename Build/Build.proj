@@ -19,7 +19,7 @@
     
     <PropertyGroup>
         <!-- When bumping up MajorVersion, make sure to update VersionStartYear to current year -->
-        <MajorVersion>87</MajorVersion>
+        <MajorVersion>88</MajorVersion>
         <VersionStartYear>2019</VersionStartYear>
         
         <!-- Build number is of the format (CurrentYear - VersionStartYear + 1)(2 digit month)(2 digit day) -->
