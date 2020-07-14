@@ -108,8 +108,7 @@ namespace Kudu.Services
 
             if (Kudu.Core.Helpers.EnvironmentHelper.IsWindowsContainers())
             {
-                // Always point to the 64-bit folder since Kudu can run in 32-bit or 64-bit mode.
-                startInfo.FileName = System.Environment.ExpandEnvironmentVariables(@"%ProgramW6432%\IIS\Microsoft Web Hosting Framework\Containers\Diagnostics\Microsoft.Windows.Containers.Console.exe");
+                startInfo.FileName = System.Environment.ExpandEnvironmentVariables(@"%ProgramFiles%\IIS\Microsoft Web Hosting Framework\Containers\Diagnostics\Microsoft.Windows.Containers.Console.exe");
             }
             else if (shell.Equals("powershell", StringComparison.OrdinalIgnoreCase))
             {

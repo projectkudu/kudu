@@ -12,6 +12,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Web.Http;
+using System.Web.UI;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
 using Kudu.Core;
@@ -31,6 +32,7 @@ namespace Kudu.Services.Deployment
     {
         private const string ZipDeploy = "ZipDeploy";
         private const string WarDeploy = "WarDeploy";
+        private const string OneDeploy = "OneDeploy";
         private const string DefaultMessage = "Created via a push deployment";
 
         private readonly IEnvironment _environment;
@@ -138,6 +140,164 @@ namespace Kudu.Services.Deployment
             }
         }
 
+        [HttpPost]
+        [HttpPut]
+        public async Task<HttpResponseMessage> OnePushDeploy(
+            [FromUri] bool isAsync = false,
+            [FromUri] string author = null,
+            [FromUri] string authorEmail = null,
+            [FromUri] string deployer = OneDeploy,
+            [FromUri] string message = DefaultMessage)
+        {
+            using (_tracer.Step("OnePushDeploy"))
+            {
+                var response = Request.CreateResponse();
+                //Checks the "type" query parameter, defaults to "static" if no query parameter is provided 
+               var deployType = Request.RequestUri.ParseQueryString()["type"];
+                if (string.IsNullOrWhiteSpace(deployType))
+                {
+                    deployType = "static";
+                }
+                var website_framework = (System.Environment.GetEnvironmentVariable("website_framework".ToLower())).ToLower();
+                //Checks the "path" queary parameter, path root at /wwwroot TBD if need to change to /home
+                string path = Request.RequestUri.ParseQueryString()["path"];
+                //Checks the "clean" query parameter, defauts to False if no query parameter is provided
+                var cleanQuery = Request.RequestUri.ParseQueryString()["clean"];
+                bool isCleanDeployment = Convert.ToBoolean(cleanQuery);
+                //Checks the "async" query parameter, defaults to false if no query parameter is provided
+                var asyncQuery = Request.RequestUri.ParseQueryString()["async"];
+                isAsync = Convert.ToBoolean(asyncQuery);
+
+                var deploymentInfo = new ZipDeploymentInfo(_environment, _traceFactory)
+                {
+                    AllowDeploymentWhileScmDisabled = true,
+                    Deployer = deployer,
+                    WatchedFilePath = Path.Combine("WEB-INF", "web.xml"),
+                    IsContinuous = false,
+                    AllowDeferredDeployment = false,
+                    IsReusable = false,
+                    CleanupTargetDirectory = isCleanDeployment,
+                    TargetChangeset = DeploymentManager.CreateTemporaryChangeSet(message: "Deploying from pushed file"),
+                    CommitId = null,
+                    RepositoryType = RepositoryType.None,
+                    Fetch = LocalAppFetch,
+                    DoFullBuildByDefault = false,
+                    Author = author,
+                    AuthorEmail = authorEmail,
+                    Message = message
+                };
+
+                switch (deployType)
+                {
+                    case "war":
+                        if(website_framework!="tomcat")
+                        {
+                           
+                            response.StatusCode = HttpStatusCode.BadRequest;
+                            response.Content = new StringContent("WAR files cannot be deployed to " + website_framework + " web apps.");
+                            return response;
+                        }
+                        if (string.IsNullOrWhiteSpace(deploymentInfo.TargetPath))
+                        {
+                            deploymentInfo.FileName = "app.war";
+                        }
+                        break;
+                    case "jar":
+                        if (website_framework != "javase")
+                        {
+
+                            response.StatusCode = HttpStatusCode.BadRequest;
+                            response.Content = new StringContent("JAR files cannot be deployed to " + website_framework + " web apps.");
+                            return response;
+                        }
+                        if (string.IsNullOrWhiteSpace(deploymentInfo.TargetPath))
+                        {
+                            deploymentInfo.FileName = "app.jar";
+                        }
+                        break;
+                    case "lib":
+                        if (string.IsNullOrWhiteSpace(deploymentInfo.TargetPath))
+                        {
+                            response.StatusCode = HttpStatusCode.BadRequest;
+                            response.Content = new StringContent("Path must be defined for library file deployments");
+                            return response;
+                        }
+                        else
+                        {
+                            deploymentInfo.FileName = Path.GetFileName(path);
+                            deploymentInfo.TargetPath = Path.GetDirectoryName(path);
+                        }
+                        break;
+                    case "startup":
+                        //assumes windows application for Kudu deploymnets
+                        if (string.IsNullOrWhiteSpace(deploymentInfo.TargetPath))
+                        {
+                            //deploymentInfo.TargetPath = Path.Combine(_environment.RootPath, "startup.bat");
+                            deploymentInfo.TargetPath = _environment.RootPath;
+                            deploymentInfo.FileName = "startup.bat";
+                        }
+                        break;
+                    case "ear":
+                        //currently not supported on Windows but here for future use
+                        if (website_framework != "javeee")
+                        {
+
+                            response.StatusCode = HttpStatusCode.BadRequest;
+                            response.Content = new StringContent("EAR files cannot be deployed to " + website_framework + " web apps.");
+                            return response;
+                        }
+                        if (string.IsNullOrWhiteSpace(deploymentInfo.TargetPath))
+                        {
+                            deploymentInfo.FileName = "app.ear";
+                        }
+                        break;
+                    case "static":
+                        if (string.IsNullOrWhiteSpace(path))
+                        {
+                            response.StatusCode = HttpStatusCode.BadRequest;
+                            response.Content = new StringContent("Path must be defined for static file deployments");
+                            return response;
+                        }
+                        else
+                        {
+                            deploymentInfo.FileName = Path.GetFileName(path);
+                            deploymentInfo.TargetPath = Path.GetDirectoryName(path);
+                        }
+                        break;
+                    case "zip":
+                        deploymentInfo.Fetch = LocalZipHandler;
+                        if (_settings.RunFromLocalZip())
+                        {
+                            // This is used if the deployment is Run-From-Zip
+                            // the name of the deployed file in D:\home\data\SitePackages\{name}.zip is the 
+                            // timestamp in the format yyyMMddHHmmss. 
+                            deploymentInfo.ZipName = $"{DateTime.UtcNow.ToString("yyyyMMddHHmmss")}.zip";
+
+                            // This is also for Run-From-Zip where we need to extract the triggers
+                            // for post deployment sync triggers.
+                            deploymentInfo.SyncFunctionsTriggersPath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+                        }
+                        break;
+                    default:
+                        if (string.IsNullOrWhiteSpace(deployType))
+                        {
+                            //return error: type not provided
+                            response.StatusCode = HttpStatusCode.BadRequest;
+                            response.Content = new StringContent("Deployment type not provided");
+                            return response;
+                        }
+                        else
+                        {
+                            //return error: type not valid
+                            response.StatusCode = HttpStatusCode.BadRequest;
+                            response.Content = new StringContent("Deployment type not valid");
+                            return response;
+                        }
+                }
+                return await PushDeployAsync(deploymentInfo, isAsync);
+            }
+        }
+
         private string GetZipURLFromARMJSON(JObject requestObject)
         {
             using (_tracer.Step("Reading the zip URL from the request JSON"))
@@ -184,6 +344,8 @@ namespace Kudu.Services.Deployment
         private async Task<HttpResponseMessage> PushDeployAsync(ZipDeploymentInfo deploymentInfo, bool isAsync)
         {
             var content = Request.Content;
+            var deployer = deploymentInfo.Deployer;
+            var deploymentType = Request.RequestUri.ParseQueryString()["type"];
             var isRequestJSON = content.Headers?.ContentType?.MediaType?.Equals("application/json", StringComparison.OrdinalIgnoreCase);
             if (isRequestJSON == true)
             {
@@ -197,7 +359,7 @@ namespace Kudu.Services.Deployment
                     return ArmUtils.CreateErrorResponse(Request, HttpStatusCode.BadRequest, ex);
                 }
             }
-            else
+            else if (deployer != "OneDeploy" || deploymentType == "zip") // only runs this code if using Zip/War Deploy or OneDeploy Zip 
             {
                 if (_settings.RunFromLocalZip())
                 {
@@ -305,7 +467,7 @@ namespace Kudu.Services.Deployment
         {
             if (_settings.RunFromLocalZip() && deploymentInfo is ZipDeploymentInfo)
             {
-                ZipDeploymentInfo zipDeploymentInfo = (ZipDeploymentInfo) deploymentInfo;
+                ZipDeploymentInfo zipDeploymentInfo = (ZipDeploymentInfo)deploymentInfo;
                 // If this was a request with a Zip URL in the JSON, we first need to get the zip content and write it to the site.
                 if (!string.IsNullOrEmpty(zipDeploymentInfo.ZipURL))
                 {
@@ -354,6 +516,35 @@ namespace Kudu.Services.Deployment
             }
         }
 
+        private async Task LocalAppFetch(IRepository repository, DeploymentInfoBase deploymentInfo, string targetBranch, ILogger logger, ITracer tracer)
+        {
+            var zipDeploymentInfo = (ZipDeploymentInfo)deploymentInfo;
+            var content = !string.IsNullOrEmpty(zipDeploymentInfo.ZipURL)
+                ? await DeploymentHelper.GetZipContentFromURL(zipDeploymentInfo, tracer)
+                : Request.Content;
+            //var content = Request.Content;
+            //var fileName = Path.ChangeExtension("app", deploymentInfo.FileExtention);
+            var tempDirPath = repository.RepositoryPath;
+            var targetInfo = FileSystemHelpers.DirectoryInfoFromDirectoryName(tempDirPath);
+            if (targetInfo.Exists)
+            {
+                var moveTarget = Path.Combine(targetInfo.Parent.FullName, Path.GetRandomFileName());
+                using (tracer.Step(string.Format("Renaming extractTargetDirectory({0}) to tempDirectory({1})", targetInfo.FullName, moveTarget)))
+                {
+                    targetInfo.MoveTo(moveTarget);
+                }
+            }          
+            var tempFilePath = Path.Combine(tempDirPath, deploymentInfo.FileName);
+            Directory.CreateDirectory(tempDirPath);
+            using (tracer.Step("Saving request content to {0}", tempFilePath))
+            {
+                await content.CopyToAsync(tempFilePath, tracer);
+                var cleanTask = Task.Run(() => DeleteFilesAndDirsExcept(tempFilePath, tempDirPath, tracer));
+                await Task.WhenAll(cleanTask);
+            }
+            CommitRepo(repository, zipDeploymentInfo);
+        }
+
         private async Task<string> DeployZipLocally(ZipDeploymentInfo zipDeploymentInfo, ITracer tracer)
         {
             var content = await DeploymentHelper.GetZipContentFromURL(zipDeploymentInfo, tracer);
@@ -371,7 +562,7 @@ namespace Kudu.Services.Deployment
 
         private async Task LocalZipFetch(IRepository repository, DeploymentInfoBase deploymentInfo, string targetBranch, ILogger logger, ITracer tracer)
         {
-            var zipDeploymentInfo = (ZipDeploymentInfo) deploymentInfo;
+            var zipDeploymentInfo = (ZipDeploymentInfo)deploymentInfo;
 
             // If this was a request with a Zip URL in the JSON, we need to deploy the zip locally and get the path
             // Otherwise, for this kind of deployment, RepositoryUrl is a local path.

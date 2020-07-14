@@ -116,7 +116,7 @@ namespace Kudu.Core.SiteExtensions
                     throw new InvalidOperationException($"{packageId}.nuspec contains empty content!");
                 }
 
-                if (string.IsNullOrEmpty(searchTerm) || content.Contains(searchTerm) || content.IndexOf($"<id>{searchTerm}</id>", StringComparison.OrdinalIgnoreCase) > 0)
+                if (string.IsNullOrEmpty(searchTerm) || content.Contains(searchTerm))
                 {
                     using (var reader = XmlReader.Create(new System.IO.StringReader(content)))
                     {
@@ -206,13 +206,12 @@ namespace Kudu.Core.SiteExtensions
         /// <param name="destinationFolder">Folder where we copy the package content (content folder only) to</param>
         /// <param name="pathToLocalCopyOfNupkg">File path where we copy the nudpk to</param>
         /// <returns></returns>
-        public static async Task DownloadPackageToFolder(SiteExtensionInfo package, string destinationFolder, string pathToLocalCopyOfNupkg)
+        public static async Task DownloadPackageToFolder(string packageId, string packageVersion, string destinationFolder, string pathToLocalCopyOfNupkg)
         {
-            var packageId = package.Id;
-            var packageVersion = package.Version;
             using (var client = new HttpClient { Timeout = HttpClientTimeout })
             {
-                var uri = new Uri(!string.IsNullOrEmpty(package.PackageUri) ? package.PackageUri : $"https://www.nuget.org/api/v2/package/{packageId}/{packageVersion}");
+                var uri = new Uri(String.Format("https://www.nuget.org/api/v2/package/{0}/{1}", packageId, packageVersion));
+
                 var response = await client.GetAsync(uri);
 
                 using (Stream packageStream = await response.Content.ReadAsStreamAsync())
@@ -254,25 +253,23 @@ namespace Kudu.Core.SiteExtensions
             }
         }
 
-        public static async Task UpdateLocalPackage(string siteExtentionsRootPath, SiteExtensionInfo package, string destinationFolder, string pathToLocalCopyOfNupkg, ITracer tracer)
+        public static async Task UpdateLocalPackage(string siteExntentionsRootPath, string packageId, string packageVersion, string destinationFolder, string pathToLocalCopyOfNupkg, ITracer tracer)
         {
-            var packageId = package.Id;
-            var packageVersion = package.Version;
             tracer.Trace("Performing incremental package update for {0}", packageId);
             using (var client = new HttpClient { Timeout = HttpClientTimeout })
             {
-                var uri = new Uri(!string.IsNullOrEmpty(package.PackageUri) ? package.PackageUri : $"https://www.nuget.org/api/v2/package/{packageId}/{packageVersion}");
+                var uri = new Uri(String.Format("https://www.nuget.org/api/v2/package/{0}/{1}", packageId, packageVersion));
                 var response = await client.GetAsync(uri);
                 using (Stream newPackageStream = await response.Content.ReadAsStreamAsync())
                 {
                     // update file
-                    var localPackage = (await FeedExtensionsV2.SearchLocalRepo(siteExtentionsRootPath, packageId)).FirstOrDefault();
+                    var localPackage = (await FeedExtensionsV2.SearchLocalRepo(siteExntentionsRootPath, packageId)).FirstOrDefault();
                     if (localPackage == null)
                     {
                         throw new FileNotFoundException(string.Format(CultureInfo.InvariantCulture, "Package {0} not found from local repo.", packageId));
                     }
 
-                    string nupkgFile = Directory.GetFiles(Path.Combine(siteExtentionsRootPath, packageId), "*.nupkg", SearchOption.TopDirectoryOnly).FirstOrDefault();
+                    string nupkgFile = Directory.GetFiles(Path.Combine(siteExntentionsRootPath, packageId), "*.nupkg", SearchOption.TopDirectoryOnly).FirstOrDefault();
 
                     using (ZipFile oldPackageZip = ZipFile.Read(nupkgFile))
                     using (ZipFile newPackageZip = ZipFile.Read(newPackageStream))
