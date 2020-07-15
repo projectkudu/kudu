@@ -260,9 +260,11 @@ namespace Kudu.Services.SiteExtensions
                 requestInfo = new SiteExtensionInfo();
             }
 
-            tracer.Trace("Installing {0}, version: {1} from feed: {2}", id, requestInfo.Version, requestInfo.FeedUrl);
-            SiteExtensionInfo result = await InitInstallSiteExtension(id, requestInfo.Type);
-            var manager = GetSiteExtensionManager(forceUseV1: !string.IsNullOrEmpty(requestInfo.FeedUrl));
+            ValidatePackageUri(id, requestInfo, tracer);
+
+            tracer.Trace("Installing {0}, version: {1} from feed: {2}, packageUri: {3}", id, requestInfo.Version, requestInfo.FeedUrl, StringUtils.ObfuscatePath(requestInfo.PackageUri));
+            SiteExtensionInfo result = await InitInstallSiteExtension(id, requestInfo);
+            var manager = GetSiteExtensionManager(forceUseV1: !string.IsNullOrEmpty(requestInfo.FeedUrl) && string.IsNullOrEmpty(requestInfo.PackageUri));
 
             if (ArmUtils.IsArmRequest(Request))
             {
@@ -299,7 +301,7 @@ namespace Kudu.Services.SiteExtensions
                         {
                             using (backgroundTracer.Step("Background thread started for {0} installation", id))
                             {
-                                manager.InstallExtension(id, requestInfo.Version, requestInfo.FeedUrl, requestInfo.Type, backgroundTracer, requestInfo.InstallationArgs).Wait();
+                                manager.InstallExtension(id, requestInfo, backgroundTracer).Wait();
                             }
                         }
                         finally
@@ -329,7 +331,7 @@ namespace Kudu.Services.SiteExtensions
             }
             else
             {
-                result = await manager.InstallExtension(id, requestInfo.Version, requestInfo.FeedUrl, requestInfo.Type, tracer, requestInfo.InstallationArgs);
+                result = await manager.InstallExtension(id, requestInfo, tracer);
  
                 if (string.Equals(Constants.SiteExtensionProvisioningStateFailed, result.ProvisioningState, StringComparison.OrdinalIgnoreCase))
                 {
@@ -422,17 +424,18 @@ namespace Kudu.Services.SiteExtensions
                 jsonSetting.ToString());
         }
 
-        private async Task<SiteExtensionInfo> InitInstallSiteExtension(string id, SiteExtensionInfo.SiteExtensionType type)
+        private async Task<SiteExtensionInfo> InitInstallSiteExtension(string id, SiteExtensionInfo request)
         {
             SiteExtensionStatus settings = new SiteExtensionStatus(_environment.SiteExtensionSettingsPath, id, _traceFactory.GetTracer());
             settings.ProvisioningState = Constants.SiteExtensionProvisioningStateCreated;
             settings.Operation = Constants.SiteExtensionOperationInstall;
             settings.Status = HttpStatusCode.Created;
-            settings.Type = type;
+            settings.Type = request.Type;
             settings.Comment = null;
 
             SiteExtensionInfo info = new SiteExtensionInfo();
             info.Id = id;
+            info.PackageUri = request.PackageUri;
             settings.FillSiteExtensionInfo(info);
             return await Task.FromResult(info);
         }
@@ -517,6 +520,34 @@ namespace Kudu.Services.SiteExtensions
                 // to 409 Conflict instead of 500 InternalServerError (implying server issue).
                 throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.Conflict, ex));
             }
+        }
+
+        private void ValidatePackageUri(string id, SiteExtensionInfo info, ITracer tracer)
+        {
+            if (string.IsNullOrEmpty(info.PackageUri))
+            {
+                return;
+            }
+
+            if (Uri.TryCreate(info.PackageUri, UriKind.Absolute, out Uri packageUri))
+            {
+                var nupkgFileName = Path.GetFileName(packageUri.LocalPath);
+                if (!string.IsNullOrEmpty(nupkgFileName) && string.Equals(".nupkg", Path.GetExtension(nupkgFileName), StringComparison.OrdinalIgnoreCase))
+                {
+                    var fileName = Path.GetFileNameWithoutExtension(nupkgFileName);
+                    if (fileName.StartsWith($"{id}.", StringComparison.OrdinalIgnoreCase)
+                        && SemanticVersion.TryParse(fileName.Substring(id.Length + 1), out SemanticVersion version))
+                    {
+                        info.Id = id;
+                        info.Version = version.ToString();
+                        return;
+                    }
+                }
+            }
+
+            var message = $"'{info.PackageUri}' is not a valid nupkg uri!";
+            tracer.Trace(message);
+            throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.BadRequest, message));
         }
     }
 }

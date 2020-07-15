@@ -68,7 +68,5 @@ namespace Kudu.Core.Deployment
         // won't update until after a process restart. Therefore, we copy the needed
         // files into a separate folders and run sync triggers from there.
         public string SyncFunctionsTriggersPath { get; set; } = null;
-
-        public string FileName { get; set; }
     }
 }

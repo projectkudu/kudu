@@ -217,9 +217,9 @@ namespace Kudu.Core.SiteExtensions
             return info;
         }
 
-        public Task<SiteExtensionInfo> InstallExtension(string id, string version, string feedUrl, SiteExtensionInfo.SiteExtensionType type, ITracer tracer, string installationArgs = null)
+        public Task<SiteExtensionInfo> InstallExtension(string id, SiteExtensionInfo requestInfo, ITracer tracer)
         {
-            var installationTask = InstallExtensionCore(id, version, feedUrl, type, tracer, installationArgs);
+            var installationTask = InstallExtensionCore(id, requestInfo, tracer);
 
 #pragma warning disable 4014
             // Track pending task
@@ -229,8 +229,12 @@ namespace Kudu.Core.SiteExtensions
             return installationTask;
         }
 
-        private async Task<SiteExtensionInfo> InstallExtensionCore(string id, string version, string feedUrl, SiteExtensionInfo.SiteExtensionType type, ITracer tracer, string installationArgs)
+        private async Task<SiteExtensionInfo> InstallExtensionCore(string id, SiteExtensionInfo requestInfo, ITracer tracer)
         {
+            var version = requestInfo.Version;
+            var feedUrl = requestInfo.FeedUrl;
+            var type = requestInfo.Type;
+            var installationArgs = requestInfo.InstallationArgs;
             try
             {
                 using (tracer.Step("Installing '{0}' version '{1}' from '{2}'", id, version, feedUrl))

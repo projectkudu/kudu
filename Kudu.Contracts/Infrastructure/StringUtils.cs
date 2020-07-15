@@ -36,5 +36,21 @@ namespace Kudu.Contracts.Infrastructure
                 return false;
             }
         }
+
+        public static string ObfuscatePath(string path)
+        {
+            if (string.IsNullOrEmpty(path))
+            {
+                return path;
+            }
+
+            var index = path.IndexOf('?');
+            if (index < 0)
+            {
+                return path;
+            }
+
+            return $"{path.Substring(0, index + 1)}...";
+        }
     }
 }

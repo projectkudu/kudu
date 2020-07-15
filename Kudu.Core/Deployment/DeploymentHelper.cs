@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Kudu.Core.Tracing;
+using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.SourceControl;
@@ -83,7 +84,7 @@ namespace Kudu.Core.Deployment
             using (var client = new HttpClient(new HttpClientHandler()))
             {
                 Uri uri = new Uri(zipDeploymentInfo.ZipURL);
-                using (tracer.Step("Trying to make a GET request to {0}", uri.AbsoluteUri))
+                using (tracer.Step($"Trying to make a GET request to {StringUtils.ObfuscatePath(zipDeploymentInfo.ZipURL)}"))
                 {
                     try
                     {
