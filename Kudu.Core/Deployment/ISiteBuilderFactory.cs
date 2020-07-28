@@ -6,6 +6,6 @@ namespace Kudu.Core.Deployment
 {
     public interface ISiteBuilderFactory
     {
-        ISiteBuilder CreateBuilder(ITracer tracer, ILogger logger, IDeploymentSettingsManager settings, IRepository fileFinder);
+        ISiteBuilder CreateBuilder(ITracer tracer, ILogger logger, IDeploymentSettingsManager settings, IRepository fileFinder, DeploymentInfoBase deploymentInfo);
     }
 }

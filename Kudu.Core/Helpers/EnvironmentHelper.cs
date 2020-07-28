@@ -37,5 +37,10 @@ namespace Kudu.Core.Helpers
                 System.Environment.GetEnvironmentVariable("WEBSITE_ISOLATION") == "hyperv" &&
                 System.Environment.GetEnvironmentVariable("WEBSITE_OS") == "linux";
         }
+
+        public static string GetApplicationStack()
+        {
+            return System.Environment.GetEnvironmentVariable(Constants.StackEnvVarName);
+        }
     }
 }

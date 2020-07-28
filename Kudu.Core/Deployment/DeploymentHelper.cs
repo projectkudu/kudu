@@ -79,12 +79,12 @@ namespace Kudu.Core.Deployment
             }
         }
 
-        public static async Task<HttpContent> GetZipContentFromURL(ZipDeploymentInfo zipDeploymentInfo, ITracer tracer)
+        public static async Task<HttpContent> GetArtifactContentFromURL(ArtifactDeploymentInfo artifactDeploymentInfo, ITracer tracer)
         {
             using (var client = new HttpClient(new HttpClientHandler()))
             {
-                Uri uri = new Uri(zipDeploymentInfo.ZipURL);
-                using (tracer.Step($"Trying to make a GET request to {StringUtils.ObfuscatePath(zipDeploymentInfo.ZipURL)}"))
+                Uri uri = new Uri(artifactDeploymentInfo.RemoteURL);
+                using (tracer.Step($"Trying to make a GET request to {StringUtils.ObfuscatePath(artifactDeploymentInfo.RemoteURL)}"))
                 {
                     try
                     {

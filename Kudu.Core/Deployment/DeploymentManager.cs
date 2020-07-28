@@ -4,6 +4,8 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Net;
+using System.Net.Security;
 using System.Text;
 using System.Threading.Tasks;
 using Kudu.Contracts.Infrastructure;
@@ -275,7 +277,7 @@ namespace Kudu.Core.Deployment
 
                 if (statusFile != null && statusFile.Status == DeployStatus.Success && _settings.RunFromLocalZip())
                 {
-                    var zipDeploymentInfo = deploymentInfo as ZipDeploymentInfo;
+                    var zipDeploymentInfo = deploymentInfo as ArtifactDeploymentInfo;
                     if (zipDeploymentInfo != null)
                     {
                         await PostDeploymentHelper.UpdateSiteVersion(zipDeploymentInfo, _environment, tracer);
@@ -284,11 +286,17 @@ namespace Kudu.Core.Deployment
             }
         }
 
-        public async Task RestartMainSiteIfNeeded(ITracer tracer, ILogger logger)
+        public async Task RestartMainSiteIfNeeded(ITracer tracer, ILogger logger, DeploymentInfoBase deploymentInfo)
         {
             // If post-deployment restart is disabled, do nothing.
             if (!_settings.RestartAppOnGitDeploy())
             {
+                return;
+            }
+
+            if (deploymentInfo != null && deploymentInfo.Deployer == Constants.OneDeploy)
+            {
+                await PostDeploymentHelper.RestartMainSiteAsync(_environment.RequestId, new PostDeploymentTraceListener(tracer, logger));
                 return;
             }
 
@@ -622,7 +630,7 @@ namespace Kudu.Core.Deployment
                 {
                     using (tracer.Step("Determining deployment builder"))
                     {
-                        builder = _builderFactory.CreateBuilder(tracer, innerLogger, perDeploymentSettings, repository);
+                        builder = _builderFactory.CreateBuilder(tracer, innerLogger, perDeploymentSettings, repository, deploymentInfo);
                         deploymentAnalytics.ProjectType = builder.ProjectType;
                         tracer.Trace("Builder is {0}", builder.GetType().Name);
                     }
@@ -693,15 +701,11 @@ namespace Kudu.Core.Deployment
                     {
                         await builder.Build(context);
                         builder.PostBuild(context);
-
-                        await RestartMainSiteIfNeeded(tracer, logger);
-
+                        await RestartMainSiteIfNeeded(tracer, logger, deploymentInfo);
+            
                         await PostDeploymentHelper.SyncFunctionsTriggers(_environment.RequestId, new PostDeploymentTraceListener(tracer, logger), deploymentInfo?.SyncFunctionsTriggersPath);
 
-                        if (!_settings.RunFromZip() && _settings.TouchWatchedFileAfterDeployment())
-                        {
-                            TryTouchWatchedFile(context, deploymentInfo);
-                        }
+                        TouchWatchedFileIfNeeded(_settings, deploymentInfo, context);
 
                         FinishDeployment(id, deployStep);
 
@@ -726,6 +730,19 @@ namespace Kudu.Core.Deployment
             {
                 // Clean the temp folder up
                 CleanBuild(tracer, buildTempPath);
+            }
+        }
+
+        private static void TouchWatchedFileIfNeeded(IDeploymentSettingsManager settings, DeploymentInfoBase deploymentInfo, DeploymentContext context)
+        {
+            if (deploymentInfo != null && !deploymentInfo.WatchedFileEnabled)
+            {
+                return;
+            }
+
+            if (!settings.RunFromZip() && settings.TouchWatchedFileAfterDeployment())
+            {
+                TryTouchWatchedFile(context, deploymentInfo);
             }
         }
 
@@ -781,17 +798,17 @@ namespace Kudu.Core.Deployment
 
         private static string GetOutputPath(DeploymentInfoBase deploymentInfo, IEnvironment environment, IDeploymentSettingsManager perDeploymentSettings)
         {
-            string targetPath = perDeploymentSettings.GetTargetPath();
+            string targetDirectoryPath = perDeploymentSettings.GetTargetPath();
 
-            if (String.IsNullOrWhiteSpace(targetPath))
+            if (String.IsNullOrWhiteSpace(targetDirectoryPath))
             {
-                targetPath = deploymentInfo?.TargetPath;
+                targetDirectoryPath = deploymentInfo?.TargetDirectoryPath;
             }
 
-            if (!String.IsNullOrWhiteSpace(targetPath))
+            if (!String.IsNullOrWhiteSpace(targetDirectoryPath))
             {
-                targetPath = targetPath.Trim('\\', '/');
-                return Path.GetFullPath(Path.Combine(environment.WebRootPath, targetPath));
+                targetDirectoryPath = targetDirectoryPath.Trim('\\', '/');
+                return Path.GetFullPath(Path.Combine(environment.WebRootPath, targetDirectoryPath));
             }
 
             return environment.WebRootPath;

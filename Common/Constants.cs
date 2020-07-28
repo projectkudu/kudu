@@ -8,8 +8,8 @@ namespace Kudu
         public const string WebRoot = "wwwroot";
         public const string MappedSite = "/_app";
         public const string RepositoryPath = "repository";
-        public const string ZipTempPath = "zipdeploy";
-        public const string ZipExtractPath = "extracted";
+        public const string ZipTempDirectoryName = "zipdeploy";
+        public const string ArtifactStagingDirectoryName = "extracted";
 
         public const string LockPath = "locks";
         public const string DeploymentLockFile = "deployments.lock";
@@ -101,7 +101,7 @@ namespace Kudu
         public const string FreeSKU = "Free";
         public const string BasicSKU = "Basic";
 
-        //Setting for VC++ for node builds
+        // Setting for VC++ for node builds
         public const string VCVersion = "2015";
 
         public const string RoleBasedContributorHeader = "X-MS-CLIENT-ROLEBASED-CONTRIBUTOR";
@@ -136,5 +136,23 @@ namespace Kudu
         public const string PackageNameTxt = "packagename.txt";
         public const string AppOfflineFileName = "app_offline.htm";
         public const string AppOfflineKuduContent = "Created by kudu";
+
+        public const string OneDeploy = "OneDeploy";
+
+        // OneDeploy Deploy Types
+        public const string War = "war";
+        public const string Jar = "jar";
+        public const string Lib = "lib";
+        public const string Startup = "startup";
+        public const string Ear = "ear";
+        public const string Static = "static";
+        public const string Zip = "zip";
+
+        // Stacks suppoorted by OneDeploy 
+        public const string StackEnvVarName = "WEBSITE_STACK";
+        public const string Tomcat = "TOMCAT";
+        public const string JavaSE = "JAVASE";
+        public const string JavaEE = "JAVAEE";
+
     }
 }
