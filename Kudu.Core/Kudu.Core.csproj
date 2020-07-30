@@ -214,6 +214,9 @@
     <Compile Include="Deployment\DeploymentStatusFileExtensions.cs" />
     <Compile Include="Deployment\DeploymentStatusManager.cs" />
     <Compile Include="Deployment\FetchDeploymentManager.cs" />
+    <Compile Include="Deployment\Generator\AspNetCoreMSBuild1607Builder.cs" />
+    <Compile Include="Deployment\Generator\DotNetConsoleMSBuild1607Builder.cs" />
+    <Compile Include="Deployment\Generator\FunctionMSBuild1607Builder.cs" />
     <Compile Include="Deployment\Generator\FunctionMsbuildBuilder.cs" />
     <Compile Include="Deployment\Generator\DotNetConsoleBuilder.cs" />
     <Compile Include="Deployment\Generator\AspNetCoreMSBuild16Builder.cs" />
