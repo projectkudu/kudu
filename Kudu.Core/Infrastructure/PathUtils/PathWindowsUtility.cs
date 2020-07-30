@@ -132,6 +132,13 @@ namespace Kudu.Core.Infrastructure
             return probPaths.FirstOrDefault(path => Directory.Exists(path));
         }
 
+        internal override string ResolveMSBuild1670Dir()
+        {
+            string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);
+
+            return Path.Combine(programFiles, "MSBuild-16.7.0", "MSBuild", "Current", "Bin");
+        }
+
         internal override string ResolveMSBuildPath()
         {
             string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);
