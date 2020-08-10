@@ -17,6 +17,7 @@ using Kudu.TestHarness;
 using Kudu.TestHarness.Xunit;
 using Newtonsoft.Json;
 using Xunit;
+using static Kudu.FunctionalTests.DeploymentTestHelper;
 
 namespace Kudu.FunctionalTests
 {
@@ -24,7 +25,6 @@ namespace Kudu.FunctionalTests
     public class OneDeployTests
     {
         public const string deployer = "OneDeploy";
-
 
         [Theory]
         [InlineData("true")]
@@ -39,13 +39,7 @@ namespace Kudu.FunctionalTests
 
                 if (async == "true")
                 {
-                    DeployResult result;
-                    do
-                    {
-                        result = await appManager.DeploymentManager.GetResultAsync("latest");
-                        Assert.Equal(deployer, result.Deployer);
-                        await Task.Delay(TimeSpan.FromSeconds(2));
-                    } while (!new[] { DeployStatus.Failed, DeployStatus.Success }.Contains(result.Status));
+                    await WaitForDeploymentCompletionAsync(appManager, deployer);
                 }
                 
                 await AssertSuccessfulDeploymentByFilenames(appManager, new string[] { "app.war" });
@@ -65,13 +59,7 @@ namespace Kudu.FunctionalTests
 
                 if (async == "true")
                 {
-                    DeployResult result;
-                    do
-                    {
-                        result = await appManager.DeploymentManager.GetResultAsync("latest");
-                        Assert.Equal(deployer, result.Deployer);
-                        await Task.Delay(TimeSpan.FromSeconds(2));
-                    } while (!new[] { DeployStatus.Failed, DeployStatus.Success }.Contains(result.Status));
+                    await WaitForDeploymentCompletionAsync(appManager, deployer);
                 }
 
                 await AssertSuccessfulDeploymentByFilenames(appManager, files.Select(f => f.Filename).ToArray(), "webapps/ROOT");
@@ -92,16 +80,10 @@ namespace Kudu.FunctionalTests
 
                 if (async == "true")
                 {
-                    DeployResult result;
-                    do
-                    {
-                        result = await appManager.DeploymentManager.GetResultAsync("latest");
-                        Assert.Equal(deployer, result.Deployer);
-                        await Task.Delay(TimeSpan.FromSeconds(2));
-                    } while (!new[] { DeployStatus.Failed, DeployStatus.Success }.Contains(result.Status));
+                    await WaitForDeploymentCompletionAsync(appManager, deployer);
                 }
 
-                await AssertSuccessfulDeploymentByFilenames(appManager, new string[] { fileName }, "text");
+                await AssertSuccessfulDeploymentByFilenames(appManager, new string[] { fileName }, "staticfiles");
             });
         }
 
@@ -118,13 +100,7 @@ namespace Kudu.FunctionalTests
 
                 if (async == "true")
                 {
-                    DeployResult result;
-                    do
-                    {
-                        result = await appManager.DeploymentManager.GetResultAsync("latest");
-                        Assert.Equal(deployer, result.Deployer);
-                        await Task.Delay(TimeSpan.FromSeconds(2));
-                    } while (!new[] { DeployStatus.Failed, DeployStatus.Success }.Contains(result.Status));
+                    await WaitForDeploymentCompletionAsync(appManager, deployer);
                 }
 
                 await AssertSuccessfulDeploymentByFilenames(appManager, new string[] { "app.jar" });
@@ -145,13 +121,7 @@ namespace Kudu.FunctionalTests
 
                 if (async == "true")
                 {
-                    DeployResult result;
-                    do
-                    {
-                        result = await appManager.DeploymentManager.GetResultAsync("latest");
-                        Assert.Equal(deployer, result.Deployer);
-                        await Task.Delay(TimeSpan.FromSeconds(2));
-                    } while (!new[] { DeployStatus.Failed, DeployStatus.Success }.Contains(result.Status));
+                    await WaitForDeploymentCompletionAsync(appManager, deployer);
                 }
 
                 await AssertSuccessfulDeploymentByFilenames(appManager, files.Select(f => f.Filename).ToArray());
@@ -163,7 +133,7 @@ namespace Kudu.FunctionalTests
         [InlineData("false")]
         public Task TestURLBasedDeployment(string async)
         {
-            var packageUri = "https://github.com/dannysongg/testrepo/blob/master/green.war?raw=true";
+            var packageUri = " https://github.com/projectkudu/kudu/blob/master/Kudu.FunctionalTests/green.war?raw=true";
             return ApplicationManager.RunAsync("TestURLDeployment", async appManager =>
             {
                 var client = appManager.OneDeployManager.Client;
@@ -177,13 +147,7 @@ namespace Kudu.FunctionalTests
                     {
                         if (async == "true")
                         {
-                            DeployResult result;
-                            do
-                            {
-                                result = await appManager.DeploymentManager.GetResultAsync("latest");
-                                Assert.Equal(deployer, result.Deployer);
-                                await Task.Delay(TimeSpan.FromSeconds(2));
-                            } while (!new[] { DeployStatus.Failed, DeployStatus.Success }.Contains(result.Status));
+                            await WaitForDeploymentCompletionAsync(appManager, deployer);
                         }
                         else
                         {
@@ -197,7 +161,8 @@ namespace Kudu.FunctionalTests
         }
 
         [Fact]
-        public Task EnsureIterativeDeployment()
+        //Creates a war and static file to deploy one after the other and checks for both files in /wwwroot
+        public Task TestIncrementalDeployment()
         {
             return ApplicationManager.RunAsync("TestIterativeDeployment", async appManager =>
             {
@@ -213,8 +178,6 @@ namespace Kudu.FunctionalTests
             });
         }
 
-
-
         private static async Task<HttpResponseMessage> DeployNonZippedArtifact(
             ApplicationManager appManager,
             TestFile file,
@@ -226,19 +189,7 @@ namespace Kudu.FunctionalTests
             TestTracer.Trace("Deploying file");
             using (var fileStream = CreateFileStream(file))
             {
-                IList<KeyValuePair<string, string>> queryParams = new List<KeyValuePair<string, string>>();
-                if (!string.IsNullOrWhiteSpace(type))
-                {
-                    queryParams.Add(new KeyValuePair<string, string>("type", type));
-                }
-                if (!string.IsNullOrWhiteSpace(path))
-                {
-                    queryParams.Add(new KeyValuePair<string, string>("path", path));
-                }
-                if (async != "false")
-                {
-                    queryParams.Add(new KeyValuePair<string, string>("async", async));
-                }
+                IList<KeyValuePair<string, string>> queryParams = GetOneDeployQueryParams(type, path, async);
                 return await appManager.OneDeployManager.PushDeployFromStream(fileStream, metadata, queryParams);
             }
         }
@@ -253,97 +204,12 @@ namespace Kudu.FunctionalTests
             TestTracer.Trace("Deploying zip");
             using (var zipStream = CreateZipStream(files))
             {
-                IList<KeyValuePair<string, string>> queryParams = new List<KeyValuePair<string, string>>();
-                if (!string.IsNullOrWhiteSpace(type))
-                {
-                    queryParams.Add(new KeyValuePair<string, string>("type", type));
-                }
-                if (!string.IsNullOrWhiteSpace(path))
-                {
-                    queryParams.Add(new KeyValuePair<string, string>("path", path));
-                }
-                if (async != "false")
-                {
-                    queryParams.Add(new KeyValuePair<string, string>("async", async));
-                }
+                IList<KeyValuePair<string, string>> queryParams = GetOneDeployQueryParams(type, path, async);
 
                 return await appManager.OneDeployManager.PushDeployFromStream(
                     zipStream,
                     metadata,
                     queryParams);
-            }
-        }
-
-        private static TestFile CreateRandomTestFile()
-        {
-            var fileValues = Guid.NewGuid().ToString("N");
-            return new TestFile { Content = fileValues, Filename = fileValues }; 
-        }
-
-        private static TestFile[] CreateRandomFilesForZip(int numFiles)
-        {
-            return Enumerable.Range(0, numFiles)
-                .Select(i => Guid.NewGuid().ToString("N"))
-                .Select(s => new TestFile { Content = s, Filename = s })
-                .ToArray();
-        }
-
-
-        private static Stream CreateZipStream(TestFile[] files)
-        {
-            var s = new MemoryStream();
-            using (var archive = new ZipArchive(s, ZipArchiveMode.Update, true))
-            {
-                foreach (var file in files)
-                {
-                    var entry = archive.CreateEntry(file.Filename);
-
-                    using (var w = new StreamWriter(entry.Open()))
-                    {
-                        w.Write(file.Content);
-                    }
-
-                    if (file.ModifiedTime.HasValue)
-                    {
-                        entry.LastWriteTime = file.ModifiedTime.Value;
-                    }
-                }
-            }
-
-            s.Position = 0;
-            return s;
-        }
-
-        private static Stream CreateFileStream(TestFile file)
-        {
-            var s = new MemoryStream();
-            using (var sw = new StreamWriter(s, Encoding.Default, file.Content.Length, true))
-            {
-                sw.Write(file.Content);
-            }
-            s.Position = 0;
-            return s;
-        }
-
-        private static async Task AssertSuccessfulDeploymentByContent(ApplicationManager appManager, TestFile[] files)
-        {
-            TestTracer.Trace("Verifying files are deployed and deployment record created.");
-
-            var deployment = await appManager.DeploymentManager.GetResultAsync("latest");
-
-            Assert.Equal(DeployStatus.Success, deployment.Status);
-            Assert.Equal(deployer, deployment.Deployer);
-
-            var entries = await appManager.VfsWebRootManager.ListAsync(null);
-            var deployedFilenames = entries.Select(e => e.Name);
-
-            var filenameSet = new HashSet<string>(files.Select(f => f.Filename));
-            Assert.True(filenameSet.SetEquals(entries.Select(e => e.Name)));
-
-            foreach (var file in files)
-            {
-                var deployedContent = await appManager.VfsWebRootManager.ReadAllTextAsync(file.Filename);
-                Assert.Equal(file.Content, deployedContent);
             }
         }
 
@@ -361,29 +227,22 @@ namespace Kudu.FunctionalTests
             Assert.True(!filenames.Except(deployedFilenames).Any());
         }
 
-
-        private static async Task AssertSuccessfulDeployment(ApplicationManager appManager, int timeoutSecs = 30)
+        private static IList<KeyValuePair<string, string>> GetOneDeployQueryParams(string type, string path, string async)
         {
-            DeployResult deployment = null;
-            for (int i = 0; i < timeoutSecs; ++i)
+            IList<KeyValuePair<string, string>> queryParams = new List<KeyValuePair<string, string>>();
+            if (!string.IsNullOrWhiteSpace(type))
             {
-                deployment = await appManager.DeploymentManager.GetResultAsync("latest");
-                if (deployment.Status == DeployStatus.Success || deployment.Status == DeployStatus.Failed)
-                {
-                    break;
-                }
-
-                await Task.Delay(1000);
+                queryParams.Add(new KeyValuePair<string, string>("type", type));
             }
-
-            Assert.Equal(DeployStatus.Success, deployment.Status);
-        }
-
-        private class TestFile
-        {
-            public string Filename;
-            public string Content;
-            public DateTime? ModifiedTime;
+            if (!string.IsNullOrWhiteSpace(path))
+            {
+                queryParams.Add(new KeyValuePair<string, string>("path", path));
+            }
+            if (async != "false")
+            {
+                queryParams.Add(new KeyValuePair<string, string>("async", async));
+            }
+            return queryParams;
         }
     }
 }

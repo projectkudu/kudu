@@ -140,19 +140,19 @@ namespace Kudu
         public const string OneDeploy = "OneDeploy";
 
         // OneDeploy Deploy Types
-        public const string War = "war";
-        public const string Jar = "jar";
-        public const string Lib = "lib";
-        public const string Startup = "startup";
-        public const string Ear = "ear";
-        public const string Static = "static";
-        public const string Zip = "zip";
+        //public const string War = "war";
+        //public const string Jar = "jar";
+        //public const string Lib = "lib";
+        //public const string Startup = "startup";
+        //public const string Ear = "ear";
+        //public const string Static = "static";
+        //public const string Zip = "zip";
 
         // Stacks suppoorted by OneDeploy 
         public const string StackEnvVarName = "WEBSITE_STACK";
         public const string Tomcat = "TOMCAT";
         public const string JavaSE = "JAVASE";
-        public const string JavaEE = "JAVAEE";
+        public const string JBossEap = "JBOSSEAP";
 
     }
 }

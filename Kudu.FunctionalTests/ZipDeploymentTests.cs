@@ -14,6 +14,7 @@ using Kudu.TestHarness;
 using Kudu.TestHarness.Xunit;
 using Newtonsoft.Json;
 using Xunit;
+using static Kudu.FunctionalTests.DeploymentTestHelper;
 
 namespace Kudu.FunctionalTests
 {
@@ -149,7 +150,7 @@ namespace Kudu.FunctionalTests
                 response.EnsureSuccessStatusCode();
                 await AssertSuccessfulDeploymentByFilenames(appManager, files.Select(f => f.Filename).ToArray());
 
-                var empty = new FileForZip[0];
+                var empty = new TestFile[0];
                 var response2 = await DeployZip(appManager, empty, new ZipDeployMetadata());
                 await AssertSuccessfulDeploymentByFilenames(appManager, new string[0]);
             });
@@ -166,7 +167,7 @@ namespace Kudu.FunctionalTests
                 response.EnsureSuccessStatusCode();
 
                 // Immediately try another deployment
-                var response2 = await DeployZip(appManager, new FileForZip[0], new ZipDeployMetadata { IsAsync = true });
+                var response2 = await DeployZip(appManager, new TestFile[0], new ZipDeployMetadata { IsAsync = true });
 
                 Assert.Equal(HttpStatusCode.Conflict, response2.StatusCode);
 
@@ -193,7 +194,7 @@ namespace Kudu.FunctionalTests
                 response.EnsureSuccessStatusCode();
 
                 // Immediately try another deployment
-                var response2 = await DeployZip(appManager, new FileForZip[0], new ZipDeployMetadata());
+                var response2 = await DeployZip(appManager, new TestFile[0], new ZipDeployMetadata());
 
                 Assert.Equal(HttpStatusCode.Conflict, response2.StatusCode);
 
@@ -228,7 +229,7 @@ namespace Kudu.FunctionalTests
                 // Deploy a new zip with some new files, some modified files, and some old files
                 var newFiles = CreateRandomFilesForZip(3);
                 var oldfile = files[0];
-                var modifiedFile = new FileForZip { Filename = files[1].Filename, Content = "UPDATED", ModifiedTime = DateTime.Now };
+                var modifiedFile = new TestFile { Filename = files[1].Filename, Content = "UPDATED", ModifiedTime = DateTime.Now };
                 var files2 = newFiles.Concat(new[] { oldfile, modifiedFile }).ToArray();
 
                 var response2 = await DeployZip(appManager, files2, new ZipDeployMetadata());
@@ -246,8 +247,8 @@ namespace Kudu.FunctionalTests
             {
                 await appManager.SettingsManager.SetValue("PROJECT", "subdir");
 
-                var rootFile = new FileForZip { Filename = "should-not-be-deployed", Content = "" };
-                var subdirFile = new FileForZip { Filename = "subdir/should-be-deployed", Content = "" };
+                var rootFile = new TestFile { Filename = "should-not-be-deployed", Content = "" };
+                var subdirFile = new TestFile { Filename = "subdir/should-be-deployed", Content = "" };
 
                 var files = new[] { rootFile, subdirFile };
                 var response = await DeployZip(appManager, files, new ZipDeployMetadata());
@@ -263,7 +264,7 @@ namespace Kudu.FunctionalTests
             {
                 var files = new[]
                 {
-                    new FileForZip { Filename = "package.json", Content = simplePackageJsonWithDependencyContent}
+                    new TestFile { Filename = "package.json", Content = simplePackageJsonWithDependencyContent}
                 };
 
                 // Should do KuduSync copy only, no build (zip deployments are assumed to be complete by default)
@@ -273,7 +274,7 @@ namespace Kudu.FunctionalTests
 
                 var files2 = files.Concat(new[]
                 {
-                    new FileForZip { Filename = ".deployment", Content = "[config]\r\nSCM_DO_BUILD_DURING_DEPLOYMENT = true"}
+                    new TestFile { Filename = ".deployment", Content = "[config]\r\nSCM_DO_BUILD_DURING_DEPLOYMENT = true"}
                 }).ToArray();
 
                 await appManager.SettingsManager.SetValue("SCM_DO_BUILD_DURING_DEPLOYMENT", "false");
@@ -290,7 +291,7 @@ namespace Kudu.FunctionalTests
                 var response3 = await DeployZip(appManager, files2, new ZipDeployMetadata());
                 response3.EnsureSuccessStatusCode();
 
-                var expected = files.Concat(new[] { new FileForZip { Filename = "node_modules" } }).ToArray();
+                var expected = files.Concat(new[] { new TestFile { Filename = "node_modules" } }).ToArray();
                 await AssertSuccessfulDeploymentByFilenames(appManager, expected.Select(f => f.Filename).ToArray());
             });
         }
@@ -349,7 +350,7 @@ namespace Kudu.FunctionalTests
         {
             return ApplicationManager.RunAsync("TestWarDeploymentUpdatesWebXmlTimestamp", async appManager =>
             {
-                var files = new[] { new FileForZip { Filename = "WEB-INF/web.xml" } };
+                var files = new[] { new TestFile { Filename = "WEB-INF/web.xml" } };
 
                 // STEP 1: Deploy WAR and get web.xml timestamp
 
@@ -432,7 +433,7 @@ namespace Kudu.FunctionalTests
             });
         }
 
-        private static async Task AssertSuccessfulDeploymentByContent(ApplicationManager appManager, FileForZip[] files)
+        private static async Task AssertSuccessfulDeploymentByContent(ApplicationManager appManager, TestFile[] files)
         {
             TestTracer.Trace("Verifying files are deployed and deployment record created.");
 
@@ -488,7 +489,7 @@ namespace Kudu.FunctionalTests
 
         private static async Task<HttpResponseMessage> DeployZip(
             ApplicationManager appManager,
-            FileForZip[] files,
+            TestFile[] files,
             ZipDeployMetadata metadata)
         {
             TestTracer.Trace("Push-deploying zip");
@@ -502,7 +503,7 @@ namespace Kudu.FunctionalTests
 
         private static async Task<HttpResponseMessage> DeployWar(
             ApplicationManager appManager,
-            FileForZip[] files,
+            TestFile[] files,
             ZipDeployMetadata metadata,
             string appName = null)
         {
@@ -522,46 +523,6 @@ namespace Kudu.FunctionalTests
             }
         }
 
-        private static FileForZip[] CreateRandomFilesForZip(int numFiles)
-        {
-            return Enumerable.Range(0, numFiles)
-                .Select(i => Guid.NewGuid().ToString("N"))
-                .Select(s => new FileForZip { Content = s, Filename = s })
-                .ToArray();
-        }
-        private static Stream CreateZipStream(int numFiles, out HashSet<string> fileNames)
-        {
-            var files = CreateRandomFilesForZip(numFiles);
-            var stream = CreateZipStream(files);
-            fileNames = new HashSet<string>(files.Select(f => f.Filename));
-            return stream;
-        }
-
-        private static Stream CreateZipStream(FileForZip[] files)
-        {
-            var s = new MemoryStream();
-            using (var archive = new ZipArchive(s, ZipArchiveMode.Update, true))
-            {
-                foreach (var file in files)
-                {
-                    var entry = archive.CreateEntry(file.Filename);
-
-                    using (var w = new StreamWriter(entry.Open()))
-                    {
-                        w.Write(file.Content);
-                    }
-
-                    if (file.ModifiedTime.HasValue)
-                    {
-                        entry.LastWriteTime = file.ModifiedTime.Value;
-                    }
-                }
-            }
-
-            s.Position = 0;
-            return s;
-        }
-
         private static string simplePackageJsonWithDependencyContent = @"{
   ""name"": ""test"",
   ""version"": ""1.0.0"",
@@ -571,11 +532,5 @@ namespace Kudu.FunctionalTests
 }
 ";
 
-        private class FileForZip
-        {
-            public string Filename;
-            public string Content;
-            public DateTime? ModifiedTime;
-        }
     }
 }

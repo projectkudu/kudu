@@ -68,6 +68,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DeploymentTestHelper.cs" />
     <Compile Include="CommandExecutorTests.cs" />
     <Compile Include="Jobs\WebJobsTests.cs" />
     <Compile Include="DeploymentActionsTests.cs" />
@@ -106,6 +107,7 @@
     <EmbeddedResource Include="dropbox\oauth.json" />
     <EmbeddedResource Include="dropbox\Kenticooauth.json" />
     <EmbeddedResource Include="dropbox\Moodleoauth.json" />
+    <None Include="green.war" />
     <None Include="packages.config">
       <SubType>Designer</SubType>
     </None>

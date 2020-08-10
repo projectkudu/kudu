@@ -253,9 +253,9 @@ namespace Kudu.Services.Deployment
                     case ArtifactType.Ear:
 
                         // Currently not supported on Windows but here for future use
-                        if (!string.Equals(websiteStack, Constants.JavaEE, StringComparison.OrdinalIgnoreCase))
+                        if (!string.Equals(websiteStack, Constants.JBossEap, StringComparison.OrdinalIgnoreCase))
                         {
-                            return Request.CreateResponse(HttpStatusCode.BadRequest, $"JAR files cannot be deployed to {websiteStack}");
+                            return Request.CreateResponse(HttpStatusCode.BadRequest, $"EAR files cannot be deployed to {websiteStack}");
                         }
 
                         deploymentInfo.TargetFileName = "app.ear";
