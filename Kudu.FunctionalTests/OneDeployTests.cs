@@ -17,7 +17,6 @@ using Kudu.TestHarness;
 using Kudu.TestHarness.Xunit;
 using Newtonsoft.Json;
 using Xunit;
-using static Kudu.FunctionalTests.DeploymentTestHelper;
 
 namespace Kudu.FunctionalTests
 {
@@ -33,13 +32,13 @@ namespace Kudu.FunctionalTests
         {
             return ApplicationManager.RunAsync("TestWarDeployment", async appManager =>
             {
-                var file = CreateRandomTestFile();
+                var file = DeploymentTestHelper.CreateRandomTestFile();
                 var response = await DeployNonZippedArtifact(appManager, file, new ZipDeployMetadata(), "war", null, async);
                 response.EnsureSuccessStatusCode();
 
                 if (async == "true")
                 {
-                    await WaitForDeploymentCompletionAsync(appManager, deployer);
+                    await DeploymentTestHelper.WaitForDeploymentCompletionAsync(appManager, deployer);
                 }
                 
                 await AssertSuccessfulDeploymentByFilenames(appManager, new string[] { "app.war" });
@@ -53,13 +52,13 @@ namespace Kudu.FunctionalTests
         {
             return ApplicationManager.RunAsync("TestLegacyWarDeployment", async appManager =>
             {
-                var files = CreateRandomFilesForZip(10);
+                var files = DeploymentTestHelper.CreateRandomFilesForZip(10);
                 var response = await DeployZippedArtifact(appManager, files, new ZipDeployMetadata(), "war", "webapps/ROOT", async);
                 response.EnsureSuccessStatusCode();
 
                 if (async == "true")
                 {
-                    await WaitForDeploymentCompletionAsync(appManager, deployer);
+                    await DeploymentTestHelper.WaitForDeploymentCompletionAsync(appManager, deployer);
                 }
 
                 await AssertSuccessfulDeploymentByFilenames(appManager, files.Select(f => f.Filename).ToArray(), "webapps/ROOT");
@@ -73,14 +72,14 @@ namespace Kudu.FunctionalTests
         {
             return ApplicationManager.RunAsync("TestStaticDeployment", async appManager =>
             {
-                var file = CreateRandomTestFile();
+                var file = DeploymentTestHelper.CreateRandomTestFile();
                 var fileName = Path.GetRandomFileName();
-                var response = await DeployNonZippedArtifact(appManager, file, new ZipDeployMetadata(), "static", Path.Combine("text", fileName), async);
+                var response = await DeployNonZippedArtifact(appManager, file, new ZipDeployMetadata(), "static", Path.Combine("staticfiles", fileName), async);
                 response.EnsureSuccessStatusCode();
 
                 if (async == "true")
                 {
-                    await WaitForDeploymentCompletionAsync(appManager, deployer);
+                    await DeploymentTestHelper.WaitForDeploymentCompletionAsync(appManager, deployer);
                 }
 
                 await AssertSuccessfulDeploymentByFilenames(appManager, new string[] { fileName }, "staticfiles");
@@ -94,13 +93,13 @@ namespace Kudu.FunctionalTests
         {
             return ApplicationManager.RunAsync("TestJarDeployment", async appManager =>
             {
-                var file = CreateRandomTestFile();
+                var file = DeploymentTestHelper.CreateRandomTestFile();
                 var response = await DeployNonZippedArtifact(appManager, file, new ZipDeployMetadata(), "jar", null, async);
                 response.EnsureSuccessStatusCode();
 
                 if (async == "true")
                 {
-                    await WaitForDeploymentCompletionAsync(appManager, deployer);
+                    await DeploymentTestHelper.WaitForDeploymentCompletionAsync(appManager, deployer);
                 }
 
                 await AssertSuccessfulDeploymentByFilenames(appManager, new string[] { "app.jar" });
@@ -115,13 +114,13 @@ namespace Kudu.FunctionalTests
         {
             return ApplicationManager.RunAsync("TestZipDeployment", async appManager =>
             {
-                var files = CreateRandomFilesForZip(10);
+                var files = DeploymentTestHelper.CreateRandomFilesForZip(10);
                 var response = await DeployZippedArtifact(appManager, files, new ZipDeployMetadata(), "zip", null, async);
                 response.EnsureSuccessStatusCode();
 
                 if (async == "true")
                 {
-                    await WaitForDeploymentCompletionAsync(appManager, deployer);
+                    await DeploymentTestHelper.WaitForDeploymentCompletionAsync(appManager, deployer);
                 }
 
                 await AssertSuccessfulDeploymentByFilenames(appManager, files.Select(f => f.Filename).ToArray());
@@ -147,7 +146,7 @@ namespace Kudu.FunctionalTests
                     {
                         if (async == "true")
                         {
-                            await WaitForDeploymentCompletionAsync(appManager, deployer);
+                            await DeploymentTestHelper.WaitForDeploymentCompletionAsync(appManager, deployer);
                         }
                         else
                         {
@@ -166,11 +165,11 @@ namespace Kudu.FunctionalTests
         {
             return ApplicationManager.RunAsync("TestIterativeDeployment", async appManager =>
             {
-                var file1 = CreateRandomTestFile();
+                var file1 = DeploymentTestHelper.CreateRandomTestFile();
                 var response1 = await DeployNonZippedArtifact(appManager, file1, new ZipDeployMetadata(), "war", null);
                 response1.EnsureSuccessStatusCode();
 
-                var file2 = CreateRandomTestFile();
+                var file2 = DeploymentTestHelper.CreateRandomTestFile();
                 var response2 = await DeployNonZippedArtifact(appManager, file2, new ZipDeployMetadata(), "static", "iterative.txt");
                 response2.EnsureSuccessStatusCode();
 
@@ -180,14 +179,14 @@ namespace Kudu.FunctionalTests
 
         private static async Task<HttpResponseMessage> DeployNonZippedArtifact(
             ApplicationManager appManager,
-            TestFile file,
+            DeploymentTestHelper.TestFile file,
             ZipDeployMetadata metadata,
             string type = null,
             string path = null,
             string async = "false")
         {
             TestTracer.Trace("Deploying file");
-            using (var fileStream = CreateFileStream(file))
+            using (var fileStream = DeploymentTestHelper.CreateFileStream(file))
             {
                 IList<KeyValuePair<string, string>> queryParams = GetOneDeployQueryParams(type, path, async);
                 return await appManager.OneDeployManager.PushDeployFromStream(fileStream, metadata, queryParams);
@@ -195,14 +194,14 @@ namespace Kudu.FunctionalTests
         }
 
         private static async Task<HttpResponseMessage> DeployZippedArtifact(ApplicationManager appManager,
-            TestFile[] files,
+            DeploymentTestHelper.TestFile[] files,
             ZipDeployMetadata metadata,
             string type = null,
             string path = null,
             string async = "false")
         {
             TestTracer.Trace("Deploying zip");
-            using (var zipStream = CreateZipStream(files))
+            using (var zipStream = DeploymentTestHelper.CreateZipStream(files))
             {
                 IList<KeyValuePair<string, string>> queryParams = GetOneDeployQueryParams(type, path, async);
 
