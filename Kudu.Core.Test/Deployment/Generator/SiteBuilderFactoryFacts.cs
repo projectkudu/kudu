@@ -26,7 +26,7 @@ namespace Kudu.Core.Test.Deployment.Generator
 
             var factory = new SiteBuilderFactory(pProvider, environment);
 
-            var result = factory.CreateBuilder(tracer, logger, settings, repository);
+            var result = factory.CreateBuilder(tracer, logger, settings, repository, deploymentInfo: null);
 
             Assert.IsType(expectedBuilderType, result);
         }

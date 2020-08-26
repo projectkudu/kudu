@@ -57,7 +57,7 @@ namespace Kudu.Core.Test.Deployment
             FileSystemHelpers.Instance = fileSystem.Object;
 
             deploymentManager
-                .Setup(m => m.FetchDeploy(It.IsAny<ZipDeploymentInfo>(), It.IsAny<bool>(), It.IsAny<Uri>(), It.IsAny<string>()))
+                .Setup(m => m.FetchDeploy(It.IsAny<ArtifactDeploymentInfo>(), It.IsAny<bool>(), It.IsAny<Uri>(), It.IsAny<string>()))
                 .Returns(Task.FromResult(FetchDeploymentRequestResult.RanSynchronously));
 
             var controller = new PushDeploymentController(
@@ -78,8 +78,8 @@ namespace Kudu.Core.Test.Deployment
 
             // Assert
             deploymentManager
-                .Verify(m => m.FetchDeploy(It.Is<ZipDeploymentInfo>(di =>
-                    !string.IsNullOrEmpty(di.ZipName) && !string.IsNullOrEmpty(di.SyncFunctionsTriggersPath)),
+                .Verify(m => m.FetchDeploy(It.Is<ArtifactDeploymentInfo>(di =>
+                    !string.IsNullOrEmpty(di.ArtifactFileName) && !string.IsNullOrEmpty(di.SyncFunctionsTriggersPath)),
                     It.IsAny<bool>(),
                     It.IsAny<Uri>(),
                     It.IsAny<string>()

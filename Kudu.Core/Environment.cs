@@ -22,7 +22,7 @@ namespace Kudu.Core
         private readonly string _locksPath;
         private readonly string _sshKeyPath;
         private readonly string _tempPath;
-        private readonly string _zipTempPath;
+        private readonly string _zipTempDirectoryPath;
         private readonly string _scriptPath;
         private readonly string _nodeModulesPath;
         private string _repositoryPath;
@@ -42,7 +42,7 @@ namespace Kudu.Core
                 string rootPath,
                 string siteRootPath,
                 string tempPath,
-                string zipTempPath,
+                string zipTempDirectoryPath,
                 string repositoryPath,
                 string webRootPath,
                 string deploymentsPath,
@@ -65,7 +65,7 @@ namespace Kudu.Core
             SiteRootPath = siteRootPath;
             _tempPath = tempPath;
             _repositoryPath = repositoryPath;
-            _zipTempPath = zipTempPath;
+            _zipTempDirectoryPath = zipTempDirectoryPath;
             _webRootPath = webRootPath;
             _deploymentsPath = deploymentsPath;
             _deploymentToolsPath = Path.Combine(_deploymentsPath, Constants.DeploymentToolsPath);
@@ -104,7 +104,7 @@ namespace Kudu.Core
 
             _tempPath = Path.GetTempPath();
             _repositoryPath = repositoryPath;
-            _zipTempPath = Path.Combine(_tempPath, Constants.ZipTempPath);
+            _zipTempDirectoryPath = Path.Combine(_tempPath, Constants.ZipTempDirectoryName);
             _webRootPath = Path.Combine(SiteRootPath, Constants.WebRoot);
             _deploymentsPath = Path.Combine(SiteRootPath, Constants.DeploymentCachePath);
             _deploymentToolsPath = Path.Combine(_deploymentsPath, Constants.DeploymentToolsPath);
@@ -232,7 +232,7 @@ namespace Kudu.Core
         {
             get
             {
-                return FileSystemHelpers.EnsureDirectory(_zipTempPath);
+                return FileSystemHelpers.EnsureDirectory(_zipTempDirectoryPath);
             }
         }
 
