@@ -22,7 +22,7 @@ namespace Kudu.Core.Deployment.Generator
             _environment = environment;
         }
 
-        public ISiteBuilder CreateBuilder(ITracer tracer, ILogger logger, IDeploymentSettingsManager settings, IRepository repository)
+        public ISiteBuilder CreateBuilder(ITracer tracer, ILogger logger, IDeploymentSettingsManager settings, IRepository repository, DeploymentInfoBase deploymentInfo)
         {
             string repositoryRoot = repository.RepositoryPath;
 
@@ -52,6 +52,12 @@ namespace Kudu.Core.Deployment.Generator
                 targetProjectPath = Path.GetFullPath(Path.Combine(repositoryRoot, targetProjectPath.TrimStart('/', '\\')));
             }
 
+            if (deploymentInfo != null && deploymentInfo.Deployer == Constants.OneDeploy)
+            {
+                var projectPath = !String.IsNullOrEmpty(targetProjectPath) ? targetProjectPath : repositoryRoot;
+                return new OneDeployBuilder(_environment, settings, _propertyProvider, repositoryRoot, projectPath, deploymentInfo);
+            }
+
             if (settings.RunFromLocalZip())
             {
                 return new RunFromZipSiteBuilder();
@@ -62,6 +68,7 @@ namespace Kudu.Core.Deployment.Generator
                 var projectPath = !String.IsNullOrEmpty(targetProjectPath) ? targetProjectPath : repositoryRoot;
                 return new BasicBuilder(_environment, settings, _propertyProvider, repositoryRoot, projectPath);
             }
+
             string msbuild16Log = String.Format("UseMSBuild16: {0}", VsHelper.UseMSBuild16().ToString());
             tracer.Trace(msbuild16Log);
             KuduEventSource.Log.GenericEvent(

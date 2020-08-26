@@ -803,12 +803,12 @@ namespace Kudu.Core.Helpers
             }
         }
 
-        public static async Task UpdateSiteVersion(ZipDeploymentInfo deploymentInfo, IEnvironment environment, ITracer tracer)
+        public static async Task UpdateSiteVersion(ArtifactDeploymentInfo deploymentInfo, IEnvironment environment, ITracer tracer)
         {
             var siteVersionPath = Path.Combine(environment.SitePackagesPath, Constants.PackageNameTxt);
-            using (tracer.Step($"Updating {siteVersionPath} with deployment {deploymentInfo.ZipName}"))
+            using (tracer.Step($"Updating {siteVersionPath} with deployment {deploymentInfo.ArtifactFileName}"))
             {
-                await OperationManager.AttemptAsync(() => FileSystemHelpers.WriteAllTextToFileAsync(siteVersionPath, deploymentInfo.ZipName));
+                await OperationManager.AttemptAsync(() => FileSystemHelpers.WriteAllTextToFileAsync(siteVersionPath, deploymentInfo.ArtifactFileName));
             }
         }
 
