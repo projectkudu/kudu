@@ -83,7 +83,7 @@ namespace Kudu.FunctionalTests
             return s;
         }
 
-        public static async Task AssertSuccessfulDeploymentByFilenames(ApplicationManager appManager, IEnumerable<string> filenames, string path = null)
+        public static async Task AssertSuccessfulDeploymentByFilenames(ApplicationManager appManager, IEnumerable<string> expectedFileNames, string path = null)
         {
             TestTracer.Trace("Verifying files are deployed and deployment record created.");
 
@@ -92,10 +92,30 @@ namespace Kudu.FunctionalTests
             Assert.Equal(DeployStatus.Success, deployment.Status);
 
             var entries = await appManager.VfsManager.ListAsync(path);
-            var deployedFilenames = entries.Select(e => e.Name);
+            var observedFileNames = entries.Select(e => e.Name);
 
-            var filenameSet = new HashSet<string>(filenames);
-            Assert.True(filenameSet.SetEquals(entries.Select(e => e.Name)), string.Join(",", filenameSet) + " != " + string.Join(",", entries.Select(e => e.Name)));
+            var expectedFileNameSet = new HashSet<string>(expectedFileNames);
+            Assert.True(expectedFileNameSet.SetEquals(entries.Select(e => e.Name)), string.Join(",", expectedFileNameSet) + " != " + string.Join(",", entries.Select(e => e.Name)));
+        }
+
+        // Deploy files to all directories of interest
+        // Useful helper function for testing 'clean' deploy scenarios
+        public static string DeployRandomFilesEverywhere(
+            ApplicationManager appManager)
+        {
+            TestTracer.Trace("Deploying random files everywhere");
+
+            var testFile = DeploymentTestHelper.CreateRandomTestFile();
+
+            appManager.VfsManager.WriteAllText($"site/scripts/{testFile.Filename}", testFile.Content);
+            appManager.VfsManager.WriteAllText($"site/libs/{testFile.Filename}", testFile.Content);
+            appManager.VfsManager.WriteAllText($"site/wwwroot/{testFile.Filename}", testFile.Content);
+            appManager.VfsManager.WriteAllText($"site/wwwroot/{testFile.Filename}", testFile.Content);
+            appManager.VfsManager.WriteAllText($"site/wwwroot/webapps/{testFile.Filename}", testFile.Content);
+            appManager.VfsManager.WriteAllText($"site/wwwroot/webapps/ROOT/{testFile.Filename}", testFile.Content);
+            appManager.VfsManager.WriteAllText($"site/wwwroot/webapps/ROOT2/{testFile.Filename}", testFile.Content);
+
+            return testFile.Content;
         }
     }
 }

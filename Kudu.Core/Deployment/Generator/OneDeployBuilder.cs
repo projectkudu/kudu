@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -46,10 +47,22 @@ namespace Kudu.Core.Deployment.Generator
             {
                 context.Logger.Log($"Clean deploying to {context.OutputPath}");
 
-                // We do not want to use the manifest for OneDeploy. Set manifest paths to null.
+                // We do not want to use the manifest for OneDeploy. Use an empty manifest file.
                 // This way we don't interfere with manifest based deployments.
-                context.PreviousManifestFilePath = context.NextManifestFilePath = string.Empty;
-                base.Build(context);
+                string tempManifestPath = null;
+                try
+                {
+                    tempManifestPath = Path.GetTempFileName();
+                    context.PreviousManifestFilePath = context.NextManifestFilePath = tempManifestPath;
+                    base.Build(context);
+                }
+                finally
+                {
+                    if (!string.IsNullOrWhiteSpace(tempManifestPath))
+                    {
+                        FileSystemHelpers.DeleteFileSafe(tempManifestPath);
+                    }
+                }
             }
             else
             {

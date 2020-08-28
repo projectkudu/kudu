@@ -94,6 +94,22 @@ namespace Kudu.TestHarness
                 return GetBooleanTestSetting("StopAfterFirstTestFailure");
             }
         }
+        
+        public static string CustomKuduUrl
+        {
+            get
+            {
+                return GetTestSetting("CustomKuduUrl");
+            }
+        }
+
+        public static bool RunningAgainstLinuxKudu
+        {
+            get
+            {
+                return GetBooleanTestSetting("RunningAgainstLinuxKudu");
+            }
+        }
 
         public static bool DisableRetry
         {

@@ -8,13 +8,14 @@ namespace Kudu.Contracts.Deployment
 {
     public enum ArtifactType
     {
-        Invalid,
+        Unknown,
         War,
         Jar,
         Ear,
         Lib,
         Static,
         Startup,
+        Script,
         Zip,
     }
 }

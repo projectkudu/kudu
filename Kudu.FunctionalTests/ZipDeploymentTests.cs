@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using Kudu.Client.Deployment;
 using Kudu.Contracts.Settings;
 using Kudu.Core.Deployment;
+using Kudu.Core.Helpers;
 using Kudu.TestHarness;
 using Kudu.TestHarness.Xunit;
 using Newtonsoft.Json;
@@ -20,8 +21,6 @@ namespace Kudu.FunctionalTests
     [KuduXunitTestClass]
     public class ZipDeploymentTests
     {
-        public const string ZipDeployer = "ZipDeploy";
-
         [Fact]
         public Task TestSimpleZipDeployment()
         {
@@ -131,7 +130,7 @@ namespace Kudu.FunctionalTests
                 do
                 {
                     result = await appManager.DeploymentManager.GetResultAsync("latest");
-                    Assert.Equal(ZipDeployer, result.Deployer);
+                    Assert.Equal(GetZipDeployer(), result.Deployer);
                     await Task.Delay(TimeSpan.FromSeconds(2));
                 } while (!new[] { DeployStatus.Failed, DeployStatus.Success }.Contains(result.Status));
 
@@ -174,7 +173,7 @@ namespace Kudu.FunctionalTests
                 do
                 {
                     result = await appManager.DeploymentManager.GetResultAsync("latest");
-                    Assert.Equal(ZipDeployer, result.Deployer);
+                    Assert.Equal(GetZipDeployer(), result.Deployer);
                     await Task.Delay(TimeSpan.FromSeconds(2));
                 } while (!new[] { DeployStatus.Failed, DeployStatus.Success }.Contains(result.Status));
 
@@ -201,7 +200,7 @@ namespace Kudu.FunctionalTests
                 do
                 {
                     result = await appManager.DeploymentManager.GetResultAsync("latest");
-                    Assert.Equal(ZipDeployer, result.Deployer);
+                    Assert.Equal(GetZipDeployer(), result.Deployer);
                     await Task.Delay(TimeSpan.FromSeconds(2));
                 } while (!new[] { DeployStatus.Failed, DeployStatus.Success }.Contains(result.Status));
 
@@ -439,7 +438,7 @@ namespace Kudu.FunctionalTests
             var deployment = await appManager.DeploymentManager.GetResultAsync("latest");
 
             Assert.Equal(DeployStatus.Success, deployment.Status);
-            Assert.Equal(ZipDeployer, deployment.Deployer);
+            Assert.Equal(GetZipDeployer(), deployment.Deployer);
 
             var entries = await appManager.VfsWebRootManager.ListAsync(null);
             var deployedFilenames = entries.Select(e => e.Name);
@@ -505,6 +504,11 @@ namespace Kudu.FunctionalTests
                     metadata,
                     queryParams);
             }
+        }
+
+        private static string GetZipDeployer()
+        {
+            return KuduUtils.RunningAgainstLinuxKudu ? "Push-Deployer" : "ZipDeploy";
         }
 
         private static string simplePackageJsonWithDependencyContent = @"{
