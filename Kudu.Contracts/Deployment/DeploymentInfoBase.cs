@@ -2,6 +2,7 @@
 using Kudu.Core.SourceControl;
 using Kudu.Contracts.Tracing;
 using System.Threading.Tasks;
+using Kudu.Contracts.Deployment;
 
 namespace Kudu.Core.Deployment
 {
@@ -16,6 +17,7 @@ namespace Kudu.Core.Deployment
             DoFullBuildByDefault = true;
             WatchedFileEnabled = true;
             RestartAllowed = true;
+            ArtifactType = ArtifactType.Unknown;
         }
 
         public RepositoryType RepositoryType { get; set; }
@@ -33,14 +35,23 @@ namespace Kudu.Core.Deployment
         public bool AllowDeploymentWhileScmDisabled { get; set; }
 
         // Optional.
+        // By default, TargetSubDirectoryRelativePath specifies the directory to deploy to relative to /home/site/wwwroot.
+        // This property can be used to change the root from wwwroot to something else.
+        public string TargetRootPath { get; set; }
+
+        // Optional.
         // Path of the directory to be deployed to. The path should be relative to the wwwroot directory.
         // Example: "webapps/ROOT"
-        public string TargetDirectoryPath { get; set; }
+        public string TargetSubDirectoryRelativePath { get; set; }
 
         // Optional.
         // Specifies the name of the deployed artifact.
-        // Example: When deploying startup files, OneDeploy will set this to startup.bat (or startup.sh)
+        // Example: When deploying startup files, OneDeploy will set this to startup.cmd (or startup.sh)
         public string TargetFileName { get; set; }
+
+        // Optional.
+        // Type of artifact being deployed.
+        public ArtifactType ArtifactType { get; set; }
 
         // Optional.
         // Path of the file that is watched for changes by the web server.

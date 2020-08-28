@@ -99,6 +99,7 @@
     <Compile Include="Commands\CommandsNativeMethods.cs" />
     <Compile Include="Commands\PersistentCommandController.cs" />
     <Compile Include="Deployment\DeploymentController.cs" />
+    <Compile Include="Deployment\OneDeployHelper.cs" />
     <Compile Include="Deployment\PushDeploymentController.cs" />
     <Compile Include="Diagnostics\HttpRequestExtensions.cs" />
     <Compile Include="Diagnostics\LinuxProcessController.cs" />
