@@ -139,7 +139,7 @@ namespace Kudu.Services.Performance
             {
                 if (Int32.TryParse(iisProfilingTimeoutInSeconds, out timeout))
                 {
-                    if (timeout < _profilingTimeout.TotalSeconds)
+                    if (timeout <= _profilingTimeout.TotalSeconds)
                     {
                         iisProfilingTimeout = TimeSpan.FromSeconds(timeout);
                     }
