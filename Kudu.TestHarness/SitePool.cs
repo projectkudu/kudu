@@ -65,23 +65,33 @@ namespace Kudu.TestHarness
             if (site != null)
             {
                 TestTracer.Trace("{0} Site already exists at {1}. Reusing site", operationName, site.SiteUrl);
+
+                RunAgainstCustomKuduUrlIfRequired(site);
+
                 var appManager = new ApplicationManager(siteManager, site, applicationName)
                 {
                     SitePoolIndex = siteIndex
                 };
 
-                // In site reuse mode, clean out the existing site so we start clean
-                // Enumrate all w3wp processes and make sure to kill any process with an open handle to klr.host.dll
-                foreach (var process in (await appManager.ProcessManager.GetProcessesAsync()).Where(p => p.Name.Equals("w3wp", StringComparison.OrdinalIgnoreCase)))
+                if (!KuduUtils.RunningAgainstLinuxKudu)
                 {
-                    var extendedProcess = await appManager.ProcessManager.GetProcessAsync(process.Id);
-                    if (extendedProcess.OpenFileHandles.Any(h => h.IndexOf("dnx.host.dll", StringComparison.OrdinalIgnoreCase) != -1))
+                    // In site reuse mode, clean out the existing site so we start clean
+                    // Enumrate all w3wp processes and make sure to kill any process with an open handle to klr.host.dll
+                    foreach (var process in (await appManager.ProcessManager.GetProcessesAsync()).Where(p => p.Name.Equals("w3wp", StringComparison.OrdinalIgnoreCase)))
                     {
-                        await appManager.ProcessManager.KillProcessAsync(extendedProcess.Id, throwOnError:false);
+                        var extendedProcess = await appManager.ProcessManager.GetProcessAsync(process.Id);
+                        if (extendedProcess.OpenFileHandles.Any(h => h.IndexOf("dnx.host.dll", StringComparison.OrdinalIgnoreCase) != -1))
+                        {
+                            await appManager.ProcessManager.KillProcessAsync(extendedProcess.Id, throwOnError: false);
+                        }
                     }
                 }
 
                 await appManager.RepositoryManager.Delete(deleteWebRoot: true, ignoreErrors: true);
+
+                // Nuke directories of interest to start the tests with a clean slate
+                appManager.VfsManager.Delete("site/libs", recursive: true);
+                appManager.VfsManager.Delete("site/scripts", recursive: true);
 
                 // Make sure we start with the correct default file as some tests expect it
                 WriteIndexHtml(appManager);
@@ -115,6 +125,8 @@ namespace Kudu.TestHarness
                     }
 
                     site = siteManager.CreateSiteAsync(applicationName).Result;
+
+                    RunAgainstCustomKuduUrlIfRequired(site);
                 }
 
                 TestTracer.Trace("{0} Created new site at {1}", operationName, site.SiteUrl);
@@ -125,6 +137,13 @@ namespace Kudu.TestHarness
             }
         }
 
+        private static void RunAgainstCustomKuduUrlIfRequired(Site site)
+        {
+            if (!string.IsNullOrWhiteSpace(KuduUtils.CustomKuduUrl))
+            {
+                site.ServiceUrls = new List<string> { KuduUtils.CustomKuduUrl };
+            }
+        }
 
         private static ISiteManager GetSiteManager(IKuduContext context)
         {

@@ -135,7 +135,6 @@ namespace Kudu.Core.Helpers
         /// It is written to require least dependencies but framework assemblies.
         /// Caller is responsible for synchronization.
         /// </summary>
-        /// <param name="siteName">WEBSITE_SITE_NAME env</param>
         /// <param name="kind">MSDeploy, ZipDeploy, Git, ..</param>
         /// <param name="requestId">for correlation</param>
         /// <param name="status">Success or fail</param>
@@ -163,6 +162,44 @@ namespace Kudu.Core.Helpers
 
             VerifyEnvironments();
 
+            // Try and let functions runtime call the settriggers
+            if (!await FunctionsRuntimeSyncTriggers(requestId))
+            {
+                Trace(TraceEventType.Information, "Attempting to perform settriggers call directly.");
+                await PerformSettriggers(requestId, functionsPath);
+            }
+
+            // this couples with sync function triggers
+            await SyncLogicAppJson(requestId, tracer);
+        }
+
+        private static async Task<bool> FunctionsRuntimeSyncTriggers(string requestId)
+        {
+            try
+            {
+                var scmHostName = IsLocalHost ? HttpAuthority : HttpHost;
+
+                var scmSplit = scmHostName.Split('.');
+
+                if (!(scmSplit.Length > 1 && scmSplit[1].Equals("scm", StringComparison.OrdinalIgnoreCase)))
+                {
+                    return false;
+                }
+
+                var functionsSiteHostName = string.Join(".", scmSplit.Where((el, idx) => idx != 1));
+                await PostAsync("/admin/host/synctriggers", requestId, hostName: functionsSiteHostName);
+
+                return true;
+            }
+            catch (Exception)
+            {
+                Trace(TraceEventType.Information, "Syncing function triggers by calling the functions runtime site failed.");
+                return false;
+            }
+        }
+
+        private static async Task PerformSettriggers(string requestId, string functionsPath = null)
+        {
             functionsPath = !string.IsNullOrEmpty(functionsPath)
                 ? functionsPath
                 : System.Environment.ExpandEnvironmentVariables(@"%HOME%\site\wwwroot");
@@ -215,11 +252,18 @@ namespace Kudu.Core.Helpers
                 }
             }
 
-            var content = JsonConvert.SerializeObject(triggers);
+            var triggersArray = new JArray(triggers);
+
+            JObject result = new JObject
+            {
+                { "triggers", triggersArray }
+            };
+
+            var content = JsonConvert.SerializeObject(result);
             Exception exception = null;
             try
             {
-                await PostAsync("/operations/settriggers", requestId, content);
+                await PostAsync("/operations/settriggers", requestId, content: content);
             }
             catch (Exception ex)
             {
@@ -234,9 +278,6 @@ namespace Kudu.Core.Helpers
                       content.Length,
                       exception == null ? "successful." : ("failed with " + exception));
             }
-
-            // this couples with sync function triggers
-            await SyncLogicAppJson(requestId, tracer);
         }
 
         public static async Task SyncLogicAppJson(string requestId, TraceListener tracer)
@@ -334,7 +375,7 @@ namespace Kudu.Core.Helpers
 
                     Trace(tracer, TraceEventType.Information, $"Requesting site restart. Attempt #{attemptCount}");
 
-                    await PostAsync(Constants.RestartApiPath, requestId, null);
+                    await PostAsync(Constants.RestartApiPath, requestId);
 
                     Trace(tracer, TraceEventType.Information, $"Successfully requested a restart. Attempt #{attemptCount}");
 
@@ -480,11 +521,14 @@ namespace Kudu.Core.Helpers
         }
 
         // Throws on failure
-        private static async Task PostAsync(string path, string requestId, string content = null)
+        private static async Task PostAsync(string path, string requestId, string hostName = null, string content = null)
         {
             var hostOrAuthority = IsLocalHost ? HttpAuthority : HttpHost;
-            var scheme = IsLocalHost ? "http" : "https";
+            hostName = hostName ?? hostOrAuthority;
+
             var ipAddress = await GetAlternativeIPAddress(hostOrAuthority);
+
+            var scheme = IsLocalHost ? "http" : "https";
             var statusCode = default(HttpStatusCode);
             try
             {
@@ -492,14 +536,14 @@ namespace Kudu.Core.Helpers
                 {
                     if (ipAddress == null)
                     {
-                        Trace(TraceEventType.Verbose, "Begin HttpPost {0}://{1}{2}, x-ms-request-id: {3}", scheme, hostOrAuthority, path, requestId);
-                        client.BaseAddress = new Uri(string.Format("{0}://{1}", scheme, hostOrAuthority));
+                        Trace(TraceEventType.Verbose, "Begin HttpPost {0}://{1}{2}, x-ms-request-id: {3}", scheme, hostName, path, requestId);
+                        client.BaseAddress = new Uri(string.Format("{0}://{1}", scheme, hostName));
                     }
                     else
                     {
-                        Trace(TraceEventType.Verbose, "Begin HttpPost {0}://{1}{2}, host: {3}, x-ms-request-id: {4}", scheme, ipAddress, path, hostOrAuthority, requestId);
+                        Trace(TraceEventType.Verbose, "Begin HttpPost {0}://{1}{2}, host: {3}, x-ms-request-id: {4}", scheme, ipAddress, path, hostName, requestId);
                         client.BaseAddress = new Uri(string.Format("{0}://{1}", scheme, ipAddress));
-                        client.DefaultRequestHeaders.Host = hostOrAuthority;
+                        client.DefaultRequestHeaders.Host = hostName;
                     }
 
                     client.DefaultRequestHeaders.UserAgent.Add(_userAgent.Value);
@@ -759,12 +803,12 @@ namespace Kudu.Core.Helpers
             }
         }
 
-        public static async Task UpdateSiteVersion(ZipDeploymentInfo deploymentInfo, IEnvironment environment, ITracer tracer)
+        public static async Task UpdateSiteVersion(ArtifactDeploymentInfo deploymentInfo, IEnvironment environment, ITracer tracer)
         {
             var siteVersionPath = Path.Combine(environment.SitePackagesPath, Constants.PackageNameTxt);
-            using (tracer.Step($"Updating {siteVersionPath} with deployment {deploymentInfo.ZipName}"))
+            using (tracer.Step($"Updating {siteVersionPath} with deployment {deploymentInfo.ArtifactFileName}"))
             {
-                await OperationManager.AttemptAsync(() => FileSystemHelpers.WriteAllTextToFileAsync(siteVersionPath, deploymentInfo.ZipName));
+                await OperationManager.AttemptAsync(() => FileSystemHelpers.WriteAllTextToFileAsync(siteVersionPath, deploymentInfo.ArtifactFileName));
             }
         }
 
