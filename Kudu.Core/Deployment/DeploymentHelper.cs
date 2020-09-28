@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Kudu.Core.Tracing;
+using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.SourceControl;
@@ -78,12 +79,12 @@ namespace Kudu.Core.Deployment
             }
         }
 
-        public static async Task<HttpContent> GetZipContentFromURL(ZipDeploymentInfo zipDeploymentInfo, ITracer tracer)
+        public static async Task<HttpContent> GetArtifactContentFromURL(ArtifactDeploymentInfo artifactDeploymentInfo, ITracer tracer)
         {
             using (var client = new HttpClient(new HttpClientHandler()))
             {
-                Uri uri = new Uri(zipDeploymentInfo.ZipURL);
-                using (tracer.Step("Trying to make a GET request to {0}", uri.AbsoluteUri))
+                Uri uri = new Uri(artifactDeploymentInfo.RemoteURL);
+                using (tracer.Step($"Trying to make a GET request to {StringUtils.ObfuscatePath(artifactDeploymentInfo.RemoteURL)}"))
                 {
                     try
                     {

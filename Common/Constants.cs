@@ -8,8 +8,8 @@ namespace Kudu
         public const string WebRoot = "wwwroot";
         public const string MappedSite = "/_app";
         public const string RepositoryPath = "repository";
-        public const string ZipTempPath = "zipdeploy";
-        public const string ZipExtractPath = "extracted";
+        public const string ZipTempDirectoryName = "zipdeploy";
+        public const string ArtifactStagingDirectoryName = "extracted";
 
         public const string LockPath = "locks";
         public const string DeploymentLockFile = "deployments.lock";
@@ -101,7 +101,7 @@ namespace Kudu
         public const string FreeSKU = "Free";
         public const string BasicSKU = "Basic";
 
-        //Setting for VC++ for node builds
+        // Setting for VC++ for node builds
         public const string VCVersion = "2015";
 
         public const string RoleBasedContributorHeader = "X-MS-CLIENT-ROLEBASED-CONTRIBUTOR";
@@ -136,5 +136,7 @@ namespace Kudu
         public const string PackageNameTxt = "packagename.txt";
         public const string AppOfflineFileName = "app_offline.htm";
         public const string AppOfflineKuduContent = "Created by kudu";
+
+        public const string OneDeploy = "OneDeploy";
     }
 }

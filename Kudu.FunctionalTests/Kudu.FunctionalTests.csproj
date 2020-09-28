@@ -68,9 +68,12 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="TestFile.cs" />
+    <Compile Include="DeploymentTestHelper.cs" />
     <Compile Include="CommandExecutorTests.cs" />
     <Compile Include="Jobs\WebJobsTests.cs" />
     <Compile Include="DeploymentActionsTests.cs" />
+    <Compile Include="OneDeployTests.cs" />
     <Compile Include="ZipDeploymentTests.cs" />
     <Compile Include="SiteExtensions\SiteExtensionApiFacts.cs" />
     <Compile Include="SiteExtensions\SiteExtensionsIncrementalDeploymentTests.cs" />

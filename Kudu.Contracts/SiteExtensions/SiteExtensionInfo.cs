@@ -59,6 +59,7 @@ namespace Kudu.Contracts.SiteExtensions
             LicenseUrl = json.Value<string>("licenseUrl");
             Summary = json.Value<string>("description");
             IconUrl = json.Value<string>("iconUrl") ?? "https://www.nuget.org/Content/Images/packageDefaultIcon-50x50.png";
+            PackageUri = json.Value<string>("packageUri");
         }
 
         public SiteExtensionInfo(SiteExtensionInfo info)
@@ -81,6 +82,7 @@ namespace Kudu.Contracts.SiteExtensions
             LocalPath = info.LocalPath;
             InstalledDateTime = info.InstalledDateTime;
             InstallationArgs = info.InstallationArgs;
+            PackageUri = info.PackageUri;
         }
 
         public SiteExtensionInfo(UIPackageMetadata data)
@@ -248,6 +250,16 @@ namespace Kudu.Contracts.SiteExtensions
 
         [JsonProperty(PropertyName = "comment")]
         public string Comment
+        {
+            get;
+            set;
+        }
+
+        /// <summary>
+        /// explicit url to download nupkg such as https://globalcdn.nuget.org/packages/microsoft.applicationinsights.azurewebsites.2.6.5.nupkg
+        /// </summary>
+        [JsonProperty(PropertyName = "packageUri")]
+        public string PackageUri
         {
             get;
             set;

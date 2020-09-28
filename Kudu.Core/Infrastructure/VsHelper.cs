@@ -92,7 +92,7 @@ namespace Kudu.Core.Infrastructure
             {
                 XDocument document = XDocument.Parse(content);
                 var projectElement = document.Root;
-                if (projectElement == null 
+                if (projectElement == null
                     || projectElement.Value == null
                     || projectElement.Attribute("Sdk") == null
                     || projectElement.Attribute("Sdk").Value == null)
@@ -251,6 +251,67 @@ namespace Kudu.Core.Infrastructure
             {
                 return StringUtils.IsTrueLike(var);
             }
+        }
+
+        public static bool UseMSBuild1607()
+        {
+            String var = System.Environment.GetEnvironmentVariable(String.Format("APPSETTING_{0}", SettingsKeys.UseMSBuild1607));
+            if (string.IsNullOrEmpty(var))
+            {
+                return StringUtils.IsTrueLike(ScmHostingConfigurations.GetValue(SettingsKeys.UseMSBuild1607, "false"));
+            }
+            else
+            {
+                return StringUtils.IsTrueLike(var);
+            }
+        }
+
+        public static string GetTargetFramework(string path)
+        {
+            try
+            {
+                string document = File.ReadAllText(path);
+                return GetTargetFrameworkContents(document);
+            }
+            catch (Exception)
+            {
+                return string.Empty;
+            }
+        }
+
+        public static string GetTargetFrameworkContents(string content)
+        {
+            try
+            {
+                XDocument document = XDocument.Parse(content);
+                var targetFramework = document.Root.Descendants("TargetFramework");
+                var targetFrameworkElement = targetFramework.FirstOrDefault();
+                if (targetFrameworkElement == null || targetFrameworkElement.Value == null)
+                {
+                    // old-style .csproj
+                    return string.Empty;
+                }
+                else
+                {
+                    KuduEventSource.Log.GenericEvent(
+                            ServerConfiguration.GetApplicationName(),
+                            string.Format("Dotnet target framework found: {0}", targetFramework),
+                            string.Empty,
+                            string.Empty,
+                            string.Empty,
+                            string.Empty);
+                    return targetFrameworkElement.Value;
+                }
+            }
+            catch (Exception)
+            {
+                return string.Empty;
+            }
+        }
+
+        public static bool IsDotNetCore5(string target)
+        {
+            return target.StartsWith("net5.0", StringComparison.OrdinalIgnoreCase);
         }
 
         // 01, 10, 11 in binares

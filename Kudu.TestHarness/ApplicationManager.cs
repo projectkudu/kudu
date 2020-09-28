@@ -57,6 +57,7 @@ namespace Kudu.TestHarness
             SiteExtensionManager = new RemoteSiteExtensionManager(site.ServiceUrl + "api", credentials);
             ZipDeploymentManager = new RemotePushDeploymentManager(site.ServiceUrl + "api/zipdeploy", credentials);
             WarDeploymentManager = new RemotePushDeploymentManager(site.ServiceUrl + "api/wardeploy", credentials);
+            OneDeployManager = new RemotePushDeploymentManager(site.ServiceUrl + "api/publish", credentials);
 
             var repositoryInfo = RepositoryManager.GetRepositoryInfo().Result;
             GitUrl = repositoryInfo.GitUrl.OriginalString;
@@ -193,6 +194,12 @@ namespace Kudu.TestHarness
         }
 
         public RemotePushDeploymentManager WarDeploymentManager
+        {
+            get;
+            private set;
+        }
+
+        public RemotePushDeploymentManager OneDeployManager
         {
             get;
             private set;
