@@ -2,6 +2,7 @@
 using Kudu.Core.SourceControl;
 using Kudu.Contracts.Tracing;
 using System.Threading.Tasks;
+using Kudu.Contracts.Deployment;
 
 namespace Kudu.Core.Deployment
 {
@@ -14,6 +15,9 @@ namespace Kudu.Core.Deployment
             IsReusable = true;
             AllowDeferredDeployment = true;
             DoFullBuildByDefault = true;
+            WatchedFileEnabled = true;
+            RestartAllowed = true;
+            ArtifactType = ArtifactType.Unknown;
         }
 
         public RepositoryType RepositoryType { get; set; }
@@ -25,13 +29,29 @@ namespace Kudu.Core.Deployment
         public bool AllowDeferredDeployment { get; set; }
         // indicating that this is a CI triggered by SCM provider 
         public bool IsContinuous { get; set; }
+
+        // NOTE: Do not access the request stream in the Fetch handler as it may have been closed during asynchronous scenarios
         public FetchDelegate Fetch { get; set; }
         public bool AllowDeploymentWhileScmDisabled { get; set; }
 
         // Optional.
+        // By default, TargetSubDirectoryRelativePath specifies the directory to deploy to relative to /home/site/wwwroot.
+        // This property can be used to change the root from wwwroot to something else.
+        public string TargetRootPath { get; set; }
+
+        // Optional.
         // Path of the directory to be deployed to. The path should be relative to the wwwroot directory.
         // Example: "webapps/ROOT"
-        public string TargetPath { get; set; }
+        public string TargetSubDirectoryRelativePath { get; set; }
+
+        // Optional.
+        // Specifies the name of the deployed artifact.
+        // Example: When deploying startup files, OneDeploy will set this to startup.cmd (or startup.sh)
+        public string TargetFileName { get; set; }
+
+        // Optional.
+        // Type of artifact being deployed.
+        public ArtifactType ArtifactType { get; set; }
 
         // Optional.
         // Path of the file that is watched for changes by the web server.
@@ -68,5 +88,12 @@ namespace Kudu.Core.Deployment
         // won't update until after a process restart. Therefore, we copy the needed
         // files into a separate folders and run sync triggers from there.
         public string SyncFunctionsTriggersPath { get; set; } = null;
+
+        // Specifies whether to touch the watched file (example web.config, web.xml, etc) after the deployment
+        public bool WatchedFileEnabled { get; set;}
+
+        // Used to allow / disallow 'restart' on a per deployment basis, if needed.
+        // For example: OneDeploy allows clients to enable / disable 'restart'.
+        public bool RestartAllowed { get; set; }
     }
 }
