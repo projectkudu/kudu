@@ -189,6 +189,14 @@ namespace Kudu.Services.Deployment
         {
             using (_tracer.Step(Constants.OneDeploy))
             {
+                string deploymentId = null;
+                IEnumerable<string> idValues;
+
+                if (Request.Headers.TryGetValues(Constants.ScmDeploymentIdHeader, out idValues) && idValues.Count() > 0)
+                {
+                    deploymentId = idValues.ElementAt(0);
+                }
+
                 JObject requestObject = null;
 
                 try
@@ -240,6 +248,7 @@ namespace Kudu.Services.Deployment
                     TargetRootPath = _environment.WebRootPath,
                     TargetChangeset = DeploymentManager.CreateTemporaryChangeSet(message: Constants.OneDeploy),
                     CommitId = null,
+                    FixedDeploymentId = deploymentId,
                     RepositoryType = RepositoryType.None,
                     Fetch = OneDeployFetch,
                     DoFullBuildByDefault = false,
