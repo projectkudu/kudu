@@ -11,6 +11,7 @@ namespace Kudu.Contracts.Settings
         public static readonly TimeSpan DefaultCommandIdleTimeout = TimeSpan.FromMinutes(1);
         public static readonly TimeSpan DefaultLogStreamTimeout = TimeSpan.FromMinutes(120);  // remember to update help message
         public static readonly TimeSpan DefaultHttpClientTimeout = TimeSpan.FromSeconds(100);
+        public static readonly TimeSpan MoonCakeDefaultHttpClientTimeout = TimeSpan.FromMinutes(5); // Mooncake default should be 5 min
         public static readonly TimeSpan DefaultWebJobsRestartTime = TimeSpan.FromMinutes(1);
         public static readonly TimeSpan DefaultJobsIdleTimeout = TimeSpan.FromMinutes(2);
         public const TraceLevel DefaultTraceLevel = TraceLevel.Error;
@@ -75,7 +76,31 @@ namespace Kudu.Contracts.Settings
 
         public static TimeSpan GetHttpClientTimeout(this IDeploymentSettingsManager settings)
         {
-            return GetTimeSpan(settings, SettingsKeys.HttpClientTimeout, DefaultHttpClientTimeout);
+            TimeSpan defaultTimeout = DefaultHttpClientTimeout;
+            string stampName = GetCurrentStampName();
+
+            if (IsMoonCake(settings, stampName))
+            {
+                // Update default timeout for SettingsKeys.HttpClientTimeout for Mooncake
+                defaultTimeout = MoonCakeDefaultHttpClientTimeout;
+            }
+
+            return GetTimeSpan(settings, SettingsKeys.HttpClientTimeout, defaultTimeout);
+        }
+
+        public static bool IsMoonCake(this IDeploymentSettingsManager settings, string stampName)
+        {
+            if(!string.IsNullOrEmpty(stampName) && stampName.StartsWith("cnws", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        public static string GetCurrentStampName()
+        {
+            return System.Environment.GetEnvironmentVariable("WEBSITE_CURRENT_STAMPNAME");
         }
 
         public static string GetPostDeploymentActionsDir(this IDeploymentSettingsManager settings, string defaultPath)
