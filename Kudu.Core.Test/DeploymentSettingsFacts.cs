@@ -58,17 +58,13 @@ namespace Kudu.Core.Test
             Assert.Equal(expected, settings.GetHttpClientTimeout());
         }
 
-        [Fact]
-        public void CheckMoonCakeStampTest()
+        [Theory]
+        [InlineData("cnws-test-stamp", true)]
+        [InlineData("waws-test-stamp", false)]
+        public void CheckMoonCakeStampTest(string stampName, bool expected)
         {
-            // Act
-            MockDeploymentSettingsManager settings = new MockDeploymentSettingsManager();
-
             // Assert
-            Assert.Equal(true, settings.IsMoonCake("cnws-test-stamp"));
-
-            // Assert
-            Assert.Equal(false, settings.IsMoonCake("waws-test-stamp"));
+            Assert.Equal(expected, DeploymentSettingsExtension.IsMoonCake(stampName));
         }
 
         [Theory, MemberData("TraceLevelData")]

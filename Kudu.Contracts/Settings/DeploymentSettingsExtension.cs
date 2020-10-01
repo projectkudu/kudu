@@ -79,7 +79,7 @@ namespace Kudu.Contracts.Settings
             TimeSpan defaultTimeout = DefaultHttpClientTimeout;
             string stampName = GetCurrentStampName();
 
-            if (IsMoonCake(settings, stampName))
+            if (IsMoonCake(stampName))
             {
                 // Update default timeout for SettingsKeys.HttpClientTimeout for Mooncake
                 defaultTimeout = MoonCakeDefaultHttpClientTimeout;
@@ -88,7 +88,7 @@ namespace Kudu.Contracts.Settings
             return GetTimeSpan(settings, SettingsKeys.HttpClientTimeout, defaultTimeout);
         }
 
-        public static bool IsMoonCake(this IDeploymentSettingsManager settings, string stampName)
+        public static bool IsMoonCake(string stampName)
         {
             if(!string.IsNullOrEmpty(stampName) && stampName.StartsWith("cnws", StringComparison.OrdinalIgnoreCase))
             {
