@@ -68,13 +68,7 @@ namespace Kudu.Services.Deployment
         {
             using (_tracer.Step("ZipPushDeploy"))
             {
-                string deploymentId = null;
-                IEnumerable<string> idValues;
-
-                if (Request.Headers.TryGetValues(Constants.ScmDeploymentIdHeader, out idValues) && idValues.Count() > 0)
-                {
-                    deploymentId = idValues.ElementAt(0);
-                }
+                string deploymentId = GetExternalDeploymentId(Request);
 
                 var deploymentInfo = new ArtifactDeploymentInfo(_environment, _traceFactory)
                 {
@@ -120,13 +114,7 @@ namespace Kudu.Services.Deployment
         {
             using (_tracer.Step("WarPushDeploy"))
             {
-                string deploymentId = null;
-                IEnumerable<string> idValues;
-
-                if (Request.Headers.TryGetValues(Constants.ScmDeploymentIdHeader, out idValues) && idValues.Count() > 0)
-                {
-                    deploymentId = idValues.ElementAt(0);
-                }
+                string deploymentId = GetExternalDeploymentId(Request);
 
                 var appName = Request.RequestUri.ParseQueryString()["name"];
 
@@ -189,13 +177,7 @@ namespace Kudu.Services.Deployment
         {
             using (_tracer.Step(Constants.OneDeploy))
             {
-                string deploymentId = null;
-                IEnumerable<string> idValues;
-
-                if (Request.Headers.TryGetValues(Constants.ScmDeploymentIdHeader, out idValues) && idValues.Count() > 0)
-                {
-                    deploymentId = idValues.ElementAt(0);
-                }
+                string deploymentId = GetExternalDeploymentId(Request);
 
                 JObject requestObject = null;
 
@@ -364,6 +346,19 @@ namespace Kudu.Services.Deployment
 
                 return await PushDeployAsync(deploymentInfo, isAsync, requestObject, artifactType);
             }
+        }
+
+        private static string GetExternalDeploymentId(HttpRequestMessage request)
+        {
+            string deploymentId = null;
+            IEnumerable<string> idValues;
+
+            if (request.Headers.TryGetValues(Constants.ScmDeploymentIdHeader, out idValues) && idValues.Count() > 0)
+            {
+                deploymentId = idValues.ElementAt(0);
+            }
+
+            return deploymentId;
         }
 
         private HttpResponseMessage StatusCode400(string message)
