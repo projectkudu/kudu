@@ -155,8 +155,13 @@ echo $i > pushinfo
             }
         }
 
-        public bool Commit(string message, string authorName, string emailAddress)
+        public bool Commit(string message, string authorName, string emailAddress, string commitId = null)
         {
+            if (commitId != null)
+            {
+                throw new ArgumentException("Commit ID must be null in Git repository contexts");
+            }
+
             using (var repo = new LibGit2Sharp.Repository(RepositoryPath))
             {
                 var changes = repo.RetrieveStatus(new StatusOptions

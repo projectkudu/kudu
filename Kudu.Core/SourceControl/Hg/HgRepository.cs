@@ -161,8 +161,13 @@ namespace Kudu.Core.SourceControl
             Repository.Remove(path);
         }
 
-        public bool Commit(string message, string authorName = null, string emailAddress = null)
+        public bool Commit(string message, string authorName = null, string emailAddress = null, string commitId = null)
         {
+            if (commitId != null)
+            {
+                throw new ArgumentException("Commit ID must be null in Mercurial repository contexts");
+            }
+
             if (!Repository.Status().Any())
             {
                 return false;

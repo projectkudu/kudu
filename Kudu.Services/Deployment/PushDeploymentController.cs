@@ -759,7 +759,7 @@ namespace Kudu.Services.Deployment
             // We need to make to call repository.Commit() since deployment flow expects at
             // least 1 commit in the IRepository. Even though there is no repo per se in this
             // scenario, deployment pipeline still generates a NullRepository
-            repository.Commit(deploymentInfo.Message, deploymentInfo.Author, deploymentInfo.AuthorEmail);
+            repository.Commit(deploymentInfo.Message, deploymentInfo.Author, deploymentInfo.AuthorEmail, deploymentInfo.FixedDeploymentId);
         }
 
         private async Task WriteSitePackageZip(ArtifactDeploymentInfo zipDeploymentInfo, ITracer tracer, HttpContent content)

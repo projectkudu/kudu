@@ -78,12 +78,17 @@ namespace Kudu.Core.SourceControl
             // no-op
         }
 
-        public bool Commit(string message, string authorName, string emailAddress)
+        public bool Commit(string message, string authorName, string emailAddress, string commitId = null)
         {
             var tracer = _traceFactory.GetTracer();
             using (tracer.Step("None repository commit"))
             {
-                var changeSet = new ChangeSet(Guid.NewGuid().ToString("N"),
+                if (string.IsNullOrEmpty(commitId))
+                {
+                    commitId = Guid.NewGuid().ToString("N");
+                }
+
+                var changeSet = new ChangeSet(commitId,
                                               !string.IsNullOrEmpty(authorName) ? authorName : Resources.Deployment_UnknownValue,
                                               !string.IsNullOrEmpty(emailAddress) ? emailAddress : Resources.Deployment_UnknownValue,
                                               message ?? Resources.Deployment_UnknownValue,

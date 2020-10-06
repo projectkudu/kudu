@@ -26,7 +26,7 @@ namespace Kudu.Core.SourceControl
         /// Commits new, modified and deleted files to the repository.
         /// </summary>
         /// <returns>True if one or more files were added to a changeset</returns>
-        bool Commit(string message, string authorName, string emailAddress);
+        bool Commit(string message, string authorName, string emailAddress, string commitId = null);
         void Update(string id);
         void Update();
         void Push();
