@@ -521,7 +521,7 @@ namespace Kudu.Core.Helpers
         }
 
         // Throws on failure
-        private static async Task PostAsync(string path, string requestId, string hostName = null, string content = null)
+        public static async Task PostAsync(string path, string requestId, string hostName = null, string content = null)
         {
             var hostOrAuthority = IsLocalHost ? HttpAuthority : HttpHost;
             hostName = hostName ?? hostOrAuthority;
@@ -556,6 +556,18 @@ namespace Kudu.Core.Helpers
                         statusCode = response.StatusCode;
                         response.EnsureSuccessStatusCode();
                     }
+                }
+            }
+            catch (HttpRequestException ex)
+            {
+                if (path.Equals(Constants.UpdateDeployStatusPath) && statusCode == HttpStatusCode.NotFound)
+                {
+                    // fail silently if 404 is encountered on
+                    Trace(TraceEventType.Warning, $"Call to {path} ended in 404. {ex}");
+                }
+                else
+                {
+                    throw;
                 }
             }
             finally
