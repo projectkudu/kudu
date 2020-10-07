@@ -530,6 +530,7 @@ namespace Kudu.Core.Helpers
 
             var scheme = IsLocalHost ? "http" : "https";
             var statusCode = default(HttpStatusCode);
+            string resContent = "";
             try
             {
                 using (var client = HttpClientFactory())
@@ -554,7 +555,22 @@ namespace Kudu.Core.Helpers
                     using (var response = await client.PostAsync(path, payload))
                     {
                         statusCode = response.StatusCode;
+                        if(response.Content != null)
+                        {
+                            resContent = response.Content.ReadAsStringAsync().Result;
+                        }
+
                         response.EnsureSuccessStatusCode();
+                    }
+
+                    if(path.Equals(Constants.UpdateDeployStatusPath) && resContent.Contains("Excessive SCM Site operation requests. Retry after 5 seconds"))
+                    {
+                        // Request was throttled throw an exception
+                        // If max retries aren't reached, this request will be retried
+                        Trace(TraceEventType.Information, $"Call to {path} was throttled. Setting statusCode to {HttpStatusCode.NotAcceptable}");
+
+                        statusCode = HttpStatusCode.NotAcceptable;
+                        throw new HttpRequestException();
                     }
                 }
             }
