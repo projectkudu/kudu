@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Net.Http;
 using System.Threading.Tasks;
 using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Settings;
@@ -12,6 +13,7 @@ using Kudu.Core.Hooks;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.SourceControl;
 using Kudu.Core.Tracing;
+using Newtonsoft.Json;
 
 namespace Kudu.Core.Deployment
 {
@@ -163,6 +165,8 @@ namespace Kudu.Core.Deployment
                                                     deploymentInfo.Deployer);
 
                     ILogger innerLogger = null;
+                    DeployStatusApiResult updateStatusObj = null;
+
                     try
                     {
                         ILogger logger = _deploymentManager.GetLogger(tempChangeSet.Id);
@@ -205,6 +209,12 @@ namespace Kudu.Core.Deployment
                             // unless for GenericHandler where specific commitId is specified
                             bool deploySpecificCommitId = !String.IsNullOrEmpty(deploymentInfo.CommitId);
 
+                            if (PostDeploymentHelper.IsAzureEnvironment() && deploymentInfo.FixedDeploymentId != null)
+                            {
+                                updateStatusObj = new DeployStatusApiResult(Constants.BuildInProgress, deploymentInfo.FixedDeploymentId);
+                                await SendDeployStatusUpdate(updateStatusObj);
+                            }
+
                             await _deploymentManager.DeployAsync(
                                 repository,
                                 changeSet,
@@ -213,6 +223,14 @@ namespace Kudu.Core.Deployment
                                 deploymentInfo: deploymentInfo,
                                 needFileUpdate: deploySpecificCommitId,
                                 fullBuildByDefault: deploymentInfo.DoFullBuildByDefault);
+
+                            if (updateStatusObj != null)
+                            {
+                                // Since build is success we need to force restart on windows
+                                // Directly set this instead of Constants.BuildSuccessful
+                                updateStatusObj.DeploymentStatus = Constants.PostBuildRestartRequired;
+                                await SendDeployStatusUpdate(updateStatusObj);
+                            }
                         }
                     }
                     catch (Exception ex)
@@ -230,6 +248,13 @@ namespace Kudu.Core.Deployment
                             {
                                 statusFile.MarkFailed();
                             }
+                        }
+
+                        if (updateStatusObj != null)
+                        {
+                            // Set deployment status as failure if exception is thrown
+                            updateStatusObj.DeploymentStatus = Constants.BuildFailed;
+                            await SendDeployStatusUpdate(updateStatusObj);
                         }
 
                         throw;
@@ -252,6 +277,27 @@ namespace Kudu.Core.Deployment
                     // since deployment is now done, trigger swap if enabled
                     await PostDeploymentHelper.PerformAutoSwap(_environment.RequestId, new PostDeploymentTraceListener(_tracer, _deploymentManager.GetLogger(lastChange.Id)));
                 }
+            }
+        }
+
+        private async Task SendDeployStatusUpdate(DeployStatusApiResult updateStatusObj)
+        {
+            int attemptCount = 0;
+            try
+            {
+                await OperationManager.AttemptAsync(async () =>
+                {
+                    attemptCount++;
+
+                    Console.WriteLine($" PostAsync - Trying to send {updateStatusObj.DeploymentStatus} deployment status to {Constants.UpdateDeployStatusPath}");
+                    await PostDeploymentHelper.PostAsync(Constants.UpdateDeployStatusPath, _environment.RequestId, content: JsonConvert.SerializeObject(updateStatusObj));
+
+                }, 3, 5 * 1000);
+            }
+            catch (Exception ex)
+            {
+                _tracer.TraceError($"Failed to request a post deployment status. Number of attempts: {attemptCount}. Exception: {ex}");
+                throw;
             }
         }
 
@@ -293,7 +339,7 @@ namespace Kudu.Core.Deployment
             // Needed for deployments where deferred deployment is not allowed. Will be set to false if
             // lock contention occurs and AllowDeferredDeployment is false, otherwise true.
             var deploymentWillOccurTcs = new TaskCompletionSource<bool>();
-            
+
             // This task will be let out of scope intentionally
             var deploymentTask = Task.Run(() =>
             {
