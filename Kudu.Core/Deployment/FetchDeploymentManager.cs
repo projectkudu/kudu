@@ -209,9 +209,9 @@ namespace Kudu.Core.Deployment
                             // unless for GenericHandler where specific commitId is specified
                             bool deploySpecificCommitId = !String.IsNullOrEmpty(deploymentInfo.CommitId);
 
-                            if (PostDeploymentHelper.IsAzureEnvironment() && deploymentInfo.FixedDeploymentId != null)
+                            if (PostDeploymentHelper.IsAzureEnvironment() && deploymentInfo.DeploymentId != null)
                             {
-                                updateStatusObj = new DeployStatusApiResult(Constants.BuildInProgress, deploymentInfo.FixedDeploymentId);
+                                updateStatusObj = new DeployStatusApiResult(Constants.BuildInProgress, deploymentInfo.DeploymentId);
                                 await SendDeployStatusUpdate(updateStatusObj);
                             }
 
@@ -289,7 +289,7 @@ namespace Kudu.Core.Deployment
                 {
                     attemptCount++;
 
-                    Console.WriteLine($" PostAsync - Trying to send {updateStatusObj.DeploymentStatus} deployment status to {Constants.UpdateDeployStatusPath}");
+                    _tracer.Trace($" PostAsync - Trying to send {updateStatusObj.DeploymentStatus} deployment status to {Constants.UpdateDeployStatusPath}");
                     await PostDeploymentHelper.PostAsync(Constants.UpdateDeployStatusPath, _environment.RequestId, content: JsonConvert.SerializeObject(updateStatusObj));
 
                 }, 3, 5 * 1000);

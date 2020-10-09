@@ -79,7 +79,7 @@ namespace Kudu.Services.Deployment
                     IsReusable = false,
                     TargetChangeset = DeploymentManager.CreateTemporaryChangeSet(message: "Deploying from pushed zip file"),
                     CommitId = null,
-                    FixedDeploymentId = deploymentId,
+                    DeploymentId = deploymentId,
                     RepositoryType = RepositoryType.None,
                     Fetch = LocalZipHandler,
                     DoFullBuildByDefault = false,
@@ -135,7 +135,7 @@ namespace Kudu.Services.Deployment
                     CleanupTargetDirectory = true, // For now, always cleanup the target directory. If needed, make it configurable
                     TargetChangeset = DeploymentManager.CreateTemporaryChangeSet(message: "Deploying from pushed war file"),
                     CommitId = null,
-                    FixedDeploymentId = deploymentId,
+                    DeploymentId = deploymentId,
                     RepositoryType = RepositoryType.None,
                     Fetch = LocalZipFetch,
                     DoFullBuildByDefault = false,
@@ -230,7 +230,7 @@ namespace Kudu.Services.Deployment
                     TargetRootPath = _environment.WebRootPath,
                     TargetChangeset = DeploymentManager.CreateTemporaryChangeSet(message: Constants.OneDeploy),
                     CommitId = null,
-                    FixedDeploymentId = deploymentId,
+                    DeploymentId = deploymentId,
                     RepositoryType = RepositoryType.None,
                     Fetch = OneDeployFetch,
                     DoFullBuildByDefault = false,
@@ -759,7 +759,7 @@ namespace Kudu.Services.Deployment
             // We need to make to call repository.Commit() since deployment flow expects at
             // least 1 commit in the IRepository. Even though there is no repo per se in this
             // scenario, deployment pipeline still generates a NullRepository
-            repository.Commit(deploymentInfo.Message, deploymentInfo.Author, deploymentInfo.AuthorEmail, deploymentInfo.FixedDeploymentId);
+            repository.Commit(deploymentInfo.Message, deploymentInfo.Author, deploymentInfo.AuthorEmail);
         }
 
         private async Task WriteSitePackageZip(ArtifactDeploymentInfo zipDeploymentInfo, ITracer tracer, HttpContent content)

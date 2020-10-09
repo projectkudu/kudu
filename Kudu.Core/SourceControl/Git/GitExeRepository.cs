@@ -236,13 +236,8 @@ fi" + "\n";
             Execute("add {0}", path);
         }
 
-        public bool Commit(string message, string authorName = null, string emailAddress = null, string commitId = null)
+        public bool Commit(string message, string authorName = null, string emailAddress = null)
         {
-            if (commitId != null)
-            {
-                throw new ArgumentException("Commit ID must be null in Git repository contexts");
-            }
-
             ITracer tracer = _tracerFactory.GetTracer();
 
             // Add all unstaged files

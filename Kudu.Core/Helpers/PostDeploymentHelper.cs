@@ -578,7 +578,8 @@ namespace Kudu.Core.Helpers
             {
                 if (path.Equals(Constants.UpdateDeployStatusPath) && statusCode == HttpStatusCode.NotFound)
                 {
-                    // fail silently if 404 is encountered on
+                    // Fail silently if 404 is encountered.
+                    // This will only happen transiently during a platform upgrade if new bits aren't on the FrontEnd yet.
                     Trace(TraceEventType.Warning, $"Call to {path} ended in 404. {ex}");
                 }
                 else
