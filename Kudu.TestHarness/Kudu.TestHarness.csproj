@@ -105,6 +105,7 @@
     <Compile Include="Xunit\KuduXunitTestCase.cs" />
     <Compile Include="Xunit\KuduXunitTestFrameworkDiscoverer.cs" />
     <Compile Include="Xunit\KuduXunitTestFramework.cs" />
+    <Compile Include="Xunit\KuduXunitTestSkippedException.cs" />
     <Compile Include="ZipUtils.cs" />
   </ItemGroup>
   <ItemGroup>
