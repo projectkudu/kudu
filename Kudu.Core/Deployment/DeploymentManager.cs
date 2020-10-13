@@ -707,7 +707,12 @@ namespace Kudu.Core.Deployment
                     {
                         await builder.Build(context);
                         builder.PostBuild(context);
-                        await RestartMainSiteIfNeeded(tracer, logger, deploymentInfo);
+
+                        // Don't request a second container restart if it is already being restarted as part of the PushDeploy workflow
+                        if (string.IsNullOrEmpty(deploymentInfo.DeploymentId))
+                        {
+                            await RestartMainSiteIfNeeded(tracer, logger, deploymentInfo);
+                        }
             
                         await PostDeploymentHelper.SyncFunctionsTriggers(_environment.RequestId, new PostDeploymentTraceListener(tracer, logger), deploymentInfo?.SyncFunctionsTriggersPath);
 
