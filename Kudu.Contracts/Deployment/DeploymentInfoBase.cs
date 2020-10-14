@@ -91,7 +91,7 @@ namespace Kudu.Core.Deployment
 
         // Allows the use of a caller-provided GUID for the deployment, rather than
         // a commit hash or a randomly-generated identifier.
-        public string DeploymentId { get; set; } = null;
+        public string ExternalDeploymentId { get; set; } = null;
       
         // Specifies whether to touch the watched file (example web.config, web.xml, etc) after the deployment
         public bool WatchedFileEnabled { get; set;}

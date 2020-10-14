@@ -209,9 +209,9 @@ namespace Kudu.Core.Deployment
                             // unless for GenericHandler where specific commitId is specified
                             bool deploySpecificCommitId = !String.IsNullOrEmpty(deploymentInfo.CommitId);
 
-                            if (PostDeploymentHelper.IsAzureEnvironment() && deploymentInfo.DeploymentId != null)
+                            if (PostDeploymentHelper.IsAzureEnvironment() && deploymentInfo.ExternalDeploymentId != null)
                             {
-                                updateStatusObj = new DeployStatusApiResult(Constants.BuildInProgress, deploymentInfo.DeploymentId);
+                                updateStatusObj = new DeployStatusApiResult(Constants.BuildInProgress, deploymentInfo.ExternalDeploymentId);
                                 await SendDeployStatusUpdate(updateStatusObj);
                             }
 
