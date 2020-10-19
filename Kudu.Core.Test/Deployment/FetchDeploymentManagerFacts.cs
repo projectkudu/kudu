@@ -202,6 +202,11 @@ namespace Kudu.Core.Test
                 return null;
             }
 
+            public Task SendDeployStatusUpdate(DeployStatusApiResult updateStatusObj)
+            {
+                return Task.FromResult(1);
+            }
+
             public class NoopDisposable : IDisposable
             {
                 public void Dispose()

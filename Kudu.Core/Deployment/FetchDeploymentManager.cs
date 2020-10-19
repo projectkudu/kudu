@@ -212,7 +212,7 @@ namespace Kudu.Core.Deployment
                             if (PostDeploymentHelper.IsAzureEnvironment() && deploymentInfo.ExternalDeploymentId != null)
                             {
                                 updateStatusObj = new DeployStatusApiResult(Constants.BuildInProgress, deploymentInfo.ExternalDeploymentId);
-                                await SendDeployStatusUpdate(updateStatusObj);
+                                await _deploymentManager.SendDeployStatusUpdate(updateStatusObj);
                             }
 
                             await _deploymentManager.DeployAsync(
@@ -224,12 +224,12 @@ namespace Kudu.Core.Deployment
                                 needFileUpdate: deploySpecificCommitId,
                                 fullBuildByDefault: deploymentInfo.DoFullBuildByDefault);
 
-                            if (updateStatusObj != null)
+                            if (updateStatusObj != null && !deploymentInfo.RestartAllowed)
                             {
-                                // Since build is success we need to force restart on windows
-                                // Directly set this instead of Constants.BuildSuccessful
-                                updateStatusObj.DeploymentStatus = Constants.PostBuildRestartRequired;
-                                await SendDeployStatusUpdate(updateStatusObj);
+                                // If restart is disallowed, send BuildSuccessful here as PostBuildRestartRequired was not sent
+                                // during the DeployAsync flow.
+                                updateStatusObj.DeploymentStatus = Constants.BuildSuccessful;
+                                await _deploymentManager.SendDeployStatusUpdate(updateStatusObj);
                             }
                         }
                     }
@@ -254,7 +254,7 @@ namespace Kudu.Core.Deployment
                         {
                             // Set deployment status as failure if exception is thrown
                             updateStatusObj.DeploymentStatus = Constants.BuildFailed;
-                            await SendDeployStatusUpdate(updateStatusObj);
+                            await _deploymentManager.SendDeployStatusUpdate(updateStatusObj);
                         }
 
                         throw;
@@ -277,27 +277,6 @@ namespace Kudu.Core.Deployment
                     // since deployment is now done, trigger swap if enabled
                     await PostDeploymentHelper.PerformAutoSwap(_environment.RequestId, new PostDeploymentTraceListener(_tracer, _deploymentManager.GetLogger(lastChange.Id)));
                 }
-            }
-        }
-
-        private async Task SendDeployStatusUpdate(DeployStatusApiResult updateStatusObj)
-        {
-            int attemptCount = 0;
-            try
-            {
-                await OperationManager.AttemptAsync(async () =>
-                {
-                    attemptCount++;
-
-                    _tracer.Trace($" PostAsync - Trying to send {updateStatusObj.DeploymentStatus} deployment status to {Constants.UpdateDeployStatusPath}");
-                    await PostDeploymentHelper.PostAsync(Constants.UpdateDeployStatusPath, _environment.RequestId, content: JsonConvert.SerializeObject(updateStatusObj));
-
-                }, 3, 5 * 1000);
-            }
-            catch (Exception ex)
-            {
-                _tracer.TraceError($"Failed to request a post deployment status. Number of attempts: {attemptCount}. Exception: {ex}");
-                throw;
             }
         }
 

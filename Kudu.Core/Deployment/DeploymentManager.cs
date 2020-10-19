@@ -17,6 +17,7 @@ using Kudu.Core.Infrastructure;
 using Kudu.Core.Settings;
 using Kudu.Core.SourceControl;
 using Kudu.Core.Tracing;
+using Newtonsoft.Json;
 
 namespace Kudu.Core.Deployment
 {
@@ -286,6 +287,29 @@ namespace Kudu.Core.Deployment
             }
         }
 
+        public async Task SendDeployStatusUpdate(DeployStatusApiResult updateStatusObj)
+        {
+            ITracer tracer = _traceFactory.GetTracer();
+            int attemptCount = 0;
+
+            try
+            {
+                await OperationManager.AttemptAsync(async () =>
+                {
+                    attemptCount++;
+
+                    tracer.Trace($" PostAsync - Trying to send {updateStatusObj.DeploymentStatus} deployment status to {Constants.UpdateDeployStatusPath}");
+                    await PostDeploymentHelper.PostAsync(Constants.UpdateDeployStatusPath, _environment.RequestId, content: JsonConvert.SerializeObject(updateStatusObj));
+
+                }, 3, 5 * 1000);
+            }
+            catch (Exception ex)
+            {
+                tracer.TraceError($"Failed to request a post deployment status. Number of attempts: {attemptCount}. Exception: {ex}");
+                throw;
+            }
+        }
+
         public async Task RestartMainSiteIfNeeded(ITracer tracer, ILogger logger, DeploymentInfoBase deploymentInfo)
         {
             // If post-deployment restart is disabled, do nothing.
@@ -297,6 +321,13 @@ namespace Kudu.Core.Deployment
             // Proceed only if 'restart' is allowed for this deployment
             if (deploymentInfo != null && !deploymentInfo.RestartAllowed)
             {
+                return;
+            }
+
+            if (deploymentInfo != null && !string.IsNullOrEmpty(deploymentInfo.ExternalDeploymentId))
+            {
+                DeployStatusApiResult updateStatusObj = new DeployStatusApiResult(Constants.PostBuildRestartRequired, deploymentInfo.ExternalDeploymentId);
+                await SendDeployStatusUpdate(updateStatusObj);
                 return;
             }
 
@@ -708,11 +739,7 @@ namespace Kudu.Core.Deployment
                         await builder.Build(context);
                         builder.PostBuild(context);
 
-                        // Don't request a second container restart if it is already being restarted as part of the PushDeploy workflow
-                        if (string.IsNullOrEmpty(deploymentInfo.DeploymentId))
-                        {
-                            await RestartMainSiteIfNeeded(tracer, logger, deploymentInfo);
-                        }
+                        await RestartMainSiteIfNeeded(tracer, logger, deploymentInfo);
             
                         await PostDeploymentHelper.SyncFunctionsTriggers(_environment.RequestId, new PostDeploymentTraceListener(tracer, logger), deploymentInfo?.SyncFunctionsTriggersPath);
 
