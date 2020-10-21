@@ -137,7 +137,7 @@ namespace Kudu.Services.Performance
             }
         }
 
-        [HttpDelete]
+        [HttpDelete, HttpPost]
         public void KillProcess(int id)
         {
             using (_tracer.Step("ProcessController.KillProcess"))

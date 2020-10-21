@@ -38,11 +38,27 @@ namespace Kudu.Client.Diagnostics
             return Client.GetJsonAsync<ProcessInfo>(id.ToString());
         }
 
-        public async Task KillProcessAsync(int id, bool throwOnError = true)
+        public async Task DeleteProcessAsync(int id, bool throwOnError = true)
         {
             try
             {
                 HttpResponseMessage response = await Client.DeleteAsync(id.ToString());
+                response.EnsureSuccessful().Dispose();
+            }
+            catch (Exception)
+            {
+                if (throwOnError)
+                {
+                    throw;
+                }
+            }
+        }
+
+        public async Task KillProcessAsync(int id, bool throwOnError = true)
+        {
+            try
+            {
+                HttpResponseMessage response = await Client.PostAsync($"{id}/kill", new StringContent(string.Empty, Encoding.UTF8, "text/plain"));
                 response.EnsureSuccessful().Dispose();
             }
             catch (Exception)

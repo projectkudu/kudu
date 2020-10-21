@@ -203,10 +203,15 @@ namespace Kudu.FunctionalTests.Jobs
 
                     PushAndVerifyConsoleWorker(appManager, testRepository, new string[] { ExpectedVerificationFileContent });
 
-                    TestTracer.Trace("Make sure process is up");
-                    var processes = appManager.ProcessManager.GetProcessesAsync().Result;
-                    var workerProcess = processes.FirstOrDefault(p => String.Equals("ConsoleWorker", p.Name, StringComparison.OrdinalIgnoreCase));
-                    Assert.NotNull(workerProcess);
+                    WaitUntilAssertVerified(
+                        "Make sure process is up",
+                        TimeSpan.FromSeconds(30),
+                        () =>
+                        {
+                            var processes = appManager.ProcessManager.GetProcessesAsync().Result;
+                            var workerProcess = processes.FirstOrDefault(p => String.Equals("ConsoleWorker", p.Name, StringComparison.OrdinalIgnoreCase));
+                            Assert.NotNull(workerProcess);
+                        });
 
                     TestTracer.Trace("Disable this job");
                     appManager.JobsManager.DisableContinuousJobAsync("deployedJob").Wait();
@@ -220,13 +225,13 @@ namespace Kudu.FunctionalTests.Jobs
 
                     TestTracer.Trace("Disable all WebJobs");
                     appManager.SettingsManager.SetValue(SettingsKeys.WebJobsStopped, "1").Wait();
-                    RestartServiceSite(appManager);
+                    RestartServiceSite(appManager, usePost: true);
 
                     VerifyContinuousJobDisabled(appManager);
 
                     TestTracer.Trace("Enable all WebJobs");
                     appManager.SettingsManager.SetValue(SettingsKeys.WebJobsStopped, "0").Wait();
-                    RestartServiceSite(appManager);
+                    RestartServiceSite(appManager, usePost: false);
 
                     VerifyContinuousJobEnabled(appManager);
                 }
@@ -763,11 +768,18 @@ namespace Kudu.FunctionalTests.Jobs
             });
         }
 
-        private static void RestartServiceSite(ApplicationManager appManager)
+        private static void RestartServiceSite(ApplicationManager appManager, bool usePost)
         {
             try
             {
-                appManager.ProcessManager.KillProcessAsync(0).Wait();
+                if (usePost)
+                {
+                    appManager.ProcessManager.KillProcessAsync(0).Wait();
+                }
+                else
+                {
+                    appManager.ProcessManager.DeleteProcessAsync(0).Wait();
+                }
             }
             catch
             {
