@@ -2,6 +2,7 @@
 
 namespace Kudu.TestHarness.Xunit
 {
+    [Serializable]
     public class KuduXunitTestSkippedException : Exception
     {
         public KuduXunitTestSkippedException(string reason)

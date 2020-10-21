@@ -38,7 +38,7 @@ namespace Kudu.Client.Diagnostics
             return Client.GetJsonAsync<ProcessInfo>(id.ToString());
         }
 
-        public async Task DeleteProcessAsync(int id, bool throwOnError = true)
+        public async Task KillProcessAsync(int id, bool throwOnError = true)
         {
             try
             {
@@ -54,11 +54,11 @@ namespace Kudu.Client.Diagnostics
             }
         }
 
-        public async Task KillProcessAsync(int id, bool throwOnError = true)
+        public async Task StopProcessAsync(int id, bool throwOnError = true)
         {
             try
             {
-                HttpResponseMessage response = await Client.PostAsync($"{id}/kill", new StringContent(string.Empty, Encoding.UTF8, "text/plain"));
+                HttpResponseMessage response = await Client.PostAsync($"{id}/stop", new StringContent(string.Empty, Encoding.UTF8, "text/plain"));
                 response.EnsureSuccessful().Dispose();
             }
             catch (Exception)

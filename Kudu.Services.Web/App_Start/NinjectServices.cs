@@ -522,8 +522,8 @@ namespace Kudu.Services.Web.App_Start
             // Processes
             routes.MapHttpProcessesRoute("all-processes", "", new { controller = processControllerName, action = "GetAllProcesses" }, new { verb = new HttpMethodConstraint("GET") });
             routes.MapHttpProcessesRoute("one-process-get", "/{id}", new { controller = processControllerName, action = "GetProcess" }, new { verb = new HttpMethodConstraint("GET") });
-            routes.MapHttpProcessesRoute("one-process-delete", "/{id}", new { controller = processControllerName, action = "KillProcess" }, new { verb = new HttpMethodConstraint("DELETE") });
-            routes.MapHttpProcessesRoute("one-process-kill", "/{id}/kill", new { controller = processControllerName, action = "KillProcess" }, new { verb = new HttpMethodConstraint("POST") });
+            routes.MapHttpProcessesRoute("one-process-kill", "/{id}", new { controller = processControllerName, action = "KillProcess" }, new { verb = new HttpMethodConstraint("DELETE") });
+            routes.MapHttpProcessesRoute("one-process-stop", "/{id}/stop", new { controller = processControllerName, action = "KillProcess" }, new { verb = new HttpMethodConstraint("POST") });
             routes.MapHttpProcessesRoute("one-process-dump", "/{id}/dump", new { controller = processControllerName, action = "MiniDump" }, new { verb = new HttpMethodConstraint("GET") });
             routes.MapHttpProcessesRoute("start-process-profile", "/{id}/profile/start", new { controller = processControllerName, action = "StartProfileAsync" }, new { verb = new HttpMethodConstraint("POST") });
             routes.MapHttpProcessesRoute("stop-process-profile", "/{id}/profile/stop", new { controller = processControllerName, action = "StopProfileAsync" }, new { verb = new HttpMethodConstraint("GET") });

@@ -82,7 +82,7 @@ namespace Kudu.TestHarness
                         var extendedProcess = await appManager.ProcessManager.GetProcessAsync(process.Id);
                         if (extendedProcess.OpenFileHandles.Any(h => h.IndexOf("dnx.host.dll", StringComparison.OrdinalIgnoreCase) != -1))
                         {
-                            await appManager.ProcessManager.KillProcessAsync(extendedProcess.Id, throwOnError: false);
+                            await appManager.ProcessManager.StopProcessAsync(extendedProcess.Id, throwOnError: false);
                         }
                     }
                 }

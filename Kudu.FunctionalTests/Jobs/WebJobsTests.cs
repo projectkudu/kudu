@@ -225,13 +225,13 @@ namespace Kudu.FunctionalTests.Jobs
 
                     TestTracer.Trace("Disable all WebJobs");
                     appManager.SettingsManager.SetValue(SettingsKeys.WebJobsStopped, "1").Wait();
-                    RestartServiceSite(appManager, usePost: true);
+                    RestartServiceSite(appManager, useStop: true);
 
                     VerifyContinuousJobDisabled(appManager);
 
                     TestTracer.Trace("Enable all WebJobs");
                     appManager.SettingsManager.SetValue(SettingsKeys.WebJobsStopped, "0").Wait();
-                    RestartServiceSite(appManager, usePost: false);
+                    RestartServiceSite(appManager, useStop: false);
 
                     VerifyContinuousJobEnabled(appManager);
                 }
@@ -768,17 +768,17 @@ namespace Kudu.FunctionalTests.Jobs
             });
         }
 
-        private static void RestartServiceSite(ApplicationManager appManager, bool usePost)
+        private static void RestartServiceSite(ApplicationManager appManager, bool useStop)
         {
             try
             {
-                if (usePost)
+                if (useStop)
                 {
-                    appManager.ProcessManager.KillProcessAsync(0).Wait();
+                    appManager.ProcessManager.StopProcessAsync(0).Wait();
                 }
                 else
                 {
-                    appManager.ProcessManager.DeleteProcessAsync(0).Wait();
+                    appManager.ProcessManager.KillProcessAsync(0).Wait();
                 }
             }
             catch
