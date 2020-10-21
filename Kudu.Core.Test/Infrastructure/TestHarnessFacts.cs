@@ -10,22 +10,14 @@ namespace Kudu.Core.Test
         [Fact]
         public void SkippedSyncTest()
         {
-            // TeamCity reporting issue, skip if running within TeamCity
-            if (string.IsNullOrEmpty(System.Environment.GetEnvironmentVariable("TEAMCITY_VERSION")))
-            {
-                throw new KuduXunitTestSkippedException("Testing SkippedSyncTest");
-            }
+            throw new KuduXunitTestSkippedException("Testing SkippedSyncTest");
         }
 
         [Fact]
         public void SkippedAsyncTest()
         {
-            // TeamCity reporting issue, skip if running within TeamCity
-            if (string.IsNullOrEmpty(System.Environment.GetEnvironmentVariable("TEAMCITY_VERSION")))
-            {
-                SkippedAsync().Wait();
-                throw new InvalidOperationException("Should not reach here");
-            }
+            SkippedAsync().Wait();
+            throw new InvalidOperationException("Should not reach here");
         }
 
         private async Task SkippedAsync()
