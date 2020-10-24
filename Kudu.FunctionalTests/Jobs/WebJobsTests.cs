@@ -954,7 +954,9 @@ namespace Kudu.FunctionalTests.Jobs
                 TimeSpan.FromSeconds(60),
                 () =>
                 {
+                    TestTracer.Trace($"CleanupTest: Delete {JobsBinPath}");
                     appManager.VfsManager.Delete(JobsBinPath, recursive: true);
+                    TestTracer.Trace($"CleanupTest: Delete {JobsDataPath}");
                     appManager.VfsManager.Delete(JobsDataPath, recursive: true);
 
                     var logFiles = appManager.VfsManager.ListAsync("LogFiles").Result;
@@ -963,8 +965,21 @@ namespace Kudu.FunctionalTests.Jobs
                         if (logFile.Name.StartsWith("appSettings.txt", StringComparison.OrdinalIgnoreCase) ||
                             logFile.Name.StartsWith("verification.txt", StringComparison.OrdinalIgnoreCase))
                         {
+                            TestTracer.Trace($"CleanupTest: Delete LogFiles/{logFile.Name}");
                             appManager.VfsManager.Delete("LogFiles/" + logFile.Name);
                         }
+                    }
+
+                    foreach (var job in appManager.JobsManager.ListTriggeredJobsAsync().Result)
+                    {
+                        TestTracer.Trace($"CleanupTest: DeleteTriggeredJobAsync {job.Name}");
+                        appManager.JobsManager.DeleteTriggeredJobAsync(job.Name).Wait();
+                    }
+
+                    foreach (var job in appManager.JobsManager.ListContinuousJobsAsync().Result)
+                    {
+                        TestTracer.Trace($"CleanupTest: DeleteContinuousJobAsync {job.Name}");
+                        appManager.JobsManager.DeleteContinuousJobAsync(job.Name).Wait();
                     }
                 });
         }
