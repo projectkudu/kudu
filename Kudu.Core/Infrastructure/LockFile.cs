@@ -157,6 +157,8 @@ namespace Kudu.Core.Infrastructure
                 _lockStream = lockStream;
                 lockStream = null;
 
+                _traceFactory.GetTracer().Trace($"LockFile '{_path}' acquired");
+
                 return true;
             }
             catch (UnauthorizedAccessException)
@@ -270,9 +272,14 @@ namespace Kudu.Core.Infrastructure
                 return;
             }
 
-            var temp = _lockStream;
-            _lockStream = null;
-            temp.Close();
+            OperationManager.CriticalExecute("LockFile.Release", () =>
+            {
+                var temp = _lockStream;
+                _lockStream = null;
+                temp.Close();
+
+                _traceFactory.GetTracer().Trace($"LockFile '{_path}' released");
+            });
 
             // cleanup inactive lock file.  technically, it is not needed
             // we just want to see the lock folder is clean, if no active lock.

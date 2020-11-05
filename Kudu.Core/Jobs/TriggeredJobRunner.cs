@@ -83,9 +83,9 @@ namespace Kudu.Core.Jobs
                     }
                     finally
                     {
-                        step.Dispose();
-                        logger.ReportEndRun();
                         _lockFile.Release();
+                        logger.ReportEndRun();
+                        step.Dispose();
                         reportAction(triggeredJob.Name, logger.Id);
                         _currentRunningJobWaitHandle.Set();
                     }

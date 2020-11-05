@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.SourceControl;
+using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.SourceControl;
 using Kudu.Core.Tracing;
@@ -90,7 +91,7 @@ namespace Kudu.Core.Test
             var directory = new Mock<DirectoryBase>();
             var repository = new Mock<IRepository>();
             var repositoryFactory = new Mock<IRepositoryFactory>();
-            var lockFile = new DeploymentLockFile(lockFileName, Mock.Of<ITraceFactory>());
+            var lockFile = new DeploymentLockFile(lockFileName, Mock.Of<ITraceFactory>(f => f.GetTracer() == Mock.Of<ITracer>()));
 
             // Setup
             fileSystem.SetupGet(f => f.Directory)
