@@ -143,7 +143,7 @@ namespace Kudu.Core.Infrastructure
                 Path.Combine(programFiles, "Microsoft Visual Studio", "2019", "BuildTools",   "MSBuild", "Current", "Bin"), // msbuild tools
                 // above is for public kudu, below is for azure
             };
-            probPaths.Add(Path.Combine(programFiles, "MSBuild-16.8.0-pre.4.0-30608.117", "MSBuild", "Current", "Bin"));
+            probPaths.Add(Path.Combine(programFiles, "MSBuild-16.8.0", "MSBuild", "Current", "Bin"));
 
             return probPaths.FirstOrDefault(path => Directory.Exists(path));
         }
