@@ -87,7 +87,23 @@ namespace Kudu.TestHarness
                     }
                 }
 
-                await appManager.RepositoryManager.Delete(deleteWebRoot: true, ignoreErrors: true);
+                var wwwrootContent = (await appManager.VfsManager.ListAsync("site/wwwroot")).Select(x => x.Name).ToList();
+                TestTracer.Trace("wwwroot content before nuking it: {0}", string.Join(",", wwwrootContent));
+
+                try
+                {
+                    await appManager.RepositoryManager.Delete(deleteWebRoot: true, ignoreErrors: false);
+                }
+                catch (Exception ex)
+                {
+                    TestTracer.Trace("Error nuking wwwroot: {0}", ex);
+                    
+                    // Not all tests care about starting with a clean wwwroot directory.
+                    // So ignore the exception and continue.
+                }
+
+                wwwrootContent = (await appManager.VfsManager.ListAsync("site/wwwroot")).Select(x => x.Name).ToList();
+                TestTracer.Trace("wwwroot content after nuking it: {0}", string.Join(",", wwwrootContent));
 
                 // Nuke directories of interest to start the tests with a clean slate
                 appManager.VfsManager.Delete("site/libs", recursive: true);
