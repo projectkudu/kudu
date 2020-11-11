@@ -48,6 +48,7 @@ namespace Kudu.Services.Performance
             _settings = settings;
         }
 
+
         [HttpGet]
         public HttpResponseMessage GetThread(int processId, int threadId)
         {
@@ -74,10 +75,11 @@ namespace Kudu.Services.Performance
             {
                 var process = GetProcessById(id);
                 var results = new List<ProcessThreadInfo>();
+                var requestUri = Request.GetRequestUri(_settings.GetUseOriginalHostForReference()).AbsoluteUri.TrimEnd('/');
 
                 foreach (ProcessThread thread in process.Threads)
                 {
-                    results.Add(GetProcessThreadInfo(thread, Request.RequestUri.AbsoluteUri.TrimEnd('/') + '/' + thread.Id, false));
+                    results.Add(GetProcessThreadInfo(thread, $"{requestUri}/{thread.Id}", false));
                 }
 
                 return Request.CreateResponse(HttpStatusCode.OK, ArmUtils.AddEnvelopeOnArmRequest(results, Request));
@@ -116,12 +118,13 @@ namespace Kudu.Services.Performance
         [HttpGet]
         public HttpResponseMessage GetAllProcesses(bool allUsers = false)
         {
+            var requestUri = Request.GetRequestUri(_settings.GetUseOriginalHostForReference()).GetLeftPart(UriPartial.Path).TrimEnd('/');
             using (_tracer.Step("ProcessController.GetAllProcesses"))
             {
                 var currentUser = Process.GetCurrentProcess().GetUserName();
                 var results = Process.GetProcesses()
                     .Where(p => allUsers || Kudu.Core.Environment.IsAzureEnvironment() || String.Equals(currentUser, SafeGetValue(p.GetUserName, null), StringComparison.OrdinalIgnoreCase))
-                    .Select(p => GetProcessInfo(p, Request.RequestUri.GetLeftPart(UriPartial.Path).TrimEnd('/') + '/' + p.Id)).OrderBy(p => p.Name.ToLowerInvariant())
+                    .Select(p => GetProcessInfo(p, $"{requestUri}/{p.Id}")).OrderBy(p => p.Name.ToLowerInvariant())
                     .ToList();
                 return Request.CreateResponse(HttpStatusCode.OK, ArmUtils.AddEnvelopeOnArmRequest(results, Request));
             }
@@ -133,7 +136,7 @@ namespace Kudu.Services.Performance
             using (_tracer.Step("ProcessController.GetProcess"))
             {
                 var process = GetProcessById(id);
-                return Request.CreateResponse(HttpStatusCode.OK, ArmUtils.AddEnvelopeOnArmRequest(GetProcessInfo(process, Request.RequestUri.AbsoluteUri, details: true), Request));
+                return Request.CreateResponse(HttpStatusCode.OK, ArmUtils.AddEnvelopeOnArmRequest(GetProcessInfo(process, Request.GetRequestUri(_settings.GetUseOriginalHostForReference()).AbsoluteUri, details: true), Request));
             }
         }
 

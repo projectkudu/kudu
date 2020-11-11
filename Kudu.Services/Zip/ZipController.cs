@@ -6,6 +6,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
 using Kudu.Core;
 using Kudu.Core.Infrastructure;
@@ -17,8 +18,8 @@ namespace Kudu.Services.Zip
     // of good reusable logic in there. We could consider extracting a more basic base class from it.
     public class ZipController : VfsControllerBase
     {
-        public ZipController(ITracer tracer, IEnvironment environment)
-            : base(tracer, environment, environment.RootPath)
+        public ZipController(ITracer tracer, IEnvironment environment, IDeploymentSettingsManager settings)
+            : base(tracer, environment, settings, environment.RootPath)
         {
         }
 

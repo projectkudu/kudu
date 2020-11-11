@@ -61,6 +61,8 @@
         public const string UseMSBuild16 = "SCM_USE_MSBUILD_16";
         public const string UseMSBuild1607 = "SCM_USE_MSBUILD_1607";
 
+        public const string UseOriginalHostForReference = "SCM_USE_ORIGINALHOST_FOR_REFERENCE";
+
         public const string ILBVip = "SCM_ILB_VIP";
     }
 }

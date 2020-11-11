@@ -366,5 +366,10 @@ namespace Kudu.Contracts.Settings
         {
             return "1" == settings.GetValue(SettingsKeys.ZipDeployDoNotPreserveFileTime);
         }
+
+        public static bool GetUseOriginalHostForReference(this IDeploymentSettingsManager settings)
+        {
+            return "1" == settings.GetValue(SettingsKeys.UseOriginalHostForReference);
+        }
     }
 }

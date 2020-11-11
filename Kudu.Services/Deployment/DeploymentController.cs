@@ -115,7 +115,7 @@ namespace Kudu.Services.Deployment
 
                                 // e.g if final url is "https://kudutry.scm.azurewebsites.net/api/deployments/ef52ec67fc9574e726955a9cbaf7bcba791e4e95/log"
                                 // deploymentUri should be "https://kudutry.scm.azurewebsites.net/api/deployments/ef52ec67fc9574e726955a9cbaf7bcba791e4e95"
-                                Uri deploymentUri = UriHelper.MakeRelative(UriHelper.GetBaseUri(Request), Request.RequestUri.AbsolutePath);
+                                Uri deploymentUri = UriHelper.MakeRelative(Request.GetBaseUri(), Request.RequestUri.AbsolutePath);
                                 deployResult.Url = deploymentUri;
                                 deployResult.LogUrl = UriHelper.MakeRelative(deploymentUri, "log");
 
@@ -377,7 +377,7 @@ namespace Kudu.Services.Deployment
                     {
                         if (entry.HasDetails)
                         {
-                            Uri baseUri = UriHelper.MakeRelative(UriHelper.GetBaseUri(Request), Request.RequestUri.AbsolutePath);
+                            Uri baseUri = UriHelper.MakeRelative(Request.GetBaseUri(), Request.RequestUri.AbsolutePath);
                             entry.DetailsUrl = UriHelper.MakeRelative(baseUri, entry.Id);
                         }
                     }
@@ -454,7 +454,7 @@ namespace Kudu.Services.Deployment
                     throw new HttpResponseException(response);
                 }
 
-                Uri baseUri = UriHelper.MakeRelative(UriHelper.GetBaseUri(Request), Request.RequestUri.AbsolutePath);
+                Uri baseUri = UriHelper.MakeRelative(Request.GetBaseUri(), Request.RequestUri.AbsolutePath);
                 result.Url = baseUri;
                 result.LogUrl = UriHelper.MakeRelative(baseUri, "log");
 
@@ -565,7 +565,7 @@ namespace Kudu.Services.Deployment
         {
             foreach (var result in _deploymentManager.GetResults())
             {
-                Uri baseUri = UriHelper.MakeRelative(UriHelper.GetBaseUri(request), Request.RequestUri.AbsolutePath);
+                Uri baseUri = UriHelper.MakeRelative(request.GetBaseUri(), Request.RequestUri.AbsolutePath);
                 result.Url = UriHelper.MakeRelative(baseUri, result.Id);
                 result.LogUrl = UriHelper.MakeRelative(baseUri, result.Id + "/log");
                 yield return result;

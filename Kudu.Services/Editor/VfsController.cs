@@ -9,6 +9,7 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
 using Kudu.Common;
+using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
 using Kudu.Core;
 using Kudu.Core.Tracing;
@@ -21,8 +22,8 @@ namespace Kudu.Services.Editor
     /// </summary>
     public class VfsController : VfsControllerBase
     {
-        public VfsController(ITracer tracer, IEnvironment environment)
-            : base(tracer, environment, environment.RootPath)
+        public VfsController(ITracer tracer, IEnvironment environment, IDeploymentSettingsManager settings)
+            : base(tracer, environment, settings, environment.RootPath)
         {
         }
 

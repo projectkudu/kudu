@@ -441,7 +441,7 @@ namespace Kudu.Services.Deployment
 
             isAsync = ArmUtils.IsArmRequest(Request) ? true : isAsync;
 
-            var result = await _deploymentManager.FetchDeploy(deploymentInfo, isAsync, UriHelper.GetRequestUri(Request), "HEAD");
+            var result = await _deploymentManager.FetchDeploy(deploymentInfo, isAsync, Request.GetRequestUri(), "HEAD");
 
             var response = Request.CreateResponse();
 
@@ -467,7 +467,7 @@ namespace Kudu.Services.Deployment
                     else if (isAsync)
                     {
                         // latest deployment keyword reserved to poll till deployment done
-                        response.Headers.Location = new Uri(UriHelper.GetRequestUri(Request),
+                        response.Headers.Location = new Uri(Request.GetRequestUri(),
                             String.Format("/api/deployments/{0}?deployer={1}&time={2}", Constants.LatestDeployment, deploymentInfo.Deployer, DateTime.UtcNow.ToString("yyy-MM-dd_HH-mm-ssZ")));
                     }
                     response.StatusCode = HttpStatusCode.Accepted;

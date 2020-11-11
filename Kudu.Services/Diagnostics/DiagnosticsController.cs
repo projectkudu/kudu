@@ -95,7 +95,7 @@ namespace Kudu.Services.Performance
             {
                 var currentContainerLogFilenames = GetCurrentContainerLogFilenames(SearchOption.TopDirectoryOnly);
 
-                var vfsBaseAddress = UriHelper.MakeRelative(UriHelper.GetBaseUri(request), "api/vfs");
+                var vfsBaseAddress = UriHelper.MakeRelative(request.GetBaseUri(), "api/vfs");
 
                 // Open files in order to refresh (not update) the timestamp and file size.
                 // This is needed on Linux due to the way that metadata for files on the CIFS

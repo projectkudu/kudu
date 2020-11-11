@@ -12,6 +12,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Kudu.Common;
 using Kudu.Contracts.Infrastructure;
+using Kudu.Contracts.Settings;
 using Kudu.Contracts.SourceControl;
 using Kudu.Contracts.Tracing;
 using Kudu.Core;
@@ -47,8 +48,9 @@ namespace Kudu.Services.SourceControl
                                        IDeploymentManager deploymentManager,
                                        IOperationLock operationLock,
                                        IEnvironment environment,
+                                       IDeploymentSettingsManager settings,
                                        IRepositoryFactory repositoryFactory)
-            : base(tracer, environment, environment.RepositoryPath)
+            : base(tracer, environment, settings, environment.RepositoryPath)
         {
             _deploymentManager = deploymentManager;
             _operationLock = operationLock;
