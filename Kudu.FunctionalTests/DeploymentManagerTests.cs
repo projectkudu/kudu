@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Net;
@@ -804,6 +805,53 @@ namespace Kudu.FunctionalTests
                 Assert.Equal("GitHub", results[0].Deployer);
 
                 KuduAssert.VerifyUrl(appManager.SiteUrl, "<h1>Hello Kudu</h1>");
+            });
+        }
+    }
+
+    [KuduXunitTestClass]
+    public class PullApiTestHelloLfsWithAsyncTests : DeploymentManagerTests
+    {
+        [Fact]
+        public async Task PullApiTestHelloLfsWithAsync()
+        {
+            var payload = new JObject();
+            payload["url"] = "https://github.com/KuduApps/HelloLfs";
+            payload["format"] = "basic";
+            string appName = "HelloLfs";
+
+            await ApplicationManager.RunAsync(appName, async appManager =>
+            {
+                // LibGit2Sharp does not expand lfs entry
+                await appManager.SettingsManager.SetValue("SCM_USE_LIBGIT2SHARP_REPOSITORY", "0");
+
+                // Fetch master branch from first repo
+                await DeployPayloadHelperAsync(appManager, client => client.PostAsJsonAsync("deploy?isAsync=true", payload), isContinuous: true);
+
+                var results = (await appManager.DeploymentManager.GetResultsAsync()).ToList();
+                Assert.Equal(1, results.Count);
+                Assert.Equal(DeployStatus.Success, results[0].Status);
+                Assert.Equal("GitHub", results[0].Deployer);
+
+                // sanity
+                KuduAssert.VerifyUrl(appManager.SiteUrl, "<h1>Hello Kudu Lfs</h1>");
+
+                // verify lfs
+                using (var zipStream = await appManager.VfsManager.ReadAsStreamAsync("site/wwwroot/HelloKudu.zip"))
+                {
+                    using (var zip = new ZipArchive(zipStream, ZipArchiveMode.Read))
+                    {
+                        Assert.Equal(1, zip.Entries.Count);
+
+                        var entry = zip.Entries[0];
+                        Assert.Equal("index.htm", entry.FullName);
+                        using (var stream = entry.Open())
+                        using (var reader = new StreamReader(stream))
+                        {
+                            Assert.Equal("<h1>Hello Kudu ZipDeploy</h1>", await reader.ReadToEndAsync());
+                        }
+                    }
+                }
             });
         }
     }

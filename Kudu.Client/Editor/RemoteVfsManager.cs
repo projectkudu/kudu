@@ -33,6 +33,20 @@ namespace Kudu.Client.Editor
             }
         }
 
+        public async Task<Stream> ReadAsStreamAsync(string path)
+        {
+            var response = await Client.GetAsync(path);
+            if (response.StatusCode == HttpStatusCode.NotFound)
+            {
+                return null;
+            }
+
+            return await response
+                            .EnsureSuccessful()
+                            .Content
+                            .ReadAsStreamAsync();
+        }
+
         public Task<IEnumerable<VfsStatEntry>> ListAsync(string path)
         {
             return Client.GetJsonAsync<IEnumerable<VfsStatEntry>>(path);
