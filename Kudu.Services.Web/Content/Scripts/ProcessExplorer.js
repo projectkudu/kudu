@@ -242,11 +242,82 @@ var Utilities = (function () {
         return span;
     };
 
+    Utilities.getHideSecretsCheckbox = function (id, textContent, isEnabled, isChecked) {
+        var span = document.createElement("span");
+        $(span).css("width", "138px");
+        $(span).css("white-space", "nowrap");
+        $(span).css("margin-right", "10px");
+
+        var checkbox = document.createElement("input");
+        checkbox.id = id;
+        checkbox.type = "checkbox"
+        $(checkbox).css("margin-right", "10px");
+        $(checkbox).css("margin-left", "10px");
+
+        checkbox.disabled = "";
+        checkbox.checked = isChecked;
+
+        if (!isEnabled) {
+            checkbox.disabled = "disabled";
+        }
+
+        checkbox.onchange = function () {
+            var flipHidden = (!secretsHidden).toString();
+            var paramName = "hideSecrets";
+
+            // Replace hideSecrets param in URL
+            var str = location.search;
+            if (new RegExp("[&?]" + paramName + "([=&].+)?$").test(str)) {
+                str = str.replace(new RegExp("(?:[&?])" + paramName + "[^&]*", "g"), "")
+            }
+            str += "&";
+            str += paramName + "=" + flipHidden;
+            str = "?" + str.slice(1);
+
+            location.assign(location.origin + location.pathname + str + location.hash);
+        };
+
+        span.appendChild(checkbox);
+
+        var label = document.createElement("span");
+        label.textContent = textContent;
+        span.appendChild(label);
+
+        return span;
+    };
+
+    Utilities.getKeyVaultReferenceInformation = function (serializedString) {
+        try {
+            return JSON.parse(serializedString);
+        } catch (e) {
+            console.log("error parsing json: " + e.toString());
+            return {};
+        }
+    }
+
+    Utilities.hideKeyVaultSecrets = function (environmentVariables, keyVaultReferenceInformation) {
+        var array = [];
+        environmentVariables.forEach(envVar => {
+            try {
+                if (keyVaultReferenceInformation[envVar.key]) {
+                    envVar.value = "[Hidden - " + keyVaultReferenceInformation[envVar.key]["status"] + ": " + keyVaultReferenceInformation[envVar.key]["rawReference"] + "]";
+                }
+                
+            } catch (e) {
+            }
+            array.push(envVar);
+        });
+
+        return array;
+    }
+
     return Utilities;
 })();
 
 var Process = (function () {
     var webSiteSku;
+    var keyVaultReferenceInformation;
+
     function Process(json) {
         this._json = json;
         this._json.threads = Utilities.getArrayFromJson(json.threads, function (t) {
@@ -259,13 +330,24 @@ var Process = (function () {
             return new Handle(h);
         });
 
+        var keyVaultReferenceInfo = "";
         this._json.environment_variables = Utilities.getArrayFromJsonObject(json.environment_variables, function (key, value) {
             if (key === "WEBSITE_SKU") {
                 webSiteSku = value;
             }
 
+            if (key === "WEBSITE_KEYVAULT_REFERENCES") {
+                keyVaultReferenceInfo = value;
+            }
+
             return new EnvironmentVariable(key, value);
         });
+
+        keyVaultReferenceInformation = Utilities.getKeyVaultReferenceInformation(keyVaultReferenceInfo);
+
+        if (keyVaultReferenceInfo !== "" && secretsHidden) {
+            this._json.environment_variables = Utilities.hideKeyVaultSecrets(this._json.environment_variables, keyVaultReferenceInformation);
+        }
     }
     Object.defineProperty(Process.prototype, "Id", {
         get: function () {
@@ -362,6 +444,14 @@ var Process = (function () {
     Object.defineProperty(Process.prototype, "WebSiteSku", {
         get: function () {
             return webSiteSku;
+        },
+        enumerable: true,
+        configurable: true
+    });
+
+    Object.defineProperty(Process.prototype, "NumKeyVaultReferences", {
+        get: function () {
+            return Object.keys(keyVaultReferenceInformation).length;
         },
         enumerable: true,
         configurable: true
@@ -539,6 +629,11 @@ var Process = (function () {
         var _this = this;
         var div = Utilities.createDiv(this._json.id.toString() + "-environment-variables-tab");
 
+        if (Process.prototype.NumKeyVaultReferences > 0) {
+            var hideSecretsCheckbox = Utilities.getHideSecretsCheckbox(this._json.id + "-hideSecrets", "Hide KeyVault Secrets", true, secretsHidden)
+            div.appendChild(hideSecretsCheckbox);
+        }
+        
         var table = Utilities.makeArrayTable(div.id + "-table", ["Key", "Value"], this._json.environment_variables);
         div.appendChild(table);
         return $(div).hide();

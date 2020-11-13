@@ -253,6 +253,7 @@
     <Compile Include="Functions\FunctionManager.cs" />
     <Compile Include="Helpers\EnvironmentHelper.cs" />
     <Compile Include="Helpers\DeploymentCompletedInfo.cs" />
+    <Compile Include="Helpers\KeyVaultReferenceHelper.cs" />
     <Compile Include="Helpers\OSDetector.cs" />
     <Compile Include="Helpers\PermissionHelper.cs" />
     <Compile Include="Helpers\PostDeploymentHelper.cs" />
