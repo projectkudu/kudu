@@ -502,8 +502,10 @@ namespace Kudu.FunctionalTests.Jobs
             RunScenario("InPlaceJobRunsInPlace", appManager =>
             {
                 const string jobName = "joba";
-                const string expectedTempStr = "Temp\\jobs\\triggered\\" + jobName;
-                const string expectedAppDataStr = "App_Data\\jobs\\triggered\\" + jobName;
+                var expectedTempStr = appManager.ServiceUrl.Contains("localhost")
+                    ? $@"Temp\{appManager.ApplicationName}\jobs\triggered\{jobName}"
+                    : $@"Temp\jobs\triggered\{jobName}";
+                var expectedAppDataStr = $@"App_Data\jobs\triggered\{jobName}";
 
                 TestTracer.Trace("Create the triggered WebJob");
                 appManager.JobsManager.CreateTriggeredJobAsync(jobName, "run.cmd", "cd\n").Wait();

@@ -102,7 +102,13 @@ namespace Kudu.Core
 
             SiteRootPath = Path.Combine(rootPath, Constants.SiteFolder);
 
+            // tempPath per apppool to avoid collision and cleanup
             _tempPath = Path.GetTempPath();
+            if (string.IsNullOrEmpty(System.Environment.GetEnvironmentVariable("WEBSITE_INSTANCE_ID")))
+            {
+                _tempPath = Path.Combine(_tempPath, System.Environment.GetEnvironmentVariable("APP_POOL_ID") ?? string.Empty);
+            }
+
             _repositoryPath = repositoryPath;
             _zipTempDirectoryPath = Path.Combine(_tempPath, Constants.ZipTempDirectoryName);
             _webRootPath = Path.Combine(SiteRootPath, Constants.WebRoot);

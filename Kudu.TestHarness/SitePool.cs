@@ -66,32 +66,15 @@ namespace Kudu.TestHarness
             {
                 TestTracer.Trace("{0} Site already exists at {1}. Reusing site", operationName, site.SiteUrl);
 
+                TestTracer.Trace("{0} Reset existing site content", operationName);
+                await siteManager.ResetSiteContent(applicationName);
+
                 RunAgainstCustomKuduUrlIfRequired(site);
 
                 var appManager = new ApplicationManager(siteManager, site, applicationName)
                 {
                     SitePoolIndex = siteIndex
                 };
-
-                if (!KuduUtils.RunningAgainstLinuxKudu)
-                {
-                    // In site reuse mode, clean out the existing site so we start clean
-                    // Enumrate all w3wp processes and make sure to kill any process with an open handle to klr.host.dll
-                    foreach (var process in (await appManager.ProcessManager.GetProcessesAsync()).Where(p => p.Name.Equals("w3wp", StringComparison.OrdinalIgnoreCase)))
-                    {
-                        var extendedProcess = await appManager.ProcessManager.GetProcessAsync(process.Id);
-                        if (extendedProcess.OpenFileHandles.Any(h => h.IndexOf("dnx.host.dll", StringComparison.OrdinalIgnoreCase) != -1))
-                        {
-                            await appManager.ProcessManager.StopProcessAsync(extendedProcess.Id, throwOnError: false);
-                        }
-                    }
-                }
-
-                await appManager.RepositoryManager.Delete(deleteWebRoot: true, ignoreErrors: true);
-
-                // Nuke directories of interest to start the tests with a clean slate
-                appManager.VfsManager.Delete("site/libs", recursive: true);
-                appManager.VfsManager.Delete("site/scripts", recursive: true);
 
                 // Make sure we start with the correct default file as some tests expect it
                 WriteIndexHtml(appManager);

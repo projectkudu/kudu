@@ -188,6 +188,94 @@ namespace Kudu.SiteManagement
             }
         }
 
+        public async Task ResetSiteContent(string applicationName)
+        {
+            const int MaxWaitSeconds = 300;
+            using (ServerManager iis = GetServerManager())
+            {
+                var appPool = iis.ApplicationPools.FirstOrDefault(ap => ap.Name == applicationName);
+                if (appPool == null)
+                {
+                    throw new InvalidOperationException($"Failed to recycle {applicationName} app pool.  It does not exist!");
+                }
+
+                // the app pool is running or starting, so stop it first.
+                if (appPool.State == ObjectState.Started || appPool.State == ObjectState.Starting)
+                {
+                    // wait for the app to finish before trying to stop
+                    for (int i = 0; i > MaxWaitSeconds && appPool.State == ObjectState.Starting; ++i)
+                    {
+                        await Task.Delay(1000);
+                    }
+
+                    // stop the app if it isn't already stopped
+                    if (appPool.State != ObjectState.Stopped)
+                    {
+                        appPool.Stop();
+                    }
+                }
+
+                // wait for the app to stop
+                for (int i = 0; appPool.State != ObjectState.Stopped; ++i)
+                {
+                    await Task.Delay(1000);
+                    if (i > MaxWaitSeconds)
+                    {
+                        throw new InvalidOperationException($"Failed to recycle {applicationName} app pool.  Its state '{appPool.State}' is not stopped!");
+                    }
+                }
+
+                string root = _context.Paths.GetApplicationPath(applicationName);
+                string siteRoot = _context.Paths.GetLiveSitePath(applicationName);
+                foreach (var dir in Directory.GetDirectories(root).Concat(new[] { Path.Combine(Path.GetTempPath(), applicationName) }))
+                {
+                    if (!Directory.Exists(dir))
+                    {
+                        continue;
+                    }
+
+                    // use rmdir command since it handles both hidden and read-only files
+                    OperationManager.SafeExecute(() => Process.Start(new ProcessStartInfo
+                    {
+                        Arguments = $"/C rmdir /s /q \"{dir}\"",
+                        WindowStyle = ProcessWindowStyle.Hidden,
+                        CreateNoWindow = true,
+                        FileName = "cmd.exe"
+                    })?.WaitForExit());
+
+                    if (Directory.Exists(dir) && !dir.Contains(".deleted."))
+                    {
+                        var dirName = Path.GetFileName(dir);
+                        OperationManager.Attempt(() => Process.Start(new ProcessStartInfo
+                        {
+                            Arguments = $"/C ren \"{dir}\" \"{dirName}.deleted.{Guid.NewGuid():N}\"",
+                            WindowStyle = ProcessWindowStyle.Hidden,
+                            CreateNoWindow = true,
+                            FileName = "cmd.exe"
+                        })?.WaitForExit());
+                    }
+                }
+
+                var webRoot = Path.Combine(siteRoot, Constants.WebRoot);
+                FileSystemHelpers.EnsureDirectory(siteRoot);
+                FileSystemHelpers.EnsureDirectory(webRoot);
+                File.WriteAllText(Path.Combine(webRoot, HostingStartHtml), HostingStartHtmlContents);
+
+                // start the app
+                appPool.Start();
+
+                // wait for the app to stop
+                for (int i = 0; appPool.State != ObjectState.Started; ++i)
+                {
+                    await Task.Delay(1000);
+                    if (i > MaxWaitSeconds)
+                    {
+                        throw new InvalidOperationException($"Failed to recycle {applicationName} app pool.  Its state '{appPool.State}' is not started!");
+                    }
+                }
+            }
+        }
+
         //NOTE: Small temporary object for configuration.
         private struct BindingInformation
         {
