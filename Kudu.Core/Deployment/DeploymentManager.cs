@@ -306,7 +306,9 @@ namespace Kudu.Core.Deployment
             catch (Exception ex)
             {
                 tracer.TraceError($"Failed to request a post deployment status. Number of attempts: {attemptCount}. Exception: {ex}");
-                throw;
+                // Do not throw the exception
+                // We fail silently so that we do not fail the build altogether if this call fails
+                //throw;
             }
         }
 
@@ -740,7 +742,7 @@ namespace Kudu.Core.Deployment
                         builder.PostBuild(context);
 
                         await RestartMainSiteIfNeeded(tracer, logger, deploymentInfo);
-            
+
                         await PostDeploymentHelper.SyncFunctionsTriggers(_environment.RequestId, new PostDeploymentTraceListener(tracer, logger), deploymentInfo?.SyncFunctionsTriggersPath);
 
                         TouchWatchedFileIfNeeded(_settings, deploymentInfo, context);
