@@ -515,8 +515,8 @@ var Process = (function () {
             });
         }));
 
-        buttonDiv.appendChild(Utilities.getButton("ui-button-info", div.id + "-dumb", "Download memory dump", function () {
-            Utilities.downloadURL(_this._json.minidump);
+        buttonDiv.appendChild(Utilities.getButton("ui-button-info", div.id + "-dump", "Download memory dump", function () {
+            Utilities.downloadURL(_this._json.minidump + "?dumpType=2");
         }));
 
         div.appendChild(buttonDiv);
