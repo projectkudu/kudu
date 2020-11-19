@@ -287,7 +287,7 @@ namespace Kudu.Core.Deployment
             }
         }
 
-        public async Task SendDeployStatusUpdate(DeployStatusApiResult updateStatusObj)
+        public async Task<bool> SendDeployStatusUpdate(DeployStatusApiResult updateStatusObj)
         {
             ITracer tracer = _traceFactory.GetTracer();
             int attemptCount = 0;
@@ -298,10 +298,13 @@ namespace Kudu.Core.Deployment
                 {
                     attemptCount++;
 
-                    tracer.Trace($" PostAsync - Trying to send {updateStatusObj.DeploymentStatus} deployment status to {Constants.UpdateDeployStatusPath}");
+                    tracer.Trace($" PostAsync - Trying to send {updateStatusObj.DeploymentStatus} deployment status to {Constants.UpdateDeployStatusPath}. Deployment Id is {updateStatusObj.DeploymentId}");
                     await PostDeploymentHelper.PostAsync(Constants.UpdateDeployStatusPath, _environment.RequestId, content: JsonConvert.SerializeObject(updateStatusObj));
 
                 }, 3, 5 * 1000);
+
+                // If no exception is thrown, the operation was a success
+                return true;
             }
             catch (Exception ex)
             {
@@ -309,6 +312,8 @@ namespace Kudu.Core.Deployment
                 // Do not throw the exception
                 // We fail silently so that we do not fail the build altogether if this call fails
                 //throw;
+
+                return false;
             }
         }
 
@@ -326,11 +331,23 @@ namespace Kudu.Core.Deployment
                 return;
             }
 
-            if (deploymentInfo != null && !string.IsNullOrEmpty(deploymentInfo.ExternalDeploymentId))
+            if (deploymentInfo != null)
             {
-                DeployStatusApiResult updateStatusObj = new DeployStatusApiResult(Constants.PostBuildRestartRequired, deploymentInfo.ExternalDeploymentId);
-                await SendDeployStatusUpdate(updateStatusObj);
-                return;
+                // Send deployment status update to FE
+                // FE will modify the operations table with the PostBuildRestartRequired status
+                IRepository repository = deploymentInfo.GetRepository();
+                string deployBranch = !String.IsNullOrEmpty(deploymentInfo.CommitId) ? deploymentInfo.CommitId : _settings.GetBranch();
+                var changeSet = repository.GetChangeSet(deployBranch);
+
+                DeployStatusApiResult updateStatusObj = new DeployStatusApiResult(Constants.PostBuildRestartRequired, changeSet.Id);
+                bool isSuccess = await SendDeployStatusUpdate(updateStatusObj);
+
+                if (isSuccess)
+                {
+                    // If operation is a success and PostBuildRestartRequired was posted successfully to the operations DB, then return
+                    // Else fallthrough to RestartMainSiteAsync
+                    return;
+                }
             }
 
             if (deploymentInfo != null && deploymentInfo.Deployer == Constants.OneDeploy)

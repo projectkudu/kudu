@@ -192,6 +192,26 @@ namespace Kudu.Core.Deployment
                         // The branch or commit id to deploy
                         string deployBranch = !String.IsNullOrEmpty(deploymentInfo.CommitId) ? deploymentInfo.CommitId : targetBranch;
 
+                        try
+                        {
+                            _tracer.Trace($"Before sending {Constants.BuildRequestReceived} status to /api/updatedeploystatus");
+                            if (PostDeploymentHelper.IsAzureEnvironment())
+                            {
+                                // Parse the changesetId into a GUID
+                                // The FE hook allows only GUID as a deployment id
+                                // If the id is already in GUID format nothing will happen
+                                // If it doesn't have the necessary format for a GUID, and exception will be thrown
+                                var changeSet = repository.GetChangeSet(deployBranch);
+                                updateStatusObj = new DeployStatusApiResult(Constants.BuildRequestReceived, Guid.Parse(changeSet.Id).ToString());
+                                await _deploymentManager.SendDeployStatusUpdate(updateStatusObj);
+                            }
+                        }
+                        catch(Exception e)
+                        {
+                            _tracer.TraceError($"Exception while sending {Constants.BuildRequestReceived} status to /api/updatedeploystatus. " +
+                                $"Entry in the operations table for the deployment status may not have been created. {e}");
+                        }
+
                         // In case the commit or perhaps fetch do no-op.
                         if (deploymentInfo.TargetChangeset != null && ShouldDeploy(repository, deploymentInfo, deployBranch))
                         {
@@ -209,9 +229,9 @@ namespace Kudu.Core.Deployment
                             // unless for GenericHandler where specific commitId is specified
                             bool deploySpecificCommitId = !String.IsNullOrEmpty(deploymentInfo.CommitId);
 
-                            if (PostDeploymentHelper.IsAzureEnvironment() && deploymentInfo.ExternalDeploymentId != null)
+                            if (updateStatusObj != null)
                             {
-                                updateStatusObj = new DeployStatusApiResult(Constants.BuildInProgress, deploymentInfo.ExternalDeploymentId);
+                                updateStatusObj.DeploymentStatus = Constants.BuildInProgress;
                                 await _deploymentManager.SendDeployStatusUpdate(updateStatusObj);
                             }
 
