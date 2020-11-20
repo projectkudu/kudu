@@ -284,6 +284,13 @@ namespace Kudu.Core.Deployment
                         await PostDeploymentHelper.UpdateSiteVersion(zipDeploymentInfo, _environment, tracer);
                     }
                 }
+
+                if (statusFile.Status == DeployStatus.Success
+                    && ScmHostingConfigurations.FunctionsSyncTriggersDelaySeconds > 0)
+                {
+                    await PostDeploymentHelper.SyncTriggersIfFunctionsSite(_environment.RequestId, new PostDeploymentTraceListener(tracer),
+                        deploymentInfo?.SyncFunctionsTriggersPath, tracePath: _environment.TracePath);
+                }
             }
         }
 
@@ -770,7 +777,11 @@ namespace Kudu.Core.Deployment
 
                         await RestartMainSiteIfNeeded(tracer, logger, deploymentInfo);
 
-                        await PostDeploymentHelper.SyncFunctionsTriggers(_environment.RequestId, new PostDeploymentTraceListener(tracer, logger), deploymentInfo?.SyncFunctionsTriggersPath);
+                        if (ScmHostingConfigurations.FunctionsSyncTriggersDelaySeconds == 0)
+                        {
+                            await PostDeploymentHelper.SyncTriggersIfFunctionsSite(_environment.RequestId, new PostDeploymentTraceListener(tracer, logger),
+                                deploymentInfo?.SyncFunctionsTriggersPath, tracePath: _environment.TracePath);
+                        }
 
                         TouchWatchedFileIfNeeded(_settings, deploymentInfo, context);
 

@@ -87,6 +87,8 @@ namespace Kudu
 
         public const string RestartApiPath = "/api/app/restart";
         public const string UpdateDeployStatusPath = "/api/app/updatedeploystatus";
+        public const string SetTriggersApiPath = "/operations/settriggers";
+        public const string FunctionsSyncTriggersApiPath = "/admin/host/synctriggers";
 
         public const string SiteExtensionProvisioningStateCreated = "Created";
         public const string SiteExtensionProvisioningStateAccepted = "Accepted";
