@@ -16,6 +16,7 @@ using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Deployment;
 using Kudu.Core.Infrastructure;
+using Kudu.Core.Settings;
 using Kudu.Core.Tracing;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -125,7 +126,7 @@ namespace Kudu.Core.Helpers
         {
             RunPostDeploymentScripts(tracer);
 
-            await SyncFunctionsTriggers(requestId, tracer);
+            await SyncTriggersIfFunctionsSite(requestId, tracer);
 
             await PerformAutoSwap(requestId, tracer);
         }
@@ -150,7 +151,7 @@ namespace Kudu.Core.Helpers
             }
         }
 
-        public static async Task SyncFunctionsTriggers(string requestId, TraceListener tracer, string functionsPath = null)
+        public static async Task SyncTriggersIfFunctionsSite(string requestId, TraceListener tracer, string functionsPath = null, string tracePath = null)
         {
             _tracer = tracer;
 
@@ -162,18 +163,111 @@ namespace Kudu.Core.Helpers
 
             VerifyEnvironments();
 
-            // Try and let functions runtime call the settriggers
-            if (!await FunctionsRuntimeSyncTriggers(requestId))
-            {
-                Trace(TraceEventType.Information, "Attempting to perform settriggers call directly.");
-                await PerformSettriggers(requestId, functionsPath);
-            }
+            await SyncFunctionsTriggers(requestId, functionsPath, tracePath);
 
             // this couples with sync function triggers
             await SyncLogicAppJson(requestId, tracer);
         }
 
-        private static async Task<bool> FunctionsRuntimeSyncTriggers(string requestId)
+        private static async Task SyncFunctionsTriggers(string requestId, string functionsPath, string tracePath)
+        {
+            int syncTriggersDelaySeconds = ScmHostingConfigurations.FunctionsSyncTriggersDelaySeconds;
+
+            if (syncTriggersDelaySeconds == 0)
+            {
+                await AttemptSyncTriggerAndSetTriggers(requestId, functionsPath);
+                return;
+            }
+
+            if (ScmHostingConfigurations.FunctionsSyncTriggersDelayBackground)
+            {
+                await NotifyFrontEndOfFunctionsUpdate(requestId);
+
+                Trace(TraceEventType.Verbose, "Scheduling background sync triggers after delay");
+
+                // create background tracer independent of request lifetime if possible
+                ITracer bgTracer = null;
+                if (!string.IsNullOrEmpty(tracePath))
+                {
+                    bgTracer = new CascadeTracer(new XmlTracer(tracePath, TraceLevel.Verbose), new ETWTracer(requestId, "POST"));
+                }
+
+                // schedule sync triggers call in the background
+                _ = ScheduleBackgroundSyncTriggers(syncTriggersDelaySeconds, requestId, functionsPath, bgTracer);
+            }
+            else
+            {
+                await NotifyFrontEndOfFunctionsUpdate(requestId);
+                await WaitForFunctionsSiteRestart(syncTriggersDelaySeconds);
+
+                await AttemptSyncTriggerAndSetTriggers(requestId, functionsPath);
+            }
+        }
+
+        private static Task ScheduleBackgroundSyncTriggers(int syncTriggersDelaySeconds, string requestId, string functionsPath, ITracer bgTracer = null)
+        {
+            return Task.Run(async () =>
+            {
+                using (bgTracer?.Step(XmlTracer.BackgroundTrace, new Dictionary<string, string>() {
+                    {"url", "synctriggers-operation"},
+                    {"method", "POST"}
+                }) ?? DisposableAction.Noop)
+                {
+                    bool shutdownSemaphoreAcquired = false;
+                    try
+                    {
+                        if (bgTracer != null)
+                        {
+                            _tracer = new PostDeploymentTraceListener(bgTracer);
+                        }
+
+                        // best effort
+                        shutdownSemaphoreAcquired = ShutdownDelaySemaphore.GetInstance().Acquire(bgTracer);
+                        await WaitForFunctionsSiteRestart(syncTriggersDelaySeconds);
+                        await AttemptSyncTriggerAndSetTriggers(requestId, functionsPath);
+                    }
+                    catch (Exception ex)
+                    {
+                        bgTracer?.TraceError(ex);
+                    }
+                    finally
+                    {
+                        if (shutdownSemaphoreAcquired)
+                        {
+                            ShutdownDelaySemaphore.GetInstance().Release(bgTracer);
+                        }
+                    }
+                }
+            });
+        }
+
+        private static Task NotifyFrontEndOfFunctionsUpdate(string requestId)
+        {
+            return PerformEmptySettriggers(requestId);
+        }
+
+        private static Task PerformEmptySettriggers(string requestId)
+        {
+            return PostAsync(Constants.SetTriggersApiPath, requestId, content: "");
+        }
+
+        private static Task WaitForFunctionsSiteRestart(int seconds = 60)
+        {
+            var delaySpan = TimeSpan.FromSeconds(seconds);
+            Trace(TraceEventType.Information, $"Delaying '{delaySpan}' for Functions site to restart.");
+            return Task.Delay(delaySpan);
+        }
+
+        private static async Task AttemptSyncTriggerAndSetTriggers(string requestId, string functionsPath)
+        {
+            if (!await TryFunctionsRuntimeSyncTriggers(requestId))
+            {
+                Trace(TraceEventType.Information, "Attempting to perform settriggers call directly.");
+                await PerformSettriggers(requestId, functionsPath);
+            }
+        }
+
+        private static async Task<bool> TryFunctionsRuntimeSyncTriggers(string requestId)
         {
             try
             {
@@ -187,7 +281,9 @@ namespace Kudu.Core.Helpers
                 }
 
                 var functionsSiteHostName = string.Join(".", scmSplit.Where((el, idx) => idx != 1));
-                await PostAsync("/admin/host/synctriggers", requestId, hostName: functionsSiteHostName);
+
+                await OperationManager.AttemptAsync(async () => await PostAsync(Constants.FunctionsSyncTriggersApiPath, requestId,
+                    hostName: functionsSiteHostName), retries: 3, delayBeforeRetry: 1000);
 
                 return true;
             }
@@ -263,7 +359,7 @@ namespace Kudu.Core.Helpers
             Exception exception = null;
             try
             {
-                await PostAsync("/operations/settriggers", requestId, content: content);
+                await PostAsync(Constants.SetTriggersApiPath, requestId, content: content);
             }
             catch (Exception ex)
             {

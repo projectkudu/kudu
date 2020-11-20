@@ -281,6 +281,7 @@
     <Compile Include="Infrastructure\PathUtils\PathWindowsUtility.cs" />
     <Compile Include="Infrastructure\ServerConfiguration.cs" />
     <Compile Include="Infrastructure\SettingsProcessor.cs" />
+    <Compile Include="Infrastructure\ShutdownDelaySemaphore.cs" />
     <Compile Include="Infrastructure\ZipArchiveExtensions.cs" />
     <Compile Include="Jobs\AggregateContinuousJobsManager.cs" />
     <Compile Include="Jobs\AggregateJobsManagerBase.cs" />

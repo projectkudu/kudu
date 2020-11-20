@@ -64,6 +64,33 @@ namespace Kudu.Core.Settings
             get { return GetValue("GetLatestDeploymentOptimized", "1") != "0"; }
         }
 
+        // default = 0, meaning same behavior as today
+        // 60, meaning 60s delay + only call after sitepackage update + empty trigger
+        public static int FunctionsSyncTriggersDelaySeconds
+        {
+            get
+            {
+                if (int.TryParse(GetValue("FunctionsSyncTriggersDelaySeconds"), out int secs)
+                    && secs >= 0)
+                {
+                    return secs;
+                }
+
+                return 0;
+            }
+        }
+
+        // If FunctionsSyncTriggersDelaySeconds = 0, this is a no-op
+        // default = 0, blocking for FunctionsSyncTriggersDelaySeconds
+        // 1, in the background
+        public static bool FunctionsSyncTriggersDelayBackground
+        {
+            get
+            {
+                return GetValue("FunctionsSyncTriggersDelayBackground", "0") == "1" && FunctionsSyncTriggersDelaySeconds > 0;
+            }
+        }
+
         public static bool DeploymentStatusCompleteFileEnabled
         {
             get { return GetValue("DeploymentStatusCompleteFileEnabled", "1") != "0"; }
