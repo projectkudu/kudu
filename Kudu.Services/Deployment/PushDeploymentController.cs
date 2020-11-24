@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
@@ -233,7 +234,7 @@ namespace Kudu.Services.Deployment
                 switch (artifactType)
                 {
                     case ArtifactType.War:
-                        if (!OneDeployHelper.EnsureValidStack(OneDeployHelper.Tomcat, ignoreStack, out error))
+                        if (!OneDeployHelper.EnsureValidStack(artifactType, new List<string> { OneDeployHelper.Tomcat, OneDeployHelper.JBossEap }, ignoreStack, out error))
                         {
                             return StatusCode400(error);
                         }
@@ -245,9 +246,15 @@ namespace Kudu.Services.Deployment
                             // For legacy war deployments, the only path allowed is webapps/<directory-name>
                             //
 
+                            if (!OneDeployHelper.EnsureValidPath(artifactType, OneDeployHelper.WwwrootDirectoryRelativePath, ref path, out error))
+                            {
+                                return StatusCode400(error);
+                            }
+
                             if (!OneDeployHelper.IsLegacyWarPathValid(path))
                             {
-                                return StatusCode400($"path='{path}'. Only allowed path when type={artifactType} is webapps/<directory-name>. Example: path=webapps/ROOT");
+                                return StatusCode400($"path='{path}' is invalid. When type={artifactType}, the only allowed paths are webapps/<directory-name> or /home/site/wwwroot/webapps/<directory-name>. " +
+                                                     $"Example: path=webapps/ROOT or path=/home/site/wwwroot/webapps/ROOT");
                             }
 
                             deploymentInfo.TargetRootPath = Path.Combine(_environment.WebRootPath, path);
@@ -267,7 +274,7 @@ namespace Kudu.Services.Deployment
                         break;
 
                     case ArtifactType.Jar:
-                        if (!OneDeployHelper.EnsureValidStack(OneDeployHelper.JavaSE, ignoreStack, out error))
+                        if (!OneDeployHelper.EnsureValidStack(artifactType, new List<string> { OneDeployHelper.JavaSE }, ignoreStack, out error))
                         {
                             return StatusCode400(error);
                         }
@@ -276,7 +283,7 @@ namespace Kudu.Services.Deployment
                         break;
 
                     case ArtifactType.Ear:
-                        if (!OneDeployHelper.EnsureValidStack(OneDeployHelper.JBossEap, ignoreStack, out error))
+                        if (!OneDeployHelper.EnsureValidStack(artifactType, new List<string> { OneDeployHelper.JBossEap }, ignoreStack, out error))
                         {
                             return StatusCode400(error);
                         }
@@ -285,38 +292,38 @@ namespace Kudu.Services.Deployment
                         break;
 
                     case ArtifactType.Lib:
-                        if (!OneDeployHelper.EnsureValidPath(artifactType, path, out error))
+                        if (!OneDeployHelper.EnsureValidPath(artifactType, OneDeployHelper.LibsDirectoryRelativePath, ref path, out error))
                         {
                             return StatusCode400(error);
                         }
 
-                        deploymentInfo.TargetRootPath = OneDeployHelper.GetLibsDirectoryAbsolutePath(_environment);
-                        OneDeployHelper.SetTargetSubDirectoyAndFileNameFromPath(deploymentInfo, path);
+                        deploymentInfo.TargetRootPath = OneDeployHelper.GetAbsolutePath(_environment, OneDeployHelper.LibsDirectoryRelativePath);
+                        OneDeployHelper.SetTargetSubDirectoyAndFileNameFromRelativePath(deploymentInfo, path);
                         break;
 
                     case ArtifactType.Startup:
-                        deploymentInfo.TargetRootPath = OneDeployHelper.GetScriptsDirectoryAbsolutePath(_environment);
-                        OneDeployHelper.SetTargetSubDirectoyAndFileNameFromPath(deploymentInfo, OneDeployHelper.GetStartupFileName());
+                        deploymentInfo.TargetRootPath = OneDeployHelper.GetAbsolutePath(_environment, OneDeployHelper.ScriptsDirectoryRelativePath);
+                        OneDeployHelper.SetTargetSubDirectoyAndFileNameFromRelativePath(deploymentInfo, OneDeployHelper.GetStartupFileName());
                         break;
 
                     case ArtifactType.Script:
-                        if (!OneDeployHelper.EnsureValidPath(artifactType, path, out error))
+                        if (!OneDeployHelper.EnsureValidPath(artifactType, OneDeployHelper.ScriptsDirectoryRelativePath, ref path, out error))
                         {
                             return StatusCode400(error);
                         }
 
-                        deploymentInfo.TargetRootPath = OneDeployHelper.GetScriptsDirectoryAbsolutePath(_environment);
-                        OneDeployHelper.SetTargetSubDirectoyAndFileNameFromPath(deploymentInfo, path);
+                        deploymentInfo.TargetRootPath = OneDeployHelper.GetAbsolutePath(_environment, OneDeployHelper.ScriptsDirectoryRelativePath);
+                        OneDeployHelper.SetTargetSubDirectoyAndFileNameFromRelativePath(deploymentInfo, path);
 
                         break;
 
                     case ArtifactType.Static:
-                        if (!OneDeployHelper.EnsureValidPath(artifactType, path, out error))
+                        if (!OneDeployHelper.EnsureValidPath(artifactType, OneDeployHelper.WwwrootDirectoryRelativePath, ref path, out error))
                         {
                             return StatusCode400(error);
                         }
 
-                        OneDeployHelper.SetTargetSubDirectoyAndFileNameFromPath(deploymentInfo, path);
+                        OneDeployHelper.SetTargetSubDirectoyAndFileNameFromRelativePath(deploymentInfo, path);
 
                         break;
 

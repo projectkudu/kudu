@@ -257,6 +257,77 @@ namespace Kudu.FunctionalTests
 
         #endregion
 
+        #region Path specific tests
+
+        // Tests that invalid paths return 400 (Bad Request) and not 5xx.
+        [Fact]
+        public Task TestInvalidPaths()
+        {
+            return ApplicationManager.RunAsync("TestInvalidPaths", async appManager =>
+            {
+                var files = DeploymentTestHelper.CreateRandomFilesForZip(10);
+
+                //
+                // NOTE: For each type, run a successful scenario to validate that all is good and then
+                // begin with the tests for invalid paths where we expect the test to fail
+                //
+
+                // Legacy war - relative paths
+                {
+                    await DeployZippedArtifact(appManager, appManager.OneDeployManager, files, "war", "webapps/ROOT", isAsync: false, isClean: false, expectedSuccess: true);
+                    await DeployZippedArtifact(appManager, appManager.OneDeployManager, files, "war", "webapps/ROOT/", isAsync: false, isClean: false, expectedSuccess: false);
+                    await DeployZippedArtifact(appManager, appManager.OneDeployManager, files, "war", "invalid", isAsync: false, isClean: false, expectedSuccess: false);
+                    await DeployZippedArtifact(appManager, appManager.OneDeployManager, files, "war", "webapps/app/foo", isAsync: false, isClean: false, expectedSuccess: false);
+                    await DeployZippedArtifact(appManager, appManager.OneDeployManager, files, "war", "webapps2/app", isAsync: false, isClean: false, expectedSuccess: false);
+                    await DeployZippedArtifact(appManager, appManager.OneDeployManager, files, "war", "webapps", isAsync: false, isClean: false, expectedSuccess: false);
+                }
+
+                // Legacy war - absolute paths
+                {
+                    await DeployZippedArtifact(appManager, appManager.OneDeployManager, files, "war", "/home/site/wwwroot/webapps/app", isAsync: false, isClean: false, expectedSuccess: true);
+                    await DeployZippedArtifact(appManager, appManager.OneDeployManager, files, "war", "/home/site/wwwroot/webapps/app/", isAsync: false, isClean: false, expectedSuccess: false);
+                    await DeployZippedArtifact(appManager, appManager.OneDeployManager, files, "war", "/home/site/wwwroot/webapps/app/foo", isAsync: false, isClean: false, expectedSuccess: false);
+                    await DeployZippedArtifact(appManager, appManager.OneDeployManager, files, "war", "/home/site/wwwroot/webapps/", isAsync: false, isClean: false, expectedSuccess: false);
+                    await DeployZippedArtifact(appManager, appManager.OneDeployManager, files, "war", "/home/site/wwwroot/webapps", isAsync: false, isClean: false, expectedSuccess: false);
+                    await DeployZippedArtifact(appManager, appManager.OneDeployManager, files, "war", "/home/site/wwwroot/webapps2/app", isAsync: false, isClean: false, expectedSuccess: false);
+                    await DeployZippedArtifact(appManager, appManager.OneDeployManager, files, "war", "/home/site/wwwroot/", isAsync: false, isClean: false, expectedSuccess: false);
+                }
+
+                // lib - absolute paths
+                {
+                    await DeployZippedArtifact(appManager, appManager.OneDeployManager, files, "lib", "/home/site/libs/file.jar", isAsync: false, isClean: false, expectedSuccess: true);
+                    await DeployZippedArtifact(appManager, appManager.OneDeployManager, files, "lib", "/home/site/libs/file.jar/", isAsync: false, isClean: false, expectedSuccess: false);
+                    await DeployZippedArtifact(appManager, appManager.OneDeployManager, files, "lib", "/home/site/libs/", isAsync: false, isClean: false, expectedSuccess: false);
+                    await DeployZippedArtifact(appManager, appManager.OneDeployManager, files, "lib", "/home/site/libs", isAsync: false, isClean: false, expectedSuccess: false);
+                    await DeployZippedArtifact(appManager, appManager.OneDeployManager, files, "lib", "/home/site/libsfile.jar", isAsync: false, isClean: false, expectedSuccess: false);
+                    await DeployZippedArtifact(appManager, appManager.OneDeployManager, files, "lib", "/home/site/lib2/file.jar", isAsync: false, isClean: false, expectedSuccess: false);
+                }
+
+                // script - absolute paths
+                {
+                    await DeployZippedArtifact(appManager, appManager.OneDeployManager, files, "script", "/home/site/scripts/file.bat", isAsync: false, isClean: false, expectedSuccess: true);
+                    await DeployZippedArtifact(appManager, appManager.OneDeployManager, files, "script", "/home/site/scripts/file.bat/", isAsync: false, isClean: false, expectedSuccess: false);
+                    await DeployZippedArtifact(appManager, appManager.OneDeployManager, files, "script", "/home/site/scripts/", isAsync: false, isClean: false, expectedSuccess: false);
+                    await DeployZippedArtifact(appManager, appManager.OneDeployManager, files, "script", "/home/site/scripts", isAsync: false, isClean: false, expectedSuccess: false);
+                    await DeployZippedArtifact(appManager, appManager.OneDeployManager, files, "script", "/home/site/scriptsfile.bat", isAsync: false, isClean: false, expectedSuccess: false);
+                    await DeployZippedArtifact(appManager, appManager.OneDeployManager, files, "script", "/home/site/scripts2/file.bat", isAsync: false, isClean: false, expectedSuccess: false);
+                }
+
+                // Static - absolute paths
+                {
+                    await DeployZippedArtifact(appManager, appManager.OneDeployManager, files, "static", "/home/site/wwwroot/file.bat", isAsync: false, isClean: false, expectedSuccess: true);
+                    await DeployZippedArtifact(appManager, appManager.OneDeployManager, files, "static", "/home/site/wwwroot/file.bat/", isAsync: false, isClean: false, expectedSuccess: false);
+                    await DeployZippedArtifact(appManager, appManager.OneDeployManager, files, "static", "/home/site/wwwroot/", isAsync: false, isClean: false, expectedSuccess: false);
+                    await DeployZippedArtifact(appManager, appManager.OneDeployManager, files, "static", "/home/site/wwwroot", isAsync: false, isClean: false, expectedSuccess: false);
+                    await DeployZippedArtifact(appManager, appManager.OneDeployManager, files, "static", "/home/site/wwwrootfile.bat", isAsync: false, isClean: false, expectedSuccess: false);
+                    await DeployZippedArtifact(appManager, appManager.OneDeployManager, files, "static", "/home/site/wwwroot2/file.bat", isAsync: false, isClean: false, expectedSuccess: false);
+                }
+            });
+        }
+
+        #endregion
+
+
         #region Advanced scenarios
 
         // Tests deployments to /home/site/wwwroot/webapps/<dir>
@@ -332,6 +403,7 @@ namespace Kudu.FunctionalTests
                     }
 
                     var response = await client.SendAsync(request);
+                    TestTracer.Trace($"Response code={response.StatusCode}");
                     response.EnsureSuccessStatusCode();
 
                     if (isAsync || isArmRequest)
@@ -341,6 +413,7 @@ namespace Kudu.FunctionalTests
 
                     await DeploymentTestHelper.AssertSuccessfulDeploymentByFilenames(appManager, new string[] { "hostingstart.html", "NOTICE.txt" }, "site/wwwroot");
                 }
+                TestTracer.Trace($"Validation successful!");
             });
         }
 
@@ -400,9 +473,10 @@ namespace Kudu.FunctionalTests
             string path,
             bool isAsync,
             bool? isClean,
-            string expectedDeployPath = null)
+            string expectedDeployPath = null,
+            bool expectedSuccess = true)
         {
-            TestTracer.Trace("Deploying file");
+            TestTracer.Trace($"Deploying file type={type} path={path} isAsync={isAsync} isClean={isClean} expectedDeployPath={expectedDeployPath} expectedSuccess={expectedSuccess}");
 
             var testFile = DeploymentTestHelper.CreateRandomTestFile();
             using (var fileStream = DeploymentTestHelper.CreateFileStream(testFile))
@@ -410,7 +484,15 @@ namespace Kudu.FunctionalTests
                 IList<KeyValuePair<string, string>> queryParams = GetOneDeployQueryParams(type, path, isAsync, isClean);
 
                 var response = await appManager.OneDeployManager.PushDeployFromStream(fileStream, new ZipDeployMetadata(), queryParams);
-                response.EnsureSuccessStatusCode();
+                TestTracer.Trace($"Response code={response.StatusCode}");
+                if (expectedSuccess)
+                {
+                    response.EnsureSuccessStatusCode();
+                }
+                else
+                {
+                    Assert.True(response.StatusCode == System.Net.HttpStatusCode.BadRequest, $"This test is expected to fail with status code == 400. Observed status code == {response.StatusCode}");
+                }
 
                 if (isAsync)
                 {
@@ -423,6 +505,7 @@ namespace Kudu.FunctionalTests
                 VerifyDeployedArtifact(appManager, testFile.Content, expectedDeployPath);
             }
 
+            TestTracer.Trace($"Validation successful!");
             return testFile.Content;
         }
 
@@ -432,21 +515,31 @@ namespace Kudu.FunctionalTests
                                                                             string type,
                                                                             string path,
                                                                             bool isAsync,
-                                                                            bool? isClean = null)
+                                                                            bool? isClean = null,
+                                                                            bool expectedSuccess = true)
         {
-            TestTracer.Trace("Deploying zip");
+            TestTracer.Trace($"Deploying zip type={type} path={path} isAsync={isAsync} isClean={isClean} expectedSuccess={expectedSuccess}");
             using (var zipStream = DeploymentTestHelper.CreateZipStream(files))
             {
                 IList<KeyValuePair<string, string>> queryParams = GetOneDeployQueryParams(type, path, isAsync, isClean);
 
                 var response = await deploymentManager.PushDeployFromStream(zipStream, new ZipDeployMetadata(), queryParams);
-                response.EnsureSuccessStatusCode();
+                TestTracer.Trace($"Response code={response.StatusCode}");
+                if (expectedSuccess)
+                {
+                    response.EnsureSuccessStatusCode();
+                }
+                else
+                {
+                    Assert.True(response.StatusCode == System.Net.HttpStatusCode.BadRequest, $"This test is expected to fail with status code == 400. Observed status code == {response.StatusCode}");
+                }
 
                 if (isAsync)
                 {
                     await DeploymentTestHelper.WaitForDeploymentCompletionAsync(applicationManager, deployer);
                 }
             }
+            TestTracer.Trace($"Validation successful!");
         }
 
         private static IList<KeyValuePair<string, string>> GetOneDeployQueryParams(string type, string path, bool isAsync, bool? isClean)
