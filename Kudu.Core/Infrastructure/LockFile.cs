@@ -144,6 +144,7 @@ namespace Kudu.Core.Infrastructure
         public bool Lock(string operationName)
         {
             Stream lockStream = null;
+            var ignoreCloseStreamException = false;
             try
             {
                 FileSystemHelpers.EnsureDirectory(Path.GetDirectoryName(_path));
@@ -171,7 +172,8 @@ namespace Kudu.Core.Infrastructure
                     //      There is one drawback, previously for write action, even acquire lock will fail with UnauthorizedAccessException,
                     //      there will be retry within given timeout. so if exception is temporary, previous`s implementation will still go thru.
                     //      While right now will end up failure. But it is a extreme edge case, should be ok to ignore.
-                    return FileSystemHelpers.IsFileSystemReadOnly();
+                    ignoreCloseStreamException = FileSystemHelpers.IsFileSystemReadOnly();
+                    return ignoreCloseStreamException;
                 }
             }
             catch (IOException ex)
@@ -180,7 +182,8 @@ namespace Kudu.Core.Infrastructure
                 {
                     // if not enough disk space, no one has the lock.
                     // let the operation thru and fail where it would try to get the file
-                    return ex.Message.Contains(NotEnoughSpaceText);
+                    ignoreCloseStreamException = ex.Message.Contains(NotEnoughSpaceText);
+                    return ignoreCloseStreamException;
                 }
             }
             catch (Exception ex)
@@ -191,7 +194,7 @@ namespace Kudu.Core.Infrastructure
             {
                 if (lockStream != null)
                 {
-                    OperationManager.CriticalExecute("LockFile.Lock.Finally", () => lockStream.Close());
+                    OperationManager.CriticalExecute("LockFile.Lock.Finally", () => lockStream.Close(), _ => !ignoreCloseStreamException);
                 }
             }
 

@@ -106,7 +106,7 @@ namespace Kudu.Core.Infrastructure
             }
         }
 
-        public static void CriticalExecute(string method, Action action)
+        public static void CriticalExecute(string method, Action action, Func<Exception, bool> shouldFailFast = null)
         {
             try
             {
@@ -114,21 +114,24 @@ namespace Kudu.Core.Infrastructure
             }
             catch (Exception ex)
             {
-                KuduEventSource.Log.KuduException(
-                    ServerConfiguration.GetApplicationName(),
-                    method,
-                    string.Empty,
-                    string.Empty,
-                    "Critical execution encounters an exception and will fail fast in 60s",
-                    ex.ToString());
-
-                ThreadPool.QueueUserWorkItem(_ =>
+                if (shouldFailFast == null || shouldFailFast(ex))
                 {
-                    Thread.Sleep(60000);
-                    System.Environment.FailFast($"Method {method} encounters critical exception {ex}");
-                });
+                    KuduEventSource.Log.KuduException(
+                        ServerConfiguration.GetApplicationName(),
+                        method,
+                        string.Empty,
+                        string.Empty,
+                        "Critical execution encounters an exception and will fail fast in 60s",
+                        ex.ToString());
 
-                throw;
+                    ThreadPool.QueueUserWorkItem(_ =>
+                    {
+                        Thread.Sleep(60000);
+                        System.Environment.FailFast($"Method {method} encounters critical exception {ex}");
+                    });
+
+                    throw;
+                }
             }
         }
     }
