@@ -73,6 +73,11 @@ namespace Kudu.Core.Infrastructure
             return Path.Combine(gitPath, "bin", "bash.exe");
         }
 
+        internal override string ResolveLocalSitePath()
+        {
+            return System.Environment.ExpandEnvironmentVariables("%SystemDrive%\\local");
+        }
+
         internal override string ResolveNpmJsPath()
         {
             string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);

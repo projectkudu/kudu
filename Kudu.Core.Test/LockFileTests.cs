@@ -115,6 +115,53 @@ namespace Kudu.Core.Test
             repository.Verify(r => r.ClearLock(), Times.Once);
         }
 
+        [Fact]
+        public void DeploymentLockSentinelTest()
+        {
+            // Mock
+            System.Environment.SetEnvironmentVariable("WEBSITE_INSTANCE_ID", "Instance1");
+            var path = @"x:\temp1";
+            var pathSentinel = "C:\\local\\ShutdownSentinel\\Sentinel.txt";
+            var lockFileName = Path.Combine(path, "deployment1.lock");
+            var fileSystem = new Mock<IFileSystem>();
+            var file = new Mock<FileBase>();
+            var fileInfoBase = new Mock<IFileInfoFactory>();
+            var directory = new Mock<DirectoryBase>();
+            var repository = new Mock<IRepository>();
+            var repositoryFactory = new Mock<IRepositoryFactory>();
+            var lockFile = new DeploymentLockFile(lockFileName, Mock.Of<ITraceFactory>(f => f.GetTracer() == Mock.Of<ITracer>()));
+
+            // Setup
+            fileSystem.SetupGet(f => f.Directory)
+                      .Returns(directory.Object);
+            directory.Setup(d => d.Exists(path))
+                     .Returns(true);
+            fileSystem.SetupGet(f => f.File)
+                      .Returns(file.Object);
+            file.Setup(f => f.Open(lockFileName, FileMode.Create, FileAccess.Write, FileShare.Read))
+                .Returns(Mock.Of<Stream>());
+            file.Setup(f => f.Create(pathSentinel)).Returns(Mock.Of<Stream>());
+            fileInfoBase.Setup(f => f.FromFileName(pathSentinel)).Returns(Mock.Of<FileInfoBase>());
+            fileSystem.SetupGet(f => f.FileInfo).Returns(fileInfoBase.Object);
+
+            repositoryFactory.Setup(f => f.GetRepository())
+                             .Returns(repository.Object);
+            FileSystemHelpers.Instance = fileSystem.Object;
+            lockFile.RepositoryFactory = repositoryFactory.Object;
+
+            // Test
+            var locked = lockFile.Lock("operationName");
+            file.Setup(f => f.Exists(pathSentinel)).Returns(true);
+
+            Assert.True(locked, "lock should be successful!");
+            Assert.True(FileSystemHelpers.FileExists(pathSentinel), "Sentinel file should be present");
+
+            repository.Verify(r => r.ClearLock(), Times.Once);
+
+            // Reset IsAzureEnvironment env variable
+            System.Environment.SetEnvironmentVariable("WEBSITE_INSTANCE_ID", null);
+        }
+
         private LockFile MockLockFile(string path, ITraceFactory traceFactory = null, IFileSystem fileSystem = null)
         {
             traceFactory = traceFactory ?? NullTracerFactory.Instance;
