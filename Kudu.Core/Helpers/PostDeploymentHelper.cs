@@ -563,14 +563,24 @@ namespace Kudu.Core.Helpers
                         response.EnsureSuccessStatusCode();
                     }
 
-                    if(path.Equals(Constants.UpdateDeployStatusPath) && resContent.Contains("Excessive SCM Site operation requests. Retry after 5 seconds"))
+                    if(path.Equals(Constants.UpdateDeployStatusPath))
                     {
-                        // Request was throttled throw an exception
-                        // If max retries aren't reached, this request will be retried
-                        Trace(TraceEventType.Information, $"Call to {path} was throttled. Setting statusCode to {HttpStatusCode.NotAcceptable}");
+                        if(resContent.Contains("Excessive SCM Site operation requests. Retry after 5 seconds"))
+                        {
+                            // Request was throttled throw an exception
+                            // If max retries aren't reached, this request will be retried
+                            Trace(TraceEventType.Information, $"Call to {path} was throttled. Setting statusCode to {HttpStatusCode.NotAcceptable}");
 
-                        statusCode = HttpStatusCode.NotAcceptable;
-                        throw new HttpRequestException();
+                            statusCode = HttpStatusCode.NotAcceptable;
+                            throw new HttpRequestException();
+                        }
+                        else if (resContent.Contains("Needs fallback to another restart method from Kudu"))
+                        {
+                            // Reuqest failed because HostingConfig might be set to false for deployment status posting
+                            // In that case, fail the request
+                            statusCode = HttpStatusCode.NotImplemented;
+                            throw new HttpRequestException();
+                        }
                     }
                 }
             }
