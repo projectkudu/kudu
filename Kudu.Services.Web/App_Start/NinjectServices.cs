@@ -65,6 +65,7 @@ namespace Kudu.Services.Web.App_Start
 
         // Due to a bug in Ninject we can't use Dispose to clean up LockFile so we shut it down manually
         private static DeploymentLockFile _deploymentLock;
+        private static LockFile _hooksLock;
 
         private static event Action Shutdown;
 
@@ -173,23 +174,7 @@ namespace Kudu.Services.Web.App_Start
             TraceServices.SetTraceFactory(createTracerThunk);
 
             // Setup the deployment lock
-            string lockPath = Path.Combine(environment.SiteRootPath, Constants.LockPath);
-            string deploymentLockPath = Path.Combine(lockPath, Constants.DeploymentLockFile);
-            string statusLockPath = Path.Combine(lockPath, Constants.StatusLockFile);
-            string sshKeyLockPath = Path.Combine(lockPath, Constants.SSHKeyLockFile);
-            string hooksLockPath = Path.Combine(lockPath, Constants.HooksLockFile);
-
-            _deploymentLock = new DeploymentLockFile(deploymentLockPath, kernel.Get<ITraceFactory>());
-            _deploymentLock.InitializeAsyncLocks();
-
-            var statusLock = new LockFile(statusLockPath, kernel.Get<ITraceFactory>());
-            var sshKeyLock = new LockFile(sshKeyLockPath, kernel.Get<ITraceFactory>());
-            var hooksLock = new LockFile(hooksLockPath, kernel.Get<ITraceFactory>());
-
-            kernel.Bind<IOperationLock>().ToConstant(sshKeyLock).WhenInjectedInto<SSHKeyController>();
-            kernel.Bind<IOperationLock>().ToConstant(statusLock).WhenInjectedInto<DeploymentStatusManager>();
-            kernel.Bind<IOperationLock>().ToConstant(hooksLock).WhenInjectedInto<WebHooksManager>();
-            kernel.Bind<IOperationLock>().ToConstant(_deploymentLock);
+            BindLockFiles(environment.SiteRootPath, kernel);
 
             var shutdownDetector = new ShutdownDetector();
             shutdownDetector.Initialize();
@@ -223,7 +208,7 @@ namespace Kudu.Services.Web.App_Start
 
             // LogStream service
             // The hooks and log stream start endpoint are low traffic end-points. Re-using it to avoid creating another lock
-            var logStreamManagerLock = hooksLock;
+            var logStreamManagerLock = _hooksLock;
             kernel.Bind<LogStreamManager>().ToMethod(context => new LogStreamManager(Path.Combine(environment.RootPath, Constants.LogFilesPath),
                                                                                      context.Kernel.Get<IEnvironment>(),
                                                                                      context.Kernel.Get<IDeploymentSettingsManager>(),
@@ -370,6 +355,28 @@ namespace Kudu.Services.Web.App_Start
                     kernel.Get<IAnalytics>(),
                     kernel.Get<ITraceFactory>()));
             GlobalConfiguration.Configuration.Filters.Add(new EnsureRequestIdHandlerAttribute());
+        }
+
+        private static void BindLockFiles(string siteRootPath, IKernel kernel)
+        {
+            // Setup the deployment lock
+            string lockPath = Path.Combine(siteRootPath, Constants.LockPath);
+            string deploymentLockPath = Path.Combine(lockPath, Constants.DeploymentLockFile);
+            string statusLockPath = Path.Combine(lockPath, Constants.StatusLockFile);
+            string sshKeyLockPath = Path.Combine(lockPath, Constants.SSHKeyLockFile);
+            string hooksLockPath = Path.Combine(lockPath, Constants.HooksLockFile);
+
+            _deploymentLock = new DeploymentLockFile(deploymentLockPath, kernel.Get<ITraceFactory>());
+            _deploymentLock.InitializeAsyncLocks();
+
+            var statusLock = new LockFile(statusLockPath, kernel.Get<ITraceFactory>(), traceLock: false);
+            var sshKeyLock = new LockFile(sshKeyLockPath, kernel.Get<ITraceFactory>());
+            _hooksLock = new LockFile(hooksLockPath, kernel.Get<ITraceFactory>());
+
+            kernel.Bind<IOperationLock>().ToConstant(sshKeyLock).WhenInjectedInto<SSHKeyController>();
+            kernel.Bind<IOperationLock>().ToConstant(statusLock).WhenInjectedInto<DeploymentStatusManager>();
+            kernel.Bind<IOperationLock>().ToConstant(_hooksLock).WhenInjectedInto<WebHooksManager>();
+            kernel.Bind<IOperationLock>().ToConstant(_deploymentLock);
         }
 
         private static void CleanupOrEnsureDirectories(IEnvironment environment)

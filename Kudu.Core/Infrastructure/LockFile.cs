@@ -27,6 +27,9 @@ namespace Kudu.Core.Infrastructure
         // file system readonly or disk full period.
         private readonly bool _ensureLock;
 
+        // trace lock acquired and released
+        private readonly bool _traceLock;
+
         private ConcurrentQueue<QueueItem> _lockRequestQueue;
         private FileSystemWatcher _lockFileWatcher;
 
@@ -37,11 +40,12 @@ namespace Kudu.Core.Infrastructure
         {
         }
 
-        public LockFile(string path, ITraceFactory traceFactory, bool ensureLock = false)
+        public LockFile(string path, ITraceFactory traceFactory, bool ensureLock = false, bool traceLock = true)
         {
             _path = Path.GetFullPath(path);
             _traceFactory = traceFactory;
             _ensureLock = ensureLock;
+            _traceLock = traceLock;
         }
 
         public OperationLockInfo LockInfo
@@ -158,7 +162,10 @@ namespace Kudu.Core.Infrastructure
                 _lockStream = lockStream;
                 lockStream = null;
 
-                _traceFactory.GetTracer().Trace($"LockFile '{_path}' acquired");
+                if (_traceLock)
+                {
+                    _traceFactory.GetTracer().Trace($"LockFile '{_path}' acquired");
+                }
 
                 return true;
             }
@@ -281,7 +288,10 @@ namespace Kudu.Core.Infrastructure
                 _lockStream = null;
                 temp.Close();
 
-                _traceFactory.GetTracer().Trace($"LockFile '{_path}' released");
+                if (_traceLock)
+                {
+                    _traceFactory.GetTracer().Trace($"LockFile '{_path}' released");
+                }
             });
 
             // cleanup inactive lock file.  technically, it is not needed

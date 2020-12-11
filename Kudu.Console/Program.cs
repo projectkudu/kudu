@@ -122,7 +122,7 @@ namespace Kudu.Console
             string statusLockPath = Path.Combine(lockPath, Constants.StatusLockFile);
             string hooksLockPath = Path.Combine(lockPath, Constants.HooksLockFile);
 
-            IOperationLock statusLock = new LockFile(statusLockPath, traceFactory);
+            IOperationLock statusLock = new LockFile(statusLockPath, traceFactory, traceLock: false);
             IOperationLock hooksLock = new LockFile(hooksLockPath, traceFactory);
 
             IBuildPropertyProvider buildPropertyProvider = new BuildPropertyProvider();

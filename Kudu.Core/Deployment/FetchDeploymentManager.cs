@@ -304,7 +304,7 @@ namespace Kudu.Core.Deployment
                     string deploymentLockPath = Path.Combine(lockPath, Constants.DeploymentLockFile);
                     string statusLockPath = Path.Combine(lockPath, Constants.StatusLockFile);
                     string hooksLockPath = Path.Combine(lockPath, Constants.HooksLockFile);
-                    var statusLock = new LockFile(statusLockPath, traceFactory);
+                    var statusLock = new LockFile(statusLockPath, traceFactory, traceLock: false);
                     var hooksLock = new LockFile(hooksLockPath, traceFactory);
                     var deploymentLock = new DeploymentLockFile(deploymentLockPath, traceFactory);
 
