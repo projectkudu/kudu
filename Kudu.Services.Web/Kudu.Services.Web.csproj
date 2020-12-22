@@ -204,6 +204,7 @@
     </Compile>
     <Compile Include="App_Start\TraceDeprecatedActionAttribute.cs" />
     <Compile Include="SafeOnePerRequestHttpModule.cs" />
+    <Compile Include="Infrastruture\BackgroundTask.cs" />
     <Compile Include="Infrastruture\HttpHandlerRouteHandler.cs" />
     <Compile Include="Infrastruture\RouteCollectionExtensions.cs" />
     <Compile Include="SafeOnePerRequestNinjectModule.cs" />

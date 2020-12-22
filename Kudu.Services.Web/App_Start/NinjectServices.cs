@@ -39,6 +39,7 @@ using Kudu.Services.Performance;
 using Kudu.Services.ServiceHookHandlers;
 using Kudu.Services.SSHKey;
 using Kudu.Services.Web.Infrastructure;
+using Kudu.Services.Web.Infrastruture;
 using Kudu.Services.Web.Services;
 using Kudu.Services.Web.Tracing;
 using Microsoft.AspNet.SignalR;
@@ -204,7 +205,13 @@ namespace Kudu.Services.Web.App_Start
             // Trace shutdown event
             // Cannot use shutdownDetector.Token.Register because of race condition
             // with NinjectServices.Stop via WebActivator.ApplicationShutdownMethodAttribute
-            Shutdown += () => TraceShutdown(environment, noContextDeploymentsSettingsManager);
+            Shutdown += () =>
+            {
+                BackgroundTask.Shutdown();
+                TraceShutdown(environment, noContextDeploymentsSettingsManager);
+            };
+
+            BackgroundTask.Start();
 
             // LogStream service
             // The hooks and log stream start endpoint are low traffic end-points. Re-using it to avoid creating another lock

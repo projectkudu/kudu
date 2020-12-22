@@ -30,6 +30,9 @@
         public const string SkipSslValidation = "SCM_SKIP_SSL_VALIDATION";
         // Free, Shared, Basic, Standard, Premium
         public const string WebSiteSku = "WEBSITE_SKU";
+        public const string WebSiteName = "WEBSITE_SITE_NAME";
+        public const string WebSiteHostName = "WEBSITE_HOSTNAME";
+        public const string WebSiteOwnerName = "WEBSITE_OWNER_NAME";
         public const string WebJobsRestartTime = "WEBJOBS_RESTART_TIME";
         public const string WebJobsIdleTimeoutInSeconds = "WEBJOBS_IDLE_TIMEOUT";
         public const string WebJobsHistorySize = "WEBJOBS_HISTORY_SIZE";

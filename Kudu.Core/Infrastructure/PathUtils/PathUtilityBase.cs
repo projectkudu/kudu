@@ -59,7 +59,7 @@ namespace Kudu.Core.Infrastructure
 
         // This corresponds to the directory which contains the VirtualDirectory0
         // Eg. D:\DWASFiles\Sites\<SiteName>
-        internal abstract string ResolveLocalSitePath();
+        public abstract string ResolveLocalSitePath();
 
         internal virtual string ResolveMSBuild15Dir()
         {

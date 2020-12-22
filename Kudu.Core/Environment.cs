@@ -431,7 +431,7 @@ namespace Kudu.Core
             }
         }
 
-        static void GetDiskFreeSpace(string path, out ulong freeBytes, out ulong totalBytes)
+        public static void GetDiskFreeSpace(string path, out ulong freeBytes, out ulong totalBytes)
         {
             ulong diskFreeBytes;
             if (!EnvironmentNativeMethods.GetDiskFreeSpaceEx(path, out freeBytes, out totalBytes, out diskFreeBytes))

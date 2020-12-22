@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Tracing;
 
@@ -9,7 +8,7 @@ namespace Kudu.Core.Settings
 {
     public static class ScmHostingConfigurations
     {
-        private readonly static string _configsFile = 
+        public readonly static string ConfigsFile = 
             System.Environment.ExpandEnvironmentVariables(@"%ProgramFiles(x86)%\SiteExtensions\kudu\ScmHostingConfigurations.txt");
 
         private static Dictionary<string, string> _configs;
@@ -24,8 +23,8 @@ namespace Kudu.Core.Settings
 
                 try
                 {
-                    var settings = FileSystemHelpers.FileExists(_configsFile) 
-                        ? FileSystemHelpers.ReadAllText(_configsFile) 
+                    var settings = FileSystemHelpers.FileExists(ConfigsFile) 
+                        ? FileSystemHelpers.ReadAllText(ConfigsFile) 
                         : null;
 
                     KuduEventSource.Log.GenericEvent(

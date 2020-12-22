@@ -71,7 +71,7 @@ namespace Kudu.Core.Infrastructure
             return path;
         }
 
-        internal override string ResolveLocalSitePath()
+        public override string ResolveLocalSitePath()
         {
             throw new NotImplementedException();
         }

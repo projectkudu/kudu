@@ -5,7 +5,6 @@ using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
-using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Web;
@@ -14,6 +13,7 @@ using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Tracing;
 using Kudu.Services.Infrastructure;
+using Kudu.Services.Web.Infrastruture;
 
 namespace Kudu.Services.Web.Tracing
 {
@@ -23,14 +23,6 @@ namespace Kudu.Services.Web.Tracing
         private static readonly object _stepKey = new object();
         private static int _traceStartup;
         private static DateTime _lastRequestDateTime;
-
-        private static DateTime _nextHeartbeatDateTime = DateTime.MinValue; 
-        private static Lazy<string> _kuduVersion = new Lazy<string>(() =>
-        {
-            var assembly = Assembly.GetExecutingAssembly();
-            var fvi = FileVersionInfo.GetVersionInfo(assembly.Location);
-            return fvi.FileVersion;
-        });
 
         // (/|$) means either "/" or end-of-line
         // {0,2} means repeat pattern 0 to 2 times
@@ -103,9 +95,6 @@ namespace Kudu.Services.Web.Tracing
 
             // Always trace the startup request.
             ITracer tracer = TraceStartup(httpContext);
-
-            // Trace heartbeat periodically
-            TraceHeartbeat();
 
             // Skip certain paths
             if (TraceExtensions.ShouldSkipRequest(httpRequest))
@@ -343,31 +332,11 @@ namespace Kudu.Services.Web.Tracing
                         requestId,
                         Environment.GetEnvironmentVariable(SettingsKeys.ScmType),
                         Environment.GetEnvironmentVariable(SettingsKeys.WebSiteSku),
-                        _kuduVersion.Value);
+                        BackgroundTask.KuduVersion.Value);
                 });
             }
 
             return tracer;
-        }
-
-        private static void TraceHeartbeat()
-        {
-            var now = DateTime.UtcNow;
-            if (_nextHeartbeatDateTime < now)
-            {
-                _nextHeartbeatDateTime = now.AddHours(1);
-
-                OperationManager.SafeExecute(() =>
-                {
-                    KuduEventSource.Log.GenericEvent(
-                        ServerConfiguration.GetApplicationName(),
-                        string.Format("Heartbeat pid:{0}, domain:{1}", Process.GetCurrentProcess().Id, AppDomain.CurrentDomain.Id),
-                        string.Empty,
-                        Environment.GetEnvironmentVariable(SettingsKeys.ScmType),
-                        Environment.GetEnvironmentVariable(SettingsKeys.WebSiteSku),
-                        _kuduVersion.Value);
-                });
-            }
         }
 
         private static Dictionary<string, string> GetTraceAttributes(HttpContext httpContext)
