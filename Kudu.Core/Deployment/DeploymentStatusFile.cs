@@ -1,9 +1,9 @@
 ﻿using System;
 using System.IO;
-using System.IO.Abstractions;
 using System.Xml.Linq;
 using Kudu.Contracts.Infrastructure;
 using Kudu.Core.Infrastructure;
+using Kudu.Core.Settings;
 using Kudu.Core.Tracing;
 
 namespace Kudu.Core.Deployment
@@ -14,14 +14,17 @@ namespace Kudu.Core.Deployment
     public class DeploymentStatusFile : IDeploymentStatusFile
     {
         private const string StatusFile = "status.xml";
+        private const string StatusCompleteFile = "status_complete.xml";
         private readonly string _activeFile;
         private readonly string _statusFile;
+        private readonly string _statusCompleteFile;
         private readonly IOperationLock _statusLock;
 
         private DeploymentStatusFile(string id, IEnvironment environment, IOperationLock statusLock, XDocument document = null)
         {
             _activeFile = Path.Combine(environment.DeploymentsPath, Constants.ActiveDeploymentFile);
             _statusFile = Path.Combine(environment.DeploymentsPath, id, StatusFile);
+            _statusCompleteFile = Path.Combine(environment.DeploymentsPath, id, StatusCompleteFile);
             _statusLock = statusLock;
 
             Id = id;
@@ -51,7 +54,27 @@ namespace Kudu.Core.Deployment
 
         public static DeploymentStatusFile Open(string id, IEnvironment environment, IAnalytics analytics, IOperationLock statusLock)
         {
-            return statusLock.LockOperation(() =>
+            // status complete file is created infrequently at deployment completion time
+            // once deployment is completed, it is highly unlikely its status will change
+            // this helps optimize status read operation avoid taking status lock
+            DeploymentStatusFile statusComplete = null;
+            OperationManager.SafeExecute(() =>
+            {
+                string path = Path.Combine(environment.DeploymentsPath, id, StatusCompleteFile);
+                if (FileSystemHelpers.FileExists(path))
+                {
+                    if (ScmHostingConfigurations.DeploymentStatusCompleteFileEnabled)
+                    {
+                        statusComplete = new DeploymentStatusFile(id, environment, statusLock, FileSystemCache.ReadXml(path));
+                    }
+                    else
+                    {
+                        FileSystemHelpers.DeleteFile(path);
+                    }
+                }
+            });
+
+            return statusComplete ?? statusLock.LockOperation(() =>
             {
                 string path = Path.Combine(environment.DeploymentsPath, id, StatusFile);
 
@@ -194,6 +217,19 @@ namespace Kudu.Core.Deployment
                     else
                     {
                         FileSystemHelpers.WriteAllText(_activeFile, String.Empty);
+                    }
+                });
+
+                OperationManager.Attempt(() =>
+                {
+                    // enable the feature thru configuration
+                    if (ScmHostingConfigurations.DeploymentStatusCompleteFileEnabled && Complete)
+                    {
+                        FileSystemHelpers.CopyFile(_statusFile, _statusCompleteFile);
+                    }
+                    else if (FileSystemHelpers.FileExists(_statusCompleteFile))
+                    {
+                        FileSystemHelpers.DeleteFile(_statusCompleteFile);
                     }
                 });
             }, "Updating deployment status", DeploymentStatusManager.LockTimeout);

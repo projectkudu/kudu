@@ -265,6 +265,7 @@
     <Compile Include="Helpers\SimpleWebTokenHelper.cs" />
     <Compile Include="Hooks\WebHooksManager.cs" />
     <Compile Include="Infrastructure\AspNetCoreHelper.cs" />
+    <Compile Include="Infrastructure\FileSystemCache.cs" />
     <Compile Include="Infrastructure\FunctionAppHelper.cs" />
     <Compile Include="Infrastructure\FileSystemWatcherWrapper.cs" />
     <Compile Include="Infrastructure\IFileSystemWatcher.cs" />

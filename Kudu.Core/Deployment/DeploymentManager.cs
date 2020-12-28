@@ -835,7 +835,7 @@ namespace Kudu.Core.Deployment
             string activeDeploymentId = _status.ActiveDeploymentId;
             bool isDeploying = IsDeploying;
 
-            foreach (var id in FileSystemHelpers.GetDirectories(_environment.DeploymentsPath))
+            foreach (var id in FileSystemHelpers.GetDirectoryNames(_environment.DeploymentsPath).Where(p => !p.Equals(@"tools", StringComparison.OrdinalIgnoreCase)))
             {
                 DeployResult result = GetResult(id, activeDeploymentId, isDeploying);
 

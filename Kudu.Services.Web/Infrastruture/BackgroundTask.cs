@@ -16,8 +16,6 @@ namespace Kudu.Services.Web.Infrastruture
 {
     public static class BackgroundTask
     {
-        public const int DefaulTelemetryIntervalMinutes = 30;
-
         public readonly static Lazy<string> AppServiceVersion = new Lazy<string>(() =>
         {
             var assembly = Assembly.Load("Microsoft.Web.Hosting, Version=7.1.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35");
@@ -74,23 +72,23 @@ namespace Kudu.Services.Web.Infrastruture
 
             do
             {
+                OperationManager.SafeExecute(FileSystemCache.CleanUp);
                 OperationManager.SafeExecute(EmitTelemetry);
             } while (!shutdownEvent.WaitOne(TimeSpan.FromMinutes(10)));
         }
 
         private static void EmitTelemetry()
         {
-            int interval = DefaulTelemetryIntervalMinutes;
-
             var now = DateTime.UtcNow;
             if (_nextTelemetryDateTime < now)
             {
-                interval = GetTelemetryIntervalMinutes(interval);
-                _nextTelemetryDateTime = now.AddMinutes(interval > 0 ? interval : DefaulTelemetryIntervalMinutes);
+                var interval = ScmHostingConfigurations.TelemetryIntervalMinutes;
                 if (interval <= 0)
                 {
                     return;
                 }
+
+                _nextTelemetryDateTime = now.AddMinutes(interval);
 
                 var telemetry = new Dictionary<string, object>();
                 AddProcessInfo(telemetry);
@@ -105,20 +103,6 @@ namespace Kudu.Services.Web.Infrastruture
                     Environment.GetEnvironmentVariable(SettingsKeys.WebSiteSku),
                     KuduVersion.Value);
             }
-        }
-
-        private static int GetTelemetryIntervalMinutes(int defaultInterval)
-        {
-            try
-            {
-                var value = ScmHostingConfigurations.GetValue("TelemetryIntervalMinutes", $"{DefaulTelemetryIntervalMinutes}");
-                return int.TryParse(value, out int interval) ? interval : 0;
-            }
-            catch (Exception)
-            {
-            }
-
-            return defaultInterval;
         }
 
         private static void AddProcessInfo(Dictionary<string, object> telemetry)

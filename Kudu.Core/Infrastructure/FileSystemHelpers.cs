@@ -293,6 +293,11 @@ namespace Kudu.Core.Infrastructure
             return Instance.Directory.GetDirectories(path);
         }
 
+        public static string[] GetDirectoryNames(string path)
+        {
+            return Instance.Directory.GetDirectories(path).Select(p => Path.GetFileName(p)).ToArray();
+        }
+
         public static string[] GetFiles(string path, string pattern)
         {
             return Instance.Directory.GetFiles(path, pattern);

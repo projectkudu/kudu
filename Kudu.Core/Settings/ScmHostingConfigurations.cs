@@ -14,8 +14,24 @@ namespace Kudu.Core.Settings
         private static Dictionary<string, string> _configs;
         private static DateTime _configsTTL;
 
+        public static bool DeploymentStatusCompleteFileEnabled
+        {
+            get { return GetValue("DeploymentStatusCompleteFileEnabled") == "1"; }
+        }
+
+        public static int TelemetryIntervalMinutes
+        {
+            get { return int.TryParse(GetValue("TelemetryIntervalMinutes"), out int value) ? value : 30; }
+        }
+
         public static string GetValue(string key, string defaultValue = null)
         {
+            var env = System.Environment.GetEnvironmentVariable($"SCM_{key}");
+            if (!string.IsNullOrEmpty(env))
+            {
+                return env;
+            }
+
             var configs = _configs;
             if (configs == null || DateTime.UtcNow > _configsTTL)
             {
