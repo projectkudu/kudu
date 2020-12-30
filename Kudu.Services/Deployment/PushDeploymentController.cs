@@ -7,19 +7,14 @@ using System.IO.Compression;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Reflection;
-using System.ServiceModel;
-using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Web.Http;
 using Kudu.Contracts.Deployment;
+using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
 using Kudu.Core;
 using Kudu.Core.Deployment;
-using Kudu.Core.Helpers;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.SourceControl;
 using Kudu.Core.Tracing;
@@ -41,19 +36,22 @@ namespace Kudu.Services.Deployment
         private readonly ITracer _tracer;
         private readonly ITraceFactory _traceFactory;
         private readonly IDeploymentSettingsManager _settings;
+        private readonly IOperationLock _deploymentLock;
 
         public PushDeploymentController(
             IEnvironment environment,
             IFetchDeploymentManager deploymentManager,
             ITracer tracer,
             ITraceFactory traceFactory,
-            IDeploymentSettingsManager settings)
+            IDeploymentSettingsManager settings,
+            IOperationLock deploymentLock)
         {
             _environment = environment;
             _deploymentManager = deploymentManager;
             _tracer = tracer;
             _traceFactory = traceFactory;
             _settings = settings;
+            _deploymentLock = deploymentLock;
         }
 
         [HttpPost]
@@ -416,34 +414,40 @@ namespace Kudu.Services.Deployment
             // It will be extracted to the appropriate directory by the Fetch handler
             else if (artifactType == ArtifactType.Zip)
             {
-                if (_settings.RunFromLocalZip())
+                await _deploymentLock.LockHttpOperationAsync(async () =>
                 {
-                    await WriteSitePackageZip(deploymentInfo, _tracer, Request.Content);
-                }
-                else
-                {
-                    var zipFileName = Path.ChangeExtension(Path.GetRandomFileName(), "zip");
-                    var zipFilePath = Path.Combine(_environment.ZipTempPath, zipFileName);
-
-                    using (_tracer.Step("Saving request content to {0}", zipFilePath))
+                    if (_settings.RunFromLocalZip())
                     {
-                        await content.CopyToAsync(zipFilePath, _tracer);
+                        await WriteSitePackageZip(deploymentInfo, _tracer, Request.Content);
                     }
+                    else
+                    {
+                        var zipFileName = Path.ChangeExtension(Path.GetRandomFileName(), "zip");
+                        var zipFilePath = Path.Combine(_environment.ZipTempPath, zipFileName);
 
-                    deploymentInfo.RepositoryUrl = zipFilePath;
-                }
+                        using (_tracer.Step("Saving request content to {0}", zipFilePath))
+                        {
+                            await content.CopyToAsync(zipFilePath, _tracer);
+                        }
+
+                        deploymentInfo.RepositoryUrl = zipFilePath;
+                    }
+                }, "Preparing zip package");
             }
             // Copy the request body to a temp file.
             // It will be moved to the appropriate directory by the Fetch handler
             else if (deploymentInfo.Deployer == Constants.OneDeploy)
             {
-                var artifactTempPath = Path.Combine(_environment.ZipTempPath, deploymentInfo.TargetFileName);
-                using (_tracer.Step("Saving request content to {0}", artifactTempPath))
+                await _deploymentLock.LockHttpOperationAsync(async () =>
                 {
-                    await content.CopyToAsync(artifactTempPath, _tracer);
-                }
+                    var artifactTempPath = Path.Combine(_environment.ZipTempPath, deploymentInfo.TargetFileName);
+                    using (_tracer.Step("Saving request content to {0}", artifactTempPath))
+                    {
+                        await content.CopyToAsync(artifactTempPath, _tracer);
+                    }
 
-                deploymentInfo.RepositoryUrl = artifactTempPath;
+                    deploymentInfo.RepositoryUrl = artifactTempPath;
+                }, "Preparing zip package");
             }
 
             isAsync = ArmUtils.IsArmRequest(Request) ? true : isAsync;

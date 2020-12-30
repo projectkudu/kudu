@@ -6,6 +6,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
+using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Deployment;
@@ -28,6 +29,7 @@ namespace Kudu.Core.Test.Deployment
             var tracer = new Mock<ITracer>();
             var traceFactory = new Mock<ITraceFactory>();
             var settings = new Mock<IDeploymentSettingsManager>();
+            var deploymentLock = new Mock<IOperationLock>();
             var fileSystem = new Mock<IFileSystem>();
             var fileBase = new Mock<FileBase>();
             var directoryBase = new Mock<DirectoryBase>();
@@ -60,12 +62,15 @@ namespace Kudu.Core.Test.Deployment
                 .Setup(m => m.FetchDeploy(It.IsAny<ArtifactDeploymentInfo>(), It.IsAny<bool>(), It.IsAny<Uri>(), It.IsAny<string>()))
                 .Returns(Task.FromResult(FetchDeploymentRequestResult.RanSynchronously));
 
+            deploymentLock.Setup(f => f.Lock(It.IsAny<string>())).Returns(true);
+
             var controller = new PushDeploymentController(
                 environment.Object,
                 deploymentManager.Object,
                 tracer.Object,
                 traceFactory.Object,
-                settings.Object)
+                settings.Object,
+                deploymentLock.Object)
             {
                 Request = new HttpRequestMessage(HttpMethod.Post, "https://localhost/zipDeploy")
                 {
