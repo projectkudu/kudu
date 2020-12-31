@@ -33,7 +33,7 @@ namespace Kudu.Services.Deployment
 
             var segments = path.Split('/');
 
-            return segments.Length == 2 && path.StartsWith("webapps/", StringComparison.Ordinal) & !string.IsNullOrWhiteSpace(segments[1]);
+            return segments.Length == 2 && path.StartsWith("webapps/", StringComparison.Ordinal) && !string.IsNullOrWhiteSpace(segments[1]);
         }
 
         public static bool EnsureValidStack(ArtifactType artifactType, List<string> expectedStacks, bool ignoreStack, out string error)
