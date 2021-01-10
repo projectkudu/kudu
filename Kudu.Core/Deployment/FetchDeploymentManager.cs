@@ -97,7 +97,7 @@ namespace Kudu.Core.Deployment
                         waitForTempDeploymentCreation);
 
                     return successfullyRequested
-                    ? FetchDeploymentRequestResult.RunningAynschronously
+                    ? FetchDeploymentRequestResult.RunningAsynchronously
                     : FetchDeploymentRequestResult.ConflictDeploymentInProgress;
                 }
             }
