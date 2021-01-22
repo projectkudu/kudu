@@ -21,7 +21,7 @@ namespace Kudu.Core.Deployment
             // Artifact "repository" does not conflict with other types, including NoRepository,
             // so there's no call to EnsureRepository
             var path = Path.Combine(_environment.ZipTempPath, Constants.ArtifactStagingDirectoryName);
-            return new NullRepository(path, _traceFactory, ExternalDeploymentId);
+            return new NullRepository(path, _traceFactory, DeploymentTrackingId);
         }
 
         public string Author { get; set; }
