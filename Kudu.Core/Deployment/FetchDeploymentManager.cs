@@ -198,11 +198,18 @@ namespace Kudu.Core.Deployment
                             if (PostDeploymentHelper.IsAzureEnvironment())
                             {
                                 // Parse the changesetId into a GUID
+                                // If DeploymentTrackingId is provided, give that preference
                                 // The FE hook allows only GUID as a deployment id
                                 // If the id is already in GUID format nothing will happen
                                 // If it doesn't have the necessary format for a GUID, and exception will be thrown
                                 var changeSet = repository.GetChangeSet(deployBranch);
-                                updateStatusObj = new DeployStatusApiResult(Constants.BuildRequestReceived, Guid.Parse(changeSet.Id).ToString());
+                                var trackingId = Guid.Parse(changeSet.Id).ToString();
+                                if (deploymentInfo != null
+                                    && !string.IsNullOrEmpty(deploymentInfo.DeploymentTrackingId))
+                                {
+                                    trackingId = deploymentInfo.DeploymentTrackingId;
+                                }
+                                updateStatusObj = new DeployStatusApiResult(Constants.BuildRequestReceived, trackingId);
                                 await _deploymentManager.SendDeployStatusUpdate(updateStatusObj);
                             }
                         }
