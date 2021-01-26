@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Kudu.Contracts.Settings;
+using Kudu.Core.SiteExtensions;
 using SystemEnvironment = System.Environment;
 
 namespace Kudu.Core.Infrastructure
@@ -149,19 +150,47 @@ namespace Kudu.Core.Infrastructure
                 // above is for public kudu, below is for azure
             };
 
-            string latestMsBuildPath = Path.Combine(programFiles, "MSBuild-16.8.3", "MSBuild", "Current", "Bin");
+            string[] msBuildDirectories = FileSystemHelpers.GetDirectories(Path.Combine(programFiles, "MSBuilds"));
 
-            if (Directory.Exists(latestMsBuildPath))
+            SemanticVersion latestMsBuild = null;
+
+            // Iterate through MSbuild versions inside Program Files (x86)\MSBuilds and fetch the latest one
+            foreach (string msBuild in msBuildDirectories)
+            {
+                int versionStartIndex = msBuild.LastIndexOf("-");
+
+                if(versionStartIndex == -1)
+                {
+                    continue;
+                }
+
+                string versionStr = msBuild.Substring(versionStartIndex + 1);
+
+                if(SemanticVersion.TryParse(versionStr, out SemanticVersion currVersion))
+                {
+                    string installedFilePath = Path.Combine(programFiles, "MSBuilds", $"MSBuild-{currVersion}", $"MSBuild-{currVersion}.installed");
+                    if (FileSystemHelpers.FileExists(installedFilePath) &&
+                        (latestMsBuild == null || currVersion.CompareTo(latestMsBuild) > 0))
+                    {
+                        latestMsBuild = currVersion;
+                    }
+                }
+            }
+
+            string latestMsBuildPath = Path.Combine(programFiles, "MSBuilds", $"MSBuild-{latestMsBuild}", "MSBuild", "Current", "Bin");
+
+            if (!string.IsNullOrEmpty(latestMsBuild.ToString()) && FileSystemHelpers.DirectoryExists(latestMsBuildPath))
             {
                 probPaths.Add(latestMsBuildPath);
             }
             else
             {
+                // TODO: Remove this after ANT93
                 // Fallback to 16.8.0 if present
                 probPaths.Add(Path.Combine(programFiles, "MSBuild-16.8.0", "MSBuild", "Current", "Bin"));
             }
 
-            return probPaths.FirstOrDefault(path => Directory.Exists(path));
+            return probPaths.FirstOrDefault(path => FileSystemHelpers.DirectoryExists(path));
         }
 
         internal override string ResolveMSBuildPath()
