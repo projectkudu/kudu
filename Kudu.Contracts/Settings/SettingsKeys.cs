@@ -63,6 +63,8 @@
 
         public const string UseMSBuild16 = "SCM_USE_MSBUILD_16";
         public const string UseMSBuild1607 = "SCM_USE_MSBUILD_1607";
+        
+        public const string MSBuildVersion = "SCM_MSBUILD_VERSION";
 
         public const string UseOriginalHostForReference = "SCM_USE_ORIGINALHOST_FOR_REFERENCE";
 

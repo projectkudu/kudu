@@ -266,6 +266,22 @@ namespace Kudu.Core.Infrastructure
             }
         }
 
+        public static string MSBuildVersion
+        {
+            get
+            {
+                var var = System.Environment.GetEnvironmentVariable(String.Format("APPSETTING_{0}", SettingsKeys.MSBuildVersion));
+                if (string.IsNullOrEmpty(var))
+                {
+                    return ScmHostingConfigurations.GetValue(SettingsKeys.MSBuildVersion);
+                }
+                else
+                {
+                    return null;
+                }
+            }
+        }
+
         public static string GetTargetFramework(string path)
         {
             try

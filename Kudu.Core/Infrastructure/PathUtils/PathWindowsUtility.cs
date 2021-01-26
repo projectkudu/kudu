@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Kudu.Contracts.Settings;
+using Kudu.Core.SiteExtensions;
 using SystemEnvironment = System.Environment;
 
 namespace Kudu.Core.Infrastructure
@@ -149,19 +149,50 @@ namespace Kudu.Core.Infrastructure
                 // above is for public kudu, below is for azure
             };
 
-            string latestMsBuildPath = Path.Combine(programFiles, "MSBuild-16.8.3", "MSBuild", "Current", "Bin");
-
-            if (Directory.Exists(latestMsBuildPath))
+            if (FileSystemHelpers.DirectoryExists(Path.Combine(programFiles, "MSBuilds")))
             {
-                probPaths.Add(latestMsBuildPath);
-            }
-            else
-            {
-                // Fallback to 16.8.0 if present
-                probPaths.Add(Path.Combine(programFiles, "MSBuild-16.8.0", "MSBuild", "Current", "Bin"));
+                // Iterate through MSbuild versions inside Program Files (x86)\MSBuilds and fetch the latest one
+                string latestMsBuildStr = null;
+                SemanticVersion latestMsBuild = null;
+                foreach (string msBuild in FileSystemHelpers.GetDirectories(Path.Combine(programFiles, "MSBuilds")))
+                {
+                    var versionStr = Path.GetFileName(msBuild);
+                    if (SemanticVersion.TryParse(versionStr, out SemanticVersion currVersion))
+                    {
+                        string installedFilePath = Path.Combine(programFiles, "MSBuilds", $"{versionStr}.installed");
+                        if (FileSystemHelpers.FileExists(installedFilePath) &&
+                            (latestMsBuild == null || currVersion.CompareTo(latestMsBuild) > 0))
+                        {
+                            latestMsBuildStr = versionStr;
+                            latestMsBuild = currVersion;
+                        }
+                    }
+                }
+
+                var pinnedVersion = VsHelper.MSBuildVersion;
+                var pinnedPath = string.IsNullOrEmpty(pinnedVersion) ? null : Path.Combine(programFiles, "MSBuilds", pinnedVersion, "MSBuild", "Current", "Bin");
+                var pinnedInstalledFilePath = string.IsNullOrEmpty(pinnedVersion) ? null : Path.Combine(programFiles, "MSBuilds", $"{pinnedVersion}.installed");
+                if (!string.IsNullOrEmpty(pinnedInstalledFilePath)
+                    && FileSystemHelpers.DirectoryExists(pinnedPath)
+                    && FileSystemHelpers.FileExists(pinnedInstalledFilePath))
+                {
+                    probPaths.Add(pinnedPath);
+                }
+                else if (!string.IsNullOrEmpty(latestMsBuildStr))
+                {
+                    string latestMsBuildPath = Path.Combine(programFiles, "MSBuilds", latestMsBuildStr, "MSBuild", "Current", "Bin");
+                    if (FileSystemHelpers.DirectoryExists(latestMsBuildPath))
+                    {
+                        probPaths.Add(latestMsBuildPath);
+                    }
+                }
             }
 
-            return probPaths.FirstOrDefault(path => Directory.Exists(path));
+            // TODO: Remove this after ANT93
+            // Fallback to 16.8.0 if present
+            probPaths.Add(Path.Combine(programFiles, "MSBuild-16.8.0", "MSBuild", "Current", "Bin"));
+
+            return probPaths.FirstOrDefault(path => FileSystemHelpers.DirectoryExists(path));
         }
 
         internal override string ResolveMSBuildPath()

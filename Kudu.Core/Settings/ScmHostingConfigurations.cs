@@ -14,6 +14,17 @@ namespace Kudu.Core.Settings
         private static Dictionary<string, string> _configs;
         private static DateTime _configsTTL;
 
+        // for mocking purpose
+        public static Dictionary<string, string> Config
+        {
+            get { return _configs; }
+            set
+            {
+                _configs = value;
+                _configsTTL = value != null ? DateTime.UtcNow.AddMinutes(10) : DateTime.MinValue;
+            }
+        }
+
         public static bool DeploymentStatusCompleteFileEnabled
         {
             get { return GetValue("DeploymentStatusCompleteFileEnabled") == "1"; }
