@@ -25,6 +25,11 @@ namespace Kudu.Core.Settings
             }
         }
 
+        public static bool GetLatestDeploymentOptimized
+        {
+            get { return GetValue("GetLatestDeploymentOptimized") == "1"; }
+        }
+
         public static bool DeploymentStatusCompleteFileEnabled
         {
             get { return GetValue("DeploymentStatusCompleteFileEnabled") == "1"; }

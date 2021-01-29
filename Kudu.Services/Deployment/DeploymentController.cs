@@ -429,8 +429,7 @@ namespace Kudu.Services.Deployment
         {
             using (_tracer.Step("DeploymentService.GetResult"))
             {
-                DeployResult pending;
-                if (IsLatestPendingDeployment(ref id, out pending))
+                if (IsLatestPendingDeployment(Request, id, out DeployResult pending, out DeployResult latest))
                 {
                     var response = Request.CreateResponse(HttpStatusCode.Accepted, ArmUtils.AddEnvelopeOnArmRequest(pending, Request));
                     if (ArmUtils.IsArmRequest(Request) && Request.Headers.Referrer != null && Request.Headers.Referrer.AbsolutePath.EndsWith(Constants.LatestDeployment, StringComparison.OrdinalIgnoreCase))
@@ -444,8 +443,7 @@ namespace Kudu.Services.Deployment
                     return response;
                 }
 
-                DeployResult result = _deploymentManager.GetResult(id);
-
+                var result = latest ?? _deploymentManager.GetResult(id);
                 if (result == null)
                 {
                     var response = Request.CreateErrorResponse(HttpStatusCode.NotFound, String.Format(CultureInfo.CurrentCulture,
@@ -483,10 +481,19 @@ namespace Kudu.Services.Deployment
             }
         }
 
-        private bool IsLatestPendingDeployment(ref string id, out DeployResult pending)
+        private bool IsLatestPendingDeployment(HttpRequestMessage request, string id, out DeployResult pending, out DeployResult latest)
         {
-            if (String.Equals(Constants.LatestDeployment, id))
+            latest = null;
+            if (string.Equals(Constants.LatestDeployment, id))
             {
+                if (ScmHostingConfigurations.GetLatestDeploymentOptimized
+                    && (ArmUtils.IsAzureResourceManagerUserAgent(request) || ArmUtils.IsVSTSDevOpsUserAgent(request))
+                    && _deploymentLock.IsHeld)
+                {
+                    pending = DeployResult.PendingResult;
+                    return true;
+                }
+
                 using (_tracer.Step("DeploymentService.GetLatestDeployment"))
                 {
                     var results = _deploymentManager.GetResults();
@@ -497,12 +504,10 @@ namespace Kudu.Services.Deployment
                         return true;
                     }
 
-                    var latest = results.Where(r => r.EndTime != null).OrderBy(r => r.EndTime.Value).LastOrDefault();
+                    latest = results.Where(r => r.EndTime != null).OrderBy(r => r.EndTime.Value).LastOrDefault();
                     if (latest != null)
                     {
                         _tracer.Trace("Deployment {0} is {1} at {2}", latest.Id, latest.Status, latest.EndTime.Value.ToString("o"));
-
-                        id = latest.Id;
                     }
                     else
                     {

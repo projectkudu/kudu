@@ -9,6 +9,8 @@ namespace Kudu.Core.Deployment
     [DebuggerDisplay("{Id} {Status}")]
     public class DeployResult : INamedObject
     {
+        public readonly static DeployResult PendingResult = new DeployResult { ProvisioningState = "InProgress" };
+
         [JsonIgnore]
         [SuppressMessage("Microsoft.Design", "CA1033:InterfaceMethodsShouldBeCallableByChildTypes", Justification = "to provide ARM specific name")]
         string INamedObject.Name { get { return Id; } }

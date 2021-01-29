@@ -362,11 +362,25 @@ namespace Kudu.Core.Deployment
             };
         }
 
-        private IEnumerable<DeployResult> PurgeAndGetDeployments()
+        private IEnumerable<DeployResult> PurgeAndGetDeployments(bool throwOnError = true)
         {
             // Order the results by date (newest first). Previously, we supported OData to allow
             // arbitrary queries, but that was way overkill and brought in too many large binaries.
-            IEnumerable<DeployResult> results = EnumerateResults().OrderByDescending(t => t.ReceivedTime).ToList();
+            IEnumerable<DeployResult> results = null;
+            try
+            {
+                results = EnumerateResults().OrderByDescending(t => t.ReceivedTime).ToList();
+            }
+            catch (Exception)
+            {
+                if (throwOnError)
+                {
+                    throw;
+                }
+
+                return results;
+            }
+
             try
             {
                 results = PurgeDeployments(results);
@@ -391,11 +405,11 @@ namespace Kudu.Core.Deployment
                 status.MarkFailed();
             }
 
-            // Cleanup old deployments
-            PurgeAndGetDeployments();
-
             // Report deployment completion
             DeploymentCompletedInfo.Persist(_environment.RequestId, status);
+
+            // Cleanup old deployments
+            PurgeAndGetDeployments(throwOnError: false);
         }
 
         // since the expensive part (reading all files) is done,
