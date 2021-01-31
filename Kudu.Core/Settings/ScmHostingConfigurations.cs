@@ -25,6 +25,20 @@ namespace Kudu.Core.Settings
             }
         }
 
+        public static int ArmRetryAfterSeconds
+        {
+            get
+            {
+                const int DefaultArmRetryAfterSeconds = 30;
+                if (!int.TryParse(GetValue("ArmRetryAfterSeconds"), out int secs))
+                {
+                    return DefaultArmRetryAfterSeconds;
+                }
+
+                return Math.Max(10, secs);
+            }
+        }
+
         public static bool GetLatestDeploymentOptimized
         {
             get { return GetValue("GetLatestDeploymentOptimized") == "1"; }

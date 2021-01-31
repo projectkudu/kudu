@@ -91,6 +91,7 @@ namespace Kudu
         public const string SiteExtensionProvisioningStateAccepted = "Accepted";
         public const string SiteExtensionProvisioningStateSucceeded = "Succeeded";
         public const string SiteExtensionProvisioningStateFailed = "Failed";
+        public const string SiteExtensionProvisioningStateInProgress = "InProgress";
         public const string SiteExtensionProvisioningStateCanceled = "Canceled";
 
         public const string SiteExtensionOperationInstall = "install";

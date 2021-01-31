@@ -13,6 +13,7 @@ using Kudu.Services.ServiceHookHandlers;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Kudu.Core.Deployment;
+using Kudu.Core.Settings;
 
 namespace Kudu.Services
 {
@@ -93,6 +94,7 @@ namespace Kudu.Services
                             // latest deployment keyword reserved to poll till deployment done
                             context.Response.Headers["Location"] = new Uri(context.Request.GetRequestUri(),
                                 String.Format("/api/deployments/{0}?deployer={1}&time={2}", Constants.LatestDeployment, deployInfo.Deployer, DateTime.UtcNow.ToString("yyy-MM-dd_HH-mm-ssZ"))).ToString();
+                            context.Response.Headers["Retry-After"] = ScmHostingConfigurations.ArmRetryAfterSeconds.ToString();
                         }
                         context.Response.StatusCode = (int)HttpStatusCode.Accepted;
                         context.ApplicationInstance.CompleteRequest();

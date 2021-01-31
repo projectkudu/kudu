@@ -7,6 +7,7 @@ using System.IO.Compression;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using System.Web.Http;
 using Kudu.Contracts.Deployment;
@@ -16,6 +17,7 @@ using Kudu.Contracts.Tracing;
 using Kudu.Core;
 using Kudu.Core.Deployment;
 using Kudu.Core.Infrastructure;
+using Kudu.Core.Settings;
 using Kudu.Core.SourceControl;
 using Kudu.Core.Tracing;
 using Kudu.Services.Arm;
@@ -474,12 +476,14 @@ namespace Kudu.Services.Deployment
                         // latest deployment keyword reserved to poll till deployment done
                         response.Headers.Location = new Uri(statusURL +
                             String.Format("/deployments/{0}?api-version=2018-02-01&deployer={1}&time={2}", Constants.LatestDeployment, deploymentInfo.Deployer, DateTime.UtcNow.ToString("yyy-MM-dd_HH-mm-ssZ")));
+                        response.Headers.RetryAfter = new RetryConditionHeaderValue(TimeSpan.FromSeconds(ScmHostingConfigurations.ArmRetryAfterSeconds));
                     }
                     else if (isAsync)
                     {
                         // latest deployment keyword reserved to poll till deployment done
                         response.Headers.Location = new Uri(Request.GetRequestUri(),
                             String.Format("/api/deployments/{0}?deployer={1}&time={2}", Constants.LatestDeployment, deploymentInfo.Deployer, DateTime.UtcNow.ToString("yyy-MM-dd_HH-mm-ssZ")));
+                        response.Headers.RetryAfter = new RetryConditionHeaderValue(TimeSpan.FromSeconds(ScmHostingConfigurations.ArmRetryAfterSeconds));
                     }
                     response.StatusCode = HttpStatusCode.Accepted;
                     break;
