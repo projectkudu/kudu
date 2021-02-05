@@ -117,7 +117,7 @@ namespace Kudu.Core.Infrastructure
                 if (shouldFailFast == null || shouldFailFast(ex))
                 {
                     KuduEventSource.Log.KuduException(
-                        ServerConfiguration.GetApplicationName(),
+                        ServerConfiguration.GetRuntimeSiteName(),
                         method,
                         string.Empty,
                         string.Empty,

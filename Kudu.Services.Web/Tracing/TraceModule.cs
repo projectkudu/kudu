@@ -232,7 +232,7 @@ namespace Kudu.Services.Web.Tracing
                 httpContext.Items[Constants.RequestIdHeader] = requestId;
                 httpContext.Items[Constants.RequestDateTimeUtc] = DateTime.UtcNow;
                 KuduEventSource.Log.ApiEvent(
-                    ServerConfiguration.GetApplicationName(),
+                    ServerConfiguration.GetRuntimeSiteName(),
                     "OnBeginRequest",
                     request.RawUrl,
                     request.HttpMethod,
@@ -253,7 +253,7 @@ namespace Kudu.Services.Web.Tracing
                 var requestTime = (DateTime)httpContext.Items[Constants.RequestDateTimeUtc];
                 var latencyInMilliseconds = (long)(DateTime.UtcNow - requestTime).TotalMilliseconds;
                 KuduEventSource.Log.ApiEvent(
-                    ServerConfiguration.GetApplicationName(),
+                    ServerConfiguration.GetRuntimeSiteName(),
                     "OnEndRequest",
                     request.RawUrl,
                     request.HttpMethod,
@@ -274,7 +274,7 @@ namespace Kudu.Services.Web.Tracing
                 var requestTime = (DateTime)httpContext.Items[Constants.RequestDateTimeUtc];
                 var latencyInMilliseconds = (long)(DateTime.UtcNow - requestTime).TotalMilliseconds;
                 KuduEventSource.Log.ApiEvent(
-                    ServerConfiguration.GetApplicationName(),
+                    ServerConfiguration.GetRuntimeSiteName(),
                     $"OnErrorRequest {ex}",
                     request.RawUrl,
                     request.HttpMethod,
@@ -327,7 +327,7 @@ namespace Kudu.Services.Web.Tracing
                 {
                     var requestId = (string)httpContext.Items[Constants.RequestIdHeader];
                     KuduEventSource.Log.GenericEvent(
-                        ServerConfiguration.GetApplicationName(),
+                        ServerConfiguration.GetRuntimeSiteName(),
                         string.Format("StartupRequest pid:{0}, domain:{1}, UseSiteExtensionV1:{2}", Process.GetCurrentProcess().Id, AppDomain.CurrentDomain.Id, DeploymentSettingsExtension.UseSiteExtensionV1.Value),
                         requestId,
                         Environment.GetEnvironmentVariable(SettingsKeys.ScmType),

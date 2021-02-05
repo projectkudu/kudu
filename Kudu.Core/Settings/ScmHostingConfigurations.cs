@@ -74,7 +74,7 @@ namespace Kudu.Core.Settings
                         : null;
 
                     KuduEventSource.Log.GenericEvent(
-                        ServerConfiguration.GetApplicationName(),
+                        ServerConfiguration.GetRuntimeSiteName(),
                         $"ScmHostingConfigurations: Update value '{settings}'",
                         string.Empty,
                         string.Empty,
@@ -87,7 +87,7 @@ namespace Kudu.Core.Settings
                 catch (Exception ex)
                 {
                     KuduEventSource.Log.KuduException(
-                        ServerConfiguration.GetApplicationName(),
+                        ServerConfiguration.GetRuntimeSiteName(),
                         "ScmHostingConfigurations.GetValue",
                         string.Empty,
                         string.Empty,

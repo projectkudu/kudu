@@ -25,7 +25,7 @@ namespace Kudu.Core.Helpers
                 _logger.Log(format, args);
 
                 KuduEventSource.Log.GenericEvent(
-                    ServerConfiguration.GetApplicationName(),
+                    ServerConfiguration.GetRuntimeSiteName(),
                     string.Format(format, args),
                     System.Environment.GetEnvironmentVariable("x-ms-request-id") ?? string.Empty,
                     string.Empty,

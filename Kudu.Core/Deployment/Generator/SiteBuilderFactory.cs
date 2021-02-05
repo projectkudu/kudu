@@ -72,7 +72,7 @@ namespace Kudu.Core.Deployment.Generator
             string msbuild16Log = String.Format("UseMSBuild16: {0}", VsHelper.UseMSBuild16().ToString());
             tracer.Trace(msbuild16Log);
             KuduEventSource.Log.GenericEvent(
-                ServerConfiguration.GetApplicationName(),
+                ServerConfiguration.GetRuntimeSiteName(),
                 msbuild16Log,
                 string.Empty,
                 string.Empty,

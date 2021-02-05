@@ -96,7 +96,7 @@ namespace Kudu.Services.Web.Infrastruture
                 AddDiskSpaceInfo(telemetry);
 
                 KuduEventSource.Log.GenericEvent(
-                    ServerConfiguration.GetApplicationName(),
+                    ServerConfiguration.GetRuntimeSiteName(),
                     $"Telemetry: {JsonConvert.SerializeObject(telemetry)}",
                     string.Empty,
                     Environment.GetEnvironmentVariable(SettingsKeys.ScmType),
@@ -124,7 +124,7 @@ namespace Kudu.Services.Web.Infrastruture
                 telemetry["webspaceName"] = parts.Length > 1 ? parts[1] : null;
             }
 
-            telemetry["runtimeSiteName"] = Environment.GetEnvironmentVariable(SettingsKeys.WebSiteName);
+            telemetry["runtimeSiteName"] = ServerConfiguration.GetRuntimeSiteName();
             telemetry["defaultHostName"] = Environment.GetEnvironmentVariable(SettingsKeys.WebSiteHostName);
             telemetry["scmType"] = Environment.GetEnvironmentVariable(SettingsKeys.ScmType);
             telemetry["sku"] = Environment.GetEnvironmentVariable(SettingsKeys.WebSiteSku);

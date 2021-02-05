@@ -4,6 +4,8 @@ namespace Kudu.Core.Infrastructure
 {
     public class ServerConfiguration : IServerConfiguration
     {
+        private static string _runtimeSiteName;
+
         private string _applicationName;
 
         public string ApplicationName
@@ -53,6 +55,29 @@ namespace Kudu.Core.Infrastructure
             }
 
             return String.Empty;
+        }
+
+        public static string GetRuntimeSiteName()
+        {
+            if (string.IsNullOrEmpty(_runtimeSiteName))
+            {
+                var runtimeSiteName = System.Environment.GetEnvironmentVariable("APP_POOL_ID");
+                if (!string.IsNullOrEmpty(runtimeSiteName))
+                {
+                    if (runtimeSiteName.StartsWith("~1"))
+                    {
+                        runtimeSiteName = runtimeSiteName.Substring(2);
+                    }
+                }
+                else
+                {
+                    runtimeSiteName = GetApplicationName() ?? string.Empty;
+                }
+
+                _runtimeSiteName = runtimeSiteName.ToLowerInvariant();
+            }
+
+            return _runtimeSiteName;
         }
     }
 }

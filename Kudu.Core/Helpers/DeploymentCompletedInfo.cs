@@ -56,7 +56,7 @@ namespace Kudu.Core.Helpers
 
                 // write to etw
                 KuduEventSource.Log.DeploymentCompleted(
-                    info.SiteName,
+                    ServerConfiguration.GetRuntimeSiteName(),
                     info.Kind,
                     info.RequestId,
                     info.Status,
@@ -65,9 +65,9 @@ namespace Kudu.Core.Helpers
             catch (Exception ex)
             {
                 KuduEventSource.Log.KuduException(
-                    info.SiteName,
+                    ServerConfiguration.GetRuntimeSiteName(),
                     string.Empty,
-                    string.Empty,
+                    info.RequestId ?? string.Empty,
                     string.Empty,
                     string.Empty,
                     $"{ex}");

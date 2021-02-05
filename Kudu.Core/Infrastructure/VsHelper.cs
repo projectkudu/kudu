@@ -220,7 +220,7 @@ namespace Kudu.Core.Infrastructure
                 else
                 {
                     KuduEventSource.Log.GenericEvent(
-                            ServerConfiguration.GetApplicationName(),
+                            ServerConfiguration.GetRuntimeSiteName(),
                             string.Format("Dotnet target framework found: {0}", targetFramework),
                             string.Empty,
                             string.Empty,
@@ -310,7 +310,7 @@ namespace Kudu.Core.Infrastructure
                 else
                 {
                     KuduEventSource.Log.GenericEvent(
-                            ServerConfiguration.GetApplicationName(),
+                            ServerConfiguration.GetRuntimeSiteName(),
                             string.Format("Dotnet target framework found: {0}", targetFramework),
                             string.Empty,
                             string.Empty,

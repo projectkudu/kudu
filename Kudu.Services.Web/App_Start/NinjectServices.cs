@@ -87,7 +87,7 @@ namespace Kudu.Services.Web.App_Start
             {
                 // trace initialization error
                 KuduEventSource.Log.KuduException(
-                    ServerConfiguration.GetApplicationName(),
+                    ServerConfiguration.GetRuntimeSiteName(),
                     "NinjectServices.Start",
                     string.Empty,
                     string.Empty,
@@ -756,7 +756,7 @@ namespace Kudu.Services.Web.App_Start
             OperationManager.SafeExecute(() =>
             {
                 KuduEventSource.Log.GenericEvent(
-                    ServerConfiguration.GetApplicationName(),
+                    ServerConfiguration.GetRuntimeSiteName(),
                     string.Format("Shutdown pid:{0}, domain:{1}", Process.GetCurrentProcess().Id, AppDomain.CurrentDomain.Id),
                     string.Empty,
                     string.Empty,
@@ -888,7 +888,7 @@ namespace Kudu.Services.Web.App_Start
 
                     // trace initialization error
                     KuduEventSource.Log.KuduException(
-                        ServerConfiguration.GetApplicationName(),
+                        ServerConfiguration.GetRuntimeSiteName(),
                         "NinjectServices.Start",
                         string.Empty,
                         string.Empty,
