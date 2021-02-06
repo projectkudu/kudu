@@ -86,6 +86,9 @@ namespace Kudu.Core.Test.Deployment
             fileBase.Setup(f => f.Create(statusFile))
                     .Returns((string path) => stream.Object);
 
+            var statusCompleteFile = Path.Combine(deploymentPath, id, "status_complete.xml");
+            fileBase.Setup(f => f.Copy(statusFile, statusCompleteFile, true));
+
             var deploymentStatus = DeploymentStatusFile.Create(id, environment, statusLock);
             deploymentStatus.Id = id;
             deploymentStatus.Status = DeployStatus.Success;

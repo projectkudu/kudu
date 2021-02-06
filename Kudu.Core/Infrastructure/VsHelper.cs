@@ -245,11 +245,11 @@ namespace Kudu.Core.Infrastructure
             String var = System.Environment.GetEnvironmentVariable(String.Format("APPSETTING_{0}", SettingsKeys.UseMSBuild16));
             if (string.IsNullOrEmpty(var))
             {
-                return StringUtils.IsTrueLike(ScmHostingConfigurations.GetValue(SettingsKeys.UseMSBuild16, "true"));
+                return !StringUtils.IsFalseLike(ScmHostingConfigurations.GetValue(SettingsKeys.UseMSBuild16, "true"));
             }
             else
             {
-                return StringUtils.IsTrueLike(var);
+                return !StringUtils.IsFalseLike(var);
             }
         }
 
