@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Text;
 using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Linq;
@@ -433,6 +434,18 @@ namespace Kudu.Core.SiteExtensions
                 using (var client = new HttpClient { Timeout = HttpClientTimeout })
                 {
                     var response = await client.GetAsync(feedUrl);
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        var details = new StringBuilder();
+                        details.Append($"HttpGet '{feedUrl}' failed with '{response.StatusCode}'.");
+                        await OperationManager.SafeExecute(async () =>
+                        {
+                            var message = await response.Content.ReadAsStringAsync();
+                            details.Append($"  Content is {message}");
+                        });
+                        throw new InvalidOperationException(details.ToString());
+                    }
+
                     var content = await response.Content.ReadAsStringAsync();
                     using (var reader = XmlReader.Create(new System.IO.StringReader(content)))
                     {
