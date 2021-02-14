@@ -20,11 +20,13 @@ namespace Kudu.Core.SourceControl
 
         private readonly string _path;
         private readonly ITraceFactory _traceFactory;
+        private readonly string _commitId;
 
-        public NullRepository(string path, ITraceFactory traceFactory)
+        public NullRepository(string path, ITraceFactory traceFactory, string commitId = null)
         {
             _path = path;
             _traceFactory = traceFactory;
+            _commitId = commitId;
         }
 
         public string CurrentId
@@ -83,7 +85,7 @@ namespace Kudu.Core.SourceControl
             var tracer = _traceFactory.GetTracer();
             using (tracer.Step("None repository commit"))
             {
-                var changeSet = new ChangeSet(Guid.NewGuid().ToString("N"),
+                var changeSet = new ChangeSet(!string.IsNullOrEmpty(_commitId) ? _commitId : Guid.NewGuid().ToString("N"),
                                               !string.IsNullOrEmpty(authorName) ? authorName : Resources.Deployment_UnknownValue,
                                               !string.IsNullOrEmpty(emailAddress) ? emailAddress : Resources.Deployment_UnknownValue,
                                               message ?? Resources.Deployment_UnknownValue,
