@@ -137,6 +137,26 @@ namespace Kudu.FunctionalTests
         }
 
         [Fact]
+        public Task TestUpdateDeployStatusHeaderZipDeployment()
+        {
+            return ApplicationManager.RunAsync("TestUpdateDeployStatusHeaderZipDeployment", async appManager =>
+            {
+                var files = DeploymentTestHelper.CreateRandomFilesForZip(10);
+                var response = await DeployZip(appManager, files, new ZipDeployMetadata { TrackDeploymentProgress = true, IsAsync = true });
+                response.EnsureSuccessStatusCode();
+                Assert.True(response.Headers.Contains(Constants.ScmDeploymentIdHeader));
+                await DeploymentTestHelper.AssertSuccessfulDeploymentByFilenames(appManager, files.Select(f => f.Filename).ToArray(), "site/wwwroot");
+
+                // If TrackDeploymentProgress=false, the response header should not contain the ScmDeploymentId
+                files = DeploymentTestHelper.CreateRandomFilesForZip(10);
+                response = await DeployZip(appManager, files, new ZipDeployMetadata { TrackDeploymentProgress = false, IsAsync = true });
+                response.EnsureSuccessStatusCode();
+                Assert.True(!response.Headers.Contains(Constants.ScmDeploymentIdHeader));
+                await DeploymentTestHelper.AssertSuccessfulDeploymentByFilenames(appManager, files.Select(f => f.Filename).ToArray(), "site/wwwroot");
+            });
+        }
+
+        [Fact]
         public Task TestEmptyZipClearsWwwroot()
         {
             return ApplicationManager.RunAsync("TestEmptyZipClearsWwwroot", async appManager =>

@@ -27,7 +27,7 @@ namespace Kudu.Core.Deployment
         public bool IsReusable { get; set; }
         // Allow deferred deployment via marker file mechanism.
         public bool AllowDeferredDeployment { get; set; }
-        // indicating that this is a CI triggered by SCM provider 
+        // indicating that this is a CI triggered by SCM provider
         public bool IsContinuous { get; set; }
 
         // NOTE: Do not access the request stream in the Fetch handler as it may have been closed during asynchronous scenarios
@@ -88,6 +88,10 @@ namespace Kudu.Core.Deployment
         // won't update until after a process restart. Therefore, we copy the needed
         // files into a separate folders and run sync triggers from there.
         public string SyncFunctionsTriggersPath { get; set; } = null;
+
+        // Allows the use of a caller-provided GUID for the deployment, rather than
+        // a commit hash or a randomly-generated identifier.
+        public string DeploymentTrackingId { get; set; } = null;
 
         // Specifies whether to touch the watched file (example web.config, web.xml, etc) after the deployment
         public bool WatchedFileEnabled { get; set;}

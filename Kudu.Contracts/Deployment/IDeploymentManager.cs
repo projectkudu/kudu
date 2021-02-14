@@ -11,6 +11,7 @@ namespace Kudu.Core.Deployment
         DeployResult GetResult(string id);
         IEnumerable<LogEntry> GetLogEntries(string id);
         IEnumerable<LogEntry> GetLogEntryDetails(string id, string logId);
+        Task<bool> SendDeployStatusUpdate(DeployStatusApiResult updateStatusObj);
 
         void Delete(string id);
         Task DeployAsync(IRepository repository, ChangeSet changeSet, string deployer, bool clean, DeploymentInfoBase deploymentInfo = null, bool needFileUpdate = true, bool fullBuildByDefault = true);
