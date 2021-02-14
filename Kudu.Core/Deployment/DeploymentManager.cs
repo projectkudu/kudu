@@ -17,6 +17,7 @@ using Kudu.Core.Infrastructure;
 using Kudu.Core.Settings;
 using Kudu.Core.SourceControl;
 using Kudu.Core.Tracing;
+using Newtonsoft.Json;
 
 namespace Kudu.Core.Deployment
 {
@@ -286,6 +287,36 @@ namespace Kudu.Core.Deployment
             }
         }
 
+        public async Task<bool> SendDeployStatusUpdate(DeployStatusApiResult updateStatusObj)
+        {
+            ITracer tracer = _traceFactory.GetTracer();
+            int attemptCount = 0;
+
+            try
+            {
+                await OperationManager.AttemptAsync(async () =>
+                {
+                    attemptCount++;
+
+                    tracer.Trace($" PostAsync - Trying to send {updateStatusObj.DeploymentStatus} deployment status to {Constants.UpdateDeployStatusPath}. Deployment Id is {updateStatusObj.DeploymentId}");
+                    await PostDeploymentHelper.PostAsync(Constants.UpdateDeployStatusPath, _environment.RequestId, content: JsonConvert.SerializeObject(updateStatusObj));
+
+                }, 3, 5 * 1000);
+
+                // If no exception is thrown, the operation was a success
+                return true;
+            }
+            catch (Exception ex)
+            {
+                tracer.TraceError($"Failed to request a post deployment status. Number of attempts: {attemptCount}. Exception: {ex}");
+                // Do not throw the exception
+                // We fail silently so that we do not fail the build altogether if this call fails
+                //throw;
+
+                return false;
+            }
+        }
+
         public async Task RestartMainSiteIfNeeded(ITracer tracer, ILogger logger, DeploymentInfoBase deploymentInfo)
         {
             // If post-deployment restart is disabled, do nothing.
@@ -298,6 +329,21 @@ namespace Kudu.Core.Deployment
             if (deploymentInfo != null && !deploymentInfo.RestartAllowed)
             {
                 return;
+            }
+
+            if (deploymentInfo != null && !string.IsNullOrEmpty(deploymentInfo.DeploymentTrackingId))
+            {
+                // Send deployment status update to FE
+                // FE will modify the operations table with the PostBuildRestartRequired status
+                DeployStatusApiResult updateStatusObj = new DeployStatusApiResult(Constants.PostBuildRestartRequired, deploymentInfo.DeploymentTrackingId);
+                bool isSuccess = await SendDeployStatusUpdate(updateStatusObj);
+
+                if (isSuccess)
+                {
+                    // If operation is a success and PostBuildRestartRequired was posted successfully to the operations DB, then return
+                    // Else fallthrough to RestartMainSiteAsync
+                    return;
+                }
             }
 
             if (deploymentInfo != null && deploymentInfo.Deployer == Constants.OneDeploy)
@@ -721,8 +767,9 @@ namespace Kudu.Core.Deployment
                     {
                         await builder.Build(context);
                         builder.PostBuild(context);
+
                         await RestartMainSiteIfNeeded(tracer, logger, deploymentInfo);
-            
+
                         await PostDeploymentHelper.SyncFunctionsTriggers(_environment.RequestId, new PostDeploymentTraceListener(tracer, logger), deploymentInfo?.SyncFunctionsTriggersPath);
 
                         TouchWatchedFileIfNeeded(_settings, deploymentInfo, context);
