@@ -214,43 +214,56 @@ namespace Kudu.Core.SiteExtensions
             using (var client = new HttpClient { Timeout = HttpClientTimeout })
             {
                 var uri = new Uri(!string.IsNullOrEmpty(package.PackageUri) ? package.PackageUri : $"https://www.nuget.org/api/v2/package/{packageId}/{packageVersion}");
-                var response = await client.GetAsync(uri);
-
-                using (Stream packageStream = await response.Content.ReadAsStreamAsync())
+                using (var response = await client.GetAsync(uri))
                 {
-                    using (ZipFile zipFile = ZipFile.Read(packageStream))
+                    if (!response.IsSuccessStatusCode)
                     {
-                        // we only care about stuff under "content" folder
-                        int substringStartIndex = @"content/".Length;
-                        IEnumerable<ZipEntry> contentEntries = zipFile.Entries.Where(e => e.FileName.StartsWith(@"content/", StringComparison.InvariantCultureIgnoreCase));
-                        foreach (var entry in contentEntries)
+                        var details = new StringBuilder();
+                        details.Append($"HttpGet '{uri}' failed with '{response.StatusCode}'.");
+                        await OperationManager.SafeExecute(async () =>
                         {
-                            string entryFileName = Uri.UnescapeDataString(entry.FileName);
-                            string fullPath = Path.Combine(destinationFolder, entryFileName.Substring(substringStartIndex));
-
-                            if (entry.IsDirectory)
-                            {
-                                FileSystemHelpers.EnsureDirectory(fullPath.Replace('/', '\\'));
-                                continue;
-                            }
-
-                            FileSystemHelpers.EnsureDirectory(Path.GetDirectoryName(fullPath));
-                            using (Stream writeStream = FileSystemHelpers.OpenWrite(fullPath))
-                            {
-                                // reset length of file stream
-                                writeStream.SetLength(0);
-
-                                // let the thread go with itself, so that once file finishes writing, doesn't need to request thread context from main thread
-                                await entry.OpenReader().CopyToAsync(writeStream).ConfigureAwait(false);
-                            }
-                        }
+                            var message = await response.Content.ReadAsStringAsync();
+                            details.Append($"  Content is {message}");
+                        });
+                        throw new InvalidOperationException(details.ToString());
                     }
 
-                    // set position back to the head of stream
-                    packageStream.Position = 0;
+                    using (Stream packageStream = await response.Content.ReadAsStreamAsync())
+                    {
+                        using (ZipFile zipFile = ZipFile.Read(packageStream))
+                        {
+                            // we only care about stuff under "content" folder
+                            int substringStartIndex = @"content/".Length;
+                            IEnumerable<ZipEntry> contentEntries = zipFile.Entries.Where(e => e.FileName.StartsWith(@"content/", StringComparison.InvariantCultureIgnoreCase));
+                            foreach (var entry in contentEntries)
+                            {
+                                string entryFileName = Uri.UnescapeDataString(entry.FileName);
+                                string fullPath = Path.Combine(destinationFolder, entryFileName.Substring(substringStartIndex));
 
-                    // save a copy of the nupkg at last
-                    WriteStreamToFile(packageStream, pathToLocalCopyOfNupkg);
+                                if (entry.IsDirectory)
+                                {
+                                    FileSystemHelpers.EnsureDirectory(fullPath.Replace('/', '\\'));
+                                    continue;
+                                }
+
+                                FileSystemHelpers.EnsureDirectory(Path.GetDirectoryName(fullPath));
+                                using (Stream writeStream = FileSystemHelpers.OpenWrite(fullPath))
+                                {
+                                    // reset length of file stream
+                                    writeStream.SetLength(0);
+
+                                    // let the thread go with itself, so that once file finishes writing, doesn't need to request thread context from main thread
+                                    await entry.OpenReader().CopyToAsync(writeStream).ConfigureAwait(false);
+                                }
+                            }
+                        }
+
+                        // set position back to the head of stream
+                        packageStream.Position = 0;
+
+                        // save a copy of the nupkg at last
+                        WriteStreamToFile(packageStream, pathToLocalCopyOfNupkg);
+                    }
                 }
             }
         }
@@ -433,29 +446,31 @@ namespace Kudu.Core.SiteExtensions
 
                 using (var client = new HttpClient { Timeout = HttpClientTimeout })
                 {
-                    var response = await client.GetAsync(feedUrl);
-                    if (!response.IsSuccessStatusCode)
+                    using (var response = await client.GetAsync(feedUrl))
                     {
-                        var details = new StringBuilder();
-                        details.Append($"HttpGet '{feedUrl}' failed with '{response.StatusCode}'.");
-                        await OperationManager.SafeExecute(async () =>
+                        if (!response.IsSuccessStatusCode)
                         {
-                            var message = await response.Content.ReadAsStringAsync();
-                            details.Append($"  Content is {message}");
-                        });
-                        throw new InvalidOperationException(details.ToString());
-                    }
-
-                    var content = await response.Content.ReadAsStringAsync();
-                    using (var reader = XmlReader.Create(new System.IO.StringReader(content)))
-                    {
-                        reader.ReadStartElement("feed");
-                        while (reader.Read())
-                        {
-                            if (reader.Name == "entry" && reader.IsStartElement())
+                            var details = new StringBuilder();
+                            details.Append($"HttpGet '{feedUrl}' failed with '{response.StatusCode}'.");
+                            await OperationManager.SafeExecute(async () =>
                             {
-                                reader.ReadToDescendant("m:properties");
-                                extensions.Add(new SiteExtensionInfo((XElement)XNode.ReadFrom(reader)));
+                                var message = await response.Content.ReadAsStringAsync();
+                                details.Append($"  Content is {message}");
+                            });
+                            throw new InvalidOperationException(details.ToString());
+                        }
+
+                        var content = await response.Content.ReadAsStringAsync();
+                        using (var reader = XmlReader.Create(new System.IO.StringReader(content)))
+                        {
+                            reader.ReadStartElement("feed");
+                            while (reader.Read())
+                            {
+                                if (reader.Name == "entry" && reader.IsStartElement())
+                                {
+                                    reader.ReadToDescendant("m:properties");
+                                    extensions.Add(new SiteExtensionInfo((XElement)XNode.ReadFrom(reader)));
+                                }
                             }
                         }
                     }
