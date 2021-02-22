@@ -86,6 +86,7 @@ namespace Kudu
         public const string LogicAppUrlKey = "LOGICAPP_URL";
 
         public const string RestartApiPath = "/api/app/restart";
+        public const string UpdateDeployStatusPath = "/api/app/updatedeploystatus";
 
         public const string SiteExtensionProvisioningStateCreated = "Created";
         public const string SiteExtensionProvisioningStateAccepted = "Accepted";
@@ -104,6 +105,14 @@ namespace Kudu
 
         // Setting for VC++ for node builds
         public const string VCVersion = "2015";
+
+        // Deployment status API constants
+        public const string BuildRequestReceived = "BuildRequestReceived";
+        public const string BuildPending = "BuildPending";
+        public const string BuildInProgress = "BuildInProgress";
+        public const string BuildSuccessful = "BuildSuccessful";
+        public const string PostBuildRestartRequired = "PostBuildRestartRequired";
+        public const string BuildFailed = "BuildFailed";
 
         public const string RoleBasedContributorHeader = "X-MS-CLIENT-ROLEBASED-CONTRIBUTOR";
         public const string ClientAuthorizationSourceHeader = "X-MS-CLIENT-AUTHORIZATION-SOURCE";
@@ -137,7 +146,7 @@ namespace Kudu
         public const string PackageNameTxt = "packagename.txt";
         public const string AppOfflineFileName = "app_offline.htm";
         public const string AppOfflineKuduContent = "Created by kudu";
-
+        public const string ScmDeploymentIdHeader = "SCM-DEPLOYMENT-ID";
         public const string OneDeploy = "OneDeploy";
     }
 }

@@ -109,6 +109,7 @@
     <Compile Include="Deployment\DeploymentInfoBase.cs" />
     <Compile Include="Deployment\DeployResult.cs" />
     <Compile Include="Deployment\DeployStatus.cs" />
+    <Compile Include="Deployment\DeployStatusApiResult.cs" />
     <Compile Include="Deployment\FetchDeploymentRequestResult.cs" />
     <Compile Include="Deployment\IDeploymentEnvironment.cs" />
     <Compile Include="Deployment\IDeploymentManager.cs" />

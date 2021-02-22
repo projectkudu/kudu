@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Net.Http;
 using System.Threading.Tasks;
 using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Settings;
@@ -12,6 +13,7 @@ using Kudu.Core.Hooks;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.SourceControl;
 using Kudu.Core.Tracing;
+using Newtonsoft.Json;
 
 namespace Kudu.Core.Deployment
 {
@@ -163,6 +165,8 @@ namespace Kudu.Core.Deployment
                                                     deploymentInfo.Deployer);
 
                     ILogger innerLogger = null;
+                    DeployStatusApiResult updateStatusObj = null;
+
                     try
                     {
                         ILogger logger = _deploymentManager.GetLogger(tempChangeSet.Id);
@@ -188,6 +192,33 @@ namespace Kudu.Core.Deployment
                         // The branch or commit id to deploy
                         string deployBranch = !String.IsNullOrEmpty(deploymentInfo.CommitId) ? deploymentInfo.CommitId : targetBranch;
 
+                        try
+                        {
+                            _tracer.Trace($"Before sending {Constants.BuildRequestReceived} status to /api/updatedeploystatus");
+                            if (PostDeploymentHelper.IsAzureEnvironment())
+                            {
+                                // Parse the changesetId into a GUID
+                                // If DeploymentTrackingId is provided, give that preference
+                                // The FE hook allows only GUID as a deployment id
+                                // If the id is already in GUID format nothing will happen
+                                // If it doesn't have the necessary format for a GUID, and exception will be thrown
+                                var changeSet = repository.GetChangeSet(deployBranch);
+                                var trackingId = Guid.Parse(changeSet.Id).ToString();
+                                if (deploymentInfo != null
+                                    && !string.IsNullOrEmpty(deploymentInfo.DeploymentTrackingId))
+                                {
+                                    trackingId = deploymentInfo.DeploymentTrackingId;
+                                }
+                                updateStatusObj = new DeployStatusApiResult(Constants.BuildRequestReceived, trackingId);
+                                await _deploymentManager.SendDeployStatusUpdate(updateStatusObj);
+                            }
+                        }
+                        catch(Exception e)
+                        {
+                            _tracer.TraceError($"Exception while sending {Constants.BuildRequestReceived} status to /api/updatedeploystatus. " +
+                                $"Entry in the operations table for the deployment status may not have been created. {e}");
+                        }
+
                         // In case the commit or perhaps fetch do no-op.
                         if (deploymentInfo.TargetChangeset != null && ShouldDeploy(repository, deploymentInfo, deployBranch))
                         {
@@ -205,6 +236,12 @@ namespace Kudu.Core.Deployment
                             // unless for GenericHandler where specific commitId is specified
                             bool deploySpecificCommitId = !String.IsNullOrEmpty(deploymentInfo.CommitId);
 
+                            if (updateStatusObj != null)
+                            {
+                                updateStatusObj.DeploymentStatus = Constants.BuildInProgress;
+                                await _deploymentManager.SendDeployStatusUpdate(updateStatusObj);
+                            }
+
                             await _deploymentManager.DeployAsync(
                                 repository,
                                 changeSet,
@@ -213,6 +250,14 @@ namespace Kudu.Core.Deployment
                                 deploymentInfo: deploymentInfo,
                                 needFileUpdate: deploySpecificCommitId,
                                 fullBuildByDefault: deploymentInfo.DoFullBuildByDefault);
+
+                            if (updateStatusObj != null && !deploymentInfo.RestartAllowed)
+                            {
+                                // If restart is disallowed, send BuildSuccessful here as PostBuildRestartRequired was not sent
+                                // during the DeployAsync flow.
+                                updateStatusObj.DeploymentStatus = Constants.BuildSuccessful;
+                                await _deploymentManager.SendDeployStatusUpdate(updateStatusObj);
+                            }
                         }
                     }
                     catch (Exception ex)
@@ -230,6 +275,13 @@ namespace Kudu.Core.Deployment
                             {
                                 statusFile.MarkFailed();
                             }
+                        }
+
+                        if (updateStatusObj != null)
+                        {
+                            // Set deployment status as failure if exception is thrown
+                            updateStatusObj.DeploymentStatus = Constants.BuildFailed;
+                            await _deploymentManager.SendDeployStatusUpdate(updateStatusObj);
                         }
 
                         throw;
@@ -293,7 +345,7 @@ namespace Kudu.Core.Deployment
             // Needed for deployments where deferred deployment is not allowed. Will be set to false if
             // lock contention occurs and AllowDeferredDeployment is false, otherwise true.
             var deploymentWillOccurTcs = new TaskCompletionSource<bool>();
-            
+
             // This task will be let out of scope intentionally
             var deploymentTask = Task.Run(() =>
             {

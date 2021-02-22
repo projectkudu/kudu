@@ -9,6 +9,7 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
+using System.Web;
 using System.Web.Http;
 using Kudu.Contracts.Deployment;
 using Kudu.Contracts.Infrastructure;
@@ -76,6 +77,7 @@ namespace Kudu.Services.Deployment
                     IsReusable = false,
                     TargetChangeset = DeploymentManager.CreateTemporaryChangeSet(message: "Deploying from pushed zip file"),
                     CommitId = null,
+                    DeploymentTrackingId = Guid.NewGuid().ToString(),
                     RepositoryType = RepositoryType.None,
                     Fetch = LocalZipHandler,
                     DoFullBuildByDefault = false,
@@ -87,8 +89,8 @@ namespace Kudu.Services.Deployment
                 if (_settings.RunFromLocalZip())
                 {
                     // This is used if the deployment is Run-From-Zip
-                    // the name of the deployed file in D:\home\data\SitePackages\{name}.zip is the 
-                    // timestamp in the format yyyMMddHHmmss. 
+                    // the name of the deployed file in D:\home\data\SitePackages\{name}.zip is the
+                    // timestamp in the format yyyMMddHHmmss.
                     deploymentInfo.ArtifactFileName = $"{DateTime.UtcNow.ToString("yyyyMMddHHmmss")}.zip";
 
                     // This is also for Run-From-Zip where we need to extract the triggers
@@ -129,6 +131,7 @@ namespace Kudu.Services.Deployment
                     CleanupTargetDirectory = true, // For now, always cleanup the target directory. If needed, make it configurable
                     TargetChangeset = DeploymentManager.CreateTemporaryChangeSet(message: "Deploying from pushed war file"),
                     CommitId = null,
+                    DeploymentTrackingId = Guid.NewGuid().ToString(),
                     RepositoryType = RepositoryType.None,
                     Fetch = LocalZipFetch,
                     DoFullBuildByDefault = false,
@@ -196,9 +199,9 @@ namespace Kudu.Services.Deployment
                 // 'async' is not a CSharp-ish variable name. And although it is a valid variable name, some
                 // IDEs confuse it to be the 'async' keyword in C#.
                 // On the other hand, isAsync is not a good name for the query-parameter.
-                // So we use 'async' as the query parameter, and then assign it to the C# variable 'isAsync' 
+                // So we use 'async' as the query parameter, and then assign it to the C# variable 'isAsync'
                 // at the earliest. Hereon, we use just 'isAsync'.
-                // 
+                //
                 bool isAsync = async;
 
                 ArtifactType artifactType = ArtifactType.Unknown;
@@ -221,6 +224,7 @@ namespace Kudu.Services.Deployment
                     TargetRootPath = _environment.WebRootPath,
                     TargetChangeset = DeploymentManager.CreateTemporaryChangeSet(message: Constants.OneDeploy),
                     CommitId = null,
+                    DeploymentTrackingId = Guid.NewGuid().ToString(),
                     RepositoryType = RepositoryType.None,
                     Fetch = OneDeployFetch,
                     DoFullBuildByDefault = false,
@@ -516,6 +520,13 @@ namespace Kudu.Services.Deployment
                     break;
             }
 
+            // Add deploymentId to header for deployment status API
+            if (deploymentInfo != null
+                && !string.IsNullOrEmpty(deploymentInfo.DeploymentTrackingId))
+            {
+                response.Headers.Add(Constants.ScmDeploymentIdHeader, deploymentInfo.DeploymentTrackingId);
+            }
+
             return response;
         }
 
@@ -604,7 +615,7 @@ namespace Kudu.Services.Deployment
             var targetInfo = FileSystemHelpers.DirectoryInfoFromDirectoryName(artifactDirectoryStagingPath);
             if (targetInfo.Exists)
             {
-                // If tempDirPath already exists, rename it so we can delete it later 
+                // If tempDirPath already exists, rename it so we can delete it later
                 var moveTarget = Path.Combine(targetInfo.Parent.FullName, Path.GetRandomFileName());
                 using (tracer.Step(string.Format("Renaming ({0}) to ({1})", targetInfo.FullName, moveTarget)))
                 {
@@ -616,7 +627,7 @@ namespace Kudu.Services.Deployment
             // We want to create a directory structure under 'artifactDirectoryStagingPath'
             // such that it exactly matches the directory structure specified
             // by deploymentInfo.TargetSubDirectoryRelativePath
-            // 
+            //
             string stagingSubDirPath = artifactDirectoryStagingPath;
 
             if (!string.IsNullOrWhiteSpace(artifactDeploymentInfo.TargetSubDirectoryRelativePath))
@@ -624,7 +635,7 @@ namespace Kudu.Services.Deployment
                 stagingSubDirPath = Path.Combine(artifactDirectoryStagingPath, artifactDeploymentInfo.TargetSubDirectoryRelativePath);
             }
 
-            // Create artifact staging directory hierarchy before later use 
+            // Create artifact staging directory hierarchy before later use
             Directory.CreateDirectory(stagingSubDirPath);
 
             var artifactFileStagingPath = Path.Combine(stagingSubDirPath, deploymentInfo.TargetFileName);
@@ -641,7 +652,7 @@ namespace Kudu.Services.Deployment
                     // Deletes all files and directories except for artifactFileStagingPath and artifactDirectoryStagingPath
                     var cleanTask = Task.Run(() => DeleteFilesAndDirsExcept(artifactFileStagingPath, artifactDirectoryStagingPath, tracer));
 
-                    // Lets the copy and cleanup tasks to run in parallel and wait for them to finish 
+                    // Lets the copy and cleanup tasks to run in parallel and wait for them to finish
                     await Task.WhenAll(copyTask, cleanTask);
                 }
             }
@@ -721,7 +732,7 @@ namespace Kudu.Services.Deployment
                     // We want to create a directory structure under 'artifactFileStagingDirectory'
                     // such that it exactly matches the directory structure specified
                     // by deploymentInfo.TargetSubDirectoryRelativePath
-                    // 
+                    //
                     string extractSubDirectoryPath = artifactFileStagingDirectory;
 
                     if (!string.IsNullOrWhiteSpace(deploymentInfo.TargetSubDirectoryRelativePath) && deploymentInfo.Deployer == Constants.OneDeploy)
