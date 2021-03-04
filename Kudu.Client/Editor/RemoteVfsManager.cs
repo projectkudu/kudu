@@ -87,7 +87,7 @@ namespace Kudu.Client.Editor
             }
         }
 
-        public void Delete(string path, bool recursive = false)
+        public async Task DeleteAsync(string path, bool recursive = false)
         {
             using (var request = new HttpRequestMessage())
             {
@@ -97,7 +97,7 @@ namespace Kudu.Client.Editor
                 request.RequestUri = new Uri(path, UriKind.Relative);
                 request.Headers.IfMatch.Add(EntityTagHeaderValue.Any);
 
-                HttpResponseMessage response = Client.SendAsync(request).Result;
+                HttpResponseMessage response = await Client.SendAsync(request);
 
                 // Don't throw if we got a 404, since we want to act as a 'delete if exists'
                 if (response.StatusCode != HttpStatusCode.NotFound)
@@ -105,6 +105,11 @@ namespace Kudu.Client.Editor
                     response.EnsureSuccessful();
                 }
             }
+        }
+
+        public void Delete(string path, bool recursive = false)
+        {
+            DeleteAsync(path, recursive).Wait();
         }
 
         private HttpResponseMessage GetHeadResponse(string path)

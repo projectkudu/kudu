@@ -9,8 +9,12 @@ using System.Threading.Tasks;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
 using Kudu.Core;
+using Kudu.Core.Deployment;
 using Kudu.Core.Infrastructure;
+using Kudu.Core.Tracing;
+using Kudu.Services.Arm;
 using Kudu.Services.Infrastructure;
+using Newtonsoft.Json.Linq;
 
 namespace Kudu.Services.Zip
 {
@@ -59,16 +63,64 @@ namespace Kudu.Services.Zip
 
         protected override async Task<HttpResponseMessage> CreateDirectoryPutResponse(DirectoryInfoBase info, string localFilePath)
         {
-            using (var stream = await Request.Content.ReadAsStreamAsync())
+            try
             {
-                // The unzipping is done over the existing folder, without first removing existing files.
-                // Hence it's more of a PATCH than a PUT. We should consider supporting both with the right semantic.
-                // Though a true PUT at the root would be scary as it would wipe all existing files!
-                var zipArchive = new ZipArchive(stream, ZipArchiveMode.Read);
-                zipArchive.Extract(localFilePath, Tracer);
-            }
+                var isRequestJSON = Request.Content.Headers?.ContentType?.MediaType?.Equals("application/json", StringComparison.OrdinalIgnoreCase);
+                var targetPath = localFilePath;
+                var isArmTemplate = false;
+                JObject requestContent = null;
+                Uri packageUri = null;
+                if (isRequestJSON == true)
+                {
+                    requestContent = await Request.Content.ReadAsAsync<JObject>();
+                    var payload = requestContent;
+                    if (ArmUtils.IsArmRequest(Request))
+                    {
+                        payload = payload.Value<JObject>("properties");
+                        isArmTemplate = ArmUtils.IsAzureResourceManagerUserAgent(Request);
+                    }
 
-            return Request.CreateResponse(HttpStatusCode.OK);
+                    var uri = payload?.Value<string>("packageUri");
+                    if (!Uri.TryCreate(uri, UriKind.Absolute, out packageUri))
+                    {
+                        throw new InvalidOperationException($"Payload contains invalid '{uri}' packageUri property");
+                    }
+
+                    var path = payload?.Value<string>("path");
+                    if (!string.IsNullOrEmpty(path))
+                    {
+                        targetPath = Path.Combine(targetPath, path);
+                        FileSystemHelpers.CreateDirectory(targetPath);
+                    }
+                }
+
+                using (packageUri == null ? Tracer.Step($"Extracting content to {targetPath}")
+                    : Tracer.Step("Extracting content from {0} to {1}", packageUri.AbsoluteUri.Split('?')[0], targetPath))
+                {
+                    var content = packageUri == null ? Request.Content
+                        : await DeploymentHelper.GetArtifactContentFromURL(new ArtifactDeploymentInfo(null, null) { RemoteURL = packageUri.AbsoluteUri }, Tracer);
+                    using (var stream = await content.ReadAsStreamAsync())
+                    {
+                        // The unzipping is done over the existing folder, without first removing existing files.
+                        // Hence it's more of a PATCH than a PUT. We should consider supporting both with the right semantic.
+                        // Though a true PUT at the root would be scary as it would wipe all existing files!
+                        var zipArchive = new ZipArchive(stream, ZipArchiveMode.Read);
+                        zipArchive.Extract(targetPath, Tracer);
+                    }
+                }
+
+                if (isArmTemplate && requestContent != null)
+                {
+                    requestContent.Value<JObject>("properties").Add("provisioningState", "Succeeded");
+                    return Request.CreateResponse(HttpStatusCode.OK, requestContent);
+                }
+
+                return Request.CreateResponse(HttpStatusCode.OK);
+            }
+            catch (Exception ex)
+            {
+                return ArmUtils.CreateErrorResponse(Request, HttpStatusCode.BadRequest, ex);
+            }
         }
 
         protected override Task<HttpResponseMessage> CreateItemPutResponse(FileSystemInfoBase info, string localFilePath, bool itemExists)

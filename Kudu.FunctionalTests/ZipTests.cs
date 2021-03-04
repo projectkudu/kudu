@@ -1,7 +1,12 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.IO.Compression;
+using System.Net.Http;
+using System.Text;
+using System.Threading.Tasks;
 using Kudu.TestHarness;
 using Kudu.TestHarness.Xunit;
+using Newtonsoft.Json;
 using Xunit;
 
 namespace Kudu.FunctionalTests
@@ -79,6 +84,75 @@ namespace Kudu.FunctionalTests
                     File.Delete(tempZip2Path);
                 }
             });
+        }
+
+        [Fact]
+        public async Task TestZipControllerPackageUri()
+        {
+            if (!TryGetZipUrl(out Uri packageUri))
+            {
+                throw new KuduXunitTestSkippedException("No ZipUrl is defined");
+            }
+
+            await ApplicationManager.RunAsync("TestZipPackageUri", async appManager =>
+            {
+                var payload = new
+                {
+                    packageUri = packageUri.AbsoluteUri
+                };
+
+                using (var response = await appManager.ZipManager.Client.PutAsJsonAsync(string.Empty, payload))
+                {
+                    response.EnsureSuccessStatusCode();
+                }
+
+                var result = await appManager.VfsManager.ReadAllTextAsync("test/hello.txt");
+                Assert.Equal("hello", result);
+
+                await appManager.VfsManager.DeleteAsync("test/hello.txt");
+            });
+        }
+
+        [Fact]
+        public async Task TestZipControllerARMPackageUri()
+        {
+            if (!TryGetZipUrl(out Uri packageUri))
+            {
+                throw new KuduXunitTestSkippedException("No ZipUrl is defined");
+            }
+
+            await ApplicationManager.RunAsync("TestZipControllerARMPackageUri", async appManager =>
+            {
+                var payload = new
+                {
+                    packageUri = packageUri.AbsoluteUri,
+                    path = "data/temp"
+                };
+
+                var content = new StringContent(JsonConvert.SerializeObject(new { properties = payload }), Encoding.UTF8, "application/json");
+                var request = new HttpRequestMessage(HttpMethod.Put, string.Empty) { Content = content };
+                request.Headers.Add("x-ms-geo-location", "eastus");
+
+                using (var response = await appManager.ZipManager.Client.SendAsync(request))
+                {
+                    response.EnsureSuccessStatusCode();
+                }
+
+                var result = appManager.VfsManager.ReadAllText("data/temp/test/hello.txt");
+                Assert.Equal("hello", result);
+
+                await appManager.VfsManager.DeleteAsync("data/temp/test/hello.txt");
+            });
+        }
+
+        private bool TryGetZipUrl(out Uri packageUri)
+        {
+            var assembly = typeof(VfsControllerBaseTest).Assembly;
+            string prefix = typeof(VfsControllerBaseTest).Namespace;
+            using (var reader = new StreamReader(assembly.GetManifestResourceStream(prefix + ".Vfs.ZipUrl.txt")))
+            {
+                return Uri.TryCreate(reader.ReadToEnd(), UriKind.Absolute, out packageUri);
+            }
         }
     }
 }
