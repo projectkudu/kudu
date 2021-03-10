@@ -6,6 +6,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
 using Kudu.Core;
@@ -95,7 +96,7 @@ namespace Kudu.Services.Zip
                 }
 
                 using (packageUri == null ? Tracer.Step($"Extracting content to {targetPath}")
-                    : Tracer.Step("Extracting content from {0} to {1}", packageUri.AbsoluteUri.Split('?')[0], targetPath))
+                    : Tracer.Step("Extracting content from {0} to {1}", StringUtils.ObfuscatePath(packageUri.AbsoluteUri), targetPath))
                 {
                     var content = packageUri == null ? Request.Content
                         : await DeploymentHelper.GetArtifactContentFromURL(new ArtifactDeploymentInfo(null, null) { RemoteURL = packageUri.AbsoluteUri }, Tracer);

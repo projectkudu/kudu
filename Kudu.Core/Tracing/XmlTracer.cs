@@ -236,7 +236,7 @@ namespace Kudu.Core.Tracing
             }
 
             // non OK
-            if (statusCode != 200)
+            if (statusCode < 200 || statusCode > 299)
             {
                 return true;
             }

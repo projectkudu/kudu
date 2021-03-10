@@ -29,8 +29,6 @@ namespace Kudu.Services.Deployment
 {
     public class PushDeploymentController : ApiController
     {
-        private const string ZipDeploy = "ZipDeploy";
-        private const string WarDeploy = "WarDeploy";
         private const string DefaultMessage = "Created via a push deployment";
 
         private readonly IEnvironment _environment;
@@ -62,7 +60,7 @@ namespace Kudu.Services.Deployment
             [FromUri] bool isAsync = false,
             [FromUri] string author = null,
             [FromUri] string authorEmail = null,
-            [FromUri] string deployer = ZipDeploy,
+            [FromUri] string deployer = Constants.ZipDeploy,
             [FromUri] string message = DefaultMessage)
         {
             using (_tracer.Step("ZipPushDeploy"))
@@ -105,7 +103,7 @@ namespace Kudu.Services.Deployment
             [FromUri] bool isAsync = false,
             [FromUri] string author = null,
             [FromUri] string authorEmail = null,
-            [FromUri] string deployer = WarDeploy,
+            [FromUri] string deployer = Constants.WarDeploy,
             [FromUri] string message = DefaultMessage)
         {
             using (_tracer.Step("WarPushDeploy"))
@@ -349,49 +347,6 @@ namespace Kudu.Services.Deployment
             return Request.CreateResponse(HttpStatusCode.BadRequest, message);
         }
 
-        private string GetArticfactURLFromARMJSON(JObject requestObject)
-        {
-            using (_tracer.Step("Reading the artifact URL from the request JSON"))
-            {
-                try
-                {
-                    // ARM template should have properties field and a packageUri field inside the properties field.
-                    string packageUri = requestObject.Value<JObject>("properties").Value<string>("packageUri");
-                    if (string.IsNullOrEmpty(packageUri))
-                    {
-                        throw new ArgumentException("Invalid Url in the JSON request");
-                    }
-                    return packageUri;
-                }
-                catch (Exception ex)
-                {
-                    _tracer.TraceError(ex, "Error reading the URL from the JSON {0}", requestObject.ToString());
-                    throw;
-                }
-            }
-        }
-
-        private string GetArtifactURLFromJSON(JObject requestObject)
-        {
-            using (_tracer.Step("Reading the artifact URL from the request JSON"))
-            {
-                try
-                {
-                    string packageUri = requestObject.Value<string>("packageUri");
-                    if (string.IsNullOrEmpty(packageUri))
-                    {
-                        throw new ArgumentException("Invalid Url in the JSON request");
-                    }
-                    return packageUri;
-                }
-                catch (Exception ex)
-                {
-                    _tracer.TraceError(ex, "Error reading the URL from the JSON {0}", requestObject.ToString());
-                    throw;
-                }
-            }
-        }
-
         private async Task<HttpResponseMessage> PushDeployAsync(ArtifactDeploymentInfo deploymentInfo, bool isAsync, JObject requestObject = null, ArtifactType artifactType = ArtifactType.Zip)
         {
             var content = Request.Content;
@@ -405,7 +360,24 @@ namespace Kudu.Services.Deployment
                     {
                         requestObject = await Request.Content.ReadAsAsync<JObject>();
                     }
-                    deploymentInfo.RemoteURL = ArmUtils.IsArmRequest(Request) ? GetArticfactURLFromARMJSON(requestObject) : GetArtifactURLFromJSON(requestObject);
+
+                    if (ArmUtils.IsArmRequest(Request))
+                    {
+                        requestObject = requestObject.Value<JObject>("properties");
+                    }
+
+                    var packageUri = requestObject.Value<string>("packageUri");
+                    if (!Uri.TryCreate(packageUri, UriKind.Absolute, out _))
+                    {
+                        throw new ArgumentException($"Invalid '{packageUri}' packageUri in the JSON request");
+                    }
+                    deploymentInfo.RemoteURL = packageUri;
+
+                    var targetPath = requestObject.Value<string>("targetPath");
+                    if (!string.IsNullOrEmpty(targetPath))
+                    {
+                        deploymentInfo.TargetRootPath = targetPath;
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -667,9 +639,9 @@ namespace Kudu.Services.Deployment
             var zipFileName = Path.ChangeExtension(Path.GetRandomFileName(), "zip");
             var zipFilePath = Path.Combine(_environment.ZipTempPath, zipFileName);
 
-            using (_tracer.Step("Downloading content from {0} to {1}", zipDeploymentInfo.RemoteURL.Split('?')[0], zipFilePath))
+            using (tracer.Step("Downloading content from {0} to {1}", StringUtils.ObfuscatePath(zipDeploymentInfo.RemoteURL), zipFilePath))
             {
-                await content.CopyToAsync(zipFilePath, _tracer);
+                await content.CopyToAsync(zipFilePath, tracer);
             }
 
             zipDeploymentInfo.RepositoryUrl = zipFilePath;

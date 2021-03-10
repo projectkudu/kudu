@@ -818,16 +818,19 @@ namespace Kudu.Core.Deployment
 
         private static string GetOutputPath(DeploymentInfoBase deploymentInfo, IEnvironment environment, IDeploymentSettingsManager perDeploymentSettings)
         {
+            if (deploymentInfo?.Deployer == Constants.OneDeploy || deploymentInfo?.Deployer == Constants.ZipDeploy)
+            {
+                if (!string.IsNullOrWhiteSpace(deploymentInfo.TargetRootPath))
+                {
+                    return deploymentInfo.TargetRootPath;
+                }
+            }
+
             string targetSubDirectoryRelativePath = perDeploymentSettings.GetTargetPath();
 
             if (String.IsNullOrWhiteSpace(targetSubDirectoryRelativePath))
             {
                 targetSubDirectoryRelativePath = deploymentInfo?.TargetSubDirectoryRelativePath;
-            }
-
-            if (deploymentInfo?.Deployer == Constants.OneDeploy)
-            {
-                return string.IsNullOrWhiteSpace(deploymentInfo.TargetRootPath) ? environment.WebRootPath : deploymentInfo.TargetRootPath;
             }
 
             if (!String.IsNullOrWhiteSpace(targetSubDirectoryRelativePath))

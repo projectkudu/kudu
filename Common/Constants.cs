@@ -139,5 +139,7 @@ namespace Kudu
         public const string AppOfflineKuduContent = "Created by kudu";
 
         public const string OneDeploy = "OneDeploy";
+        public const string ZipDeploy = "ZipDeploy";
+        public const string WarDeploy = "WarDeploy";
     }
 }
