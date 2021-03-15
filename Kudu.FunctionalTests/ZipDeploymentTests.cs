@@ -124,15 +124,8 @@ namespace Kudu.FunctionalTests
 
                 TestTracer.Trace("Confirming deployment is in progress");
 
-                DeployResult result;
-                do
-                {
-                    result = await appManager.DeploymentManager.GetResultAsync("latest");
-                    Assert.Equal(GetZipDeployer(), result.Deployer);
-                    await Task.Delay(TimeSpan.FromSeconds(2));
-                } while (!new[] { DeployStatus.Failed, DeployStatus.Success }.Contains(result.Status));
+                await AssertSuccesfulAsyncDeployment(appManager, files, "site/wwwroot");
 
-                await DeploymentTestHelper.AssertSuccessfulDeploymentByFilenames(appManager, files.Select(f => f.Filename).ToArray(), "site/wwwroot");
             });
         }
 
@@ -145,14 +138,16 @@ namespace Kudu.FunctionalTests
                 var response = await DeployZip(appManager, files, new ZipDeployMetadata { TrackDeploymentProgress = true, IsAsync = true });
                 response.EnsureSuccessStatusCode();
                 Assert.True(response.Headers.Contains(Constants.ScmDeploymentIdHeader));
-                await DeploymentTestHelper.AssertSuccessfulDeploymentByFilenames(appManager, files.Select(f => f.Filename).ToArray(), "site/wwwroot");
+
+                await AssertSuccesfulAsyncDeployment(appManager, files, "site/wwwroot");
 
                 // If TrackDeploymentProgress=false, the response header should not contain the ScmDeploymentId
                 files = DeploymentTestHelper.CreateRandomFilesForZip(10);
                 response = await DeployZip(appManager, files, new ZipDeployMetadata { TrackDeploymentProgress = false, IsAsync = true });
                 response.EnsureSuccessStatusCode();
                 Assert.True(!response.Headers.Contains(Constants.ScmDeploymentIdHeader));
-                await DeploymentTestHelper.AssertSuccessfulDeploymentByFilenames(appManager, files.Select(f => f.Filename).ToArray(), "site/wwwroot");
+
+                await AssertSuccesfulAsyncDeployment(appManager, files, "site/wwwroot");
             });
         }
 
@@ -187,15 +182,7 @@ namespace Kudu.FunctionalTests
 
                 Assert.Equal(HttpStatusCode.Conflict, response2.StatusCode);
 
-                DeployResult result;
-                do
-                {
-                    result = await appManager.DeploymentManager.GetResultAsync("latest");
-                    Assert.Equal(GetZipDeployer(), result.Deployer);
-                    await Task.Delay(TimeSpan.FromSeconds(2));
-                } while (!new[] { DeployStatus.Failed, DeployStatus.Success }.Contains(result.Status));
-
-                await DeploymentTestHelper.AssertSuccessfulDeploymentByFilenames(appManager, files.Select(f => f.Filename).ToArray(), "site/wwwroot");
+                await AssertSuccesfulAsyncDeployment(appManager, files, "site/wwwroot");
             });
         }
 
@@ -214,15 +201,7 @@ namespace Kudu.FunctionalTests
 
                 Assert.Equal(HttpStatusCode.Conflict, response2.StatusCode);
 
-                DeployResult result;
-                do
-                {
-                    result = await appManager.DeploymentManager.GetResultAsync("latest");
-                    Assert.Equal(GetZipDeployer(), result.Deployer);
-                    await Task.Delay(TimeSpan.FromSeconds(2));
-                } while (!new[] { DeployStatus.Failed, DeployStatus.Success }.Contains(result.Status));
-
-                await DeploymentTestHelper.AssertSuccessfulDeploymentByFilenames(appManager, files.Select(f => f.Filename).ToArray(), "site/wwwroot");
+                await AssertSuccesfulAsyncDeployment(appManager, files, "site/wwwroot");
             });
         }
 
@@ -500,6 +479,19 @@ namespace Kudu.FunctionalTests
                     zipStream,
                     metadata);
             }
+        }
+
+        private async Task AssertSuccesfulAsyncDeployment(ApplicationManager appManager, TestFile[] files, string path = null)
+        {
+            DeployResult result;
+            do
+            {
+                result = await appManager.DeploymentManager.GetResultAsync("latest");
+                Assert.Equal(GetZipDeployer(), result.Deployer);
+                await Task.Delay(TimeSpan.FromSeconds(2));
+            } while (!new[] { DeployStatus.Failed, DeployStatus.Success }.Contains(result.Status));
+
+            await DeploymentTestHelper.AssertSuccessfulDeploymentByFilenames(appManager, files.Select(f => f.Filename).ToArray(), path);
         }
 
         private static async Task<HttpResponseMessage> DeployWar(
