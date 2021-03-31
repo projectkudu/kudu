@@ -311,7 +311,7 @@ namespace Kudu.Core.Infrastructure
                 {
                     KuduEventSource.Log.GenericEvent(
                             ServerConfiguration.GetRuntimeSiteName(),
-                            string.Format("Dotnet target framework found: {0}", targetFramework),
+                            $"Dotnet target framework found: {targetFrameworkElement?.Value}",
                             string.Empty,
                             string.Empty,
                             string.Empty,
