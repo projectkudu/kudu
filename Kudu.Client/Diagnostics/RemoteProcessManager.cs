@@ -38,6 +38,11 @@ namespace Kudu.Client.Diagnostics
             return Client.GetJsonAsync<ProcessInfo>(id.ToString());
         }
 
+        public Task<ProcessEnvironmentInfo> GetEnvironmentAsync(int id, string filter)
+        {
+            return Client.GetJsonAsync<ProcessEnvironmentInfo>($"{id}/environments/{filter}");
+        }
+
         public async Task KillProcessAsync(int id, bool throwOnError = true)
         {
             try

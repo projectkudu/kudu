@@ -116,6 +116,29 @@ namespace Kudu.Services.Performance
         }
 
         [HttpGet]
+        public HttpResponseMessage GetEnvironments(int id, string filter)
+        {
+            using (_tracer.Step("ProcessController.GetEnvironments"))
+            {
+                var envs = GetProcessById(id).GetEnvironmentVariables()
+                    .Where(p => string.Equals("all", filter, StringComparison.OrdinalIgnoreCase) || p.Key.IndexOf(filter, StringComparison.OrdinalIgnoreCase) >= 0)
+                    .ToDictionary(p => p.Key, p => p.Value);
+
+                if (ArmUtils.IsArmRequest(Request))
+                {
+                    // No need to hide the secrets if the request is from contributor or admin.
+                    if (!(ArmUtils.IsRbacContributorRequest(Request) || ArmUtils.IsLegacyAuthorizationSource(Request)))
+                    {
+                        envs = envs.Where(kv => _armWhitelistedVariables.Contains(kv.Key, StringComparer.OrdinalIgnoreCase))
+                            .ToDictionary(k => k.Key, v => v.Value);
+                    }
+                }
+
+                return Request.CreateResponse(HttpStatusCode.OK, ArmUtils.AddEnvelopeOnArmRequest(new ProcessEnvironmentInfo(filter, envs), Request));
+            }
+        }
+
+        [HttpGet]
         public HttpResponseMessage GetAllProcesses(bool allUsers = false)
         {
             var requestUri = Request.GetRequestUri(_settings.GetUseOriginalHostForReference()).GetLeftPart(UriPartial.Path).TrimEnd('/');
