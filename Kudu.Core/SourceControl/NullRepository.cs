@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Web;
-using Kudu.Contracts.Tracing;
+using Kudu.Contracts.Settings;
+using Kudu.Contracts.SourceControl;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Tracing;
 
@@ -65,6 +65,12 @@ namespace Kudu.Core.SourceControl
             if (changeSet != null)
             {
                 if (id == changeSet.Id || id == "master" || id == "HEAD")
+                {
+                    return changeSet;
+                }
+
+                var scmType = System.Environment.GetEnvironmentVariable(SettingsKeys.ScmType);
+                if (string.Equals(ScmType.None, scmType, StringComparison.OrdinalIgnoreCase))
                 {
                     return changeSet;
                 }
