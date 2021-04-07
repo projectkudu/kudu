@@ -6,6 +6,7 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
+using Kudu.Core.Settings;
 using Kudu.Core.Tracing;
 
 namespace Kudu.Services.ByteRanges
@@ -42,11 +43,9 @@ namespace Kudu.Services.ByteRanges
 
         public static async Task<int> CopyToAsync(this HttpContent content, string filePath, ITracer tracer)
         {
-            const int ReadBufferSize = 4096;
-
             var nextTraceTime = DateTime.UtcNow.AddSeconds(30);
             var total = 0;
-            var buffer = new byte[ReadBufferSize];
+            var buffer = new byte[ScmHostingConfigurations.StreamCopyBufferSize];
             using (var src = await content.ReadAsStreamAsync())
             using (var dst = FileSystemHelpers.CreateFile(filePath))
             {

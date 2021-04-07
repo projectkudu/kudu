@@ -39,6 +39,26 @@ namespace Kudu.Core.Settings
             }
         }
 
+        public static int StreamCopyBufferSize
+        {
+            get 
+            {
+                // We pick a value that is the largest multiple of 4096 that is still smaller than the large object heap threshold (85K).
+                // The CopyTo/CopyToAsync buffer is short-lived and is likely to be collected at Gen0, and it offers a significant
+                // improvement in Copy performance.
+                // see https://referencesource.microsoft.com/#mscorlib/system/io/stream.cs,53
+                const int DefaultStreamCopyBufferSize = 81920;
+
+                if (!int.TryParse(GetValue(nameof(StreamCopyBufferSize)), out int value))
+                {
+                    value = DefaultStreamCopyBufferSize;
+                }
+
+                // multiple of 4096 and between range
+                return Math.Max(4096, Math.Min(DefaultStreamCopyBufferSize, (value / 4096) * 4096));
+            }
+        }
+
         public static bool GetLatestDeploymentOptimized
         {
             get { return GetValue("GetLatestDeploymentOptimized", "1") != "0"; }
