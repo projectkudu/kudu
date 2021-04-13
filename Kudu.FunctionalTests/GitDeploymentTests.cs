@@ -474,6 +474,57 @@ namespace Kudu.FunctionalTests
         }
     }
 
+    [KuduXunitTestClass]
+    public class DotNetCore60JITConsoleAppTests : GitDeploymentTests
+    {
+        [Fact]
+        [KuduXunitTest(PrivateOnly = true, MinAntaresVersion = 94)]
+        public void DotNetCore60ConsoleAppJIT()
+        {
+            Func<SiteConfig, SiteConfig> updateConfig = config => { config.NetFrameworkVersion = "v6.0"; return config; };
+            string randomTestName = "DotNetCore60PreviewConsoleAppTests";
+            ApplicationManager.Run(randomTestName, appManager =>
+            {
+                var config = appManager.ConfigurationManager.GetConfig(appManager.ApplicationName);
+                config = updateConfig(config);
+
+                appManager.UpdateConfig(config);
+
+                // Act
+                using (TestRepository testRepository = Git.Clone("DotNetCore60PreviewConsole"))
+                {
+                    appManager.GitDeploy(testRepository.PhysicalPath, "master");
+                }
+                var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
+
+                // Assert
+                Assert.Equal(1, results.Count);
+                Assert.Equal(DeployStatus.Success, results[0].Status);
+
+                OperationManager.Attempt(() =>
+                {
+                    var log = appManager.VfsManager.ReadAllText("data/jobs/continuous/deployedJob/job_log.txt");
+                    Assert.Contains(@"Microsoft.NETCore.App\6.0", log);
+                }, retries: 10, delayBeforeRetry: 30000);
+            });
+        }
+    }
+
+    [KuduXunitTestClass]
+    public class AspNetCore60JITWebTests : GitDeploymentTests
+    {
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        [KuduXunitTest(PrivateOnly = true, MinAntaresVersion = 94)]
+        public void PushAndDeployAspNetCore60WebJIT(bool readOnly)
+        {
+            PushAndDeployApps("DotNetCore60PreviewWeb", "master", @"Microsoft.NETCore.App\6.0.", HttpStatusCode.OK, "Deployment successful",
+                appSettings: readOnly ? new Dictionary<string, string> { { "WEBSITE_READONLY_APP", "1" } } : null,
+                updateConfig: config => { config.NetFrameworkVersion = "v6.0"; return config; });
+        }
+    }
+
     public abstract class GitDeploymentTests
     {
         //Common code

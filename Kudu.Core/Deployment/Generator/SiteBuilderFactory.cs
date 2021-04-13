@@ -131,7 +131,7 @@ namespace Kudu.Core.Deployment.Generator
                 project = solution.Projects.Where(p => p.IsExecutable).FirstOrDefault();
                 if (project != null)
                 {
-                    if (VsHelper.UseMSBuild1607() || VsHelper.IsDotNetCore5(project.TargetFramework))
+                    if (VsHelper.UseMSBuild1607() || VsHelper.IsNewDotNetCoreMajorVersion(project.TargetFramework))
                     {
                         return new DotNetConsoleMSBuild1607Builder(_environment,
                                                                      settings,
@@ -179,7 +179,7 @@ namespace Kudu.Core.Deployment.Generator
 
             if (project.IsAspNetCore)
             {
-                if (VsHelper.UseMSBuild1607() || VsHelper.IsDotNetCore5(project.TargetFramework))
+                if (VsHelper.UseMSBuild1607() || VsHelper.IsNewDotNetCoreMajorVersion(project.TargetFramework))
                 {
                     return new AspNetCoreMSBuild1607Builder(_environment,
                                                           settings,
@@ -219,7 +219,7 @@ namespace Kudu.Core.Deployment.Generator
                                           solution.Path);
             }
 
-            if (VsHelper.UseMSBuild1607() || VsHelper.IsDotNetCore5(project.TargetFramework))
+            if (VsHelper.UseMSBuild1607() || VsHelper.IsNewDotNetCoreMajorVersion(project.TargetFramework))
             {
                 return new FunctionMSBuild1607Builder(_environment,
                                                     settings,
@@ -344,7 +344,7 @@ namespace Kudu.Core.Deployment.Generator
             if (AspNetCoreHelper.TryAspNetCoreWebProject(targetPath, fileFinder, out projectJson))
             {
                 string targetFramework = VsHelper.GetTargetFrameworkJson(projectJson);
-                if (VsHelper.UseMSBuild1607() || VsHelper.IsDotNetCore5(targetFramework))
+                if (VsHelper.UseMSBuild1607() || VsHelper.IsNewDotNetCoreMajorVersion(targetFramework))
                 {
                     return new AspNetCoreMSBuild1607Builder(_environment,
                                                  perDeploymentSettings,
@@ -428,7 +428,7 @@ namespace Kudu.Core.Deployment.Generator
             }
             else if (AspNetCoreHelper.IsDotnetCoreFromProjectFile(targetPath, projectTypeGuids))
             {
-                if (VsHelper.UseMSBuild1607() || VsHelper.IsDotNetCore5(targetFramework))
+                if (VsHelper.UseMSBuild1607() || VsHelper.IsNewDotNetCoreMajorVersion(targetFramework))
                 {
                     return new AspNetCoreMSBuild1607Builder(_environment,
                                                           perDeploymentSettings,
@@ -458,7 +458,7 @@ namespace Kudu.Core.Deployment.Generator
             }
             else if (VsHelper.IsExecutableProject(targetPath))
             {
-                if (VsHelper.UseMSBuild1607() || VsHelper.IsDotNetCore5(targetFramework))
+                if (VsHelper.UseMSBuild1607() || VsHelper.IsNewDotNetCoreMajorVersion(targetFramework))
                 {
                     return new DotNetConsoleMSBuild1607Builder(_environment,
                                                              perDeploymentSettings,
@@ -491,7 +491,7 @@ namespace Kudu.Core.Deployment.Generator
             {
                 if (FunctionAppHelper.IsCSharpFunctionFromProjectFile(targetPath))
                 {
-                    if (VsHelper.UseMSBuild1607() || VsHelper.IsDotNetCore5(targetFramework))
+                    if (VsHelper.UseMSBuild1607() || VsHelper.IsNewDotNetCoreMajorVersion(targetFramework))
                     {
                         return new FunctionMSBuild1607Builder(_environment,
                                                             perDeploymentSettings,
