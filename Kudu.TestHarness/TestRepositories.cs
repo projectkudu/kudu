@@ -31,7 +31,7 @@ namespace Kudu.TestHarness
             new TestRepositoryInfo("https://github.com/KuduApps/Dev11_Net45_Mvc4_WebAPI.git",       "bb9e6b4"),
             new TestRepositoryInfo("https://github.com/KuduApps/DnxWebJobTest.git",                 "8450950"),
             new TestRepositoryInfo("https://github.com/KuduApps/Express-Template.git",              "0878ac7"),
-            new TestRepositoryInfo("https://github.com/KuduApps/DotNetCore60PreviewWeb",            "0e504a5"),
+            new TestRepositoryInfo("https://github.com/KuduApps/DotNetCore60PreviewWeb",            "92de9be"),
             new TestRepositoryInfo("https://github.com/KuduApps/DotNetCore60PreviewConsole",        "75eec5c"),
             new TestRepositoryInfo("https://github.com/KuduApps/fsharp-owin-sample.git",            "c29e8ae"),
             new TestRepositoryInfo("https://github.com/KuduApps/HangProcess.git",                   "e1c6c52"),
