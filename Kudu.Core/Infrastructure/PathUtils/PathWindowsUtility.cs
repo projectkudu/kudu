@@ -159,9 +159,7 @@ namespace Kudu.Core.Infrastructure
                     var versionStr = Path.GetFileName(msBuild);
                     if (SemanticVersion.TryParse(versionStr, out SemanticVersion currVersion))
                     {
-                        string installedFilePath = Path.Combine(programFiles, "MSBuilds", $"{versionStr}.installed");
-                        if (FileSystemHelpers.FileExists(installedFilePath) &&
-                            (latestMsBuild == null || currVersion.CompareTo(latestMsBuild) > 0))
+                        if (latestMsBuild == null || currVersion.CompareTo(latestMsBuild) > 0)
                         {
                             latestMsBuildStr = versionStr;
                             latestMsBuild = currVersion;
@@ -171,10 +169,7 @@ namespace Kudu.Core.Infrastructure
 
                 var pinnedVersion = VsHelper.MSBuildVersion;
                 var pinnedPath = string.IsNullOrEmpty(pinnedVersion) ? null : Path.Combine(programFiles, "MSBuilds", pinnedVersion, "MSBuild", "Current", "Bin");
-                var pinnedInstalledFilePath = string.IsNullOrEmpty(pinnedVersion) ? null : Path.Combine(programFiles, "MSBuilds", $"{pinnedVersion}.installed");
-                if (!string.IsNullOrEmpty(pinnedInstalledFilePath)
-                    && FileSystemHelpers.DirectoryExists(pinnedPath)
-                    && FileSystemHelpers.FileExists(pinnedInstalledFilePath))
+                if (FileSystemHelpers.DirectoryExists(pinnedPath))
                 {
                     probPaths.Add(pinnedPath);
                 }
