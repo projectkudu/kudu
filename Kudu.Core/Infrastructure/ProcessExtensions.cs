@@ -112,20 +112,20 @@ namespace Kudu.Core.Infrastructure
         /// </summary>
         public static Process GetParentProcess(this Process process, ITracer tracer)
         {
-            if (!OSDetector.IsOnWindows())
-            {
-                return process.GetParentProcessLinux(tracer);
-            }
-
-            IntPtr processHandle;
-            if (!process.TryGetProcessHandle(out processHandle))
-            {
-                return null;
-            }
-
-            var pbi = new ProcessNativeMethods.ProcessInformation();
             try
             {
+                if (!OSDetector.IsOnWindows())
+                {
+                    return process.GetParentProcessLinux(tracer);
+                }
+
+                IntPtr processHandle;
+                if (!process.TryGetProcessHandle(out processHandle))
+                {
+                    return null;
+                }
+
+                var pbi = new ProcessNativeMethods.ProcessInformation();
                 int returnLength;
                 int status = ProcessNativeMethods.NtQueryInformationProcess(processHandle, 0, ref pbi, Marshal.SizeOf(pbi), out returnLength);
                 if (status != 0)
@@ -362,7 +362,7 @@ namespace Kudu.Core.Infrastructure
             }
             catch (Win32Exception ex)
             {
-                if (ex.NativeErrorCode != 5)
+                if (!process.HasExited && ex.NativeErrorCode != 5)
                 {
                     throw;
                 }
@@ -512,8 +512,7 @@ namespace Kudu.Core.Infrastructure
                 Process parent = proc.GetParentProcess(tracer);
                 if (parent != null)
                 {
-                    List<int> children = null;
-                    if (!tree.TryGetValue(parent.Id, out children))
+                    if (!tree.TryGetValue(parent.Id, out var children))
                     {
                         tree[parent.Id] = children = new List<int>();
                     }
