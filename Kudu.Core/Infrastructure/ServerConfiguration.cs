@@ -61,15 +61,8 @@ namespace Kudu.Core.Infrastructure
         {
             if (string.IsNullOrEmpty(_runtimeSiteName))
             {
-                var runtimeSiteName = System.Environment.GetEnvironmentVariable("APP_POOL_ID");
-                if (!string.IsNullOrEmpty(runtimeSiteName))
-                {
-                    if (runtimeSiteName.StartsWith("~1"))
-                    {
-                        runtimeSiteName = runtimeSiteName.Substring(2);
-                    }
-                }
-                else
+                var runtimeSiteName = System.Environment.GetEnvironmentVariable("WEBSITE_DEPLOYMENT_ID");
+                if (string.IsNullOrEmpty(runtimeSiteName))
                 {
                     runtimeSiteName = GetApplicationName() ?? string.Empty;
                 }

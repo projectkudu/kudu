@@ -142,7 +142,7 @@ namespace Kudu.Services.Web.Infrastruture
             ulong totalBytes;
             var homePath = Environment.GetEnvironmentVariable("HOME");
             var localPath = Environment.ExpandEnvironmentVariables("%SystemDrive%\\local");
-            var userProfilePath = Environment.ExpandEnvironmentVariables("%SystemDrive%\\users\\%WEBSITE_SITE_NAME%");
+            var userProfilePath = Environment.ExpandEnvironmentVariables($"%SystemDrive%\\users\\{ServerConfiguration.GetRuntimeSiteName()}");
 
             OperationManager.SafeExecute(() =>
             {
