@@ -101,6 +101,7 @@
     <Compile Include="Deployment\PythonSiteEnablerTests.cs" />
     <Compile Include="Deployment\NodeSiteEnablerTests.cs" />
     <Compile Include="Deployment\DeploymentManagerFacts.cs" />
+    <Compile Include="EnvironmentHelperFacts.cs" />
     <Compile Include="FileSystemHubFacts.cs" />
     <Compile Include="Functions\FunctionManagerTests.cs" />
     <Compile Include="Functions\FunctionSecretTests.cs" />

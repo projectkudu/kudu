@@ -111,6 +111,13 @@
     </div>
     }
 
+    @if (Kudu.Core.Helpers.EnvironmentHelper.IsRunFromPackage())
+    {
+    <div class="alert alert-warning" role="alert">
+      Your app is currently in read only mode because you are running from a package file. To make any changes, please update the content in your zip file and WEBSITE_RUN_FROM_PACKAGE app setting.
+    </div>
+    }
+
     <h3>REST API <small>(works best when using a JSON viewer extension)</small></h3>
     <ul>
         <li>

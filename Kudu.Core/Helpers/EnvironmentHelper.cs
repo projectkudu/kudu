@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Kudu.Contracts.Infrastructure;
+using System;
 
 namespace Kudu.Core.Helpers
 {
@@ -31,11 +32,28 @@ namespace Kudu.Core.Helpers
             return isolation == "hyperv" || isolation == "process";
         }
 
+        public static bool IsRunFromPackage()
+        {
+            string runFromPackage = System.Environment.GetEnvironmentVariable("WEBSITE_RUN_FROM_PACKAGE");
+            return IsValidRunFromPackage(runFromPackage);
+        }
+
         public static bool IsLCOW()
         {
             return
                 System.Environment.GetEnvironmentVariable("WEBSITE_ISOLATION") == "hyperv" &&
                 System.Environment.GetEnvironmentVariable("WEBSITE_OS") == "linux";
+        }
+
+        internal static bool IsValidRunFromPackage(string runFromPackageValue)
+        {
+            if (string.IsNullOrEmpty(runFromPackageValue))
+            {
+                return false;
+            }
+
+            return StringUtils.IsTrueLike(runFromPackageValue)
+                || Uri.TryCreate(runFromPackageValue, UriKind.Absolute, out _);
         }
     }
 }
