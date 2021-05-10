@@ -24,6 +24,12 @@
     <!-- Render toast notifications here -->
     <div id="toast"></div>
 
+    @if (Kudu.Core.Helpers.EnvironmentHelper.IsRunFromPackage())
+    {
+    <div class="alert alert-warning" role="alert" style="margin-top: 1.2em; width: 90%;">
+      Your app is currently in read only mode because you are running from a package file. To make any changes, please update the content in your zip file and WEBSITE_RUN_FROM_PACKAGE app setting.
+    </div>}
+
     <div class="view main-view" data-bind="visible: !fileEdit()">
         <div id="fileList">
             <div id="operations" class="h3" style="position: relative">
