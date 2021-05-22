@@ -10,6 +10,7 @@ using System.Threading;
 using System.Web;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
+using Kudu.Core.Helpers;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Tracing;
 using Kudu.Services.Infrastructure;
@@ -332,7 +333,8 @@ namespace Kudu.Services.Web.Tracing
                         requestId,
                         Environment.GetEnvironmentVariable(SettingsKeys.ScmType),
                         Environment.GetEnvironmentVariable(SettingsKeys.WebSiteSku),
-                        BackgroundTask.KuduVersion.Value);
+                        EnvironmentHelper.KuduVersion.Value,
+                        EnvironmentHelper.AppServiceVersion.Value);
                 });
             }
 

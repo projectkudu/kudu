@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Threading;
 using Kudu.Contracts.Settings;
 using Kudu.Core.Helpers;
@@ -16,20 +15,6 @@ namespace Kudu.Services.Web.Infrastruture
 {
     public static class BackgroundTask
     {
-        public readonly static Lazy<string> AppServiceVersion = new Lazy<string>(() =>
-        {
-            var assembly = Assembly.Load("Microsoft.Web.Hosting, Version=7.1.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35");
-            var fvi = FileVersionInfo.GetVersionInfo(assembly.Location);
-            return fvi.FileVersion;
-        });
-
-        public readonly static Lazy<string> KuduVersion = new Lazy<string>(() =>
-        {
-            var assembly = Assembly.GetExecutingAssembly();
-            var fvi = FileVersionInfo.GetVersionInfo(assembly.Location);
-            return fvi.FileVersion;
-        });
-
         private static int _running = 0;
         private static ManualResetEvent _shutdownEvent;
         private static DateTime _startupDateTime = DateTime.UtcNow;
@@ -101,7 +86,8 @@ namespace Kudu.Services.Web.Infrastruture
                     string.Empty,
                     Environment.GetEnvironmentVariable(SettingsKeys.ScmType),
                     Environment.GetEnvironmentVariable(SettingsKeys.WebSiteSku),
-                    KuduVersion.Value);
+                    EnvironmentHelper.KuduVersion.Value,
+                    EnvironmentHelper.AppServiceVersion.Value);
             }
         }
 
@@ -110,8 +96,8 @@ namespace Kudu.Services.Web.Infrastruture
             telemetry["processId"] = Process.GetCurrentProcess().Id;
             telemetry["appDomainId"] = AppDomain.CurrentDomain.Id;
             telemetry["startupTime"] = $"{ _startupDateTime:s}Z";
-            telemetry["appServiceVersion"] = AppServiceVersion.Value;
-            telemetry["kuduVersion"] = KuduVersion.Value;
+            telemetry["appServiceVersion"] = EnvironmentHelper.AppServiceVersion.Value;
+            telemetry["kuduVersion"] = EnvironmentHelper.KuduVersion.Value;
         }
 
         private static void AddSiteInfo(Dictionary<string, object> telemetry)

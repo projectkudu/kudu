@@ -11,6 +11,7 @@ using Kudu.Contracts.Settings;
 using Kudu.Core.Settings;
 using Kudu.Core.SourceControl;
 using Kudu.Core.Tracing;
+using Kudu.Core.Helpers;
 
 namespace Kudu.Core.Infrastructure
 {
@@ -225,7 +226,8 @@ namespace Kudu.Core.Infrastructure
                             string.Empty,
                             string.Empty,
                             string.Empty,
-                            string.Empty);
+                            EnvironmentHelper.KuduVersion.Value,
+                            EnvironmentHelper.AppServiceVersion.Value);
                     return targetFramework;
                 }
             }
@@ -315,7 +317,8 @@ namespace Kudu.Core.Infrastructure
                             string.Empty,
                             string.Empty,
                             string.Empty,
-                            string.Empty);
+                            EnvironmentHelper.KuduVersion.Value,
+                            EnvironmentHelper.AppServiceVersion.Value);
                     return targetFrameworkElement.Value;
                 }
             }

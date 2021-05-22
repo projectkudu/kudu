@@ -64,11 +64,11 @@ namespace Kudu.Core.Tracing
 
         [SuppressMessage("Microsoft.Performance", "CA1801:ReviewUnusedParameters")]
         [Event(65514, Level = EventLevel.Informational, Message = "Generic event for site {0}", Channel = EventChannel.Operational)]
-        public void GenericEvent(string siteName, string Message, string requestId, string scmType, string siteMode, string buildVersion)
+        public void GenericEvent(string siteName, string Message, string requestId, string scmType, string siteMode, string buildVersion, string appServiceVersion)
         {
             if (IsEnabled())
             {
-                WriteEvent(65514, siteName, Message, requestId, scmType, siteMode, buildVersion);
+                WriteEvent(65514, siteName, Message, requestId, scmType, siteMode, buildVersion, appServiceVersion);
             }
         }
 
@@ -90,13 +90,15 @@ namespace Kudu.Core.Tracing
         /// <param name="requestId">requestId</param>
         /// <param name="status">Success, Failed</param>
         /// <param name="details">deployment-specific json</param>
+        /// <param name="buildVersion">runtime version</param>
+        /// <param name="appServiceVersion">appservice version</param>
         [SuppressMessage("Microsoft.Performance", "CA1801:ReviewUnusedParameters")]
         [Event(65516, Level = EventLevel.Informational, Message = "Deployment completed for site {0}", Channel = EventChannel.Operational)]
-        public void DeploymentCompleted(string siteName, string kind, string requestId, string status, string details)
+        public void DeploymentCompleted(string siteName, string kind, string requestId, string status, string details, string buildVersion, string appServiceVersion)
         {
             if (IsEnabled())
             {
-                WriteEvent(65516, siteName, kind, requestId, status, details);
+                WriteEvent(65516, siteName, kind, requestId, status, details, buildVersion, appServiceVersion);
             }
         }
     }

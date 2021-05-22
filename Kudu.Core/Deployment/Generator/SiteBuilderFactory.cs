@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
+using Kudu.Core.Helpers;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.SourceControl;
 using Kudu.Core.Tracing;
@@ -77,7 +78,8 @@ namespace Kudu.Core.Deployment.Generator
                 string.Empty,
                 string.Empty,
                 string.Empty,
-                string.Empty
+                EnvironmentHelper.KuduVersion.Value,
+                EnvironmentHelper.AppServiceVersion.Value
             );
 
             if (!String.IsNullOrEmpty(targetProjectPath))

@@ -762,7 +762,8 @@ namespace Kudu.Services.Web.App_Start
                     string.Empty,
                     string.Empty,
                     string.Empty,
-                    string.Empty);
+                    EnvironmentHelper.KuduVersion.Value,
+                    EnvironmentHelper.AppServiceVersion.Value);
             });
         }
 

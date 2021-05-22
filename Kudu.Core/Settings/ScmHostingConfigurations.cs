@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Kudu.Core.Helpers;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Tracing;
 
@@ -126,7 +127,8 @@ namespace Kudu.Core.Settings
                         string.Empty,
                         string.Empty,
                         string.Empty,
-                        string.Empty);
+                        EnvironmentHelper.KuduVersion.Value,
+                        EnvironmentHelper.AppServiceVersion.Value);
 
                     configs = Parse(settings);
                     _configs = configs;

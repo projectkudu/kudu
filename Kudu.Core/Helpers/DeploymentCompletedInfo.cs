@@ -60,7 +60,9 @@ namespace Kudu.Core.Helpers
                     info.Kind,
                     info.RequestId,
                     info.Status,
-                    info.Details);
+                    info.Details,
+                    EnvironmentHelper.KuduVersion.Value,
+                    EnvironmentHelper.AppServiceVersion.Value);
             }
             catch (Exception ex)
             {

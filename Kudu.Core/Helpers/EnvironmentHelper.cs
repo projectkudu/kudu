@@ -1,10 +1,33 @@
 ﻿using Kudu.Contracts.Infrastructure;
 using System;
+using System.Diagnostics;
+using System.Reflection;
 
 namespace Kudu.Core.Helpers
 {
     public static class EnvironmentHelper
     {
+        public readonly static Lazy<string> AppServiceVersion = new Lazy<string>(() =>
+        {
+            try
+            {
+                var assembly = Assembly.Load("Microsoft.Web.Hosting, Version=7.1.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35");
+                var fvi = FileVersionInfo.GetVersionInfo(assembly.Location);
+                return fvi.FileVersion;
+            } 
+            catch (Exception)
+            {
+                return string.Empty;
+            }
+        });
+
+        public readonly static Lazy<string> KuduVersion = new Lazy<string>(() =>
+        {
+            var assembly = Assembly.GetExecutingAssembly();
+            var fvi = FileVersionInfo.GetVersionInfo(assembly.Location);
+            return fvi.FileVersion;
+        });
+
         public static string NormalizeBinPath(string binPath)
         {
             if (!string.IsNullOrWhiteSpace(binPath) && !OSDetector.IsOnWindows())

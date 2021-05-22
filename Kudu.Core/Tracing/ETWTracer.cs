@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Net.Http;
 using System.Text;
 using Kudu.Contracts.Tracing;
+using Kudu.Core.Helpers;
 using Kudu.Core.Infrastructure;
 
 namespace Kudu.Core.Tracing
@@ -81,7 +82,8 @@ namespace Kudu.Core.Tracing
                                          _requestId,
                                          string.Empty,
                                          string.Empty,
-                                         string.Empty);
+                                         EnvironmentHelper.KuduVersion.Value,
+                                         EnvironmentHelper.AppServiceVersion.Value);
         }
     }
 }

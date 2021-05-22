@@ -30,7 +30,8 @@ namespace Kudu.Core.Helpers
                     System.Environment.GetEnvironmentVariable("x-ms-request-id") ?? string.Empty,
                     string.Empty,
                     string.Empty,
-                    string.Empty);
+                    EnvironmentHelper.KuduVersion.Value,
+                    EnvironmentHelper.AppServiceVersion.Value);
             }
 
             _tracer.Trace(format, args);
