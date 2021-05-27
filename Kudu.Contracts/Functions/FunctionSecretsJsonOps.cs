@@ -66,13 +66,30 @@ namespace Kudu.Core.Functions
             throw new FormatException($"Invalid secrets json: {json}");
         }
 
-        public FunctionSecrets GenerateKeyObject(string functionKey, string functionName)
+        public FunctionSecrets GenerateKeyObject(string functionKey, string functionName, string route)
         {
-            return new FunctionSecrets
+
+            FunctionSecrets f = new FunctionSecrets();
+
+            if (route != string.Empty)
             {
-                Key = functionKey,
-                TriggerUrl = String.Format(@"https://{0}/api/{1}?code={2}", System.Environment.GetEnvironmentVariable("WEBSITE_HOSTNAME") ?? "localhost", functionName, functionKey)
-            };
+                f = new FunctionSecrets
+                {
+                    Key = functionKey,
+                    TriggerUrl = String.Format(@"https://{0}/{3}/{1}?code={2}", System.Environment.GetEnvironmentVariable("WEBSITE_HOSTNAME") ?? "localhost", functionName, functionKey, route)
+                };
+            }
+            else
+            {
+                f = new FunctionSecrets
+                {
+                    Key = functionKey,
+                    TriggerUrl = String.Format(@"https://{0}/api/{1}?code={2}", System.Environment.GetEnvironmentVariable("WEBSITE_HOSTNAME") ?? "localhost", functionName, functionKey)
+                };
+            }
+
+            return f;
         }
+
     }
 }
