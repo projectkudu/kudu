@@ -45,6 +45,20 @@ namespace Kudu.Core.Test
             Assert.Equal(expected, actual);
         }
 
+        [Theory]
+        [InlineData("https://tempuri.org/hello/world", "https://tempuri.org/hello/world")]
+        [InlineData("https://tempuri.org/hello?world", "https://tempuri.org/hello?...")]
+        [InlineData("https://user:password@tempuri.org:545/hello?world", "https://tempuri.org:545/hello?...")]
+        [InlineData("/tempuri.org/hello/world", "/tempuri.org/hello/world")]
+        [InlineData("/tempuri.org/hello?world", "/tempuri.org/hello?...")]
+        [InlineData("", "")]
+        [InlineData(null, null)]
+        public void ObfuscateUrlTests(string uri, string expected)
+        {
+            var actual = StringUtils.ObfuscateUrl(uri);
+            Assert.Equal(expected, actual);
+        }
+
         [Fact]
         public void LatestMsBuildTest()
         {

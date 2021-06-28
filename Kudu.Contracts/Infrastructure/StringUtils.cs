@@ -52,5 +52,15 @@ namespace Kudu.Contracts.Infrastructure
 
             return $"{path.Substring(0, index + 1)}...";
         }
+
+        public static string ObfuscateUrl(string url)
+        {
+            if (Uri.TryCreate(url, UriKind.Absolute, out var uri))
+            {
+                return $"{uri.Scheme}://{uri.Authority}{StringUtils.ObfuscatePath(uri.PathAndQuery)}";
+            }
+
+            return StringUtils.ObfuscatePath(url);
+        }
     }
 }

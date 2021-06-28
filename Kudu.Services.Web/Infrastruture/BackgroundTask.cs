@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
+using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Settings;
 using Kudu.Core.Helpers;
 using Kudu.Core.Infrastructure;
@@ -115,6 +116,24 @@ namespace Kudu.Services.Web.Infrastruture
             telemetry["scmType"] = Environment.GetEnvironmentVariable(SettingsKeys.ScmType);
             telemetry["sku"] = Environment.GetEnvironmentVariable(SettingsKeys.WebSiteSku);
             telemetry["scmHostingConfigurations"] = FileSystemHelpers.FileExists(ScmHostingConfigurations.ConfigsFile) ? FileSystemHelpers.ReadAllText(ScmHostingConfigurations.ConfigsFile) : null;
+
+            var runFromPkg = Environment.GetEnvironmentVariable(SettingsKeys.RunFromZip);
+            if (string.IsNullOrEmpty(runFromPkg))
+            {
+                runFromPkg = Environment.GetEnvironmentVariable(SettingsKeys.RunFromZipOld);
+            }
+            telemetry["runFromPkg"] = StringUtils.ObfuscateUrl(runFromPkg);
+            if (runFromPkg == "1")
+            {
+                OperationManager.SafeExecute(() =>
+                {
+                    var packageNameTxt = Path.Combine(Environment.ExpandEnvironmentVariables("%SystemDrive%\\home"), Constants.DataPath, Constants.SitePackages, Constants.PackageNameTxt);
+                    if (File.Exists(packageNameTxt))
+                    {
+                        telemetry["packageNameTxt"] = File.ReadAllText(packageNameTxt).Trim();
+                    }
+                });
+            }
         }
 
         private static void AddDiskSpaceInfo(Dictionary<string, object> telemetry)
