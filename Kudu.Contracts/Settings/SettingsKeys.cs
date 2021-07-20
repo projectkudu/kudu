@@ -68,6 +68,6 @@
 
         public const string UseOriginalHostForReference = "SCM_USE_ORIGINALHOST_FOR_REFERENCE";
 
-        public const string ILBVip = "SCM_ILB_VIP";
+        public const string ILBVip = "ILB_VIP";
     }
 }

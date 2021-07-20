@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
+using Kudu.Contracts.Settings;
 using Kudu.Core.Helpers;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Tracing;
@@ -100,6 +102,11 @@ namespace Kudu.Core.Settings
         public static int TelemetryIntervalMinutes
         {
             get { return int.TryParse(GetValue("TelemetryIntervalMinutes"), out int value) ? value : 30; }
+        }
+
+        public static IPAddress ILBVip
+        {
+            get { return IPAddress.TryParse(GetValue(SettingsKeys.ILBVip), out var address) ? address : null; }
         }
 
         public static string GetValue(string key, string defaultValue = null)

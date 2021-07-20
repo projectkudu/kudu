@@ -708,9 +708,13 @@ namespace Kudu.Core.Helpers
         {
             try
             {
-                if (!IsLocalHost && IPAddress.TryParse(System.Environment.GetEnvironmentVariable(SettingsKeys.ILBVip), out IPAddress ilbAddress))
+                if (!IsLocalHost)
                 {
-                    return ilbAddress;
+                    var ilbAddress = ScmHostingConfigurations.ILBVip;
+                    if (ilbAddress != null)
+                    {
+                        return ilbAddress;
+                    }
                 }
 
                 // if resolved successfully, return null to not use alternative ipAddress
