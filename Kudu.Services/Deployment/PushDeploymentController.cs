@@ -333,6 +333,7 @@ namespace Kudu.Services.Deployment
                         break;
 
                     case ArtifactType.Zip:
+                        SetRunFromZipDeploymentInfo(deploymentInfo);
                         deploymentInfo.Fetch = LocalZipHandler;
                         deploymentInfo.TargetSubDirectoryRelativePath = path;
 
@@ -780,6 +781,27 @@ namespace Kudu.Services.Deployment
             {
                 tracer.TraceError(ex, "Exception encountered during zip folder cleanup");
                 throw;
+            }
+        }
+
+        private void SetRunFromZipDeploymentInfo(ArtifactDeploymentInfo deploymentInfo)
+        {
+            if (deploymentInfo == null
+                || _settings == null)
+            {
+                return;
+            }
+
+            if (_settings.RunFromLocalZip())
+            {
+                // This is used if the deployment is Run-From-Zip
+                // the name of the deployed file in D:\home\data\SitePackages\{name}.zip is the
+                // timestamp in the format yyyMMddHHmmss.
+                deploymentInfo.ArtifactFileName = $"{DateTime.UtcNow.ToString("yyyyMMddHHmmss")}.zip";
+
+                // This is also for Run-From-Zip where we need to extract the triggers
+                // for post deployment sync triggers.
+                deploymentInfo.SyncFunctionsTriggersPath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
             }
         }
     }
