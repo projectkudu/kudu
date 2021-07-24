@@ -24,6 +24,8 @@ namespace Kudu.FunctionalTests.SiteExtensions
     [KuduXunitTestClass]
     public class SiteExtensionApiFacts
     {
+        private const string TestGeoLocation = "test-geo-location";
+
         private static readonly Dictionary<string, string> _galleryInstalledExtensions = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
             {"sitereplicator", "Site"},
@@ -330,7 +332,7 @@ namespace Kudu.FunctionalTests.SiteExtensions
                 TestTracer.Trace("Install package '{0}'-'{1}' fresh from '{2}' async", testPackageId, latestPackage.Version, feedEndpoint);
                 HttpResponseMessage responseMessage = await manager.InstallExtension(id: testPackageId, version: latestPackage.Version, feedUrl: feedEndpoint);
                 ArmEntry<SiteExtensionInfo> armResult = await responseMessage.Content.ReadAsAsync<ArmEntry<SiteExtensionInfo>>();
-                Assert.Equal(string.Empty, armResult.Location);   // test "x-ms-geo-location" header is empty, same value should be assign to "Location"
+                Assert.Equal(TestGeoLocation, armResult.Location);   // test "x-ms-geo-location" header is empty, same value should be assign to "Location"
                 Assert.Equal(HttpStatusCode.Created, responseMessage.StatusCode);
                 Assert.True(responseMessage.Headers.Contains(Constants.RequestIdHeader));
 
@@ -362,7 +364,7 @@ namespace Kudu.FunctionalTests.SiteExtensions
                 // And there is no polling, since it finished within 15 seconds
                 responseMessage = await manager.InstallExtension(testPackageId);
                 armResult = await responseMessage.Content.ReadAsAsync<ArmEntry<SiteExtensionInfo>>();
-                Assert.Equal(string.Empty, armResult.Location);   // test "x-ms-geo-location" header is empty, same value should be assign to "Location"
+                Assert.Equal(TestGeoLocation, armResult.Location);   // test "x-ms-geo-location" header is empty, same value should be assign to "Location"
                 Assert.Equal(latestPackage.Id, armResult.Properties.Id);
                 Assert.Equal(feedEndpoint, armResult.Properties.FeedUrl);
                 Assert.Equal(HttpStatusCode.OK, responseMessage.StatusCode);
@@ -987,7 +989,7 @@ namespace Kudu.FunctionalTests.SiteExtensions
 
             if (isArmRequest && !containsArmHeader)
             {
-                client.DefaultRequestHeaders.Add(ArmUtils.GeoLocationHeaderKey, string.Empty);
+                client.DefaultRequestHeaders.Add(ArmUtils.GeoLocationHeaderKey, TestGeoLocation);
             }
             else if (!isArmRequest && containsArmHeader)
             {
