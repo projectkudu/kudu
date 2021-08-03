@@ -79,7 +79,7 @@ namespace Kudu.Core.Settings
                     return secs;
                 }
 
-                return 0;
+                return 60;
             }
         }
 
@@ -90,7 +90,7 @@ namespace Kudu.Core.Settings
         {
             get
             {
-                return GetValue("FunctionsSyncTriggersDelayBackground", "0") == "1" && FunctionsSyncTriggersDelaySeconds > 0;
+                return GetValue("FunctionsSyncTriggersDelayBackground", "1") != "0" && FunctionsSyncTriggersDelaySeconds > 0;
             }
         }
 
