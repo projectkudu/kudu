@@ -461,6 +461,7 @@ namespace Kudu.Services.Performance
                 Id = process.Id,
                 Name = process.ProcessName,
                 Href = selfLink,
+                MachineName = System.Environment.MachineName,
                 UserName = SafeGetValue(process.GetUserName, null)
             };
 
