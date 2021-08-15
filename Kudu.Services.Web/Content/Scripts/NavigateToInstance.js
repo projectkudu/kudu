@@ -15,8 +15,8 @@
                         var instanceTabBtn = document.createElement('li'); // is a node
                         instanceTabBtn.innerHTML = '<a href=\"#" onclick="NavigateToInstance(\'' + obj[i] + '\')">Instance: ' + obj[i].substring(0, 4) + '</a>';
                         instanceTabBtn.setAttribute("id", "inst-id-btn-" + obj[i]);
-                        if (obj[i].trim().valueOf() === $.currInst) {
-                            $("#instance-drop-down-text").text("Instance: " + obj[i].substring(0, 4) + "  ");
+                        if (obj[i].trim().valueOf() === $.currInst.split(':')[0]) {
+                            $("#instance-drop-down-text").text("Instance: " + obj[i].substring(0, 4) + " - " + $.currInst.split(':')[1]);
                         }
                         ul.appendChild(instanceTabBtn);
                     }

@@ -33,7 +33,7 @@
     @if (Kudu.Core.Environment.IsAzureEnvironment())
     {
         <script>
-            $.currInst = "@System.Environment.GetEnvironmentVariable("WEBSITE_INSTANCE_ID")";
+            $.currInst = "@System.Environment.GetEnvironmentVariable("WEBSITE_INSTANCE_ID"):(@System.Environment.GetEnvironmentVariable("COMPUTERNAME"))";
         </script>
     }
 
