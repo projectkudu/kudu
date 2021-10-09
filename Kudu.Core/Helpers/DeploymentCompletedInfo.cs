@@ -28,10 +28,10 @@ namespace Kudu.Core.Helpers
             }
 
             var serializer = new JavaScriptSerializer();
-            Persist(status.SiteName, kind, requestId, status.Status.ToString(), serializer.Serialize(status));
+            Persist(status.SiteName, kind, requestId, status.Status.ToString(), serializer.Serialize(status), status.ProjectType ?? string.Empty, status.VsProjectId ?? string.Empty);
         }
 
-        public static void Persist(string siteName, string kind, string requestId, string status, string details)
+        public static void Persist(string siteName, string kind, string requestId, string status, string details, string projectType, string vsProjectId)
         {
             var info = new DeploymentCompletedInfo
             {
@@ -62,7 +62,9 @@ namespace Kudu.Core.Helpers
                     info.Status,
                     info.Details,
                     EnvironmentHelper.KuduVersion.Value,
-                    EnvironmentHelper.AppServiceVersion.Value);
+                    EnvironmentHelper.AppServiceVersion.Value,
+                    projectType,
+                    vsProjectId);
             }
             catch (Exception ex)
             {

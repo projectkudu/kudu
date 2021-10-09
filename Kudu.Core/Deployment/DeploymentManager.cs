@@ -248,7 +248,7 @@ namespace Kudu.Core.Deployment
 
                     if (statusFile != null)
                     {
-                        MarkStatusComplete(statusFile, success: false);
+                        MarkStatusComplete(statusFile, success: false, deploymentAnalytics: deploymentAnalytics);
                     }
 
                     tracer.TraceError(ex);
@@ -447,8 +447,11 @@ namespace Kudu.Core.Deployment
             return results;
         }
 
-        private void MarkStatusComplete(IDeploymentStatusFile status, bool success)
+        private void MarkStatusComplete(IDeploymentStatusFile status, bool success, DeploymentAnalytics deploymentAnalytics = null)
         {
+            status.ProjectType = deploymentAnalytics?.ProjectType;
+            status.VsProjectId = deploymentAnalytics?.VsProjectId;
+
             if (success)
             {
                 status.MarkSuccess();
@@ -722,7 +725,7 @@ namespace Kudu.Core.Deployment
 
                     innerLogger.Log(ex);
 
-                    MarkStatusComplete(currentStatus, success: false);
+                    MarkStatusComplete(currentStatus, success: false, deploymentAnalytics: deploymentAnalytics);
 
                     FailDeployment(tracer, deployStep, deploymentAnalytics, ex);
 
@@ -785,14 +788,14 @@ namespace Kudu.Core.Deployment
 
                         TouchWatchedFileIfNeeded(_settings, deploymentInfo, context);
 
-                        FinishDeployment(id, deployStep);
+                        FinishDeployment(id, deployStep, deploymentAnalytics);
 
                         deploymentAnalytics.VsProjectId = TryGetVsProjectId(context);
                         deploymentAnalytics.Result = DeployStatus.Success.ToString();
                     }
                     catch (Exception ex)
                     {
-                        MarkStatusComplete(currentStatus, success: false);
+                        MarkStatusComplete(currentStatus, success: false, deploymentAnalytics: deploymentAnalytics);
 
                         FailDeployment(tracer, deployStep, deploymentAnalytics, ex);
 
@@ -956,7 +959,7 @@ namespace Kudu.Core.Deployment
         /// - Marks the active deployment
         /// - Sets the complete flag
         /// </summary>
-        private void FinishDeployment(string id, IDisposable deployStep)
+        private void FinishDeployment(string id, IDisposable deployStep, DeploymentAnalytics deploymentAnalytics)
         {
             using (deployStep)
             {
@@ -964,7 +967,7 @@ namespace Kudu.Core.Deployment
                 logger.Log(Resources.Log_DeploymentSuccessful);
 
                 IDeploymentStatusFile currentStatus = _status.Open(id);
-                MarkStatusComplete(currentStatus, success: true);
+                MarkStatusComplete(currentStatus, success: true, deploymentAnalytics: deploymentAnalytics);
 
                 _status.ActiveDeploymentId = id;
 

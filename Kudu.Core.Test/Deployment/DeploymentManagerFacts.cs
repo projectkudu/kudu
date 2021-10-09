@@ -275,6 +275,10 @@ namespace Kudu.Core.Test.Deployment
 
             public string SiteName { get; set; }
 
+            public string ProjectType { get; set; }
+
+            public string VsProjectId { get; set; }
+
             public void Save()
             {
                 // Do nothing.

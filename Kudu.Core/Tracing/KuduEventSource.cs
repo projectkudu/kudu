@@ -92,13 +92,15 @@ namespace Kudu.Core.Tracing
         /// <param name="details">deployment-specific json</param>
         /// <param name="buildVersion">runtime version</param>
         /// <param name="appServiceVersion">appservice version</param>
+        /// <param name="projectType">project type</param>
+        /// <param name="vsProjectId">vs project id</param>
         [SuppressMessage("Microsoft.Performance", "CA1801:ReviewUnusedParameters")]
         [Event(65516, Level = EventLevel.Informational, Message = "Deployment completed for site {0}", Channel = EventChannel.Operational)]
-        public void DeploymentCompleted(string siteName, string kind, string requestId, string status, string details, string buildVersion, string appServiceVersion)
+        public void DeploymentCompleted(string siteName, string kind, string requestId, string status, string details, string buildVersion, string appServiceVersion, string projectType, string vsProjectId)
         {
             if (IsEnabled())
             {
-                WriteEvent(65516, siteName, kind, requestId, status, details, buildVersion, appServiceVersion);
+                WriteEvent(65516, siteName, kind, requestId, status, details, buildVersion, appServiceVersion, projectType, vsProjectId);
             }
         }
     }

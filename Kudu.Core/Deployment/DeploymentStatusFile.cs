@@ -155,6 +155,8 @@ namespace Kudu.Core.Deployment
             Complete = complete;
             IsTemporary = isTemporary;
             IsReadOnly = isReadOnly;
+            ProjectType = GetOptionalElementValue(document.Root, "project_type");
+            VsProjectId = GetOptionalElementValue(document.Root, "vsproject_id");
         }
 
         public string Id { get; set; }
@@ -174,6 +176,8 @@ namespace Kudu.Core.Deployment
         public bool IsReadOnly { get; set; }
         public string SiteName { get; private set; }
         public string HostName { get; private set; }
+        public string ProjectType { get; set; }
+        public string VsProjectId { get; set; }
 
         public void Save()
         {
@@ -197,7 +201,9 @@ namespace Kudu.Core.Deployment
                     new XElement("endTime", EndTime),
                     new XElement("complete", Complete.ToString()),
                     new XElement("is_temp", IsTemporary.ToString()),
-                    new XElement("is_readonly", IsReadOnly.ToString())
+                    new XElement("is_readonly", IsReadOnly.ToString()),
+                    new XElement("project_type", $"{ProjectType}"),
+                    new XElement("vsproject_id", $"{VsProjectId}")
                 ));
 
             _statusLock.LockOperation(() =>
