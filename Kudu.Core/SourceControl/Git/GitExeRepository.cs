@@ -142,6 +142,8 @@ namespace Kudu.Core.SourceControl.Git
                 }
 
                 // to disallow browsing to this folder in case of in-place repo
+                // since system.web/authorization/deny does not deny access to static files, the mispelled closing element <configuration>
+                // in web.config will result to 500 when accessing (in a way preventing all access)
                 using (tracer.Step("Create deny users for .git folder"))
                 {
                     string content = "<?xml version=\"1.0\"" + @"?>
