@@ -19,7 +19,7 @@ namespace Kudu.FunctionalTests.Infrastructure
 {
     public static class KuduAssert
     {
-        public const string DefaultPageContent = "is up and running";
+        public const string DefaultPageContent = " running";
 
         public static T ThrowsUnwrapped<T>(Action action) where T : Exception
         {
