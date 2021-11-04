@@ -55,8 +55,13 @@ namespace Kudu.Core.Deployment.Generator
 
             if (deploymentInfo != null && deploymentInfo.Deployer == Constants.OneDeploy)
             {
-                var projectPath = !String.IsNullOrEmpty(targetProjectPath) ? targetProjectPath : repositoryRoot;
-                return new OneDeployBuilder(_environment, settings, _propertyProvider, repositoryRoot, projectPath, deploymentInfo);
+                // Return OneDeployBuilder when SCM_DO_BUILD_DURING_DEPLOYMENT is not enabled
+                // Otherwise the respective builder needs to be returned
+                if (!settings.DoBuildDuringDeployment())
+                {
+                    var projectPath = !String.IsNullOrEmpty(targetProjectPath) ? targetProjectPath : repositoryRoot;
+                    return new OneDeployBuilder(_environment, settings, _propertyProvider, repositoryRoot, projectPath, deploymentInfo);
+                }
             }
 
             if (settings.RunFromLocalZip())
