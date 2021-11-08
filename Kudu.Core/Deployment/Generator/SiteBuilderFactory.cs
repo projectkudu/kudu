@@ -55,9 +55,9 @@ namespace Kudu.Core.Deployment.Generator
 
             if (deploymentInfo != null && deploymentInfo.Deployer == Constants.OneDeploy)
             {
-                // Return OneDeployBuilder when SCM_DO_BUILD_DURING_DEPLOYMENT is not enabled
+                // Return OneDeployBuilder when SCM_DO_BUILD_DURING_DEPLOYMENT or WEBSITE_RUN_FROM_PACKAGE is not enabled
                 // Otherwise the respective builder needs to be returned
-                if (!settings.DoBuildDuringDeployment())
+                if (!settings.DoBuildDuringDeployment() && !settings.RunFromLocalZip())
                 {
                     var projectPath = !String.IsNullOrEmpty(targetProjectPath) ? targetProjectPath : repositoryRoot;
                     return new OneDeployBuilder(_environment, settings, _propertyProvider, repositoryRoot, projectPath, deploymentInfo);
