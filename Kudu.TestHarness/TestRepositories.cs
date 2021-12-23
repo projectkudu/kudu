@@ -33,6 +33,7 @@ namespace Kudu.TestHarness
             new TestRepositoryInfo("https://github.com/KuduApps/Express-Template.git",              "0878ac7"),
             new TestRepositoryInfo("https://github.com/KuduApps/DotNetCore60PreviewWeb",            "fbd568d"),
             new TestRepositoryInfo("https://github.com/KuduApps/DotNetCore60PreviewConsole",        "22cbe01"),
+            new TestRepositoryInfo("https://github.com/KuduApps/DumpAllApp.git",                    "33e8fc2"),
             new TestRepositoryInfo("https://github.com/KuduApps/fsharp-owin-sample.git",            "c29e8ae"),
             new TestRepositoryInfo("https://github.com/KuduApps/HangProcess.git",                   "e1c6c52"),
             new TestRepositoryInfo("https://github.com/KuduApps/HelloKudu.git",                     "2370e44"),

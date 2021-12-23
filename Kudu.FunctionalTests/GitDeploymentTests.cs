@@ -2,6 +2,7 @@
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using Kudu.Client;
 using Kudu.Contracts.Settings;
@@ -471,6 +472,36 @@ namespace Kudu.FunctionalTests
         public void PushAndDeployAspNetCore21WebApiCli()
         {
             PushAndDeployApps("AspNetCore2.1.0WebApiCli", "master", "[\"value1\",\"value2\"]", HttpStatusCode.OK, "Deployment successful", resourcePath: "/api/values");
+        }
+    }
+
+    [KuduXunitTestClass]
+    public class DumpAllAppTests
+    {
+        [Fact]
+        [KuduXunitTest(PrivateOnly = true)]
+        public async Task DumpAllAppTest()
+        {
+            // Arrange
+            string appName = "DumpAllApp";
+            using (var repo = Git.Clone(appName))
+            {
+                await ApplicationManager.RunAsync(appName, async appManager =>
+                {
+                    // Act
+                    appManager.GitDeploy(repo.PhysicalPath);
+
+                    // Assert
+                    var results = (await appManager.DeploymentManager.GetResultsAsync()).ToList();
+                    Assert.Equal(1, results.Count);
+                    Assert.Equal(DeployStatus.Success, results[0].Status);
+
+                    // Verify Content
+                    var requestId = $"{Guid.NewGuid()}";
+                    var expected = $"<li><strong>Request-Id</strong><span> = {requestId}</span></li>";
+                    await KuduAssert.VerifyUrlAsync(appManager.SiteUrl, content: expected, headers: new[] { new NameValueHeaderValue("Request-Id", requestId) });
+                });
+            }
         }
     }
 

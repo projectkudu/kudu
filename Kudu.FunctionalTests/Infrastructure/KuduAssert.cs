@@ -87,11 +87,21 @@ namespace Kudu.FunctionalTests.Infrastructure
         }
 
         public static async Task VerifyUrlAsync(string url, string content = null, HttpStatusCode statusCode = HttpStatusCode.OK, 
-            string httpMethod = "GET", string jsonPayload = "", ICredentials credentials = null)
+            string httpMethod = "GET", string jsonPayload = "", ICredentials credentials = null, NameValueHeaderValue[] headers = null)
         {
             using (var client = new HttpClient(HttpClientHelper.CreateClientHandler(url, credentials)))
             {
                 client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("Kudu-Test", "1.0"));
+
+                // custom headers
+                if (headers != null)
+                {
+                    foreach (var header in headers)
+                    {
+                        client.DefaultRequestHeaders.Add(header.Name, header.Value);
+                    }
+                }
+
                 HttpResponseMessage response = null;
                 if (String.Equals(httpMethod, "POST"))
                 {
