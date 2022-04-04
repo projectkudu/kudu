@@ -99,5 +99,11 @@ namespace Kudu.Core.Deployment
         // Used to allow / disallow 'restart' on a per deployment basis, if needed.
         // For example: OneDeploy allows clients to enable / disable 'restart'.
         public bool RestartAllowed { get; set; }
+
+        /* capture x-ms-correlation-id is passed in request*/
+        public string CorrelationId { get; set; }
+
+        /* capture deployment path*/
+        public string DeploymentPath { get; set; }
     }
 }

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Kudu.Core.SourceControl;
+using Kudu.Contracts.Tracing;
 
 namespace Kudu.Core.Deployment
 {
@@ -22,6 +23,8 @@ namespace Kudu.Core.Deployment
         IDisposable CreateTemporaryDeployment(string statusText, out ChangeSet tempChangeSet, ChangeSet changeset = null, string deployedBy = null);
 
         ILogger GetLogger(string id);
+
+        ILogger GetLogger(string id, ITracer tracer, DeploymentInfoBase deploymentInfo);
 
         string GetDeploymentScriptContent();
     }

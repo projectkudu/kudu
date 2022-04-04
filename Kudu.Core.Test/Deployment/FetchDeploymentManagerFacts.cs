@@ -197,6 +197,11 @@ namespace Kudu.Core.Test
                 return Mock.Of<ILogger>();
             }
 
+            public ILogger GetLogger(string id, ITracer tracer, DeploymentInfoBase deploymentInfo)
+            {
+                return Mock.Of<ILogger>();
+            }
+
             public string GetDeploymentScriptContent()
             {
                 return null;
