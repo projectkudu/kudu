@@ -295,6 +295,15 @@ namespace Kudu.Core {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Deployment Failed..
+        /// </summary>
+        internal static string Log_DeploymentFailed {
+            get {
+                return ResourceManager.GetString("Log_DeploymentFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Using the following command to generate deployment script: &apos;azure site deploymentscript {0}&apos;..
         /// </summary>
         internal static string Log_DeploymentScriptGeneratorCommand {
@@ -329,7 +338,7 @@ namespace Kudu.Core {
                 return ResourceManager.GetString("Log_GeneratingDeploymentScript", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Reached maximum allowed output lines for this run, to see all of the job&apos;s logs you can enable website application diagnostics.
         /// </summary>

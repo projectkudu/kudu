@@ -175,6 +175,7 @@ namespace Kudu.Core.Helpers
 
             if (syncTriggersDelaySeconds == 0)
             {
+                Trace(TraceEventType.Verbose, "Sync triggers without delay");
                 await AttemptSyncTriggerAndSetTriggers(requestId, functionsPath);
                 return;
             }
@@ -199,7 +200,7 @@ namespace Kudu.Core.Helpers
             {
                 await NotifyFrontEndOfFunctionsUpdate(requestId);
                 await WaitForFunctionsSiteRestart(syncTriggersDelaySeconds);
-
+                Trace(TraceEventType.Verbose, "Sync triggers without delay");
                 await AttemptSyncTriggerAndSetTriggers(requestId, functionsPath);
             }
         }
@@ -269,6 +270,8 @@ namespace Kudu.Core.Helpers
 
         private static async Task<bool> TryFunctionsRuntimeSyncTriggers(string requestId)
         {
+            Exception exception = null;
+
             try
             {
                 var scmHostName = IsLocalHost ? HttpAuthority : HttpHost;
@@ -287,10 +290,16 @@ namespace Kudu.Core.Helpers
 
                 return true;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                Trace(TraceEventType.Information, "Syncing function triggers by calling the functions runtime site failed.");
+                exception = ex;
                 return false;
+            }
+            finally
+            {
+                Trace(TraceEventType.Information,
+                      "Syncing function triggers by calling the functions runtime site {0}",
+                      exception == null ? "successful." : ("failed. " + exception));
             }
         }
 

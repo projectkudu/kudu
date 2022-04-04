@@ -50,6 +50,8 @@ namespace Kudu.Core.Infrastructure
                 reason);
 
             FileSystemHelpers.WriteAllText(restartTriggerPath, fileContents);
+
+            tracer.Trace("Modified file to trigger a restart of the app container.");
         }
     }
 }

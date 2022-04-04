@@ -213,6 +213,7 @@
     <Compile Include="Deployment\CascadeLogger.cs" />
     <Compile Include="Deployment\BuildPropertyProvider.cs" />
     <Compile Include="Deployment\DeploymentInfo.cs" />
+    <Compile Include="Deployment\DeploymentLogger.cs" />
     <Compile Include="Deployment\DeploymentStatusFileExtensions.cs" />
     <Compile Include="Deployment\DeploymentStatusManager.cs" />
     <Compile Include="Deployment\FetchDeploymentManager.cs" />

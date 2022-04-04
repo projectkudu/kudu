@@ -310,6 +310,11 @@ namespace Kudu.Contracts.Settings
             return value == null || StringUtils.IsTrueLike(value);
         }
 
+        public static string GetDoBuildDuringDeploymentAppSettingValue(this IDeploymentSettingsManager settings)
+        {
+            return settings.GetValue(SettingsKeys.DoBuildDuringDeployment);
+        }
+
         public static bool GetUseSiteExtensionV2(this IDeploymentSettingsManager settings)
         {
             var value = settings.GetValue(SettingsKeys.UseSiteExtensionV1);

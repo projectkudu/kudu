@@ -31,6 +31,7 @@ namespace Kudu.Services.Deployment
     public class PushDeploymentController : ApiController
     {
         private const string DefaultMessage = "Created via a push deployment";
+        private const string CorrelationID = "x-ms-correlation-id";
 
         private readonly IEnvironment _environment;
         private readonly IFetchDeploymentManager _deploymentManager;
@@ -76,7 +77,8 @@ namespace Kudu.Services.Deployment
                     IsReusable = false,
                     TargetChangeset = DeploymentManager.CreateTemporaryChangeSet(message: "Deploying from pushed zip file"),
                     CommitId = null,
-                    DeploymentTrackingId = trackDeploymentProgress ? Guid.NewGuid().ToString() : null,
+                    DeploymentTrackingId = Guid.NewGuid().ToString(),
+                    CorrelationId = GetCorrelationId(Request),
                     RepositoryType = RepositoryType.None,
                     Fetch = LocalZipHandler,
                     DoFullBuildByDefault = false,
@@ -85,17 +87,32 @@ namespace Kudu.Services.Deployment
                     Message = message
                 };
 
+                string remotebuild = _settings.GetValue(SettingsKeys.DoBuildDuringDeployment);
                 if (_settings.RunFromLocalZip())
                 {
-                    // This is used if the deployment is Run-From-Zip
-                    // the name of the deployed file in D:\home\data\SitePackages\{name}.zip is the
-                    // timestamp in the format yyyMMddHHmmss.
-                    deploymentInfo.ArtifactFileName = $"{DateTime.UtcNow.ToString("yyyyMMddHHmmss")}.zip";
+                    SetRunFromZipDeploymentInfo(deploymentInfo);
 
-                    // This is also for Run-From-Zip where we need to extract the triggers
-                    // for post deployment sync triggers.
-                    deploymentInfo.SyncFunctionsTriggersPath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+                    if (StringUtils.IsTrueLike(remotebuild))
+                    {
+                        deploymentInfo.DeploymentPath = "ZipDeploy. Run from package. Ignore remote build.";
+                    }
+                    else
+                    { 
+                        deploymentInfo.DeploymentPath = "ZipDeploy. Run from package."; 
+                    }
                 }
+                else
+                {
+                    if (StringUtils.IsTrueLike(remotebuild))
+                    {
+                        deploymentInfo.DeploymentPath = "ZipDeploy. Extract zip. Remote build.";
+                    }
+                    else
+                    {
+                        deploymentInfo.DeploymentPath = "ZipDeploy. Extract zip.";
+                    }
+                }
+                _tracer.Trace(deploymentInfo.DeploymentPath);
 
                 return await PushDeployAsync(deploymentInfo, isAsync);
             }
@@ -131,13 +148,15 @@ namespace Kudu.Services.Deployment
                     CleanupTargetDirectory = true, // For now, always cleanup the target directory. If needed, make it configurable
                     TargetChangeset = DeploymentManager.CreateTemporaryChangeSet(message: "Deploying from pushed war file"),
                     CommitId = null,
-                    DeploymentTrackingId = trackDeploymentProgress ? Guid.NewGuid().ToString() : null,
+                    DeploymentTrackingId = Guid.NewGuid().ToString(),
+                    CorrelationId = GetCorrelationId(Request),
                     RepositoryType = RepositoryType.None,
                     Fetch = LocalZipFetch,
                     DoFullBuildByDefault = false,
                     Author = author,
                     AuthorEmail = authorEmail,
-                    Message = message
+                    Message = message,
+                    DeploymentPath = "WarDeploy"
                 };
 
                 return await PushDeployAsync(deploymentInfo, isAsync);
@@ -225,7 +244,8 @@ namespace Kudu.Services.Deployment
                     TargetRootPath = _environment.WebRootPath,
                     TargetChangeset = DeploymentManager.CreateTemporaryChangeSet(message: Constants.OneDeploy),
                     CommitId = null,
-                    DeploymentTrackingId = trackDeploymentProgress ? Guid.NewGuid().ToString() : null,
+                    DeploymentTrackingId = Guid.NewGuid().ToString(),
+                    CorrelationId = GetCorrelationId(Request),
                     RepositoryType = RepositoryType.None,
                     Fetch = OneDeployFetch,
                     DoFullBuildByDefault = false,
@@ -233,6 +253,7 @@ namespace Kudu.Services.Deployment
                     WatchedFileEnabled = false,
                     CleanupTargetDirectory = clean.GetValueOrDefault(false),
                     RestartAllowed = restart.GetValueOrDefault(true),
+                    DeploymentPath = "OneDeploy"
                 };
 
                 string error;
@@ -362,6 +383,7 @@ namespace Kudu.Services.Deployment
 
         private async Task<HttpResponseMessage> PushDeployAsync(ArtifactDeploymentInfo deploymentInfo, bool isAsync, JObject requestObject = null, ArtifactType artifactType = ArtifactType.Zip)
         {
+            _tracer.Trace($"Starting {nameof(PushDeployAsync)}");
             var content = Request.Content;
             var isRequestJSON = content.Headers?.ContentType?.MediaType?.Equals("application/json", StringComparison.OrdinalIgnoreCase);
             if (isRequestJSON == true)
@@ -376,12 +398,19 @@ namespace Kudu.Services.Deployment
 
                     if (ArmUtils.IsArmRequest(Request))
                     {
+                        _tracer.Trace("Reading the artifact URL from the ARM request JSON");
                         requestObject = requestObject.Value<JObject>("properties");
                     }
 
                     var packageUri = requestObject.Value<string>("packageUri");
+                    if (string.IsNullOrEmpty(packageUri))
+                    {
+                        _tracer.Trace("PackageUri was empty in the JSON request");
+                        throw new ArgumentException($"PackageUri was empty in the JSON request");
+                    }
                     if (!Uri.TryCreate(packageUri, UriKind.Absolute, out _))
                     {
+                        _tracer.Trace("Invalid PackageUri in the JSON request");
                         throw new ArgumentException($"Invalid '{packageUri}' packageUri in the JSON request");
                     }
                     deploymentInfo.RemoteURL = packageUri;
@@ -443,6 +472,13 @@ namespace Kudu.Services.Deployment
 
             var response = Request.CreateResponse();
 
+            // Add deploymentId to header for deployment status API
+            if (deploymentInfo != null
+                && !string.IsNullOrEmpty(deploymentInfo.DeploymentTrackingId))
+            {
+                response.Headers.Add(Constants.ScmDeploymentIdHeader, deploymentInfo.DeploymentTrackingId);
+            }
+
             switch (result)
             {
                 case FetchDeploymentRequestResult.RunningAynschronously:
@@ -480,6 +516,7 @@ namespace Kudu.Services.Deployment
                 case FetchDeploymentRequestResult.ConflictAutoSwapOngoing:
                     response.StatusCode = HttpStatusCode.Conflict;
                     response.Content = new StringContent(Resources.Error_AutoSwapDeploymentOngoing);
+                    _tracer.Trace(Resources.Error_AutoSwapDeploymentOngoing);
                     break;
                 case FetchDeploymentRequestResult.Pending:
                     // Shouldn't happen here, as we disallow deferral for this use case
@@ -491,21 +528,16 @@ namespace Kudu.Services.Deployment
                 case FetchDeploymentRequestResult.ConflictDeploymentInProgress:
                     response.StatusCode = HttpStatusCode.Conflict;
                     response.Content = new StringContent(Resources.Error_DeploymentInProgress);
+                    _tracer.Trace(Resources.Error_DeploymentInProgress);
                     break;
                 case FetchDeploymentRequestResult.ConflictRunFromRemoteZipConfigured:
                     response.StatusCode = HttpStatusCode.Conflict;
                     response.Content = new StringContent(Resources.Error_RunFromRemoteZipConfigured);
+                    _tracer.Trace(Resources.Error_RunFromRemoteZipConfigured);
                     break;
                 default:
                     response.StatusCode = HttpStatusCode.BadRequest;
                     break;
-            }
-
-            // Add deploymentId to header for deployment status API
-            if (deploymentInfo != null
-                && !string.IsNullOrEmpty(deploymentInfo.DeploymentTrackingId))
-            {
-                response.Headers.Add(Constants.ScmDeploymentIdHeader, deploymentInfo.DeploymentTrackingId);
             }
 
             return response;
@@ -532,6 +564,7 @@ namespace Kudu.Services.Deployment
 
         private async Task LocalZipHandler(IRepository repository, DeploymentInfoBase deploymentInfo, string targetBranch, ILogger logger, ITracer tracer)
         {
+            _tracer.Trace($"Starting {nameof(LocalZipHandler)}");
             if (_settings.RunFromLocalZip() && deploymentInfo is ArtifactDeploymentInfo)
             {
                 ArtifactDeploymentInfo zipDeploymentInfo = (ArtifactDeploymentInfo)deploymentInfo;
@@ -552,6 +585,7 @@ namespace Kudu.Services.Deployment
 
         private void ExtractTriggers(IRepository repository, ArtifactDeploymentInfo deploymentInfo)
         {
+            _tracer.Trace($"Starting {nameof(ExtractTriggers)}");
             FileSystemHelpers.EnsureDirectory(deploymentInfo.SyncFunctionsTriggersPath);
             // Loading the zip file depends on how fast the file system is.
             // Tested Azure Files share with a zip containing 120k files (160 MBs)
@@ -670,6 +704,7 @@ namespace Kudu.Services.Deployment
 
         private async Task LocalZipFetch(IRepository repository, DeploymentInfoBase deploymentInfo, string targetBranch, ILogger logger, ITracer tracer)
         {
+            _tracer.Trace($"Starting {nameof(LocalZipFetch)}");
             var zipDeploymentInfo = (ArtifactDeploymentInfo)deploymentInfo;
 
             // If this was a request with a Zip URL in the JSON, we need to deploy the zip locally and get the path
@@ -805,6 +840,17 @@ namespace Kudu.Services.Deployment
             // This is also for Run-From-Zip where we need to extract the triggers
             // for post deployment sync triggers.
             deploymentInfo.SyncFunctionsTriggersPath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+        }
+
+        private string GetCorrelationId(HttpRequestMessage request)
+        {
+            var correlationId = string.Empty;
+            if (request != null && request.Headers != null && request.Headers.Contains(CorrelationID))
+            {
+                correlationId = request.Headers.GetValues(CorrelationID).ToString();
+            }
+            
+            return correlationId;
         }
     }
 }
