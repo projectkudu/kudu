@@ -65,6 +65,7 @@ namespace Kudu.Core.Deployment
             Uri requestUri,
             string targetBranch)
         {
+            _tracer.Trace($"Starting {nameof(FetchDeploy)}");
             // If Scm is not enabled, we will reject all but one payload for GenericHandler
             // This is to block the unintended CI with Scm providers like GitHub
             // Since Generic payload can only be done by user action, we loosely allow
@@ -169,7 +170,7 @@ namespace Kudu.Core.Deployment
 
                     try
                     {
-                        ILogger logger = _deploymentManager.GetLogger(tempChangeSet.Id);
+                        ILogger logger = _deploymentManager.GetLogger(tempChangeSet.Id, _tracer, deploymentInfo);
 
                         // Fetch changes from the repository
                         innerLogger = logger.Log(Resources.FetchingChanges);
@@ -310,7 +311,7 @@ namespace Kudu.Core.Deployment
                 {
                     // if last change is not null and finish successfully, mean there was at least one deployment happened
                     // since deployment is now done, trigger swap if enabled
-                    await PostDeploymentHelper.PerformAutoSwap(_environment.RequestId, new PostDeploymentTraceListener(_tracer, _deploymentManager.GetLogger(lastChange.Id)));
+                    await PostDeploymentHelper.PerformAutoSwap(_environment.RequestId, new PostDeploymentTraceListener(_tracer, _deploymentManager.GetLogger(lastChange.Id, _tracer, deploymentInfo)));
                 }
             }
         }
