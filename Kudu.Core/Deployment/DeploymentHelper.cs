@@ -9,6 +9,7 @@ using Kudu.Core.Infrastructure;
 using Kudu.Core.SourceControl;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Kudu.Core.Settings;
 
 namespace Kudu.Core.Deployment
 {
@@ -79,29 +80,30 @@ namespace Kudu.Core.Deployment
             }
         }
 
-        public static async Task<HttpContent> GetArtifactContentFromURL(ArtifactDeploymentInfo artifactDeploymentInfo, ITracer tracer)
+        public static async Task<HttpContent> GetArtifactContentFromURLAsync(ArtifactDeploymentInfo artifactDeploymentInfo, ITracer tracer)
         {
-            using (var client = new HttpClient(new HttpClientHandler()))
+            var client = new HttpClient(new HttpClientHandler());
+            Uri uri = new Uri(artifactDeploymentInfo.RemoteURL);
+            using (tracer.Step($"Trying to make a GET request to {StringUtils.ObfuscatePath(artifactDeploymentInfo.RemoteURL)}"))
             {
-                Uri uri = new Uri(artifactDeploymentInfo.RemoteURL);
-                using (tracer.Step($"Trying to make a GET request to {StringUtils.ObfuscatePath(artifactDeploymentInfo.RemoteURL)}"))
+                try
                 {
-                    try
+                    return await OperationManager.AttemptAsync<HttpContent>(async () =>
                     {
-                        return await OperationManager.AttemptAsync<HttpContent>(async () =>
-                        {
-                            HttpResponseMessage response = await client.GetAsync(uri);
-                            response.EnsureSuccessStatusCode();
-                            return response.Content;
-                        });
-                    }
-                    catch (Exception ex)
-                    {
-                        tracer.TraceError(ex, "Could not make a successful GET request to {0}", uri.AbsoluteUri);
-                        throw;
-                    }
+                        HttpResponseMessage response = ScmHostingConfigurations.UseHttpCompletionOptionResponseHeadersRead 
+                            ? await client.GetAsync(uri, HttpCompletionOption.ResponseHeadersRead) 
+                            : await client.GetAsync(uri);
+                        response.EnsureSuccessStatusCode();
+                        tracer.Trace("Content Length of Artifact: {0:n0} bytes.", response.Content.Headers.ContentLength);
+                        return response.Content;
+                    });
+                }
+                catch (Exception ex)
+                {
+                    tracer.TraceError(ex, "Could not make a successful GET request to {0}", uri.AbsoluteUri);
+                    throw;
                 }
             }
         }
-    }
+    }       
 }

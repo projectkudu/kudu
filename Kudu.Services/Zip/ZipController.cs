@@ -99,7 +99,7 @@ namespace Kudu.Services.Zip
                     : Tracer.Step("Extracting content from {0} to {1}", StringUtils.ObfuscatePath(packageUri.AbsoluteUri), targetPath))
                 {
                     var content = packageUri == null ? Request.Content
-                        : await DeploymentHelper.GetArtifactContentFromURL(new ArtifactDeploymentInfo(null, null) { RemoteURL = packageUri.AbsoluteUri }, Tracer);
+                        : await DeploymentHelper.GetArtifactContentFromURLAsync(new ArtifactDeploymentInfo(null, null) { RemoteURL = packageUri.AbsoluteUri }, Tracer);
                     using (var stream = await content.ReadAsStreamAsync())
                     {
                         // The unzipping is done over the existing folder, without first removing existing files.

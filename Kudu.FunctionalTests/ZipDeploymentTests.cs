@@ -8,11 +8,17 @@ using System.Text;
 using System.Threading.Tasks;
 using Kudu.Client.Deployment;
 using Kudu.Contracts.Settings;
+using Kudu.Contracts.Tracing;
+using Kudu.Core;
 using Kudu.Core.Deployment;
+using Kudu.Core.Tracing;
 using Kudu.TestHarness;
 using Kudu.TestHarness.Xunit;
+using Moq;
 using Newtonsoft.Json;
 using Xunit;
+using FluentAssertions;
+using Kudu.Core.Settings;
 
 namespace Kudu.FunctionalTests
 {
@@ -426,6 +432,37 @@ namespace Kudu.FunctionalTests
                 response.EnsureSuccessStatusCode();
                 await DeploymentTestHelper.AssertSuccessfulDeploymentByFilenames(appManager, files.Select(f => f.Filename).ToArray(), "site/wwwroot/webapps/testappname");
             });
+        }
+
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void TestSimpleZipUrlDeploymentLargeFile(bool useHttpCompletionOptionResponseHeadersRead)
+        {
+            // arrange
+            var packageUri = "https://kudumsistore.blob.core.windows.net/public/test3gig.zip";
+            var di = new ArtifactDeploymentInfo(Mock.Of<IEnvironment>(), Mock.Of<ITraceFactory>());
+            di.RemoteURL = packageUri;
+            ScmHostingConfigurations.Config = new Dictionary<string, string>
+            {
+                { "UseHttpCompletionOptionResponseHeadersRead", useHttpCompletionOptionResponseHeadersRead ? "1": "0" },
+            };
+
+            // act
+            Func<Task> action = async () =>
+            {
+                var httpContent = await DeploymentHelper.GetArtifactContentFromURLAsync(di, Mock.Of<ITracer>());
+            };
+
+            // assert
+            if (useHttpCompletionOptionResponseHeadersRead)
+            {
+                action.Should().NotThrow();
+            }
+            else
+            {
+                action.Should().Throw<HttpRequestException>().WithMessage("Cannot write more bytes to the buffer than the configured maximum buffer size: 2147483647.");
+            }
         }
 
         private static async Task AssertSuccessfulDeploymentByContent(ApplicationManager appManager, TestFile[] files)
