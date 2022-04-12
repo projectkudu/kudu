@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Kudu.Core.Settings;
 using Kudu.Core.SiteExtensions;
 using SystemEnvironment = System.Environment;
 
@@ -121,7 +122,7 @@ namespace Kudu.Core.Infrastructure
             return probPaths.FirstOrDefault(path => Directory.Exists(path));
         }
 
-        internal override string ResolveMSBuild16Dir()
+        internal override string ResolveMSBuild16Dir(string targetFramework)
         {
             string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);
             List<string> probPaths = new List<string>
@@ -132,6 +133,12 @@ namespace Kudu.Core.Infrastructure
                 Path.Combine(programFiles, "Microsoft Visual Studio", "2019", "BuildTools",   "MSBuild", "Current", "Bin"), // msbuild tools
                 // above is for public kudu, below is for azure
             };
+
+            if (VsHelper.IsDotNet31Version(targetFramework) && ScmHostingConfigurations.UseMSBuild167ForDotnet31)
+            {
+                probPaths.Add(Path.Combine(programFiles, "MSBuilds", "16.7.0", "MSBuild", "Current", "Bin"));
+            }
+
             probPaths.Add(Path.Combine(programFiles, "MSBuild-16.4", "MSBuild", "Current", "Bin"));
 
             return probPaths.FirstOrDefault(path => Directory.Exists(path));

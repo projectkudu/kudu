@@ -110,5 +110,17 @@ namespace Kudu.Core.Test
                 ScmHostingConfigurations.Config = null;
             }
         }
+
+        [Theory]
+        [InlineData("netcoreapp3.1", true)]
+        [InlineData(null, false)]
+        [InlineData("", false)]
+        [InlineData("netcoreapp3.2", false)]
+        [InlineData("netcoreapp3.11", true)]
+        public void VsHelperIsDotNet31VersionTests(string target, bool expected)
+        {
+            var actual = VsHelper.IsDotNet31Version(target);
+            Assert.Equal(expected, actual);
+        }
     }
 }

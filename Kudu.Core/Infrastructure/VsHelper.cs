@@ -331,7 +331,12 @@ namespace Kudu.Core.Infrastructure
         public static bool IsNewDotNetCoreMajorVersion(string target)
         {
             // Currently only for .NET 5.0 and 6.0
-            return target.StartsWith("net5.0", StringComparison.OrdinalIgnoreCase) || target.StartsWith("net6.0");
+            return target.StartsWith("net5.0", StringComparison.OrdinalIgnoreCase) || target.StartsWith("net6.0", StringComparison.OrdinalIgnoreCase);
+        }
+
+        public static bool IsDotNet31Version(string target)
+        {
+            return target != null && target.StartsWith("netcoreapp3.1", StringComparison.OrdinalIgnoreCase);
         }
 
         // 01, 10, 11 in binares

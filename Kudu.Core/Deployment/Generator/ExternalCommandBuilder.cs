@@ -48,6 +48,8 @@ namespace Kudu.Core.Deployment.Generator
 
         protected string RepositoryPath { get; private set; }
 
+        protected string TargetFramework { get; set; }
+
         protected IBuildPropertyProvider PropertyProvider { get; private set; }
 
         internal ExternalCommandFactory ExternalCommandFactory { get; private set; }
@@ -80,7 +82,7 @@ namespace Kudu.Core.Deployment.Generator
 
             // Creates an executable pointing to cmd and the working directory being
             // the repository root
-            var exe = ExternalCommandFactory.BuildExternalCommandExecutable(RepositoryPath, context.OutputPath, customLogger);
+            var exe = ExternalCommandFactory.BuildExternalCommandExecutable(RepositoryPath, context.OutputPath, customLogger, TargetFramework);
 
             exe.EnvironmentVariables[WellKnownEnvironmentVariables.PreviousManifestPath] = context.PreviousManifestFilePath ?? String.Empty;
             exe.EnvironmentVariables[WellKnownEnvironmentVariables.NextManifestPath] = context.NextManifestFilePath;

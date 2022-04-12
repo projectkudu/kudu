@@ -104,6 +104,12 @@ namespace Kudu.Core.Settings
             get { return int.TryParse(GetValue("TelemetryIntervalMinutes"), out int value) ? value : 30; }
         }
 
+        public static bool UseMSBuild167ForDotnet31
+        {
+            // this is disabled by default
+            get { return GetValue("UseMSBuild167ForDotnet31", "0") == "1"; }
+        }
+
         public static IPAddress ILBVip
         {
             get { return IPAddress.TryParse(GetValue(SettingsKeys.ILBVip), out var address) ? address : null; }
