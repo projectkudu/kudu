@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Ionic.BZip2;
 using Kudu.Contracts.Settings;
 using Kudu.Core.Helpers;
 using Kudu.Core.Infrastructure;
@@ -25,12 +26,12 @@ namespace Kudu.Core.Deployment.Generator
             _repositoryPath = repositoryPath;
         }
 
-        public Executable BuildExternalCommandExecutable(string workingDirectory, string deploymentTargetPath, ILogger logger)
+        public Executable BuildExternalCommandExecutable(string workingDirectory, string deploymentTargetPath, ILogger logger, string targetFramework = null)
         {
             string sourcePath = _repositoryPath;
             string targetPath = deploymentTargetPath;
 
-            var exe = BuildCommandExecutable(StarterScriptPath, workingDirectory, _deploymentSettings.GetCommandIdleTimeout(), logger);
+            var exe = BuildCommandExecutable(StarterScriptPath, workingDirectory, _deploymentSettings.GetCommandIdleTimeout(), logger, targetFramework);
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.SourcePath, sourcePath, logger);
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.TargetPath, targetPath, logger);
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.SelectNodeVersionCommandKey, SelectNodeVersionCommand, logger);
@@ -64,7 +65,7 @@ namespace Kudu.Core.Deployment.Generator
             return exe;
         }
 
-        public Executable BuildCommandExecutable(string commandPath, string workingDirectory, TimeSpan idleTimeout, ILogger logger)
+        public Executable BuildCommandExecutable(string commandPath, string workingDirectory, TimeSpan idleTimeout, ILogger logger, string targetFramework = null)
         {
             // Creates an executable pointing to cmd and the working directory being
             // the repository root
@@ -73,7 +74,7 @@ namespace Kudu.Core.Deployment.Generator
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.WebRootPath, _environment.WebRootPath, logger);
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.MSBuildPath, PathUtilityFactory.Instance.ResolveMSBuildPath(), logger);
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.MSBuild15Dir, PathUtilityFactory.Instance.ResolveMSBuild15Dir(), logger);
-            UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.MSBuild16Dir, PathUtilityFactory.Instance.ResolveMSBuild16Dir(), logger);
+            UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.MSBuild16Dir, PathUtilityFactory.Instance.ResolveMSBuild16Dir(targetFramework), logger);
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.MSBuild1670Dir, PathUtilityFactory.Instance.ResolveMSBuild1670Dir(), logger);
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.KuduSyncCommandKey, KuduSyncCommand, logger);
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.NuGetExeCommandKey, NuGetExeCommand, logger);

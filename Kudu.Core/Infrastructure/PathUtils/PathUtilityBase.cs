@@ -66,7 +66,7 @@ namespace Kudu.Core.Infrastructure
             return null;
         }
 
-        internal virtual string ResolveMSBuild16Dir()
+        internal virtual string ResolveMSBuild16Dir(string targetFramework)
         {
             return null;
         }
