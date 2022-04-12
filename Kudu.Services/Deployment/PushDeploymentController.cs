@@ -571,7 +571,7 @@ namespace Kudu.Services.Deployment
                 // If this was a request with a Zip URL in the JSON, we first need to get the zip content and write it to the site.
                 if (!string.IsNullOrEmpty(zipDeploymentInfo.RemoteURL))
                 {
-                    await WriteSitePackageZip(zipDeploymentInfo, tracer, await DeploymentHelper.GetArtifactContentFromURL(zipDeploymentInfo, tracer));
+                    await WriteSitePackageZip(zipDeploymentInfo, tracer, await DeploymentHelper.GetArtifactContentFromURLAsync(zipDeploymentInfo, tracer));
                 }
                 // If this is a Run-From-Zip deployment, then we need to extract function.json
                 // from the zip file into path zipDeploymentInfo.SyncFunctionsTriggersPath
@@ -661,7 +661,7 @@ namespace Kudu.Services.Deployment
             {
                 using (tracer.Step("Saving request content to {0}", artifactFileStagingPath))
                 {
-                    var content = await DeploymentHelper.GetArtifactContentFromURL(artifactDeploymentInfo, tracer);
+                    var content = await DeploymentHelper.GetArtifactContentFromURLAsync(artifactDeploymentInfo, tracer);
                     var copyTask = content.CopyToAsync(artifactFileStagingPath, tracer);
 
                     // Deletes all files and directories except for artifactFileStagingPath and artifactDirectoryStagingPath
@@ -689,7 +689,7 @@ namespace Kudu.Services.Deployment
 
         private async Task<string> DeployZipLocally(ArtifactDeploymentInfo zipDeploymentInfo, ITracer tracer)
         {
-            var content = await DeploymentHelper.GetArtifactContentFromURL(zipDeploymentInfo, tracer);
+            var content = await DeploymentHelper.GetArtifactContentFromURLAsync(zipDeploymentInfo, tracer);
             var zipFileName = Path.ChangeExtension(Path.GetRandomFileName(), "zip");
             var zipFilePath = Path.Combine(_environment.ZipTempPath, zipFileName);
 

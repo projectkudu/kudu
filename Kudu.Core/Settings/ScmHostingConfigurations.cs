@@ -110,6 +110,12 @@ namespace Kudu.Core.Settings
             get { return GetValue("UseMSBuild167ForDotnet31", "0") == "1"; }
         }
 
+        public static bool UseHttpCompletionOptionResponseHeadersRead
+        {
+            // this is enabled by default
+            get { return GetValue("UseHttpCompletionOptionResponseHeadersRead", "1") != "0"; }
+        }
+
         public static IPAddress ILBVip
         {
             get { return IPAddress.TryParse(GetValue(SettingsKeys.ILBVip), out var address) ? address : null; }

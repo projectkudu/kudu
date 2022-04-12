@@ -41,10 +41,10 @@ namespace Kudu.Services.ByteRanges
             return rangeNotSatisfiableResponse;
         }
 
-        public static async Task<int> CopyToAsync(this HttpContent content, string filePath, ITracer tracer)
+        public static async Task<long> CopyToAsync(this HttpContent content, string filePath, ITracer tracer)
         {
             var nextTraceTime = DateTime.UtcNow.AddSeconds(30);
-            var total = 0;
+            long total = 0;
             var buffer = new byte[ScmHostingConfigurations.StreamCopyBufferSize];
             using (var src = await content.ReadAsStreamAsync())
             using (var dst = FileSystemHelpers.CreateFile(filePath))
