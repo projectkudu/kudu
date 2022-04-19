@@ -100,10 +100,10 @@ namespace Kudu.Core.Deployment
         // For example: OneDeploy allows clients to enable / disable 'restart'.
         public bool RestartAllowed { get; set; }
 
-        /* capture x-ms-correlation-id is passed in request*/
+        // capture x-ms-correlation-id passed in request
         public string CorrelationId { get; set; }
 
-        /* capture deployment path*/
+        // capture deployment path
         public string DeploymentPath { get; set; }
     }
 }

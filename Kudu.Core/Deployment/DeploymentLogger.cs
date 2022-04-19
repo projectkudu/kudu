@@ -55,6 +55,7 @@ namespace Kudu.Core.Deployment
             siteInfo["deploymentId"] = _deploymentInfo?.DeploymentTrackingId;
             siteInfo["correlationId"] = _deploymentInfo?.CorrelationId;
             siteInfo["deploymentPath"] = _deploymentInfo?.DeploymentPath;
+            siteInfo["deployer"] = _deploymentInfo?.Deployer;
             siteInfo["os"] = System.Environment.GetEnvironmentVariable("WEBSITE_OS");
             siteInfo["sku"] = System.Environment.GetEnvironmentVariable("WEBSITE_SKU");
             siteInfo["language"] = System.Environment.GetEnvironmentVariable("FUNCTIONS_WORKER_RUNTIME");
