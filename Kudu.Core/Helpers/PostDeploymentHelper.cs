@@ -200,7 +200,7 @@ namespace Kudu.Core.Helpers
             {
                 await NotifyFrontEndOfFunctionsUpdate(requestId);
                 await WaitForFunctionsSiteRestart(syncTriggersDelaySeconds);
-                Trace(TraceEventType.Verbose, "Sync triggers without delay");
+                Trace(TraceEventType.Verbose, "Sync triggers with delay");
                 await AttemptSyncTriggerAndSetTriggers(requestId, functionsPath);
             }
         }

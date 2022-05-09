@@ -89,6 +89,66 @@ namespace Kudu.FunctionalTests
             });
         }
 
+        [Theory]
+        [InlineData("dotnet", true)]
+        public Task TestValidateZipDeploy(string zipLanguage, bool zipIs64Bit)
+        {
+            var testName = "TestValidateZipDeploy";
+            var packageUri = "https://raw.githubusercontent.com/KuduApps/ZipDeployArtifacts/master/HelloKudu.zip";
+            return ApplicationManager.RunAsync(testName, async appManager =>
+            {
+                var client = appManager.ZipDeploymentManager.Client;
+                var requestUri = client.BaseAddress;
+                requestUri = new Uri(string.Format("{0}validate?zipLanguage={1}&zipIs64Bit={2}", requestUri, zipLanguage, zipIs64Bit));
+
+                using (var request = new HttpRequestMessage(HttpMethod.Post, requestUri))
+                {
+                    var payload = new { packageUri = packageUri };
+                    request.Content = new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json");
+
+                    using (var response = await client.SendAsync(request))
+                    {
+                        Assert.Equal(HttpStatusCode.OK, response.StatusCode);            
+                    }
+                }
+            });
+        }
+
+        [Theory]
+        [InlineData("dotnet", true)]
+        public Task TestValidateZipDeployURL(string zipLanguage, bool zipIs64Bit)
+        {
+            var testName = "TestValidateZipDeploy";
+            var packageUri = "https://raw.githubusercontent.com/KuduApps/ZipDeployArtifacts/master/HelloKu.zip";
+            return ApplicationManager.RunAsync(testName, async appManager =>
+            {
+                var client = appManager.ZipDeploymentManager.Client;
+                var requestUri = client.BaseAddress;
+                requestUri = new Uri(string.Format("{0}validate?zipLanguage={1}&zipIs64Bit={2}", requestUri, zipLanguage, zipIs64Bit));
+
+                using (var request = new HttpRequestMessage(HttpMethod.Post, requestUri))
+                {
+                    var payload = new { packageUri = packageUri };
+                    request.Content = new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json");
+
+                    using (var response = await client.SendAsync(request))
+                    {
+                        string validation = string.Empty;
+                        var isResponseText = response.Content?.Headers?.ContentType?.MediaType?.Equals("text/plain", StringComparison.OrdinalIgnoreCase);
+                        if (isResponseText == true)
+                        {
+                            string responseText = await response.Content.ReadAsStringAsync();
+                            if (!string.IsNullOrEmpty(responseText))
+                            {
+                                validation = responseText;
+                            }
+                        }
+                        Assert.Contains("ZipDeploy Validation", validation);
+                    }
+                }
+            });
+        }
+
         [Fact]
         public Task TestZipDeployWithMetadata()
         {

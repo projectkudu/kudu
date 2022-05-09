@@ -8,6 +8,8 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
 using System.Web.Http;
@@ -24,6 +26,7 @@ using Kudu.Core.Tracing;
 using Kudu.Services.Arm;
 using Kudu.Services.ByteRanges;
 using Kudu.Services.Infrastructure;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace Kudu.Services.Deployment
@@ -32,6 +35,8 @@ namespace Kudu.Services.Deployment
     {
         private const string DefaultMessage = "Created via a push deployment";
         private const string CorrelationID = "x-ms-correlation-id";
+        private const string ZipDeployValidationError = "ZipDeploy Validation ERROR";
+        private const string ZipDeployValidationWarning = "ZipDeploy Validation WARNING";
 
         private readonly IEnvironment _environment;
         private readonly IFetchDeploymentManager _deploymentManager;
@@ -87,32 +92,11 @@ namespace Kudu.Services.Deployment
                     Message = message
                 };
 
-                string remotebuild = _settings.GetValue(SettingsKeys.DoBuildDuringDeployment);
                 if (_settings.RunFromLocalZip())
                 {
                     SetRunFromZipDeploymentInfo(deploymentInfo);
-
-                    if (StringUtils.IsTrueLike(remotebuild))
-                    {
-                        deploymentInfo.DeploymentPath = "ZipDeploy. Run from package. Ignore remote build.";
-                    }
-                    else
-                    { 
-                        deploymentInfo.DeploymentPath = "ZipDeploy. Run from package."; 
-                    }
                 }
-                else
-                {
-                    if (StringUtils.IsTrueLike(remotebuild))
-                    {
-                        deploymentInfo.DeploymentPath = "ZipDeploy. Extract zip. Remote build.";
-                    }
-                    else
-                    {
-                        deploymentInfo.DeploymentPath = "ZipDeploy. Extract zip.";
-                    }
-                }
-                _tracer.Trace(deploymentInfo.DeploymentPath);
+                deploymentInfo.DeploymentPath = GetZipDeployPathInfo();
 
                 return await PushDeployAsync(deploymentInfo, isAsync);
             }
@@ -851,6 +835,272 @@ namespace Kudu.Services.Deployment
             }
             
             return correlationId;
+        }
+
+        private string GetZipDeployPathInfo()
+        {
+            string pathmsg;
+            string remotebuild = _settings.GetValue(SettingsKeys.DoBuildDuringDeployment);
+            string functionversion = System.Environment.GetEnvironmentVariable("FUNCTIONS_EXTENSION_VERSION");
+            string isfunction = string.IsNullOrEmpty(functionversion) ? string.Empty : "Functions App ";
+            if (_settings.RunFromLocalZip())
+            {
+                if (StringUtils.IsTrueLike(remotebuild))
+                {
+                    pathmsg = string.Concat(isfunction, "ZipDeploy. Run from package. Ignore remote build.");
+                }
+                else
+                {
+                    pathmsg = string.Concat(isfunction, "ZipDeploy. Run from package.");
+                }
+            }
+            else
+            {
+                if (StringUtils.IsTrueLike(remotebuild))
+                {
+                    pathmsg = string.Concat(isfunction, "ZipDeploy. Extract zip. Remote build.");
+                }
+                else
+                {
+                    pathmsg = string.Concat(isfunction, "ZipDeploy. Extract zip.");
+                }
+            }
+            _tracer.Trace("{0}", pathmsg);
+            return pathmsg;
+        }
+
+        [HttpPost]
+        public async Task<HttpResponseMessage> ValidateZipDeploy(
+            string zipLanguage = null,
+            string zipIs64Bit = null)
+        {
+            using (_tracer.Step(nameof(ValidateZipDeploy)))
+            {
+                var response = Request.CreateResponse();
+                JObject jsonObject = new JObject();
+
+                try
+                {
+                    string message = string.Empty;
+                    string packageUri = string.Empty;
+                    ulong packageSize = 0;
+
+                    var isRequestJSON = Request.Content?.Headers?.ContentType?.MediaType?.Equals("application/json", StringComparison.OrdinalIgnoreCase);
+                    if (isRequestJSON == true)
+                    {
+                        // Read the request body
+                        JObject requestJson = await Request.Content.ReadAsAsync<JObject>();
+                        if (requestJson != null)
+                        {
+                            if (ArmUtils.IsArmRequest(Request))
+                            {
+                                _tracer.Trace("{0}: Reading the properties from the ARM request JSON", nameof(ValidateZipDeploy));
+                                requestJson = requestJson?.Value<JObject>("properties");
+
+                                packageUri = requestJson?.Value<string>("packageUri");
+                                zipLanguage = requestJson?.Value<string>("zipLanguage");
+                                zipIs64Bit = requestJson?.Value<string>("zipIs64Bit");
+                            }
+                            else
+                            {
+                                packageUri = requestJson?.Value<string>("packageUri");
+                            }
+                        }
+                    }
+                    else
+                    {
+                        packageSize = (ulong)Request.Content.Headers.ContentLength;
+                    }
+
+                    if (!string.IsNullOrEmpty(packageUri))
+                    {
+                        packageSize = await IsPackageUrlValid(packageUri);
+                    }
+                    if (packageSize > 0)
+                    {
+                        IsPackageSizeValid(packageSize);
+                    }
+                    if (!string.IsNullOrEmpty(zipLanguage))
+                    {
+                        IsLanguageMatched(zipLanguage);
+                    }
+                    if (!string.IsNullOrEmpty(zipIs64Bit))
+                    {
+                        IsBitnessMatched(StringUtils.IsTrueLike(zipIs64Bit));
+                    }
+                    message = IsSettingConflicting();
+                    _tracer.Trace(string.Format("{0}: {1}", nameof(ValidateZipDeploy), message));
+
+                    jsonObject.Add("result", message);
+                    string jsonResponse = JsonConvert.SerializeObject(jsonObject);
+                    response.Content = new StringContent(jsonResponse, Encoding.UTF8, "application/json");
+
+                    response.StatusCode = HttpStatusCode.OK;
+                    return response;
+                }
+                catch (Exception ex)
+                {
+                    _tracer.Trace(string.Format("{0}: {1}", nameof(ValidateZipDeploy), ex.Message));
+
+                    if (ex.Message.Contains(ZipDeployValidationError))
+                    {
+                        jsonObject.Add("result", ex.Message);
+                        string jsonResponse = JsonConvert.SerializeObject(jsonObject);
+                        response.Content = new StringContent(jsonResponse, Encoding.UTF8, "application/json");
+
+                        response.StatusCode = HttpStatusCode.BadRequest;
+                        return response;
+                    }
+                    else
+                    {
+                        jsonObject.Add("result", "");
+                        string jsonResponse = JsonConvert.SerializeObject(jsonObject);
+                        response.Content = new StringContent(jsonResponse, Encoding.UTF8, "application/json");
+
+                        response.StatusCode = HttpStatusCode.OK;
+                        return response;
+                    }                    
+                }
+            }
+        }
+
+        private async Task<ulong> IsPackageUrlValid(string PackageURL)
+        {
+            _tracer.Trace("{0}: {1}", nameof(ValidateZipDeploy), nameof(IsPackageUrlValid));
+
+            ulong packageSize = 0;
+            if (!Uri.TryCreate(PackageURL, UriKind.Absolute, out Uri uri))
+            {
+                string error = string.Format("{0}: Package URI is Malformed: {1}", ZipDeployValidationError, PackageURL);
+                throw new ArgumentException(error);
+            }
+
+            using (var client = new HttpClient(new HttpClientHandler()))
+            {
+                using (var request = new HttpRequestMessage(HttpMethod.Head, uri))
+                {
+                    using (var response = await client.SendAsync(request))
+                    {
+                        try
+                        {
+                            response.EnsureSuccessStatusCode();
+                            packageSize = (ulong)response.Content.Headers.ContentLength;
+                        }
+                        catch (Exception ex)
+                        {
+                            _tracer.TraceError(ex);
+                            // BadRequest: Package URL is inaccessible.
+                            string error = string.Format("{0}: Package URI is inaccessible. Failed HEAD request to {1}. Please follow these steps to verify: " +
+                                "1. Regenerate the SAS URL, in case the url has expired. " +
+                                "2. Navigate to Kudu debug console and curl on the URI to verify any accessibility restrictions. " +
+                                "3. If accessible, then redeploy. ", ZipDeployValidationError, PackageURL);
+                            throw new ArgumentException(error);
+                        }
+                    }
+                }
+            }
+            
+            return packageSize;
+        }
+
+        private bool IsPackageSizeValid(ulong packageSize)
+        {
+            _tracer.Trace("{0}: {1}: Package size from content length: {2:n0} bytes.", nameof(ValidateZipDeploy), nameof(IsPackageSizeValid), packageSize);
+
+            var homePath = System.Environment.GetEnvironmentVariable("HOME");
+            //var localPath = System.Environment.ExpandEnvironmentVariables("%SystemDrive%\\local");
+            
+            Kudu.Core.Environment.GetDiskFreeSpace(homePath, out ulong freeBytes, out ulong totalBytes);
+            float packageMB = (float)packageSize / (1024 * 1024);
+            float freeMB = (float)freeBytes / (1024 * 1024);
+            float totalMB = (float)totalBytes / (1024 * 1024);
+            if (packageMB >= freeMB)
+            {
+                // BadRequest: There is not enough space on the disk.
+                string error = string.Format("{0}: Package size = {1:0.00} MB. Free disk space = {2:0.00} MB. Total disk space = {3:0.00} MB. " +
+                    "We have detected that this upload would exceed the free space available. This issue will be mitigated by scaling vertically on the App Service Plan and restarting the application. " +
+                    "Refer App Service Pricing for more information on App Service Plans and pricing: https://azure.microsoft.com/en-us/pricing/details/app-service/windows/?cdn=disable ", ZipDeployValidationError, packageMB, freeMB, totalMB);
+                throw new ArgumentException(error);
+            }
+            return true;
+        }
+
+        private bool IsLanguageMatched(string language)
+        {
+            _tracer.Trace("{0}: {1}", nameof(ValidateZipDeploy), nameof(IsLanguageMatched));
+
+            string appLanguage = System.Environment.GetEnvironmentVariable("FUNCTIONS_WORKER_RUNTIME");
+            if (!string.IsNullOrEmpty(appLanguage) && appLanguage.ToLower() != language.ToLower())
+            {
+                // BadRequest: Mismatched language to Azure app
+                string error = string.Format("{0}: Cannot deploy {1} zip package to {2} Azure Functions app. " +
+                    "Please deploy {1} zip package on existing or newly created {1} Azure Functions app. ", ZipDeployValidationError, language, appLanguage);
+                throw new ArgumentException(error);
+            }
+            return true;
+        }
+
+        private bool IsBitnessMatched(bool is64bit)
+        {
+            _tracer.Trace("{0}: {1}", nameof(ValidateZipDeploy), nameof(IsBitnessMatched));
+
+            if (is64bit == true)
+            {
+                string appLanguage = System.Environment.GetEnvironmentVariable("FUNCTIONS_WORKER_RUNTIME");
+                string bitness = System.Environment.GetEnvironmentVariable("REMOTEDEBUGGINGBITVERSION");
+                if (!string.IsNullOrEmpty(appLanguage) && !string.IsNullOrEmpty(bitness)
+                    && appLanguage.ToLower().Contains("dotnet") && !bitness.Contains("64"))
+                {
+                    // BadRequest: deploying 64 bit code to 32 bit app
+                    string error = string.Format("{0}: Deploying 64 bit code package to 32 bit Azure Functions app. ", ZipDeployValidationError);
+                    throw new ArgumentException(error);
+                }
+            }
+            return true;
+        }
+
+        private string IsSettingConflicting()
+        {
+            _tracer.Trace("{0}: {1}", nameof(ValidateZipDeploy), nameof(IsSettingConflicting));
+
+            string messages = string.Empty;
+            if (_settings.RunFromRemoteZip())
+            {
+                // BadRequest: Remote URL so deployment not needed
+                string error = string.Format("{0}: App setting WEBSITE_RUN_FROM_PACKAGE is set to a remote URL. Zip Deployment is not needed in this case. " +
+                    "For new deployment, just set the WEBSITE_RUN_FROM_PACKAGE to the remote URL of the latest zip package and manually call synctriggers. ", ZipDeployValidationError);
+                throw new ArgumentException(error);
+            }
+            else
+            {
+                bool runFromPackage = _settings.RunFromLocalZip();
+                bool remoteBuild = StringUtils.IsTrueLike(_settings.GetValue(SettingsKeys.DoBuildDuringDeployment));
+                if (remoteBuild)
+                {
+                    if (runFromPackage)
+                    {
+                        // Warning but deployment successful
+                        messages = string.Format("{0}: Cannot perform remote build because app setting WEBSITE_RUN_FROM_PACKAGE is set to 1 along with " +
+                            "app setting SCM_DO_BUILD_DURING_DEPLOYMENT set to 1. Please choose one of the following: " +
+                            "1. If you want to perform remote build, then please set WEBSITE_RUN_FROM_PACKAGE = 0. Then Re-deploy. " +
+                            "2. If you do not want to perform remote build, then please set SCM_DO_BUILD_DURING_DEPLOYMENT = 0. Then Re-deploy. ", ZipDeployValidationWarning);
+                    }
+                }
+                else
+                {
+                    if (!runFromPackage)
+                    {
+                        // Warning but deployment successful
+                        messages = string.Format("{0}: It is recommended to set app setting WEBSITE_RUN_FROM_PACKAGE = 1 unless you are targeting one of the following scenarios: " +
+                            "1. Using portal editing. " +
+                            "2. Running post deployment scripts. " +
+                            "3. Need write permission in wwwroot. " +
+                            "4. Using custom handler with special requirements. " +
+                            "NOTE: If you decide to update app setting WEBSITE_RUN_FROM_PACKAGE = 1, you will have to re-deploy your code. ", ZipDeployValidationWarning);
+                    }
+                }
+            }
+            return messages;
         }
     }
 }
