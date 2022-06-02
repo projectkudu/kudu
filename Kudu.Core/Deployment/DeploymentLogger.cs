@@ -41,7 +41,10 @@ namespace Kudu.Core.Deployment
                 {
                     _tracer.Trace("{0} DEPLOYMENTINFO: {1}, deploymentStatus = {2}", value, siteInfoMsg, deploymentStatus);
                 }
-                else _tracer.Trace(value);
+                else
+                {
+                    _tracer.Trace("{0}", value);
+                }
             }
 
             //return NullLogger.Instance;

@@ -465,6 +465,16 @@ namespace Kudu.FunctionalTests
             }
         }
 
+        [Theory]
+        [InlineData("{11} {testing", LogEntryType.Message)]
+        [InlineData("{11} {testing", LogEntryType.Error)]
+        public void TestDeploymentLogger(string value, LogEntryType type)
+        {
+            var deploymentInfo = new ArtifactDeploymentInfo(Mock.Of<IEnvironment>(), Mock.Of<ITraceFactory>()) { };
+            var logger = new DeploymentLogger(Mock.Of<ILogger>(), Mock.Of<ITracer>(), deploymentInfo);
+            logger.Log(value, type);
+        }
+
         private static async Task AssertSuccessfulDeploymentByContent(ApplicationManager appManager, TestFile[] files)
         {
             TestTracer.Trace("Verifying files are deployed and deployment record created.");
