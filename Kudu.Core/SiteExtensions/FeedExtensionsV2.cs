@@ -446,32 +446,14 @@ namespace Kudu.Core.SiteExtensions
 
                 using (var client = new HttpClient { Timeout = HttpClientTimeout })
                 {
-                    using (var response = await client.GetAsync(feedUrl))
+                    // Five in the loop below is arbitrary. Don't want to follow the next link forever. 
+                    // It will actually go upto two pages because there are total of 110 extensions at the moment.  
+                    for (int page =  1; page <= 5; page++)
                     {
-                        if (!response.IsSuccessStatusCode)
+                        feedUrl = await GetExtensionsByFeedUrl(client, feedUrl, extensions);
+                        if (string.IsNullOrEmpty(feedUrl))
                         {
-                            var details = new StringBuilder();
-                            details.Append($"HttpGet '{feedUrl}' failed with '{response.StatusCode}'.");
-                            await OperationManager.SafeExecute(async () =>
-                            {
-                                var message = await response.Content.ReadAsStringAsync();
-                                details.Append($"  Content is {message}");
-                            });
-                            throw new InvalidOperationException(details.ToString());
-                        }
-
-                        var content = await response.Content.ReadAsStringAsync();
-                        using (var reader = XmlReader.Create(new System.IO.StringReader(content)))
-                        {
-                            reader.ReadStartElement("feed");
-                            while (reader.Read())
-                            {
-                                if (reader.Name == "entry" && reader.IsStartElement())
-                                {
-                                    reader.ReadToDescendant("m:properties");
-                                    extensions.Add(new SiteExtensionInfo((XElement)XNode.ReadFrom(reader)));
-                                }
-                            }
+                            break;
                         }
                     }
                 }
@@ -493,6 +475,45 @@ namespace Kudu.Core.SiteExtensions
                 }
 
                 return info.Extensions;
+            }
+
+            private static async Task<string> GetExtensionsByFeedUrl(HttpClient client, string feedUrl, List<SiteExtensionInfo> extensions)
+            {
+                var nextUrl = string.Empty;
+                using (var response = await client.GetAsync(feedUrl))
+                {
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        var details = new StringBuilder();
+                        details.Append($"HttpGet '{feedUrl}' failed with '{response.StatusCode}'.");
+                        await OperationManager.SafeExecute(async () =>
+                        {
+                            var message = await response.Content.ReadAsStringAsync();
+                            details.Append($"  Content is {message}");
+                        });
+                        throw new InvalidOperationException(details.ToString());
+                    }
+
+                    var content = await response.Content.ReadAsStringAsync();
+                    using (var reader = XmlReader.Create(new System.IO.StringReader(content)))
+                    {
+                        reader.ReadStartElement("feed");
+                        while (reader.Read())
+                        {
+                            if (reader.Name == "entry" && reader.IsStartElement())
+                            {
+                                reader.ReadToDescendant("m:properties");
+                                extensions.Add(new SiteExtensionInfo((XElement)XNode.ReadFrom(reader)));
+                            }
+                            else if (reader.Name == "link" && reader.IsEmptyElement && reader.GetAttribute("rel") == "next")
+                            {
+                                nextUrl = reader.GetAttribute("href");
+                            }
+                        }
+                    }
+                }
+
+                return nextUrl;
             }
         }
     }
