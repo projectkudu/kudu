@@ -122,5 +122,17 @@ namespace Kudu.Core.Test
             var actual = VsHelper.IsDotNet31Version(target);
             Assert.Equal(expected, actual);
         }
+
+        [Theory]
+        [InlineData("net5.0", false)]
+        [InlineData(null, false)]
+        [InlineData("", false)]
+        [InlineData("net6.0", false)]
+        [InlineData("net7.0", true)]
+        public void VsHelperIsDotNet7VersionTests(string target, bool expected)
+        {
+            var actual = VsHelper.IsDotNet7Version(target);
+            Assert.Equal(expected, actual);
+        }
     }
 }
