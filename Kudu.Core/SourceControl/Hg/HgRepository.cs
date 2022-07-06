@@ -233,8 +233,8 @@ namespace Kudu.Core.SourceControl
 
         fetch:
             try
-            {                
-                _hgExecutable.Execute(tracer, "pull {0} --branch {1} --noninteractive", remote, branchNameWithQuotes, PathUtilityFactory.Instance.ResolveSSHPath());
+            {
+                _hgExecutable.Execute(tracer, "pull \"{0}\" --branch \"{1}\" --noninteractive", remote, branchNameWithQuotes, PathUtilityFactory.Instance.ResolveSSHPath());
             }
             catch (CommandLineException exception)
             {

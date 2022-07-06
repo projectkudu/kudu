@@ -119,6 +119,13 @@ namespace Kudu.Core.Infrastructure
                 foreach (ZipArchiveEntry entry in entries)
                 {
                     string path = Path.Combine(directoryName, entry.FullName);
+
+                    if (!Path.GetFullPath(path).StartsWith(Path.GetFullPath(directoryName), StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        var sanitizedFileName = entry.FullName?.Replace("../", "./");
+                        path = Path.Combine(directoryName, sanitizedFileName);
+                    }
+
                     if (entry.Length == 0 && (path.EndsWith("/", StringComparison.Ordinal) || path.EndsWith("\\", StringComparison.Ordinal)))
                     {
                         // Extract directory
