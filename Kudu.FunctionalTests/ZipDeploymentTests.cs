@@ -134,8 +134,8 @@ namespace Kudu.FunctionalTests
                     using (var response = await client.SendAsync(request))
                     {
                         string validation = string.Empty;
-                        var isResponseText = response.Content?.Headers?.ContentType?.MediaType?.Equals("text/plain", StringComparison.OrdinalIgnoreCase);
-                        if (isResponseText == true)
+                        var isResponseJson = response.Content?.Headers?.ContentType?.MediaType?.Equals("application/json", StringComparison.OrdinalIgnoreCase);
+                        if (isResponseJson == true)
                         {
                             string responseText = await response.Content.ReadAsStringAsync();
                             if (!string.IsNullOrEmpty(responseText))
