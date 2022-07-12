@@ -535,6 +535,11 @@ namespace Kudu.FunctionalTests
                     var requestId = $"{Guid.NewGuid()}";
                     var expected = $"<li><strong>Request-Id</strong><span> = {requestId}</span></li>";
                     await KuduAssert.VerifyUrlAsync(appManager.SiteUrl, content: expected, headers: new[] { new NameValueHeaderValue("Request-Id", requestId) });
+
+                    // Verify Proxy-Authorization
+                    var proxyAuth = $"Basic {Guid.NewGuid()}, Basic {Guid.NewGuid()}";
+                    expected = $"<li><strong>Proxy-Authorization</strong><span> = {proxyAuth}</span></li>";
+                    await KuduAssert.VerifyUrlAsync(appManager.SiteUrl, content: expected, httpClientHandler: client => client.DefaultRequestHeaders.TryAddWithoutValidation("Proxy-Authorization", proxyAuth));
                 });
             }
         }
