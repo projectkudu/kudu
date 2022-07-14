@@ -20,9 +20,8 @@ namespace Kudu.Services.Deployment
         private const string StackEnvVarName = "WEBSITE_STACK";
 
         // All paths are relative to HOME directory
-        public const string WwwrootDirectoryRelativePath = "site/wwwroot";
-        public const string ScriptsDirectoryRelativePath = "site/scripts";
-        public const string LibsDirectoryRelativePath = "site/libs";
+        public const string WwwrootDirectoryRelativePath = "site/wwwroot/";
+        public const string ScriptsDirectoryRelativePath = "site/scripts/";
 
         public static bool IsLegacyWarPathValid(string path)
         {
@@ -53,7 +52,7 @@ namespace Kudu.Services.Deployment
             return false;
         }
 
-        public static bool EnsureValidPath(ArtifactType artifactType, string designatedDirectoryRelativePath, ref string path, out string error)
+        public static bool EnsureValidPath(ArtifactType artifactType, ref string path, out string error, string designatedDirectoryRelativePath = "")
         {
             if (string.IsNullOrWhiteSpace(path))
             {
@@ -71,7 +70,7 @@ namespace Kudu.Services.Deployment
             // If specified path is absolute, make sure it points to the designated directory for the artifact type
             if (path.StartsWith("/", StringComparison.Ordinal))
             {
-                string designatedRootAbsolutePath = $"/home/{designatedDirectoryRelativePath}/";
+                string designatedRootAbsolutePath = $"/home/{designatedDirectoryRelativePath}";
 
                 if (!path.StartsWith($"{designatedRootAbsolutePath}", StringComparison.Ordinal))
                 {
