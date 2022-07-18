@@ -12,6 +12,7 @@
         <ArtifactsPath>$(ProjectRoot)\artifacts\$(Configuration)</ArtifactsPath>
         <ServiceSiteTargetPath Condition="$(ServiceSiteTargetPath) == ''">$(ArtifactsPath)\SiteExtensions\Kudu</ServiceSiteTargetPath>
         <ServiceSiteProject>$(ProjectRoot)\Kudu.Services.Web\Kudu.Services.Web.csproj</ServiceSiteProject>
+		<ContainerExtensionProject>$(ProjectRoot)\Kudu.Agent\Kudu.Agent.csproj</ContainerExtensionProject>
         <ClientSiteTargetPath Condition="$(ClientSiteTargetPath) == ''">$(ArtifactsPath)\KuduWeb</ClientSiteTargetPath>
         <ClientSiteProject>$(ProjectRoot)\Kudu.Web\Kudu.Web.csproj</ClientSiteProject>
         <TestResultsPath>$(ArtifactsPath)\TestResults</TestResultsPath>
@@ -58,7 +59,8 @@
             <ServiceSiteFilesToCopy Include="$(ProjectRoot)\Kudu.Services.Web\bin*\Kudu.exe" />
             <ServiceSiteFilesToCopy Include="$(ProjectRoot)\Kudu.Services.Web\bin*\Kudu.exe.config" />
             <ServiceSiteFilesToCopy Include="$(ProjectRoot)\Kudu.Services.Web\bin*\Scripts\*" />
-        </ItemGroup>
+			<ServiceSiteFilesToCopy Include="$(ProjectRoot)\Kudu.Agent\bin\Debug\net6.0\*"/>
+		</ItemGroup>
         
         <Copy SourceFiles="%(ServiceSiteFilesToCopy.FullPath)" DestinationFiles="$(ServiceSiteTargetPath)\%(RecursiveDir)%(Filename)%(Extension)" 
                 SkipUnchangedFiles="true" />
@@ -69,6 +71,8 @@
                              AutoParameterizationWebConfigConnectionStrings=false;
                              SolutionDir=$(ProjectRoot)\;"/>
     </Target>
+
+	
   
     <Target Name="RunTests" DependsOnTargets="CreateOutputPath">
         <MsBuild Projects="Build.xunit.targets" Targets="_RunTests" 
