@@ -63,7 +63,7 @@ namespace Kudu.Core.Test
             Assert.Equal(expectedValue, ProcessExtensions.GetDescription(environment));
         }
 
-        [Fact]
+        /*[Fact]
         public void SnapshotAndDump_CreatesAMinidump()
         {
             const int minimumReasonableDmpFileLength = 256 * 1024; // 256 KB
@@ -119,6 +119,6 @@ namespace Kudu.Core.Test
                 {
                 }
             }
-        }
+        }*/
     }
 }
