@@ -5,6 +5,9 @@
     <OutputType>Exe</OutputType>
     <AssemblyName>kagent</AssemblyName>
     <ProjectGuid>{16AB6147-8BC4-46F8-8DAD-CFA3D5D9F9A0}</ProjectGuid>
+	<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+	<AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+	<OutDir>$(ProjectDir)bin\</OutDir>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNet.Mvc" Version="5.2.9" />

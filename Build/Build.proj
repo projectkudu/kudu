@@ -39,7 +39,7 @@
     <Target Name="UpdateVersion" Condition="'$(BUILD_NUMBER)' != ''">
         <RegexTransform Items="@(RegexTransform)" />
     </Target>
-    <Target Name="RunAll" DependsOnTargets="UpdateVersion; Ensure7Zip; RestorePackages; Build; RunTests; BuildSites; BuildZips; CopySymbols; BuildNuget" />
+    <Target Name="RunAll" DependsOnTargets="UpdateVersion; Ensure7Zip; RestorePackages; Build; RunTests; BuildSites; BuildContainerExtension; BuildZips; CopySymbols; BuildNuget" />
     <Target Name="CreateOutputPath">
         <MakeDir Directories="$(ArtifactsPath)\symbols" Condition="!Exists('$(ArtifactsPath)\symbols')" />
         <MakeDir Directories="$(TestResultsPath)" Condition="!Exists('$(TestResultsPath)')" />
@@ -59,7 +59,7 @@
             <ServiceSiteFilesToCopy Include="$(ProjectRoot)\Kudu.Services.Web\bin*\Kudu.exe" />
             <ServiceSiteFilesToCopy Include="$(ProjectRoot)\Kudu.Services.Web\bin*\Kudu.exe.config" />
             <ServiceSiteFilesToCopy Include="$(ProjectRoot)\Kudu.Services.Web\bin*\Scripts\*" />
-			<ServiceSiteFilesToCopy Include="$(ProjectRoot)\Kudu.Agent\bin\Debug\net6.0\*"/>
+			<ServiceSiteFilesToCopy Include="$(ProjectRoot)\Kudu.Agent\bin*\*"/>
 		</ItemGroup>
         
         <Copy SourceFiles="%(ServiceSiteFilesToCopy.FullPath)" DestinationFiles="$(ServiceSiteTargetPath)\%(RecursiveDir)%(Filename)%(Extension)" 
@@ -71,6 +71,27 @@
                              AutoParameterizationWebConfigConnectionStrings=false;
                              SolutionDir=$(ProjectRoot)\;"/>
     </Target>
+
+	<Target Name="BuildContainerExtension">
+		<MSBuild Projects="$(ServiceSiteProject)"
+                 Targets="pipelinePreDeployCopyAllFilesToOneFolder"
+                 Properties="_PackageTempDir=$(ServiceSiteTargetPath);
+                             AutoParameterizationWebConfigConnectionStrings=false;
+                             SolutionDir=$(ProjectRoot)\;"/>
+
+		<ItemGroup>
+			<ContainerExtensionFilesToCopy Include="$(ProjectRoot)\Kudu.Agent\bin*\*"/>
+		</ItemGroup>
+
+		<Copy SourceFiles="%(ContainerExtensionFilesToCopy.FullPath)" DestinationFiles="$(ServiceSiteTargetPath)\%(RecursiveDir)%(Filename)%(Extension)"
+                SkipUnchangedFiles="true" />
+
+		<MSBuild Projects="$(ClientSiteProject)"
+                 Targets="pipelinePreDeployCopyAllFilesToOneFolder"
+                 Properties="_PackageTempDir=$(ClientSiteTargetPath);
+                             AutoParameterizationWebConfigConnectionStrings=false;
+                             SolutionDir=$(ProjectRoot)\;"/>
+	</Target>
 
 	
   
