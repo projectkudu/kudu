@@ -10,6 +10,10 @@ using System.Runtime.InteropServices;
 using System.Security;
 using System.Security.Principal;
 using Microsoft.Win32.SafeHandles;
+using Microsoft.AspNetCore.Authentication;
+using System.DirectoryServices.AccountManagement;
+using System.Runtime.Versioning;
+using Kudu.Agent.Util;
 
 namespace Kudu.Agent.Security
 {   
@@ -29,6 +33,12 @@ namespace Kudu.Agent.Security
 
         public async Task Invoke(HttpContext context)
         {
+            if (!OSDetector.IsOnWindows())
+            {
+                // PrincipalContext method for validating credentials only works on Windows
+                throw new NotImplementedException();
+            }
+
             var authHeader = AuthenticationHeaderValue.Parse(context.Request.Headers["Authorization"]);
             var credentialBytes = Convert.FromBase64String(authHeader.Parameter);
             var credentials = Encoding.UTF8.GetString(credentialBytes).Split(':', 2);
