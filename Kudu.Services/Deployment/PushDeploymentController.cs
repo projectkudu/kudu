@@ -311,6 +311,10 @@ namespace Kudu.Services.Deployment
                         {
                             return StatusCode400(error);
                         }
+                        if (deploymentInfo.CleanupTargetDirectory)
+                        {
+                            return StatusCode400("Clean deployments cannot be performed for type=static");
+                        }
 
                         deploymentInfo.TargetRootPath = _environment.RootPath;
                         OneDeployHelper.SetTargetSubDirectoyAndFileNameFromRelativePath(deploymentInfo, path);
