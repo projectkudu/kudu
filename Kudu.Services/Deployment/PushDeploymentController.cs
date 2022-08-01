@@ -890,7 +890,7 @@ namespace Kudu.Services.Deployment
 
                 // Store only if zip file size < 100 MB
                 long fileBytes = new FileInfo(filePath).Length;
-                float fileMB = (float)fileBytes / (1024 * 1024);
+                float fileMB = (float)fileBytes / (1_024 * 1_024);
                 if (fileMB < 100)
                 {
                     // Make sure D:\home\LogFiles\kudu\deployment\BackupErrorZip exists
@@ -898,8 +898,7 @@ namespace Kudu.Services.Deployment
                     FileSystemHelpers.EnsureDirectory(errorDirPath);
 
                     // Store only 1 zip file with error
-                    IEnumerable<string> zipFiles = FileSystemHelpers.GetFiles(errorDirPath, "*.zip");
-                    if (zipFiles.Count() == 0)
+                    if (FileSystemHelpers.GetFiles(errorDirPath, "*.zip").Length == 0)
                     {
                         var errorFilePath = Path.Combine(errorDirPath, zipDeploymentInfo.ArtifactFileName);
                         using (_tracer.Step("{0}: Saving zip file with error to {1} of size {2} MB.", nameof(BackupErrorZip), errorFilePath, fileMB))
