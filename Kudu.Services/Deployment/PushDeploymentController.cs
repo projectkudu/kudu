@@ -64,7 +64,8 @@ namespace Kudu.Services.Deployment
             [FromUri] string authorEmail = null,
             [FromUri] string deployer = Constants.ZipDeploy,
             [FromUri] string message = DefaultMessage,
-            [FromUri] bool trackDeploymentProgress = false)
+            [FromUri] bool trackDeploymentProgress = false,
+            [FromUri] bool? clean = null)
         {
             using (_tracer.Step("ZipPushDeploy"))
             {
@@ -84,7 +85,8 @@ namespace Kudu.Services.Deployment
                     DoFullBuildByDefault = false,
                     Author = author,
                     AuthorEmail = authorEmail,
-                    Message = message
+                    Message = message,
+                    CleanupTargetDirectory = clean.GetValueOrDefault(false)
                 };
 
                 string remotebuild = _settings.GetValue(SettingsKeys.DoBuildDuringDeployment);
