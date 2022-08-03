@@ -65,7 +65,7 @@ namespace Kudu.Services.Deployment
             [FromUri] string deployer = Constants.ZipDeploy,
             [FromUri] string message = DefaultMessage,
             [FromUri] bool trackDeploymentProgress = false,
-            [FromUri] bool? clean = null)
+            [FromUri] bool clean = false)
         {
             using (_tracer.Step("ZipPushDeploy"))
             {
@@ -86,32 +86,33 @@ namespace Kudu.Services.Deployment
                     Author = author,
                     AuthorEmail = authorEmail,
                     Message = message,
-                    CleanupTargetDirectory = clean.GetValueOrDefault(false)
+                    CleanupTargetDirectory = clean
                 };
 
                 string remotebuild = _settings.GetValue(SettingsKeys.DoBuildDuringDeployment);
+                var cleanTargetDirectory = clean ? "Clean Target" : string.Empty;
                 if (_settings.RunFromLocalZip())
                 {
                     SetRunFromZipDeploymentInfo(deploymentInfo);
 
                     if (StringUtils.IsTrueLike(remotebuild))
                     {
-                        deploymentInfo.DeploymentPath = "ZipDeploy. Run from package. Ignore remote build.";
+                        deploymentInfo.DeploymentPath = $"ZipDeploy. Run from package. Ignore remote build. {cleanTargetDirectory}";
                     }
                     else
                     { 
-                        deploymentInfo.DeploymentPath = "ZipDeploy. Run from package."; 
+                        deploymentInfo.DeploymentPath = $"ZipDeploy. Run from package. {cleanTargetDirectory}"; 
                     }
                 }
                 else
                 {
                     if (StringUtils.IsTrueLike(remotebuild))
                     {
-                        deploymentInfo.DeploymentPath = "ZipDeploy. Extract zip. Remote build.";
+                        deploymentInfo.DeploymentPath = $"ZipDeploy. Extract zip. Remote build. {cleanTargetDirectory}";
                     }
                     else
                     {
-                        deploymentInfo.DeploymentPath = "ZipDeploy. Extract zip.";
+                        deploymentInfo.DeploymentPath = $"ZipDeploy. Extract zip. {cleanTargetDirectory}";
                     }
                 }
                 _tracer.Trace(deploymentInfo.DeploymentPath);
