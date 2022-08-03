@@ -97,8 +97,9 @@ namespace Kudu.Services.Deployment
                 if (_settings.RunFromLocalZip())
                 {
                     SetRunFromZipDeploymentInfo(deploymentInfo);
-                    }                }
-                deploymentInfo.DeploymentPath = GetZipDeployPathInfo();
+                }
+                deploymentInfo.DeploymentPath = GetZipDeployPathInfo(clean);
+
                 return await PushDeployAsync(deploymentInfo, isAsync);
             }
         }
@@ -850,7 +851,7 @@ namespace Kudu.Services.Deployment
             return correlationId;
         }
 
-        private string GetZipDeployPathInfo()
+        private string GetZipDeployPathInfo(bool clean)
         {
             string pathmsg;
             string remotebuild = _settings.GetValue(SettingsKeys.DoBuildDuringDeployment);
@@ -869,13 +870,14 @@ namespace Kudu.Services.Deployment
             }
             else
             {
+                var cleanTargetDirectory = clean ? "Clean Target" : string.Empty;
                 if (StringUtils.IsTrueLike(remotebuild))
                 {
-                    pathmsg = string.Concat(isfunction, "ZipDeploy. Extract zip. Remote build.");
+                    pathmsg = string.Concat(isfunction, $"ZipDeploy. Extract zip. Remote build. {cleanTargetDirectory}");
                 }
                 else
                 {
-                    pathmsg = string.Concat(isfunction, "ZipDeploy. Extract zip.");
+                    pathmsg = string.Concat(isfunction, $"ZipDeploy. Extract zip. {cleanTargetDirectory}");
                 }
             }
             _tracer.Trace("{0}", pathmsg);
