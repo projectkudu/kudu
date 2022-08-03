@@ -138,6 +138,10 @@ namespace Kudu.Core.Infrastructure
             {
                 probPaths.Add(Path.Combine(programFiles, "MSBuilds", "16.7.0", "MSBuild", "Current", "Bin"));
             }
+            else if (VsHelper.IsDotNet7Version(targetFramework))
+            {
+                probPaths.Add(Path.Combine(programFiles, "MSBuilds", "17.1.0", "MSBuild", "Current", "Bin"));
+            }
 
             probPaths.Add(Path.Combine(programFiles, "MSBuild-16.4", "MSBuild", "Current", "Bin"));
 

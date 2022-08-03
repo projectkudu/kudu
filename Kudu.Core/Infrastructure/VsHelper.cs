@@ -339,6 +339,11 @@ namespace Kudu.Core.Infrastructure
             return target != null && target.StartsWith("netcoreapp3.1", StringComparison.OrdinalIgnoreCase);
         }
 
+        public static bool IsDotNet7Version(string target)
+        {
+            return target != null && target.StartsWith("net7.0", StringComparison.OrdinalIgnoreCase);
+        }
+
         // 01, 10, 11 in binares
         public enum Csproj { oldFormat = 1, newFormat, bothFormat }
     }

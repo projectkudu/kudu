@@ -226,15 +226,14 @@ namespace Kudu.Core.SourceControl
             ITracer tracer = _traceFactory.GetTracer();
 
             bool retried = false;
-            
-            // Whitespace in branch name is legal in Mercurial.
-            // We need double quotes around branchName.
-            string branchNameWithQuotes = "\"" + branchName + "\"";
+          
+            remote = Uri.EscapeUriString(remote);
+            branchName = Uri.EscapeUriString(branchName);
 
         fetch:
             try
-            {                
-                _hgExecutable.Execute(tracer, "pull {0} --branch {1} --noninteractive", remote, branchNameWithQuotes, PathUtilityFactory.Instance.ResolveSSHPath());
+            {
+                _hgExecutable.Execute(tracer, "pull '{0}' --branch '{1}' --noninteractive", remote, branchName, PathUtilityFactory.Instance.ResolveSSHPath());
             }
             catch (CommandLineException exception)
             {
@@ -244,7 +243,7 @@ namespace Kudu.Core.SourceControl
                 string exceptionMessage = (exception.Message ?? String.Empty).TrimEnd();
                 if (exceptionMessage.StartsWith(branchNotFoundMessage, StringComparison.OrdinalIgnoreCase))
                 {
-                    throw new BranchNotFoundException(branchNameWithQuotes, exception);
+                    throw new BranchNotFoundException(branchName, exception);
                 }
                 else if (!retried && exceptionMessage.IndexOf(recoverRequiredMessage, StringComparison.OrdinalIgnoreCase) != -1)
                 {
@@ -255,7 +254,7 @@ namespace Kudu.Core.SourceControl
                 }
                 throw;
             }
-            _hgExecutable.Execute(tracer, "update --clean {0}", branchNameWithQuotes);
+            _hgExecutable.Execute(tracer, "update --clean '{0}'", branchName);
         }
 
         public void ClearLock()

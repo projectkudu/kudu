@@ -87,7 +87,7 @@ namespace Kudu.FunctionalTests.Infrastructure
         }
 
         public static async Task VerifyUrlAsync(string url, string content = null, HttpStatusCode statusCode = HttpStatusCode.OK, 
-            string httpMethod = "GET", string jsonPayload = "", ICredentials credentials = null, NameValueHeaderValue[] headers = null)
+            string httpMethod = "GET", string jsonPayload = "", ICredentials credentials = null, NameValueHeaderValue[] headers = null, Action<HttpClient> httpClientHandler = null)
         {
             using (var client = new HttpClient(HttpClientHelper.CreateClientHandler(url, credentials)))
             {
@@ -100,6 +100,12 @@ namespace Kudu.FunctionalTests.Infrastructure
                     {
                         client.DefaultRequestHeaders.Add(header.Name, header.Value);
                     }
+                }
+
+                // customize httpClient
+                if (httpClientHandler != null)
+                {
+                    httpClientHandler(client);
                 }
 
                 HttpResponseMessage response = null;

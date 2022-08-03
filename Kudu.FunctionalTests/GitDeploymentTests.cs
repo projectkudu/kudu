@@ -476,6 +476,41 @@ namespace Kudu.FunctionalTests
     }
 
     [KuduXunitTestClass]
+    public class NodeJsAppVer18ShouldBeDeployedTests : GitRepositoryManagementTests
+    {
+        [Fact]
+        [KuduXunitTest(PrivateOnly = true)]
+        public void NodeWithSolutionsUnderNodeModulesShouldBeDeployed()
+        {
+            string appName = "NodeWithSolutionsUnderNodeModulesShouldBeDeployed";
+
+            using (var repo = Git.Clone("NodeJsAppVer18"))
+            {
+                ApplicationManager.Run(appName, appManager =>
+                {
+                    // Act
+                    appManager.GitDeploy(repo.PhysicalPath);
+                    var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
+
+                    // Assert
+                    Assert.Equal(1, results.Count);
+                    Assert.Equal(DeployStatus.Success, results[0].Status);
+
+                    var log = GetLog(appManager, results[0].Id);
+
+                    // Node js version.
+                    Assert.Contains("18.3.0", log);
+
+                    // NPM version.
+                    Assert.Contains("8.11.0", log); 
+
+                    Assert.Contains("Handling node.js deployment", log);
+                });
+            }
+        }
+    }
+
+    [KuduXunitTestClass]
     public class DumpAllAppTests
     {
         [Fact]
@@ -500,6 +535,11 @@ namespace Kudu.FunctionalTests
                     var requestId = $"{Guid.NewGuid()}";
                     var expected = $"<li><strong>Request-Id</strong><span> = {requestId}</span></li>";
                     await KuduAssert.VerifyUrlAsync(appManager.SiteUrl, content: expected, headers: new[] { new NameValueHeaderValue("Request-Id", requestId) });
+
+                    // Verify Proxy-Authorization
+                    var proxyAuth = $"Basic {Guid.NewGuid()}, Basic {Guid.NewGuid()}";
+                    expected = $"<li><strong>Proxy-Authorization</strong><span> = {proxyAuth}</span></li>";
+                    await KuduAssert.VerifyUrlAsync(appManager.SiteUrl, content: expected, httpClientHandler: client => client.DefaultRequestHeaders.TryAddWithoutValidation("Proxy-Authorization", proxyAuth));
                 });
             }
         }
