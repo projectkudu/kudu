@@ -79,12 +79,12 @@ namespace Kudu.Core.Test.Deployment
             };
 
             // Act
-            var response = await controller.ZipPushDeploy();
+            var response = await controller.ZipPushDeploy(clean: true);
 
             // Assert
             deploymentManager
                 .Verify(m => m.FetchDeploy(It.Is<ArtifactDeploymentInfo>(di =>
-                    !string.IsNullOrEmpty(di.ArtifactFileName) && !string.IsNullOrEmpty(di.SyncFunctionsTriggersPath)),
+                    !string.IsNullOrEmpty(di.ArtifactFileName) && !string.IsNullOrEmpty(di.SyncFunctionsTriggersPath) && di.CleanupTargetDirectory == true),
                     It.IsAny<bool>(),
                     It.IsAny<Uri>(),
                     It.IsAny<string>()
