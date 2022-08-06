@@ -312,7 +312,7 @@ namespace Kudu.FunctionalTests
                 await DeploymentTestHelper.AssertSuccessfulDeploymentByFilenames(appManager, expectedFiles1.ToArray(), "site/wwwroot");
 
                 // STEP 2a: Upload a text file using OneDeploy
-                await DeployNonZippedArtifact(appManager, "static", "staticfiletest.txt", isAsync: false, isClean: null);
+                await DeployNonZippedArtifact(appManager, "static", "/home/site/wwwroot/staticfiletest.txt", isAsync: false, isClean: null);
 
                 // STEP 2b: Validate the OneDeploy result
                 expectedFiles1.Add("staticfiletest.txt");
