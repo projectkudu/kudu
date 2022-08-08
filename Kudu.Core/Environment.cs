@@ -413,6 +413,8 @@ namespace Kudu.Core
             }
         }
 
+        public static bool SkipAseSslValidation => System.Environment.GetEnvironmentVariable(SettingsKeys.SkipAseSslValidation) == "1";
+
         public static string GetFreeSpaceHtml(string path)
         {
             try

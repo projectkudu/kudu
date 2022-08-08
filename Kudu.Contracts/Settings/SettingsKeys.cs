@@ -28,6 +28,7 @@
         public const string NoRepository = "SCM_NO_REPOSITORY";
         public const string UseLibGit2SharpRepository = "SCM_USE_LIBGIT2SHARP_REPOSITORY";
         public const string SkipSslValidation = "SCM_SKIP_SSL_VALIDATION";
+        public const string SkipAseSslValidation = "SCM_SKIP_ASE_SSL_VALIDATION";
         // Free, Shared, Basic, Standard, Premium
         public const string WebSiteSku = "WEBSITE_SKU";
         public const string WebSiteName = "WEBSITE_SITE_NAME";

@@ -43,7 +43,18 @@ namespace Kudu.Core.Helpers
         // for mocking or override behavior
         public static Func<HttpClient> HttpClientFactory
         {
-            get { return _httpClientFactory ?? new Func<HttpClient>(() => new HttpClient()); }
+            get
+            {
+                return _httpClientFactory ?? new Func<HttpClient>(() =>
+                {
+                    if (Environment.SkipSslValidation || Environment.SkipAseSslValidation)
+                    {
+                        return new HttpClient(new WebRequestHandler { ServerCertificateValidationCallback = delegate { return true; } });
+                    }
+
+                    return new HttpClient();
+                });
+            }
             set { _httpClientFactory = value; }
         }
 
