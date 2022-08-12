@@ -71,7 +71,7 @@ namespace Kudu.Core.Infrastructure
             return null;
         }
 
-        internal virtual string ResolveMSBuild1670Dir()
+        internal virtual string ResolveLatestMSBuildDir()
         {
             return null;
         }

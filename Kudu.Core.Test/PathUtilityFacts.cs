@@ -92,7 +92,7 @@ namespace Kudu.Core.Test
 
             FileSystemHelpers.Instance = fileSystem.Object;
 
-            string result = PathUtilityFactory.Instance.ResolveMSBuild1670Dir();
+            string result = PathUtilityFactory.Instance.ResolveLatestMSBuildDir();
             Assert.Equal(expected, result);
 
             expected = Path.Combine(programFiles, "MSBuilds", "16.9.9", "MSBuild", "Current", "Bin");
@@ -102,7 +102,7 @@ namespace Kudu.Core.Test
             };
             try
             {
-                result = PathUtilityFactory.Instance.ResolveMSBuild1670Dir();
+                result = PathUtilityFactory.Instance.ResolveLatestMSBuildDir();
                 Assert.Equal(expected, result);
             }
             finally
