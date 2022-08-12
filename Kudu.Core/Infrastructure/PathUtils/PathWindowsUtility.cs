@@ -140,7 +140,8 @@ namespace Kudu.Core.Infrastructure
             }
             else if (VsHelper.IsDotNet7Version(targetFramework))
             {
-                probPaths.Add(Path.Combine(programFiles, "MSBuilds", "17.1.0", "MSBuild", "Current", "Bin"));
+                // Using ResolveMSBuild1670Dir as it's picking the latest MSBuild version.
+                probPaths.Add(ResolveLatestMSBuildDir());
             }
 
             probPaths.Add(Path.Combine(programFiles, "MSBuild-16.4", "MSBuild", "Current", "Bin"));
@@ -148,7 +149,7 @@ namespace Kudu.Core.Infrastructure
             return probPaths.FirstOrDefault(path => Directory.Exists(path));
         }
 
-        internal override string ResolveMSBuild1670Dir()
+        internal override string ResolveLatestMSBuildDir()
         {
             string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);
             List<string> probPaths = new List<string>
