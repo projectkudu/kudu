@@ -8,6 +8,7 @@ using System.Linq;
 using System.Threading;
 using System.Xml.Linq;
 using System.Xml.XPath;
+using Kudu.Contracts;
 using Kudu.Contracts.Jobs;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
@@ -27,7 +28,7 @@ namespace Kudu.Core.Jobs
         private string _shutdownNotificationFilePath;
         private string _workingDirectory;
         private string _inPlaceWorkingDirectory;
-        private Dictionary<string, FileInfoBase> _cachedSourceDirectoryFileMap;
+        private Dictionary<string, IFileInfo> _cachedSourceDirectoryFileMap;
 
         protected BaseJobRunner(string jobName, string jobsTypePath, string basePath, IEnvironment environment,
             IDeploymentSettingsManager settings, ITraceFactory traceFactory, IAnalytics analytics)
@@ -74,14 +75,14 @@ namespace Kudu.Core.Jobs
         protected JobSettings JobSettings { get; set; }
 
         internal static bool JobDirectoryHasChanged(
-            Dictionary<string, FileInfoBase> sourceDirectoryFileMap, 
-            Dictionary<string, FileInfoBase> workingDirectoryFileMap, 
-            Dictionary<string, FileInfoBase> cachedSourceDirectoryFileMap,
+            Dictionary<string, IFileInfo> sourceDirectoryFileMap, 
+            Dictionary<string, IFileInfo> workingDirectoryFileMap, 
+            Dictionary<string, IFileInfo> cachedSourceDirectoryFileMap,
             IJobLogger logger)
         {
             // enumerate all source directory files, and compare against the files
             // in the working directory (i.e. the cached directory)
-            FileInfoBase foundEntry = null;
+            IFileInfo foundEntry = null;
             foreach (var entry in sourceDirectoryFileMap)
             {  
                 if (workingDirectoryFileMap.TryGetValue(entry.Key, out foundEntry))
@@ -120,10 +121,10 @@ namespace Kudu.Core.Jobs
             return false;
         }
 
-        internal static Dictionary<string, FileInfoBase> GetJobDirectoryFileMap(string sourceDirectory)
+        internal static Dictionary<string, IFileInfo> GetJobDirectoryFileMap(string sourceDirectory)
         {
-            DirectoryInfoBase jobBinariesDirectory = FileSystemHelpers.DirectoryInfoFromDirectoryName(sourceDirectory);
-            FileInfoBase[] files = jobBinariesDirectory.GetFiles("*.*", SearchOption.AllDirectories);
+            IDirectoryInfo jobBinariesDirectory = FileSystemHelpers.DirectoryInfoFromDirectoryName(sourceDirectory);
+            IFileInfo[] files = jobBinariesDirectory.GetFiles("*.*", SearchOption.AllDirectories);
 
             int sourceDirectoryPathLength = sourceDirectory.Length + 1;
             return files.ToDictionary(p => p.FullName.Substring(sourceDirectoryPathLength), q => q, StringComparer.OrdinalIgnoreCase);
@@ -141,7 +142,7 @@ namespace Kudu.Core.Jobs
 
             _inPlaceWorkingDirectory = null;
 
-            Dictionary<string, FileInfoBase> sourceDirectoryFileMap = GetJobDirectoryFileMap(JobBinariesPath);
+            Dictionary<string, IFileInfo> sourceDirectoryFileMap = GetJobDirectoryFileMap(JobBinariesPath);
             if (WorkingDirectory != null)
             {
                 try
@@ -467,7 +468,7 @@ namespace Kudu.Core.Jobs
                 FileInfo fileInfo = new FileInfo(configFilePath);
                 DateTime lastWriteTime = fileInfo.LastWriteTimeUtc;
 
-                Configuration config = ConfigurationManager.OpenExeConfiguration(exeFilePath);
+                Configuration config = System.Configuration.ConfigurationManager.OpenExeConfiguration(exeFilePath);
 
                 foreach (var appSetting in settings.AppSettings)
                 {

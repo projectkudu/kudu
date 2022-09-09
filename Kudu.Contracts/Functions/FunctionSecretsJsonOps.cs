@@ -1,6 +1,8 @@
-﻿using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+﻿using System.Text.Json.Serialization;
+using System.Text.Json.Nodes;
 using System;
+using System.Text.Json;
+using System.Text.Json.Serialization.Metadata;
 
 namespace Kudu.Core.Functions
 {
@@ -32,30 +34,30 @@ namespace Kudu.Core.Functions
         {
             try
             {
-                JObject hostJson = JObject.Parse(json);
-                if (hostJson["key"]?.Type == JTokenType.String)
+                JsonArray hostJson = JsonNode.Parse(json)?.AsArray();
+                if (hostJson["key"]?.GetValue<JsonElement>().ValueKind == JsonValueKind.String)
                 {
                     isEncrypted = false;
-                    return hostJson.Value<string>("key");
+                    return (string)hostJson["key"];
                 }
-                else if (hostJson["keys"]?.Type == JTokenType.Array)
+                else if (hostJson["keys"]?.GetValue<JsonElement>().ValueKind == JsonValueKind.Array)
                 {
-                    JArray keys = hostJson.Value<JArray>("keys");
+                    JsonArray keys = (JsonArray)hostJson["keys"];
                     if (keys.Count >= 1)
                     {
-                        JObject keyObject = (JObject)keys[0];
+                        JsonObject keyObject = (JsonObject)keys[0];
                         for (int i = 1; i < keys.Count; i++)
                         {
                             // start from the second
                             // if we can't find the key named default, return the 1st key found
-                            if (String.Equals(keys[i].Value<string>("name"), "default"))
+                            if (string.Equals((string)keys[i]["name"], "default", StringComparison.Ordinal))
                             {
-                                keyObject = (JObject)keys[i];
+                                keyObject = (JsonObject)keys[i];
                                 break;
                             }
                         }
-                        isEncrypted = keyObject.Value<bool>("encrypted");
-                        return keyObject.Value<string>("value");
+                        isEncrypted = (bool)keyObject["encrypted"];
+                        return (string)keyObject["value"];
                     }
                 }
             }
@@ -71,7 +73,7 @@ namespace Kudu.Core.Functions
             return new FunctionSecrets
             {
                 Key = functionKey,
-                TriggerUrl = String.Format(@"https://{0}/api/{1}?code={2}", System.Environment.GetEnvironmentVariable("WEBSITE_HOSTNAME") ?? "localhost", functionName, functionKey)
+                TriggerUrl = string.Format(@"https://{0}/api/{1}?code={2}", Environment.GetEnvironmentVariable("WEBSITE_HOSTNAME") ?? "localhost", functionName, functionKey)
             };
         }
     }

@@ -1,6 +1,9 @@
 ﻿using System;
 using System.IO;
+using Kudu.Contracts.Deployment;
+#if NETFRAMEWORK
 using System.Web.Script.Serialization;
+#endif
 using Kudu.Core.Deployment;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Tracing;
@@ -20,6 +23,9 @@ namespace Kudu.Core.Helpers
 
         public static void Persist(string requestId, IDeploymentStatusFile status)
         {
+#if NET6_0_OR_GREATER
+            throw new NotImplementedException();
+#else
             // signify the deployment is done by git push
             var kind = System.Environment.GetEnvironmentVariable(Constants.ScmDeploymentKind);
             if (string.IsNullOrEmpty(kind))
@@ -29,10 +35,14 @@ namespace Kudu.Core.Helpers
 
             var serializer = new JavaScriptSerializer();
             Persist(status.SiteName, kind, requestId, status.Status.ToString(), serializer.Serialize(status), status.ProjectType ?? string.Empty, status.VsProjectId ?? string.Empty);
+#endif
         }
 
         public static void Persist(string siteName, string kind, string requestId, string status, string details, string projectType, string vsProjectId)
         {
+#if NET6_0_OR_GREATER
+            throw new NotImplementedException();
+#else
             var info = new DeploymentCompletedInfo
             {
                 TimeStamp = $"{DateTime.UtcNow:s}Z",
@@ -76,6 +86,7 @@ namespace Kudu.Core.Helpers
                     string.Empty,
                     $"{ex}");
             }
+#endif
         }
     }
 }

@@ -1,0 +1,298 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <OutputType>Library</OutputType>
+    <EnableNETAnalyzers>False</EnableNETAnalyzers>
+    <AnalysisLevel>none</AnalysisLevel>
+    <RunAnalyzersDuringBuild>False</RunAnalyzersDuringBuild>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\Kudu.Core\Commands\CommandExecutor.cs" Link="Commands\CommandExecutor.cs" />
+    <Compile Include="..\Kudu.Core\Deployment\ArtifactDeploymentInfo.cs" Link="Deployment\ArtifactDeploymentInfo.cs" />
+    <Compile Include="..\Kudu.Core\Deployment\BuildPropertyProvider.cs" Link="Deployment\BuildPropertyProvider.cs" />
+    <Compile Include="..\Kudu.Core\Deployment\CascadeLogger.cs" Link="Deployment\CascadeLogger.cs" />
+    <Compile Include="..\Kudu.Core\Deployment\DeploymentContext.cs" Link="Deployment\DeploymentContext.cs" />
+    <Compile Include="..\Kudu.Core\Deployment\DeploymentHelper.cs" Link="Deployment\DeploymentHelper.cs" />
+    <Compile Include="..\Kudu.Core\Deployment\DeploymentInfo.cs" Link="Deployment\DeploymentInfo.cs" />
+    <Compile Include="..\Kudu.Core\Deployment\DeploymentLogger.cs" Link="Deployment\DeploymentLogger.cs" />
+    <Compile Include="..\Kudu.Core\Deployment\DeploymentManager.cs" Link="Deployment\DeploymentManager.cs" />
+    <Compile Include="..\Kudu.Core\Deployment\DeploymentStatusFile.cs" Link="Deployment\DeploymentStatusFile.cs" />
+    <Compile Include="..\Kudu.Core\Deployment\DeploymentStatusFileExtensions.cs" Link="Deployment\DeploymentStatusFileExtensions.cs" />
+    <Compile Include="..\Kudu.Core\Deployment\DeploymentStatusManager.cs" Link="Deployment\DeploymentStatusManager.cs" />
+    <Compile Include="..\Kudu.Core\Deployment\FetchDeploymentManager.cs" Link="Deployment\FetchDeploymentManager.cs" />
+    <Compile Include="..\Kudu.Core\Deployment\Generator\AspNetCoreBuilder.cs" Link="Deployment\Generator\AspNetCoreBuilder.cs" />
+    <Compile Include="..\Kudu.Core\Deployment\Generator\AspNetCoreMSBuild1607Builder.cs" Link="Deployment\Generator\AspNetCoreMSBuild1607Builder.cs" />
+    <Compile Include="..\Kudu.Core\Deployment\Generator\AspNetCoreMSBuild16Builder.cs" Link="Deployment\Generator\AspNetCoreMSBuild16Builder.cs" />
+    <Compile Include="..\Kudu.Core\Deployment\Generator\BaseBasicBuilder.cs" Link="Deployment\Generator\BaseBasicBuilder.cs" />
+    <Compile Include="..\Kudu.Core\Deployment\Generator\BasicBuilder.cs" Link="Deployment\Generator\BasicBuilder.cs" />
+    <Compile Include="..\Kudu.Core\Deployment\Generator\CustomBuilder.cs" Link="Deployment\Generator\CustomBuilder.cs" />
+    <Compile Include="..\Kudu.Core\Deployment\Generator\CustomGeneratorCommandSiteBuilder.cs" Link="Deployment\Generator\CustomGeneratorCommandSiteBuilder.cs" />
+    <Compile Include="..\Kudu.Core\Deployment\Generator\DotNetConsoleBuilder.cs" Link="Deployment\Generator\DotNetConsoleBuilder.cs" />
+    <Compile Include="..\Kudu.Core\Deployment\Generator\DotNetConsoleMSBuild1607Builder.cs" Link="Deployment\Generator\DotNetConsoleMSBuild1607Builder.cs" />
+    <Compile Include="..\Kudu.Core\Deployment\Generator\DotNetConsoleMSBuild16Builder.cs" Link="Deployment\Generator\DotNetConsoleMSBuild16Builder.cs" />
+    <Compile Include="..\Kudu.Core\Deployment\Generator\ExternalCommandBuilder.cs" Link="Deployment\Generator\ExternalCommandBuilder.cs" />
+    <Compile Include="..\Kudu.Core\Deployment\Generator\ExternalCommandFactory.cs" Link="Deployment\Generator\ExternalCommandFactory.cs" />
+    <Compile Include="..\Kudu.Core\Deployment\Generator\FunctionBasicBuilder.cs" Link="Deployment\Generator\FunctionBasicBuilder.cs" />
+    <Compile Include="..\Kudu.Core\Deployment\Generator\FunctionMSBuild1607Builder.cs" Link="Deployment\Generator\FunctionMSBuild1607Builder.cs" />
+    <Compile Include="..\Kudu.Core\Deployment\Generator\FunctionMSBuild16Builder.cs" Link="Deployment\Generator\FunctionMSBuild16Builder.cs" />
+    <Compile Include="..\Kudu.Core\Deployment\Generator\FunctionMsbuildBuilder.cs" Link="Deployment\Generator\FunctionMsbuildBuilder.cs" />
+    <Compile Include="..\Kudu.Core\Deployment\Generator\GeneratorSiteBuilder.cs" Link="Deployment\Generator\GeneratorSiteBuilder.cs" />
+    <Compile Include="..\Kudu.Core\Deployment\Generator\GoSiteBuilder.cs" Link="Deployment\Generator\GoSiteBuilder.cs" />
+    <Compile Include="..\Kudu.Core\Deployment\Generator\GoSiteEnabler.cs" Link="Deployment\Generator\GoSiteEnabler.cs" />
+    <Compile Include="..\Kudu.Core\Deployment\Generator\MicrosoftSiteBuilder.cs" Link="Deployment\Generator\MicrosoftSiteBuilder.cs" />
+    <Compile Include="..\Kudu.Core\Deployment\Generator\NodeSiteBuilder.cs" Link="Deployment\Generator\NodeSiteBuilder.cs" />
+    <Compile Include="..\Kudu.Core\Deployment\Generator\NodeSiteEnabler.cs" Link="Deployment\Generator\NodeSiteEnabler.cs" />
+    <Compile Include="..\Kudu.Core\Deployment\Generator\OneDeployBuilder.cs" Link="Deployment\Generator\OneDeployBuilder.cs" />
+    <Compile Include="..\Kudu.Core\Deployment\Generator\PHPSiteBuilder.cs" Link="Deployment\Generator\PHPSiteBuilder.cs" />
+    <Compile Include="..\Kudu.Core\Deployment\Generator\PHPSiteEnabler.cs" Link="Deployment\Generator\PHPSiteEnabler.cs" />
+    <Compile Include="..\Kudu.Core\Deployment\Generator\PythonSiteBuilder.cs" Link="Deployment\Generator\PythonSiteBuilder.cs" />
+    <Compile Include="..\Kudu.Core\Deployment\Generator\PythonSiteEnabler.cs" Link="Deployment\Generator\PythonSiteEnabler.cs" />
+    <Compile Include="..\Kudu.Core\Deployment\Generator\RubySiteBuilder.cs" Link="Deployment\Generator\RubySiteBuilder.cs" />
+    <Compile Include="..\Kudu.Core\Deployment\Generator\RubySiteEnabler.cs" Link="Deployment\Generator\RubySiteEnabler.cs" />
+    <Compile Include="..\Kudu.Core\Deployment\Generator\RunFromZipSiteBuilder.cs" Link="Deployment\Generator\RunFromZipSiteBuilder.cs" />
+    <Compile Include="..\Kudu.Core\Deployment\Generator\SiteBuilderFactory.cs" Link="Deployment\Generator\SiteBuilderFactory.cs" />
+    <Compile Include="..\Kudu.Core\Deployment\Generator\WapBuilder.cs" Link="Deployment\Generator\WapBuilder.cs" />
+    <Compile Include="..\Kudu.Core\Deployment\Generator\WebSiteBuilder.cs" Link="Deployment\Generator\WebSiteBuilder.cs" />
+    <Compile Include="..\Kudu.Core\Deployment\IBuildPropertyProvider.cs" Link="Deployment\IBuildPropertyProvider.cs" />
+    <Compile Include="..\Kudu.Core\Deployment\ISiteBuilder.cs" Link="Deployment\ISiteBuilder.cs" />
+    <Compile Include="..\Kudu.Core\Deployment\ISiteBuilderFactory.cs" Link="Deployment\ISiteBuilderFactory.cs" />
+    <Compile Include="..\Kudu.Core\Deployment\LoggerExtensions.cs" Link="Deployment\LoggerExtensions.cs" />
+    <Compile Include="..\Kudu.Core\Deployment\NullLogger.cs" Link="Deployment\NullLogger.cs" />
+    <Compile Include="..\Kudu.Core\Deployment\ProgressLogger.cs" Link="Deployment\ProgressLogger.cs" />
+    <Compile Include="..\Kudu.Core\Deployment\StructuredTextDocument.cs" Link="Deployment\StructuredTextDocument.cs" />
+    <Compile Include="..\Kudu.Core\Deployment\StructuredTextDocumentEntry.cs" Link="Deployment\StructuredTextDocumentEntry.cs" />
+    <Compile Include="..\Kudu.Core\Deployment\StructuredTextLogger.cs" Link="Deployment\StructuredTextLogger.cs" />
+    <Compile Include="..\Kudu.Core\Deployment\WellKnownEnvironmentVariables.cs" Link="Deployment\WellKnownEnvironmentVariables.cs" />
+    <Compile Include="..\Kudu.Core\Deployment\XmlLogger.cs" Link="Deployment\XmlLogger.cs" />
+    <Compile Include="..\Kudu.Core\Environment.cs" Link="Environment.cs" />
+    <Compile Include="..\Kudu.Core\Functions\FunctionManager.cs" Link="Functions\FunctionManager.cs" />
+    <Compile Include="..\Kudu.Core\Helpers\DeploymentCompletedInfo.cs" Link="Helpers\DeploymentCompletedInfo.cs" />
+    <Compile Include="..\Kudu.Core\Helpers\EnvironmentHelper.cs" Link="Helpers\EnvironmentHelper.cs" />
+    <Compile Include="..\Kudu.Core\Helpers\KeyVaultReferenceHelper.cs" Link="Helpers\KeyVaultReferenceHelper.cs" />
+    <Compile Include="..\Kudu.Core\Helpers\OSDetector.cs" Link="Helpers\OSDetector.cs" />
+    <Compile Include="..\Kudu.Core\Helpers\PermissionHelper.cs" Link="Helpers\PermissionHelper.cs" />
+    <Compile Include="..\Kudu.Core\Helpers\PostDeploymentHelper.cs" Link="Helpers\PostDeploymentHelper.cs" />
+    <Compile Include="..\Kudu.Core\Helpers\PostDeploymentTraceListener.cs" Link="Helpers\PostDeploymentTraceListener.cs" />
+    <Compile Include="..\Kudu.Core\Helpers\ProjectGuidParser.cs" Link="Helpers\ProjectGuidParser.cs" />
+    <Compile Include="..\Kudu.Core\Helpers\SimpleWebTokenHelper.cs" Link="Helpers\SimpleWebTokenHelper.cs" />
+    <Compile Include="..\Kudu.Core\Hooks\WebHooksManager.cs" Link="Hooks\WebHooksManager.cs" />
+    <Compile Include="..\Kudu.Core\HttpContextHelper.cs" Link="HttpContextHelper.cs" />
+    <Compile Include="..\Kudu.Core\Infrastructure\AspNetCoreHelper.cs" Link="Infrastructure\AspNetCoreHelper.cs" />
+    <Compile Include="..\Kudu.Core\Infrastructure\AsyncStreamWriter.cs" Link="Infrastructure\AsyncStreamWriter.cs" />
+    <Compile Include="..\Kudu.Core\Infrastructure\BranchNotFoundException.cs" Link="Infrastructure\BranchNotFoundException.cs" />
+    <Compile Include="..\Kudu.Core\Infrastructure\CommandLineException.cs" Link="Infrastructure\CommandLineException.cs" />
+    <Compile Include="..\Kudu.Core\Infrastructure\DeploymentLockFile.cs" Link="Infrastructure\DeploymentLockFile.cs" />
+    <Compile Include="..\Kudu.Core\Infrastructure\DisposableAction.cs" Link="Infrastructure\DisposableAction.cs" />
+    <Compile Include="..\Kudu.Core\Infrastructure\DockerContainerRestartTrigger.cs" Link="Infrastructure\DockerContainerRestartTrigger.cs" />
+    <Compile Include="..\Kudu.Core\Infrastructure\Executable.cs" Link="Infrastructure\Executable.cs" />
+    <Compile Include="..\Kudu.Core\Infrastructure\ExecutableExtensions.cs" Link="Infrastructure\ExecutableExtensions.cs" />
+    <Compile Include="..\Kudu.Core\Infrastructure\FileSystemCache.cs" Link="Infrastructure\FileSystemCache.cs" />
+    <Compile Include="..\Kudu.Core\Infrastructure\FileSystemHelpers.cs" Link="Infrastructure\FileSystemHelpers.cs" />
+    <Compile Include="..\Kudu.Core\Infrastructure\FileSystemWatcherWrapper.cs" Link="Infrastructure\FileSystemWatcherWrapper.cs" />
+    <Compile Include="..\Kudu.Core\Infrastructure\FunctionAppHelper.cs" Link="Infrastructure\FunctionAppHelper.cs" />
+    <Compile Include="..\Kudu.Core\Infrastructure\IdleManager.cs" Link="Infrastructure\IdleManager.cs" />
+    <Compile Include="..\Kudu.Core\Infrastructure\IExecutable.cs" Link="Infrastructure\IExecutable.cs" />
+    <Compile Include="..\Kudu.Core\Infrastructure\IFileSystemWatcher.cs" Link="Infrastructure\IFileSystemWatcher.cs" />
+    <Compile Include="..\Kudu.Core\Infrastructure\IniFile.cs" Link="Infrastructure\IniFile.cs" />
+    <Compile Include="..\Kudu.Core\Infrastructure\InstanceIdUtility.cs" Link="Infrastructure\InstanceIdUtility.cs" />
+    <Compile Include="..\Kudu.Core\Infrastructure\IProcess.cs" Link="Infrastructure\IProcess.cs" />
+    <Compile Include="..\Kudu.Core\Infrastructure\IServerConfiguration.cs" Link="Infrastructure\IServerConfiguration.cs" />
+    <Compile Include="..\Kudu.Core\Infrastructure\IStringReader.cs" Link="Infrastructure\IStringReader.cs" />
+    <Compile Include="..\Kudu.Core\Infrastructure\LockFile.cs" Link="Infrastructure\LockFile.cs" />
+    <Compile Include="..\Kudu.Core\Infrastructure\MiniDumpNativeMethods.cs" Link="Infrastructure\MiniDumpNativeMethods.cs" />
+    <Compile Include="..\Kudu.Core\Infrastructure\NaiveFileSystemWatcher.cs" Link="Infrastructure\NaiveFileSystemWatcher.cs" />
+    <Compile Include="..\Kudu.Core\Infrastructure\OperationManager.cs" Link="Infrastructure\OperationManager.cs" />
+    <Compile Include="..\Kudu.Core\Infrastructure\ParserHelpers.cs" Link="Infrastructure\ParserHelpers.cs" />
+    <Compile Include="..\Kudu.Core\Infrastructure\PathUtils\PathLinuxUtility.cs" Link="Infrastructure\PathUtils\PathLinuxUtility.cs" />
+    <Compile Include="..\Kudu.Core\Infrastructure\PathUtils\PathUtilityBase.cs" Link="Infrastructure\PathUtils\PathUtilityBase.cs" />
+    <Compile Include="..\Kudu.Core\Infrastructure\PathUtils\PathUtilityFactory.cs" Link="Infrastructure\PathUtils\PathUtilityFactory.cs" />
+    <Compile Include="..\Kudu.Core\Infrastructure\PathUtils\PathWindowsUtility.cs" Link="Infrastructure\PathUtils\PathWindowsUtility.cs" />
+    <Compile Include="..\Kudu.Core\Infrastructure\ProcessExtensions.cs" Link="Infrastructure\ProcessExtensions.cs" />
+    <Compile Include="..\Kudu.Core\Infrastructure\ProcessWrapper.cs" Link="Infrastructure\ProcessWrapper.cs" />
+    <Compile Include="..\Kudu.Core\Infrastructure\ProgressWriter.cs" Link="Infrastructure\ProgressWriter.cs" />
+    <Compile Include="..\Kudu.Core\Infrastructure\PssSnapshotNativeMethods.cs" Link="Infrastructure\PssSnapshotNativeMethods.cs" />
+    <Compile Include="..\Kudu.Core\Infrastructure\PssSnapshotSafeHandle.cs" Link="Infrastructure\PssSnapshotSafeHandle.cs" />
+    <Compile Include="..\Kudu.Core\Infrastructure\ReflectionUtility.cs" Link="Infrastructure\ReflectionUtility.cs" />
+    <Compile Include="..\Kudu.Core\Infrastructure\SecurityUtility.cs" Link="Infrastructure\SecurityUtility.cs" />
+    <Compile Include="..\Kudu.Core\Infrastructure\ServerConfiguration.cs" Link="Infrastructure\ServerConfiguration.cs" />
+    <Compile Include="..\Kudu.Core\Infrastructure\SettingsProcessor.cs" Link="Infrastructure\SettingsProcessor.cs" />
+    <Compile Include="..\Kudu.Core\Infrastructure\ShutdownDelaySemaphore.cs" Link="Infrastructure\ShutdownDelaySemaphore.cs" />
+    <Compile Include="..\Kudu.Core\Infrastructure\StringExtensions.cs" Link="Infrastructure\StringExtensions.cs" />
+    <Compile Include="..\Kudu.Core\Infrastructure\StringReader.cs" Link="Infrastructure\StringReader.cs" />
+    <Compile Include="..\Kudu.Core\Infrastructure\ThreadAbortExtensions.cs" Link="Infrastructure\ThreadAbortExtensions.cs" />
+    <Compile Include="..\Kudu.Core\Infrastructure\VsHelper.cs" Link="Infrastructure\VsHelper.cs" />
+    <Compile Include="..\Kudu.Core\Infrastructure\VsSolution.cs" Link="Infrastructure\VsSolution.cs" />
+    <Compile Include="..\Kudu.Core\Infrastructure\VsSolutionProject.cs" Link="Infrastructure\VsSolutionProject.cs" />
+    <Compile Include="..\Kudu.Core\Infrastructure\XmlUtility.cs" Link="Infrastructure\XmlUtility.cs" />
+    <Compile Include="..\Kudu.Core\Infrastructure\ZipArchiveExtensions.cs" Link="Infrastructure\ZipArchiveExtensions.cs" />
+    <Compile Include="..\Kudu.Core\Jobs\AggregateContinuousJobsManager.cs" Link="Jobs\AggregateContinuousJobsManager.cs" />
+    <Compile Include="..\Kudu.Core\Jobs\AggregateJobsManagerBase.cs" Link="Jobs\AggregateJobsManagerBase.cs" />
+    <Compile Include="..\Kudu.Core\Jobs\AggregateTriggeredJobsManager.cs" Link="Jobs\AggregateTriggeredJobsManager.cs" />
+    <Compile Include="..\Kudu.Core\Jobs\BaseJobRunner.cs" Link="Jobs\BaseJobRunner.cs" />
+    <Compile Include="..\Kudu.Core\Jobs\BashScriptHost.cs" Link="Jobs\BashScriptHost.cs" />
+    <Compile Include="..\Kudu.Core\Jobs\ContinuousJobLogger.cs" Link="Jobs\ContinuousJobLogger.cs" />
+    <Compile Include="..\Kudu.Core\Jobs\ContinuousJobRunner.cs" Link="Jobs\ContinuousJobRunner.cs" />
+    <Compile Include="..\Kudu.Core\Jobs\ContinuousJobsManager.cs" Link="Jobs\ContinuousJobsManager.cs" />
+    <Compile Include="..\Kudu.Core\Jobs\ContinuousJobStatus.cs" Link="Jobs\ContinuousJobStatus.cs" />
+    <Compile Include="..\Kudu.Core\Jobs\DnxScriptHost.cs" Link="Jobs\DnxScriptHost.cs" />
+    <Compile Include="..\Kudu.Core\Jobs\FilePerJobLogger.cs" Link="Jobs\FilePerJobLogger.cs" />
+    <Compile Include="..\Kudu.Core\Jobs\FSharpScriptHost.cs" Link="Jobs\FSharpScriptHost.cs" />
+    <Compile Include="..\Kudu.Core\Jobs\IJobLogger.cs" Link="Jobs\IJobLogger.cs" />
+    <Compile Include="..\Kudu.Core\Jobs\IJobStatus.cs" Link="Jobs\IJobStatus.cs" />
+    <Compile Include="..\Kudu.Core\Jobs\JobLogger.cs" Link="Jobs\JobLogger.cs" />
+    <Compile Include="..\Kudu.Core\Jobs\JobNotFoundException.cs" Link="Jobs\JobNotFoundException.cs" />
+    <Compile Include="..\Kudu.Core\Jobs\JobsFileWatcher.cs" Link="Jobs\JobsFileWatcher.cs" />
+    <Compile Include="..\Kudu.Core\Jobs\JobsManagerBase.cs" Link="Jobs\JobsManagerBase.cs" />
+    <Compile Include="..\Kudu.Core\Jobs\JobStatus.cs" Link="Jobs\JobStatus.cs" />
+    <Compile Include="..\Kudu.Core\Jobs\NodeScriptHost.cs" Link="Jobs\NodeScriptHost.cs" />
+    <Compile Include="..\Kudu.Core\Jobs\PhpScriptHost.cs" Link="Jobs\PhpScriptHost.cs" />
+    <Compile Include="..\Kudu.Core\Jobs\PowerShellScriptHost.cs" Link="Jobs\PowerShellScriptHost.cs" />
+    <Compile Include="..\Kudu.Core\Jobs\PythonScriptHost.cs" Link="Jobs\PythonScriptHost.cs" />
+    <Compile Include="..\Kudu.Core\Jobs\Schedule.cs" Link="Jobs\Schedule.cs" />
+    <Compile Include="..\Kudu.Core\Jobs\ScriptHostBase.cs" Link="Jobs\ScriptHostBase.cs" />
+    <Compile Include="..\Kudu.Core\Jobs\TriggeredJobRunLogger.cs" Link="Jobs\TriggeredJobRunLogger.cs" />
+    <Compile Include="..\Kudu.Core\Jobs\TriggeredJobRunner.cs" Link="Jobs\TriggeredJobRunner.cs" />
+    <Compile Include="..\Kudu.Core\Jobs\TriggeredJobSchedule.cs" Link="Jobs\TriggeredJobSchedule.cs" />
+    <Compile Include="..\Kudu.Core\Jobs\TriggeredJobSchedulerLogger.cs" Link="Jobs\TriggeredJobSchedulerLogger.cs" />
+    <Compile Include="..\Kudu.Core\Jobs\TriggeredJobsManager.cs" Link="Jobs\TriggeredJobsManager.cs" />
+    <Compile Include="..\Kudu.Core\Jobs\TriggeredJobsScheduler.cs" Link="Jobs\TriggeredJobsScheduler.cs" />
+    <Compile Include="..\Kudu.Core\Jobs\TriggeredJobStatus.cs" Link="Jobs\TriggeredJobStatus.cs" />
+    <Compile Include="..\Kudu.Core\Jobs\WebJobsStoppedException.cs" Link="Jobs\WebJobsStoppedException.cs" />
+    <Compile Include="..\Kudu.Core\Jobs\WindowsScriptHost.cs" Link="Jobs\WindowsScriptHost.cs" />
+    <Compile Include="..\Kudu.Core\Resources.Designer.cs" Link="Resources.Designer.cs" />
+    <Compile Include="..\Kudu.Core\Settings\BasicSettingsProvider.cs" Link="Settings\BasicSettingsProvider.cs" />
+    <Compile Include="..\Kudu.Core\Settings\DefaultSettingsProvider.cs" Link="Settings\DefaultSettingsProvider.cs" />
+    <Compile Include="..\Kudu.Core\Settings\DeploymentSettingsManager.cs" Link="Settings\DeploymentSettingsManager.cs" />
+    <Compile Include="..\Kudu.Core\Settings\DeploymentSettingsProvider.cs" Link="Settings\DeploymentSettingsProvider.cs" />
+    <Compile Include="..\Kudu.Core\Settings\DiagnosticsSettingsManager.cs" Link="Settings\DiagnosticsSettingsManager.cs" />
+    <Compile Include="..\Kudu.Core\Settings\EnvironmentSettingsProvider.cs" Link="Settings\EnvironmentSettingsProvider.cs" />
+    <Compile Include="..\Kudu.Core\Settings\JsonSettings.cs" Link="Settings\JsonSettings.cs" />
+    <Compile Include="..\Kudu.Core\Settings\PerSiteSettingsProvider.cs" Link="Settings\PerSiteSettingsProvider.cs" />
+    <Compile Include="..\Kudu.Core\Settings\ScmHostingConfigurations.cs" Link="Settings\ScmHostingConfigurations.cs" />
+    <Compile Include="..\Kudu.Core\Settings\SettingsProvidersPriority.cs" Link="Settings\SettingsProvidersPriority.cs" />
+    <Compile Include="..\Kudu.Core\SiteExtensions\DummyReference.cs" Link="SiteExtensions\DummyReference.cs" />
+    <Compile Include="..\Kudu.Core\SiteExtensions\FeedExtensions.cs" Link="SiteExtensions\FeedExtensions.cs" />
+    <Compile Include="..\Kudu.Core\SiteExtensions\FeedExtensionsV2.cs" Link="SiteExtensions\FeedExtensionsV2.cs" />
+    <Compile Include="..\Kudu.Core\SiteExtensions\SemanticVersion.cs" Link="SiteExtensions\SemanticVersion.cs" />
+    <Compile Include="..\Kudu.Core\SiteExtensions\SiteExtensionBatchUpdateStatusLock.cs" Link="SiteExtensions\SiteExtensionBatchUpdateStatusLock.cs" />
+    <Compile Include="..\Kudu.Core\SiteExtensions\SiteExtensionInstallationLock.cs" Link="SiteExtensions\SiteExtensionInstallationLock.cs" />
+    <Compile Include="..\Kudu.Core\SiteExtensions\SiteExtensionManager.cs" Link="SiteExtensions\SiteExtensionManager.cs" />
+    <Compile Include="..\Kudu.Core\SiteExtensions\SiteExtensionManagerV2.cs" Link="SiteExtensions\SiteExtensionManagerV2.cs" />
+    <Compile Include="..\Kudu.Core\SiteExtensions\SiteExtensionStatus.cs" Link="SiteExtensions\SiteExtensionStatus.cs" />
+    <Compile Include="..\Kudu.Core\SourceControl\Git\GitExecutable.cs" Link="SourceControl\Git\GitExecutable.cs" />
+    <Compile Include="..\Kudu.Core\SourceControl\Git\GitExeRepository.cs" Link="SourceControl\Git\GitExeRepository.cs" />
+    <Compile Include="..\Kudu.Core\SourceControl\Git\GitExeServer.cs" Link="SourceControl\Git\GitExeServer.cs" />
+    <Compile Include="..\Kudu.Core\SourceControl\Git\IGitRepository.cs" Link="SourceControl\Git\IGitRepository.cs" />
+    <Compile Include="..\Kudu.Core\SourceControl\Git\KnownEnvironment.cs" Link="SourceControl\Git\KnownEnvironment.cs" />
+    <Compile Include="..\Kudu.Core\SourceControl\Git\LibGit2SharpRepository.cs" Link="SourceControl\Git\LibGit2SharpRepository.cs" />
+    <Compile Include="..\Kudu.Core\SourceControl\Hg\HgRepository.cs" Link="SourceControl\Hg\HgRepository.cs" />
+    <Compile Include="..\Kudu.Core\SourceControl\NullRepository.cs" Link="SourceControl\NullRepository.cs" />
+    <Compile Include="..\Kudu.Core\SourceControl\RepositoryExtensions.cs" Link="SourceControl\RepositoryExtensions.cs" />
+    <Compile Include="..\Kudu.Core\SourceControl\RepositoryFactory.cs" Link="SourceControl\RepositoryFactory.cs" />
+    <Compile Include="..\Kudu.Core\SSHKey\PEMEncoder.cs" Link="SSHKey\PEMEncoder.cs" />
+    <Compile Include="..\Kudu.Core\SSHKey\SSHEncoding.cs" Link="SSHKey\SSHEncoding.cs" />
+    <Compile Include="..\Kudu.Core\SSHKey\SSHKeyManager.cs" Link="SSHKey\SSHKeyManager.cs" />
+    <Compile Include="..\Kudu.Core\Tracing\Analytics.cs" Link="Tracing\Analytics.cs" />
+    <Compile Include="..\Kudu.Core\Tracing\CascadeTracer.cs" Link="Tracing\CascadeTracer.cs" />
+    <Compile Include="..\Kudu.Core\Tracing\ETWTracer.cs" Link="Tracing\ETWTracer.cs" />
+    <Compile Include="..\Kudu.Core\Tracing\IAnalytics.cs" Link="Tracing\IAnalytics.cs" />
+    <Compile Include="..\Kudu.Core\Tracing\ISiteExtensionLogEvent.cs" Link="Tracing\ISiteExtensionLogEvent.cs" />
+    <Compile Include="..\Kudu.Core\Tracing\ITraceFactory.cs" Link="Tracing\ITraceFactory.cs" />
+    <Compile Include="..\Kudu.Core\Tracing\KuduEventSource.cs" Link="Tracing\KuduEventSource.cs" />
+    <Compile Include="..\Kudu.Core\Tracing\KuduSiteExtensionLogEvent.cs" Link="Tracing\KuduSiteExtensionLogEvent.cs" />
+    <Compile Include="..\Kudu.Core\Tracing\NullTracer.cs" Link="Tracing\NullTracer.cs" />
+    <Compile Include="..\Kudu.Core\Tracing\NullTracerFactory.cs" Link="Tracing\NullTracerFactory.cs" />
+    <Compile Include="..\Kudu.Core\Tracing\SiteExtensionLogEvent.cs" Link="Tracing\SiteExtensionLogEvent.cs" />
+    <Compile Include="..\Kudu.Core\Tracing\SiteExtensionLogManager.cs" Link="Tracing\SiteExtensionLogManager.cs" />
+    <Compile Include="..\Kudu.Core\Tracing\TextLogger.cs" Link="Tracing\TextLogger.cs" />
+    <Compile Include="..\Kudu.Core\Tracing\TextTracer.cs" Link="Tracing\TextTracer.cs" />
+    <Compile Include="..\Kudu.Core\Tracing\TraceExtensions.cs" Link="Tracing\TraceExtensions.cs" />
+    <Compile Include="..\Kudu.Core\Tracing\TraceInfo.cs" Link="Tracing\TraceInfo.cs" />
+    <Compile Include="..\Kudu.Core\Tracing\TracerFactory.cs" Link="Tracing\TracerFactory.cs" />
+    <Compile Include="..\Kudu.Core\Tracing\TraceStep.cs" Link="Tracing\TraceStep.cs" />
+    <Compile Include="..\Kudu.Core\Tracing\XmlTracer.cs" Link="Tracing\XmlTracer.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="..\Kudu.Core\SiteExtensions\scmApplicationHost.xdt.xml" Link="SiteExtensions\scmApplicationHost.xdt.xml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="..\Kudu.Core\Resources.resx" Link="Resources.resx" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="DotNetZip" Version="1.16.0" />
+    <PackageReference Include="Mercurial.Net" Version="1.1.1.607" />
+    <PackageReference Include="Microsoft.AspNetCore.DataProtection.Abstractions" Version="6.0.8" />
+    <PackageReference Include="Microsoft.AspNetCore.Http.Extensions" Version="2.2.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Http.Features" Version="5.0.17" />
+    <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="3.3.3">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.Net.Http" Version="2.2.29" />
+    <PackageReference Include="ncrontab" Version="3.3.1" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+    <PackageReference Include="NuGet.Client" Version="4.3.0-beta1-2418" />
+    <PackageReference Include="NuGet.Protocol" Version="6.2.1" />
+    <PackageReference Include="NuGet.Resolver" Version="6.2.1" />
+    <PackageReference Include="System.Configuration.ConfigurationManager" Version="6.0.0" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.22.0" />
+    <PackageReference Include="System.IO.Abstractions" Version="17.1.1" />
+    <PackageReference Include="System.Net.Http" Version="4.3.4" />
+    <PackageReference Include="System.Text.Json" Version="6.0.0" />
+    <PackageReference Include="XmlSettings" Version="0.1.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Commands\" />
+    <Folder Include="Deployment\Generator\" />
+    <Folder Include="Functions\" />
+    <Folder Include="Helpers\" />
+    <Folder Include="Hooks\" />
+    <Folder Include="Infrastructure\PathUtils\" />
+    <Folder Include="Jobs\" />
+    <Folder Include="SourceControl\Git\" />
+    <Folder Include="SourceControl\Hg\" />
+    <Folder Include="Tracing\" />
+    <Folder Include="SSHKey\" />
+    <Folder Include="SiteExtensions\" />
+    <Folder Include="Settings\" />
+    <Folder Include="Scripts\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\Kudu.Core\app.config" Link="app.config" />
+    <None Include="..\Kudu.Core\Scripts\deployedJob.html.template" Link="Scripts\deployedJob.html.template" />
+    <None Include="..\Kudu.Core\Scripts\deploy_webjobs.cmd" Link="Scripts\deploy_webjobs.cmd" />
+    <None Include="..\Kudu.Core\Scripts\dnvm.ps1" Link="Scripts\dnvm.ps1" />
+    <None Include="..\Kudu.Core\Scripts\firstDeploymentManifest" Link="Scripts\firstDeploymentManifest" />
+    <None Include="..\Kudu.Core\Scripts\go.web.config.template" Link="Scripts\go.web.config.template" />
+    <None Include="..\Kudu.Core\Scripts\iisnode.config.template" Link="Scripts\iisnode.config.template" />
+    <None Include="..\Kudu.Core\Scripts\kudusync" Link="Scripts\kudusync" />
+    <None Include="..\Kudu.Core\Scripts\kudusync.cmd" Link="Scripts\kudusync.cmd" />
+    <None Include="..\Kudu.Core\Scripts\runDnxWebJob.cmd" Link="Scripts\runDnxWebJob.cmd" />
+    <None Include="..\Kudu.Core\Scripts\selectLatestVersion.ps1" Link="Scripts\selectLatestVersion.ps1" />
+    <None Include="..\Kudu.Core\Scripts\selectNodeVersion.js" Link="Scripts\selectNodeVersion.js" />
+    <None Include="..\Kudu.Core\Scripts\select_python_version.py" Link="Scripts\select_python_version.py" />
+    <None Include="..\Kudu.Core\Scripts\semver.js" Link="Scripts\semver.js" />
+    <None Include="..\Kudu.Core\Scripts\starter.cmd" Link="Scripts\starter.cmd" />
+    <None Include="..\Kudu.Core\Scripts\starter.sh" Link="Scripts\starter.sh" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Kudu.Contracts\Kudu.Contracts.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="NuGet.Client.VisualStudio">
+      <HintPath>..\..\..\..\..\..\nuget\nuget.protocol.types\3.0.0-pre-20150220053306\lib\net45\NuGet.Client.VisualStudio.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+</Project>

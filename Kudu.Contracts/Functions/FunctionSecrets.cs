@@ -1,13 +1,13 @@
-﻿using Newtonsoft.Json;
+﻿using System.Text.Json.Serialization;
 
 namespace Kudu.Core.Functions
 {
     public class FunctionSecrets
     {
-        [JsonProperty(PropertyName = "key")]
+        [JsonPropertyName("key")]
         public string Key { get; set; }
 
-        [JsonProperty(PropertyName = "trigger_url")]
+        [JsonPropertyName("trigger_url")]
         public string TriggerUrl { get; set; }
     }
 }

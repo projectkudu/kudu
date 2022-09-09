@@ -1,11 +1,11 @@
 ﻿using System.Collections.Generic;
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 
 namespace Kudu.Contracts.Jobs
 {
     public class TriggeredJobHistory
     {
-        [JsonProperty(PropertyName = "runs")]
+        [JsonPropertyName("runs")]
         public IEnumerable<TriggeredJobRun> TriggeredJobRuns { get; set; }
     }
 }

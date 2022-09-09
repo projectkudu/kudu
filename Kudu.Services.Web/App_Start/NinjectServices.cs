@@ -44,6 +44,8 @@ using Kudu.Services.Web.Services;
 using Kudu.Services.Web.Tracing;
 using Microsoft.AspNet.SignalR;
 using Microsoft.Owin;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 using Ninject;
 using Ninject.Web.Common;
 using Owin;
@@ -432,6 +434,10 @@ namespace Kudu.Services.Web.App_Start
             GlobalConfiguration.Configuration.IncludeErrorDetailPolicy = IncludeErrorDetailPolicy.Always;
 
             var jsonFormatter = new JsonMediaTypeFormatter();
+            jsonFormatter.SerializerSettings = new JsonSerializerSettings
+            {
+                ContractResolver = new DefaultContractResolver { NamingStrategy = new CamelCaseNamingStrategy() }
+            };
             GlobalConfiguration.Configuration.Formatters.Add(jsonFormatter);
             GlobalConfiguration.Configuration.DependencyResolver = new NinjectWebApiDependencyResolver(kernel);
             GlobalConfiguration.Configuration.Filters.Add(new TraceExceptionFilterAttribute());
@@ -480,7 +486,7 @@ namespace Kudu.Services.Web.App_Start
 
             //OneDeploy
             routes.MapHttpRouteDual("onedeploy", "publish", new { controller = "PushDeployment", action = "OneDeploy" }, new { verb = new HttpMethodConstraint("POST", "PUT") });
-            
+
             // Live Command Line
             routes.MapHttpRouteDual("execute-command", "command", new { controller = "Command", action = "ExecuteCommand" }, new { verb = new HttpMethodConstraint("POST") });
 
@@ -531,8 +537,18 @@ namespace Kudu.Services.Web.App_Start
                 routes.MapHttpRoute("current-docker-logs-zip", "api/logs/docker/zip", new { controller = "Diagnostics", action = "GetContainerLogsZip" }, new { verb = new HttpMethodConstraint("GET") });
                 routes.MapHttpRoute("current-docker-logs", "api/logs/docker", new { controller = "Diagnostics", action = "GetContainerLogs" }, new { verb = new HttpMethodConstraint("GET") });
             }
-            
-            var processControllerName = OSDetector.IsOnWindows() ? "Process" : "LinuxProcess";
+
+            var processControllerName = "";
+            var jobsControllerName = "Jobs";
+            if (EnvironmentHelper.IsWindowsContainers())
+            {
+                processControllerName = "AgentProcess";
+                jobsControllerName = "AgentJobs";
+            }
+            else
+            {
+                processControllerName = OSDetector.IsOnWindows() ? "Process" : "LinuxProcess";
+            }
 
             // Processes
             routes.MapHttpProcessesRoute("all-processes", "", new { controller = processControllerName, action = "GetAllProcesses" }, new { verb = new HttpMethodConstraint("GET") });
@@ -548,6 +564,7 @@ namespace Kudu.Services.Web.App_Start
             routes.MapHttpProcessesRoute("one-process-module", "/{id}/modules/{baseAddress}", new { controller = processControllerName, action = "GetModule" }, new { verb = new HttpMethodConstraint("GET") });
             routes.MapHttpProcessesRoute("all-envs", "/{id}/environments/{filter}", new { controller = processControllerName, action = "GetEnvironments" }, new { verb = new HttpMethodConstraint("GET") });
 
+
             // Runtime
             routes.MapHttpRouteDual("runtime", "diagnostics/runtime", new { controller = "Runtime", action = "GetRuntimeVersions" }, new { verb = new HttpMethodConstraint("GET") });
 
@@ -559,25 +576,25 @@ namespace Kudu.Services.Web.App_Start
             routes.MapHttpRouteDual("subscribe-hook", "hooks", new { controller = "WebHooks", action = "Subscribe" }, new { verb = new HttpMethodConstraint("POST") });
 
             // Jobs
-            routes.MapHttpWebJobsRoute("list-all-jobs", "", "", new { controller = "Jobs", action = "ListAllJobs" }, new { verb = new HttpMethodConstraint("GET") });
-            routes.MapHttpWebJobsRoute("list-triggered-jobs", "triggered", "", new { controller = "Jobs", action = "ListTriggeredJobs" }, new { verb = new HttpMethodConstraint("GET") });
-            routes.MapHttpWebJobsRoute("get-triggered-job", "triggered", "/{jobName}", new { controller = "Jobs", action = "GetTriggeredJob" }, new { verb = new HttpMethodConstraint("GET") });
-            routes.MapHttpWebJobsRoute("invoke-triggered-job", "triggered", "/{jobName}/run", new { controller = "Jobs", action = "InvokeTriggeredJob" }, new { verb = new HttpMethodConstraint("POST") });
-            routes.MapHttpWebJobsRoute("get-triggered-job-history", "triggered", "/{jobName}/history", new { controller = "Jobs", action = "GetTriggeredJobHistory" }, new { verb = new HttpMethodConstraint("GET") });
-            routes.MapHttpWebJobsRoute("get-triggered-job-run", "triggered", "/{jobName}/history/{runId}", new { controller = "Jobs", action = "GetTriggeredJobRun" }, new { verb = new HttpMethodConstraint("GET") });
-            routes.MapHttpWebJobsRoute("create-triggered-job", "triggered", "/{jobName}", new { controller = "Jobs", action = "CreateTriggeredJob" }, new { verb = new HttpMethodConstraint("PUT") });
-            routes.MapHttpWebJobsRoute("remove-triggered-job", "triggered", "/{jobName}", new { controller = "Jobs", action = "RemoveTriggeredJob" }, new { verb = new HttpMethodConstraint("DELETE") });
-            routes.MapHttpWebJobsRoute("get-triggered-job-settings", "triggered", "/{jobName}/settings", new { controller = "Jobs", action = "GetTriggeredJobSettings" }, new { verb = new HttpMethodConstraint("GET") });
-            routes.MapHttpWebJobsRoute("set-triggered-job-settings", "triggered", "/{jobName}/settings", new { controller = "Jobs", action = "SetTriggeredJobSettings" }, new { verb = new HttpMethodConstraint("PUT") });
-            routes.MapHttpWebJobsRoute("list-continuous-jobs", "continuous", "", new { controller = "Jobs", action = "ListContinuousJobs" }, new { verb = new HttpMethodConstraint("GET") });
-            routes.MapHttpWebJobsRoute("get-continuous-job", "continuous", "/{jobName}", new { controller = "Jobs", action = "GetContinuousJob" }, new { verb = new HttpMethodConstraint("GET") });
-            routes.MapHttpWebJobsRoute("disable-continuous-job", "continuous", "/{jobName}/stop", new { controller = "Jobs", action = "DisableContinuousJob" }, new { verb = new HttpMethodConstraint("POST") });
-            routes.MapHttpWebJobsRoute("enable-continuous-job", "continuous", "/{jobName}/start", new { controller = "Jobs", action = "EnableContinuousJob" }, new { verb = new HttpMethodConstraint("POST") });
-            routes.MapHttpWebJobsRoute("create-continuous-job", "continuous", "/{jobName}", new { controller = "Jobs", action = "CreateContinuousJob" }, new { verb = new HttpMethodConstraint("PUT") });
-            routes.MapHttpWebJobsRoute("remove-continuous-job", "continuous", "/{jobName}", new { controller = "Jobs", action = "RemoveContinuousJob" }, new { verb = new HttpMethodConstraint("DELETE") });
-            routes.MapHttpWebJobsRoute("get-continuous-job-settings", "continuous", "/{jobName}/settings", new { controller = "Jobs", action = "GetContinuousJobSettings" }, new { verb = new HttpMethodConstraint("GET") });
-            routes.MapHttpWebJobsRoute("set-continuous-job-settings", "continuous", "/{jobName}/settings", new { controller = "Jobs", action = "SetContinuousJobSettings" }, new { verb = new HttpMethodConstraint("PUT") });
-            routes.MapHttpWebJobsRoute("request-passthrough-continuous-job", "continuous", "/{jobName}/passthrough/{*path}", new { controller = "Jobs", action = "RequestPassthrough" }, new { verb = new HttpMethodConstraint("GET", "HEAD", "PUT", "POST", "DELETE", "PATCH") });
+            routes.MapHttpWebJobsRoute("list-all-jobs", "", "", new { controller = jobsControllerName, action = "ListAllJobs" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpWebJobsRoute("list-triggered-jobs", "triggered", "", new { controller = jobsControllerName, action = "ListTriggeredJobs" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpWebJobsRoute("get-triggered-job", "triggered", "/{jobName}", new { controller = jobsControllerName, action = "GetTriggeredJob" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpWebJobsRoute("invoke-triggered-job", "triggered", "/{jobName}/run", new { controller = jobsControllerName, action = "InvokeTriggeredJob" }, new { verb = new HttpMethodConstraint("POST") });
+            routes.MapHttpWebJobsRoute("get-triggered-job-history", "triggered", "/{jobName}/history", new { controller = jobsControllerName, action = "GetTriggeredJobHistory" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpWebJobsRoute("get-triggered-job-run", "triggered", "/{jobName}/history/{runId}", new { controller = jobsControllerName, action = "GetTriggeredJobRun" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpWebJobsRoute("create-triggered-job", "triggered", "/{jobName}", new { controller = jobsControllerName, action = "CreateTriggeredJob" }, new { verb = new HttpMethodConstraint("PUT") });
+            routes.MapHttpWebJobsRoute("remove-triggered-job", "triggered", "/{jobName}", new { controller = jobsControllerName, action = "RemoveTriggeredJob" }, new { verb = new HttpMethodConstraint("DELETE") });
+            routes.MapHttpWebJobsRoute("get-triggered-job-settings", "triggered", "/{jobName}/settings", new { controller = jobsControllerName, action = "GetTriggeredJobSettings" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpWebJobsRoute("set-triggered-job-settings", "triggered", "/{jobName}/settings", new { controller = jobsControllerName, action = "SetTriggeredJobSettings" }, new { verb = new HttpMethodConstraint("PUT") });
+            routes.MapHttpWebJobsRoute("list-continuous-jobs", "continuous", "", new { controller = jobsControllerName, action = "ListContinuousJobs" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpWebJobsRoute("get-continuous-job", "continuous", "/{jobName}", new { controller = jobsControllerName, action = "GetContinuousJob" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpWebJobsRoute("disable-continuous-job", "continuous", "/{jobName}/stop", new { controller = jobsControllerName, action = "DisableContinuousJob" }, new { verb = new HttpMethodConstraint("POST") });
+            routes.MapHttpWebJobsRoute("enable-continuous-job", "continuous", "/{jobName}/start", new { controller = jobsControllerName, action = "EnableContinuousJob" }, new { verb = new HttpMethodConstraint("POST") });
+            routes.MapHttpWebJobsRoute("create-continuous-job", "continuous", "/{jobName}", new { controller = jobsControllerName, action = "CreateContinuousJob" }, new { verb = new HttpMethodConstraint("PUT") });
+            routes.MapHttpWebJobsRoute("remove-continuous-job", "continuous", "/{jobName}", new { controller = jobsControllerName, action = "RemoveContinuousJob" }, new { verb = new HttpMethodConstraint("DELETE") });
+            routes.MapHttpWebJobsRoute("get-continuous-job-settings", "continuous", "/{jobName}/settings", new { controller = jobsControllerName, action = "GetContinuousJobSettings" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpWebJobsRoute("set-continuous-job-settings", "continuous", "/{jobName}/settings", new { controller = jobsControllerName, action = "SetContinuousJobSettings" }, new { verb = new HttpMethodConstraint("PUT") });
+            routes.MapHttpWebJobsRoute("request-passthrough-continuous-job", "continuous", "/{jobName}/passthrough/{*path}", new { controller = jobsControllerName, action = "RequestPassthrough" }, new { verb = new HttpMethodConstraint("GET", "HEAD", "PUT", "POST", "DELETE", "PATCH") });
 
             // Web Jobs as microservice
             routes.MapHttpRoute("list-triggered-jobs-swagger", "api/triggeredwebjobsswagger", new { controller = "Jobs", action = "ListTriggeredJobsInSwaggerFormat" }, new { verb = new HttpMethodConstraint("GET") });

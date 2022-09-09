@@ -1,5 +1,4 @@
-﻿using Newtonsoft.Json.Linq;
-using System;
+﻿using System;
 
 namespace Kudu.Core.Functions
 {
@@ -9,10 +8,10 @@ namespace Kudu.Core.Functions
         {
             get;
         }
-        
+
         // key generation is based on run time
         string GenerateKeyJson(Tuple<string,string>[] keyPairs, string functionRt, out string unencryptedKey);
-        
+
         // read existing key file based on the content format, not the run time version
         string GetKeyValueFromJson(string json, out bool isEncrypted);
 

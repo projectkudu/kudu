@@ -6,7 +6,9 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Nodes;
 using System.Threading.Tasks;
+using Kudu.Contracts;
 using Kudu.Contracts.Functions;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Helpers;
@@ -220,7 +222,7 @@ namespace Kudu.Core.Functions
             return await GetKeyObjectFromFile<FunctionSecrets>(functionName, new FunctionSecretsJsonOps());
         }
 
-        public async Task<JObject> GetHostConfigAsync()
+        public async Task<JsonNode> GetHostConfigAsync()
         {
             var host = await TryGetHostConfigAsync();
             if (host == null)
@@ -230,13 +232,13 @@ namespace Kudu.Core.Functions
             return host;
         }
 
-        private async Task<JObject> TryGetHostConfigAsync()
+        private async Task<JsonNode> TryGetHostConfigAsync()
         {
             try
             {
-                return FileSystemHelpers.FileExists(HostJsonPath)
-                    ? JObject.Parse(await FileSystemHelpers.ReadAllTextFromFileAsync(HostJsonPath))
-                    : new JObject();
+                return (FileSystemHelpers.FileExists(HostJsonPath)
+                    ? JsonObject.Parse(await FileSystemHelpers.ReadAllTextFromFileAsync(HostJsonPath))
+                    : new JsonObject());
             }
             catch
             {
@@ -246,7 +248,7 @@ namespace Kudu.Core.Functions
             return null;
         }
 
-        public async Task<JObject> PutHostConfigAsync(JObject content)
+        public async Task<JsonNode> PutHostConfigAsync(JsonNode content)
         {
             await FileSystemHelpers.WriteAllTextToFileAsync(HostJsonPath, JsonConvert.SerializeObject(content));
             return await GetHostConfigAsync();
@@ -284,7 +286,7 @@ namespace Kudu.Core.Functions
 
         private async Task<FunctionEnvelope> CreateFunctionConfig(string configContent, string functionName, FunctionTestData packageLimit)
         {
-            var functionConfig = JObject.Parse(configContent);
+            var functionConfig = JsonObject.Parse(configContent);
             var functionPath = GetFuncPathAndCheckExistence(functionName);
             string functionPrimaryScriptFile = DeterminePrimaryScriptFile((string)functionConfig["scriptFile"], functionPath);
 

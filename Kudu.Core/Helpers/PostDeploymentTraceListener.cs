@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using Kudu.Contracts.Deployment;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Deployment;
 using Kudu.Core.Infrastructure;
@@ -9,10 +10,11 @@ namespace Kudu.Core.Helpers
 {
     public class PostDeploymentTraceListener : TraceListener
     {
-        private readonly ILogger _logger;
+
+        private readonly Deployment.ILogger _logger;
         private readonly ITracer _tracer;
 
-        public PostDeploymentTraceListener(ITracer tracer, ILogger logger = null)
+        public PostDeploymentTraceListener(ITracer tracer, Deployment.ILogger logger = null)
         {
             _logger = logger;
             _tracer = tracer;

@@ -21,8 +21,8 @@ namespace Kudu.Core.Test.Deployment
             // Setup
             var tracer = new Mock<ITracer>();
             var fileSystem = new Mock<IFileSystem>();
-            var fileBase = new Mock<FileBase>();
-            var directoryBase = new Mock<DirectoryBase>();
+            var fileBase = new Mock<IFile>();
+            var directoryBase = new Mock<IDirectory>();
 
             Dictionary<string, DateTime> testFiles = new Dictionary<string, DateTime>()
             {
@@ -88,8 +88,8 @@ namespace Kudu.Core.Test.Deployment
             // Setup
             var tracerMock = new Mock<ITracer>();
             var fileSystemMock = new Mock<IFileSystem>();
-            var fileBaseMock = new Mock<FileBase>();
-            var directoryBaseMock = new Mock<DirectoryBase>();
+            var fileBaseMock = new Mock<IFile>();
+            var directoryBaseMock = new Mock<IDirectory>();
             var environmentMock = new Mock<IEnvironment>();
             var operationLockMock = new Mock<IOperationLock>();
 

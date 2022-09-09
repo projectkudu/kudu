@@ -663,7 +663,7 @@ System.ApplicationException: The trace listener AzureTableTraceListener is disab
             _fs.Directory.CreateDirectory(LogDir);
         }
 
-        public FileInfoBase AddLogFile(string name, string contents)
+        public IFileInfo AddLogFile(string name, string contents)
         {
             var path = Path.Combine(LogDir, name);
             _fs.File.WriteAllText(path, contents);
@@ -701,12 +701,12 @@ System.ApplicationException: The trace listener AzureTableTraceListener is disab
             _defaultFileSystem.AddDirectory(dir);
         }
 
-        public FileInfoBase AddLogFile(string name, string contents)
+        public IFileInfo AddLogFile(string name, string contents)
         {
             return AddLogFile(name, contents, DateTimeOffset.UtcNow);
         }
 
-        public FileInfoBase AddLogFile(string name, string contents, DateTimeOffset lastWriteTime)
+        public IFileInfo AddLogFile(string name, string contents, DateTimeOffset lastWriteTime)
         {
             var path = System.IO.Path.Combine(Constants.LogFilesPath, Constants.ApplicationLogFilesDirectory, name);
             _defaultFileSystem.AddFile(path, new MockFileData(contents ?? string.Empty) { LastWriteTime = lastWriteTime });
@@ -734,7 +734,7 @@ System.ApplicationException: The trace listener AzureTableTraceListener is disab
             _defaultFileSystem.RemoveFile(path);
         }
 
-        public DirectoryBase Directory
+        public IDirectory Directory
         {
             get { return _defaultFileSystem.Directory; }
         }
@@ -744,7 +744,7 @@ System.ApplicationException: The trace listener AzureTableTraceListener is disab
             get { return _defaultFileSystem.DirectoryInfo; }
         }
 
-        public FileBase File
+        public IFile File
         {
             get  { return _fileMock.Object; }
         }
@@ -754,9 +754,24 @@ System.ApplicationException: The trace listener AzureTableTraceListener is disab
             get { return _defaultFileSystem.FileInfo; }
         }
 
-        public PathBase Path
+        public IPath Path
         {
             get { return _defaultFileSystem.Path; }
+        }
+
+        public IFileStreamFactory FileStream
+        {
+            get { return _defaultFileSystem.FileStream; }
+        }
+
+        public IDriveInfoFactory DriveInfo
+        {
+            get { return _defaultFileSystem.DriveInfo; }
+        }
+
+        public IFileSystemWatcherFactory FileSystemWatcher
+        {
+            get { return _defaultFileSystem.FileSystemWatcher; }
         }
     }
 

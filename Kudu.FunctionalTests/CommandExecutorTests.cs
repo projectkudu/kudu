@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using Kudu.Core;
+using Kudu.Core.Commands;
 using Kudu.TestHarness;
 using Kudu.TestHarness.Xunit;
 using Xunit;

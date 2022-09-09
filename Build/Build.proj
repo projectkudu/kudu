@@ -12,6 +12,8 @@
         <ArtifactsPath>$(ProjectRoot)\artifacts\$(Configuration)</ArtifactsPath>
         <ServiceSiteTargetPath Condition="$(ServiceSiteTargetPath) == ''">$(ArtifactsPath)\SiteExtensions\Kudu</ServiceSiteTargetPath>
         <ServiceSiteProject>$(ProjectRoot)\Kudu.Services.Web\Kudu.Services.Web.csproj</ServiceSiteProject>
+        <ContainerExtensionTargetPath Condition="$(ContainerExtensionTargetPath) == ''">$(ServiceSiteTargetPath)\KuduAgent</ContainerExtensionTargetPath>
+		<ContainerExtensionProject>$(ProjectRoot)\Kudu.ContainerServices.Agent\Kudu.ContainerServices.Agent.csproj</ContainerExtensionProject>
         <ClientSiteTargetPath Condition="$(ClientSiteTargetPath) == ''">$(ArtifactsPath)\KuduWeb</ClientSiteTargetPath>
         <ClientSiteProject>$(ProjectRoot)\Kudu.Web\Kudu.Web.csproj</ClientSiteProject>
         <TestResultsPath>$(ArtifactsPath)\TestResults</TestResultsPath>
@@ -19,7 +21,7 @@
     
     <PropertyGroup>
         <!-- When bumping up MajorVersion, make sure to update VersionStartYear to current year -->
-        <MajorVersion>98</MajorVersion>
+        <MajorVersion>97</MajorVersion>
         <VersionStartYear>2019</VersionStartYear>
         
         <!-- Build number is of the format (CurrentYear - VersionStartYear + 1)(2 digit month)(2 digit day) -->
@@ -38,7 +40,7 @@
     <Target Name="UpdateVersion" Condition="'$(BUILD_NUMBER)' != ''">
         <RegexTransform Items="@(RegexTransform)" />
     </Target>
-    <Target Name="RunAll" DependsOnTargets="UpdateVersion; Ensure7Zip; RestorePackages; Build; RunTests; BuildSites; BuildZips; CopySymbols; BuildNuget" />
+    <Target Name="RunAll" DependsOnTargets="UpdateVersion; Ensure7Zip; RestorePackages; Build; RunTests; BuildSites; BuildContainerExtension; BuildZips; CopySymbols; BuildNuget" />
     <Target Name="CreateOutputPath">
         <MakeDir Directories="$(ArtifactsPath)\symbols" Condition="!Exists('$(ArtifactsPath)\symbols')" />
         <MakeDir Directories="$(TestResultsPath)" Condition="!Exists('$(TestResultsPath)')" />
@@ -58,7 +60,7 @@
             <ServiceSiteFilesToCopy Include="$(ProjectRoot)\Kudu.Services.Web\bin*\Kudu.exe" />
             <ServiceSiteFilesToCopy Include="$(ProjectRoot)\Kudu.Services.Web\bin*\Kudu.exe.config" />
             <ServiceSiteFilesToCopy Include="$(ProjectRoot)\Kudu.Services.Web\bin*\Scripts\*" />
-        </ItemGroup>
+		</ItemGroup>
         
         <Copy SourceFiles="%(ServiceSiteFilesToCopy.FullPath)" DestinationFiles="$(ServiceSiteTargetPath)\%(RecursiveDir)%(Filename)%(Extension)" 
                 SkipUnchangedFiles="true" />
@@ -69,6 +71,19 @@
                              AutoParameterizationWebConfigConnectionStrings=false;
                              SolutionDir=$(ProjectRoot)\;"/>
     </Target>
+
+	<Target Name="BuildContainerExtension">
+		<MSBuild Projects="$(ContainerExtensionProject)"
+                 Properties="TargetFramework=net6.0;RuntimeFrameworkVersion=6.0.0;SelfContained=false;
+                             UseAppHost=false;RuntimeIdentifier=win10-x64"/>
+
+		<ItemGroup>
+			<ContainerExtensionFilesToCopy Include="$(ProjectRoot)\Kudu.ContainerServices.Agent\bin\*"/>
+		</ItemGroup>
+
+		<Copy SourceFiles="%(ContainerExtensionFilesToCopy.FullPath)" DestinationFiles="$(ContainerExtensionTargetPath)\%(RecursiveDir)%(Filename)%(Extension)"
+                SkipUnchangedFiles="true" />
+	</Target>
   
     <Target Name="RunTests" DependsOnTargets="CreateOutputPath">
         <MsBuild Projects="Build.xunit.targets" Targets="_RunTests" 

@@ -1,6 +1,6 @@
 ﻿#pragma warning disable
-extern alias nugetcore;
 using System.Diagnostics.CodeAnalysis;
+
 
 namespace Kudu.Core.SiteExtensions
 {
@@ -16,6 +16,9 @@ namespace Kudu.Core.SiteExtensions
     /// </summary>
     internal class DummyReference
     {
+        // TODO: NET Framework can likely be migrated to the new NuGet functions as well, however leaving old functionality in place
+        //          until proper testing can be done with the new methods.
+#if NETFRAMEWORK
         [SuppressMessage("Microsoft.Performance", "CA1823:AvoidUnusedPrivateFields")]
         // NuGet.Client.dll
         private NuGet.Client.V3SimpleSearchResourceProvider v3SimpleSearchResourceProvider = null;
@@ -23,7 +26,7 @@ namespace Kudu.Core.SiteExtensions
         [SuppressMessage("Microsoft.Performance", "CA1823:AvoidUnusedPrivateFields")]
         // NuGet.Client.BaseTypes.dll
         private NuGet.Client.INuGetResource iNuGetResource = null;
-
+        
         [SuppressMessage("Microsoft.Performance", "CA1823:AvoidUnusedPrivateFields")]
         // NuGet.Client.V2.dll
         private NuGet.Client.V2.V2SimpleSearchResourceProvider v2SimpleSearchResourceProvider = null;
@@ -43,10 +46,6 @@ namespace Kudu.Core.SiteExtensions
         [SuppressMessage("Microsoft.Performance", "CA1823:AvoidUnusedPrivateFields")]
         // NuGetConfiguration.dll
         private NuGet.Configuration.SettingValue settingValue = null;
-
-        [SuppressMessage("Microsoft.Performance", "CA1823:AvoidUnusedPrivateFields")]
-        // NuGet.Core.dll
-        private nugetcore::NuGet.AggregateConstraintProvider aggregateConstraintProvider = null;
 
         [SuppressMessage("Microsoft.Performance", "CA1823:AvoidUnusedPrivateFields")]
         // NuGet.Data.dll
@@ -71,5 +70,67 @@ namespace Kudu.Core.SiteExtensions
         [SuppressMessage("Microsoft.Performance", "CA1823:AvoidUnusedPrivateFields")]
         // NuGet.Versioning.dll
         private NuGet.Versioning.IVersionComparer iVersionComparer = null;
+
+#else
+        // NOTE: Some definitions commented out because they couldn't be easily converted to .NET 6 and no usages of them were found
+        /*
+        [SuppressMessage("Microsoft.Performance", "CA1823:AvoidUnusedPrivateFields")]
+        // NuGet.Client.dll
+        private NuGet.Client.V3SimpleSearchResourceProvider v3SimpleSearchResourceProvider = null;
+        */
+
+        [SuppressMessage("Microsoft.Performance", "CA1823:AvoidUnusedPrivateFields")]
+        // NuGet.Client.BaseTypes.dll
+        private NuGet.Protocol.Core.Types.INuGetResource iNuGetResource = null;
+
+        /*
+        [SuppressMessage("Microsoft.Performance", "CA1823:AvoidUnusedPrivateFields")]
+        // NuGet.Client.V2.dll
+        private NuGet.Client.V2.V2SimpleSearchResourceProvider v2SimpleSearchResourceProvider = null;
+
+        [SuppressMessage("Microsoft.Performance", "CA1823:AvoidUnusedPrivateFields")]
+        // NuGet.Client.V2.VisualStudio.dll
+        private NuGet.Client.V2.VisualStudio.V2UISearchResourceProvider v2UISearchResourceProvider = null;
+
+        [SuppressMessage("Microsoft.Performance", "CA1823:AvoidUnusedPrivateFields")]
+        // NuGet.Client.V3.VisualStudio.dll
+        private NuGet.Client.V3.VisualStudio.V3UISearchResourceProvider v3UISearchResourceProvider = null;
+
+        [SuppressMessage("Microsoft.Performance", "CA1823:AvoidUnusedPrivateFields")]
+        // NuGet.Client.VisualStudio.dll
+        private NuGet.Client.VisualStudio.UISearchResource uiSearchResource = null;
+        */
+
+        [SuppressMessage("Microsoft.Performance", "CA1823:AvoidUnusedPrivateFields")]
+        // NuGetConfiguration.dll
+        private NuGet.Configuration.SettingBase settingValue = null;
+
+        /*
+        [SuppressMessage("Microsoft.Performance", "CA1823:AvoidUnusedPrivateFields")]
+        // NuGet.Data.dll
+        private NuGet.Data.INuGetRequestModifier iNuGetRequestModifier = null;
+        */
+
+        [SuppressMessage("Microsoft.Performance", "CA1823:AvoidUnusedPrivateFields")]
+        // NuGet.Frameworks.dll
+        private NuGet.Frameworks.IFrameworkCompatibilityProvider iFrameworkCompatibilityProvider = null;
+
+        [SuppressMessage("Microsoft.Performance", "CA1823:AvoidUnusedPrivateFields")]
+        // NuGet.Packaging.dll
+        private NuGet.Packaging.INuspecReader iNuspecReader = null;
+
+        [SuppressMessage("Microsoft.Performance", "CA1823:AvoidUnusedPrivateFields")]
+        // NuGet.PackagingCore.dll
+        private NuGet.Packaging.Core.IPackageCoreReader iPackageReaderCore = null;
+
+        [SuppressMessage("Microsoft.Performance", "CA1823:AvoidUnusedPrivateFields")]
+        // NuGet.Resolver.dll
+        private NuGet.Resolver.PackageResolver packageResolver = null;
+
+        [SuppressMessage("Microsoft.Performance", "CA1823:AvoidUnusedPrivateFields")]
+        // NuGet.Versioning.dll
+        private NuGet.Versioning.IVersionComparer iVersionComparer = null;
+#endif
+
     }
 }

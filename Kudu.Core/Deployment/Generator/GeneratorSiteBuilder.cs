@@ -20,12 +20,6 @@ namespace Kudu.Core.Deployment.Generator
         {
         }
 
-        // TODO: Do we still need this
-        /*protected string GetPropertyString()
-        {
-            return String.Join(";", _propertyProvider.GetProperties().Select(p => String.Format("{0}=\"{1}\"", p.Key, p.Value)));
-        }*/
-
         public override Task Build(DeploymentContext context)
         {
             var tcs = new TaskCompletionSource<object>();

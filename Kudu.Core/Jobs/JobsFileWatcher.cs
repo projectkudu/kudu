@@ -2,7 +2,10 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
+using System.Threading.Tasks;
+#if NETFRAMEWORK
 using System.Web.Hosting;
+#endif
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Tracing;
 
@@ -164,6 +167,7 @@ namespace Kudu.Core.Jobs
             // Error event is raised when the directory being watched gets deleted
             // in cases when a parent to that directory is deleted, this handler should 
             // finish quickly so the deletion does not fail.
+#if NETFRAMEWORK
             HostingEnvironment.QueueBackgroundWorkItem(cancellationToken =>
             {
                 try
@@ -180,6 +184,29 @@ namespace Kudu.Core.Jobs
                     Interlocked.Exchange(ref _pendingOnError, 0);
                 }
             });
+
+#else
+            // CORE NOTE
+            // HostingEnvironment not supported in ASP.NET Core, running a simple Task instead
+            // HostingEnvironment.QueueBackgroundWorkItem(cancellationToken =>
+
+            Task.Run(() =>
+            {
+                try
+                {
+                    Exception ex = e.GetException();
+
+                    _analytics.UnexpectedException(ex, trace: false);
+
+                    _traceFactory.GetTracer().TraceError(ex.ToString());
+                    ResetWatcher();
+                }
+                finally
+                {
+                    Interlocked.Exchange(ref _pendingOnError, 0);
+                }
+            });
+#endif
         }
 
         private void ResetWatcher()

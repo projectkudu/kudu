@@ -16,8 +16,9 @@ using Kudu.Services.Infrastructure;
 using Newtonsoft.Json.Linq;
 using System.Linq;
 using System.Text.RegularExpressions;
-using System.Collections.Generic;
 using Kudu.Core.Helpers;
+using Microsoft.Extensions.FileProviders.Physical;
+using System.IO.Abstractions;
 
 namespace Kudu.Services.Performance
 {
@@ -192,12 +193,12 @@ namespace Kudu.Services.Performance
             {
                 if (Directory.Exists(path))
                 {
-                    var dir = new DirectoryInfo(path);
+                    IDirectoryInfo dir = (IDirectoryInfo) new PhysicalDirectoryInfo(new DirectoryInfo(path));
                     if (path.EndsWith(Constants.LogFilesPath, StringComparison.Ordinal))
                     {
                         foreach (var info in dir.GetFileSystemInfos())
                         {
-                            var directoryInfo = info as DirectoryInfo;
+                            var directoryInfo = info as IDirectoryInfo;
                             if (directoryInfo != null)
                             {
                                 // excluding FREB as it contains user sensitive data such as authorization header
@@ -208,7 +209,7 @@ namespace Kudu.Services.Performance
                             }
                             else
                             {
-                                zip.AddFile((FileInfo)info, _tracer, dir.Name);
+                                zip.AddFile((IFileInfo)info, _tracer, dir.Name);
                             }
                         }
                     }

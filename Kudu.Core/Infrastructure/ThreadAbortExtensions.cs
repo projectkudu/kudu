@@ -9,7 +9,11 @@ namespace Kudu.Core
 
         public static void KuduAbort(this Thread thread, string message)
         {
+#if NET5_0_OR_GREATER
+            thread.Interrupt();
+#else
             thread.Abort(String.Format("{0}  {1}", KuduThreadAbortMessage, message));
+#endif
         }
 
         public static bool AbortedByKudu(this Exception exception)

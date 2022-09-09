@@ -268,12 +268,12 @@ namespace Kudu.Core.Infrastructure
             Instance.Directory.SetLastWriteTimeUtc(path, lastWriteTimeUtc);
         }
 
-        public static FileInfoBase FileInfoFromFileName(string fileName)
+        public static IFileInfo FileInfoFromFileName(string fileName)
         {
             return Instance.FileInfo.FromFileName(fileName);
         }
 
-        public static DirectoryInfoBase DirectoryInfoFromDirectoryName(string path)
+        public static IDirectoryInfo DirectoryInfoFromDirectoryName(string path)
         {
             return Instance.DirectoryInfo.FromDirectoryName(path);
         }
@@ -374,7 +374,7 @@ namespace Kudu.Core.Infrastructure
             return Instance.Path.GetDirectoryName(path);
         }
 
-        private static void DeleteDirectoryContentsSafe(DirectoryInfoBase directoryInfo, bool ignoreErrors)
+        private static void DeleteDirectoryContentsSafe(IDirectoryInfo directoryInfo, bool ignoreErrors)
         {
             try
             {
@@ -392,7 +392,7 @@ namespace Kudu.Core.Infrastructure
             }
         }
 
-        private static void DeleteFileSystemInfo(FileSystemInfoBase fileSystemInfo, bool ignoreErrors)
+        private static void DeleteFileSystemInfo(IFileSystemInfo fileSystemInfo, bool ignoreErrors)
         {
             if (!fileSystemInfo.Exists)
             {
@@ -408,7 +408,7 @@ namespace Kudu.Core.Infrastructure
                 if (!ignoreErrors) throw;
             }
 
-            var directoryInfo = fileSystemInfo as DirectoryInfoBase;
+            var directoryInfo = fileSystemInfo as IDirectoryInfo;
 
             if (directoryInfo != null)
             {

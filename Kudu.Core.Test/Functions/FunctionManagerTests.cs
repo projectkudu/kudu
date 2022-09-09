@@ -4,11 +4,11 @@ using System.Configuration;
 using System.IO;
 using System.IO.Abstractions;
 using System.Linq;
+using System.Text.Json.Nodes;
 using Kudu.Core.Functions;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Tracing;
 using Moq;
-using Newtonsoft.Json.Linq;
 using Xunit;
 
 namespace Kudu.Core.Test.Functions
@@ -40,7 +40,7 @@ namespace Kudu.Core.Test.Functions
 
         private void RunDeterminePrimaryScriptFileFunc(string expect, string jObjectStr, string dir)
         {
-            JObject functionConfig = JObject.Parse(jObjectStr);
+            JsonNode functionConfig = JsonObject.Parse(jObjectStr);
 
             var traceFactoryMock = new Mock<ITraceFactory>();
             traceFactoryMock.Setup(tf => tf.GetTracer()).Returns(NullTracer.Instance);

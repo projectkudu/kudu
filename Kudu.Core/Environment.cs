@@ -4,11 +4,13 @@ using System.Globalization;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Security;
-using System.Web;
 using Kudu.Contracts.Settings;
 using Kudu.Core.Helpers;
 using Kudu.Core.Infrastructure;
 using Microsoft.Win32;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Extensions;
+using Kudu.Contracts;
 
 namespace Kudu.Core
 {
@@ -36,6 +38,7 @@ namespace Kudu.Core
         private readonly string _jobsBinariesPath;
         private readonly string _sitePackagesPath;
         private readonly string _secondaryJobsBinariesPath;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
         // This ctor is used only in unit tests
         public Environment(
@@ -350,7 +353,8 @@ namespace Kudu.Core
             get
             {
                 // GetLeftPart(Authority) returns the https://www.example.com of any Uri
-                var url = HttpContext.Current?.Request?.Url?.GetLeftPart(UriPartial.Authority);
+                var displayUrl = _httpContextAccessor?.HttpContext?.Request?.GetDisplayUrl();
+                var url = displayUrl == null ? null : new Uri(displayUrl).GetLeftPart(UriPartial.Authority);
                 if (string.IsNullOrEmpty(url))
                 {
                     // if call is not done in Request context (eg. in BGThread), fall back to %host%

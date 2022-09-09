@@ -6,6 +6,8 @@ using Kudu.Contracts.Settings;
 using Kudu.Core.Helpers;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Tracing;
+
+#if NETFRAMEWORK
 using LibGit2Sharp;
 
 namespace Kudu.Core.SourceControl.Git
@@ -478,3 +480,5 @@ echo $i > pushinfo
         }
     }
 }
+
+#endif

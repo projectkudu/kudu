@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
+using System.Text.Json.Serialization;
 using Kudu.Contracts.Infrastructure;
-using Newtonsoft.Json;
 
 namespace Kudu.Core.Diagnostics
 {
@@ -18,7 +18,7 @@ namespace Kudu.Core.Diagnostics
             _name = name;
         }
 
-        [JsonProperty(PropertyName = "name")]
+        [JsonPropertyName("name")]
         string INamedObject.Name { get { return _name; } }
     }
 }

@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if NETFRAMEWORK
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition.Hosting;
 using System.Configuration;
@@ -11,6 +12,7 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
+using System.Web.Hosting;
 using System.Xml;
 using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Jobs;
@@ -26,7 +28,10 @@ using Newtonsoft.Json.Linq;
 using NuGet.Client;
 using NuGet.Client.VisualStudio;
 using NuGet.Versioning;
+using NuGet.PackagingCore;
 using NullLogger = Kudu.Core.Deployment.NullLogger;
+using Kudu.Contracts;
+
 namespace Kudu.Core.SiteExtensions
 {
     public class SiteExtensionManager : ISiteExtensionManager
@@ -58,11 +63,14 @@ namespace Kudu.Core.SiteExtensions
         private const string _installScriptName = "install.cmd";
         private const string _uninstallScriptName = "uninstall.cmd";
 
-        public SiteExtensionManager(IContinuousJobsManager continuousJobManager, ITriggeredJobsManager triggeredJobManager, IEnvironment environment, IDeploymentSettingsManager settings, ITraceFactory traceFactory, HttpContextBase context, IAnalytics analytics)
+        public SiteExtensionManager(IContinuousJobsManager continuousJobManager, ITriggeredJobsManager triggeredJobManager, IEnvironment environment, IDeploymentSettingsManager settings, ITraceFactory traceFactory, HttpContext context, IAnalytics analytics)
         {
             _rootPath = Path.Combine(environment.RootPath, "SiteExtensions");
+#if NETFRAMEWORK
             _baseUrl = context.Request.Url == null ? String.Empty : context.Request.Url.GetLeftPart(UriPartial.Authority).TrimEnd('/');
-
+#elif NET6_OR_GREATER
+            _baseUrl = context.Request.GetEncodedUrl() == null ? String.Empty : new Uri(context.Request.GetEncodedUrl()).GetLeftPart(UriPartial.Authority).TrimEnd('/');
+#endif
             _localRepository = GetSourceRepository(_rootPath);
             _continuousJobManager = continuousJobManager;
             _triggeredJobManager = triggeredJobManager;
@@ -491,7 +499,7 @@ namespace Kudu.Core.SiteExtensions
 
                     if (SiteExtensionInfo.SiteExtensionType.WebRoot == type)
                     {
-                        // if install to WebRoot, check if there is any xdt or scmXdt file come with package
+                        // if install to WebRoot, cNuGet.Resolver.PackageResolverheck if there is any xdt or scmXdt file come with package
                         // if there is, move it to site extension folder
                         string xdtFile = Path.Combine(extractPath, Constants.ApplicationHostXdtFileName);
                         string scmXdtFile = Path.Combine(extractPath, Constants.ScmApplicationHostXdtFileName);
@@ -968,7 +976,7 @@ namespace Kudu.Core.SiteExtensions
         private static bool ExtensionRequiresApplicationHost(SiteExtensionInfo info)
         {
             string appSettingName = info.Id.ToUpper(CultureInfo.CurrentCulture) + "_EXTENSION_VERSION";
-            return ConfigurationManager.AppSettings[appSettingName] != "beta";
+            return System.Configuration.ConfigurationManager.AppSettings[appSettingName] != "beta";
         }
 
         private string GetFullUrl(string url)
@@ -1047,3 +1055,5 @@ namespace Kudu.Core.SiteExtensions
         }
     }
 }
+
+#endif

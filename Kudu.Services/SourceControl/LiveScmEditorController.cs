@@ -150,7 +150,7 @@ namespace Kudu.Services.SourceControl
             }
         }
 
-        protected override Task<HttpResponseMessage> CreateItemGetResponse(FileSystemInfoBase info, string localFilePath)
+        protected override Task<HttpResponseMessage> CreateItemGetResponse(IFileSystemInfo info, string localFilePath)
         {
             // Check whether we have a conditional If-None-Match request
             if (IsIfNoneMatchRequest(_currentEtag))
@@ -203,7 +203,7 @@ namespace Kudu.Services.SourceControl
             }
         }
 
-        protected override async Task<HttpResponseMessage> CreateItemPutResponse(FileSystemInfoBase info, string localFilePath, bool itemExists)
+        protected override async Task<HttpResponseMessage> CreateItemPutResponse(IFileSystemInfo info, string localFilePath, bool itemExists)
         {
             // If repository is empty then there is no commit id and no master branch so we don't create any branch; we just init the repo.
             if (_currentEtag != null)
@@ -345,7 +345,7 @@ namespace Kudu.Services.SourceControl
             }
         }
 
-        protected override async Task<HttpResponseMessage> CreateFileDeleteResponse(FileInfoBase info)
+        protected override async Task<HttpResponseMessage> CreateFileDeleteResponse(IFileInfo info)
         {
             HttpResponseMessage response;
             if (!PrepareBranch(true, out response))
