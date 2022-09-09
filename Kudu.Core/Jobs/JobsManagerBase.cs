@@ -15,8 +15,6 @@ using Kudu.Core.Tracing;
 using Newtonsoft.Json;
 using Microsoft.AspNetCore.Http.Extensions;
 using Kudu.Contracts;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 
 namespace Kudu.Core.Jobs
 {
@@ -457,13 +455,7 @@ namespace Kudu.Core.Jobs
             var jobDirectory = GetJobBinariesDirectory(jobName);
 
             var jobSettingsPath = GetJobSettingsPath(jobDirectory);
-            // Serialization depending on Newtonsoft.Json or System.Text.Json
-            // This is necessary because of the System.Text.Json usage of the 'ValueKind' object
-#if NET6_0_OR_GREATER
-            string jobSettingsContent = System.Text.Json.JsonSerializer.Serialize(jobSettings);
-#else
             string jobSettingsContent = JsonConvert.SerializeObject(jobSettings);
-#endif
             FileSystemHelpers.WriteAllTextToFile(jobSettingsPath, jobSettingsContent);
         }
 

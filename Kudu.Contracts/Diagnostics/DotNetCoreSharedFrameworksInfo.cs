@@ -1,17 +1,17 @@
-﻿using System.Collections.Generic;
-using System.Text.Json.Serialization;
+﻿using Newtonsoft.Json;
+using System.Collections.Generic;
 
 namespace Kudu.Services.Diagnostics
 {
     public class DotNetCoreSharedFrameworksInfo
     {
-        [JsonPropertyName("Microsoft.NetCore.App")]
+        [JsonProperty(PropertyName = "Microsoft.NetCore.App")]
         public IEnumerable<string> NetCoreApp { get; set; }
 
-        [JsonPropertyName("Microsoft.AspNetCore.App")]
+        [JsonProperty(PropertyName = "Microsoft.AspNetCore.App")]
         public IEnumerable<string> AspNetCoreApp { get; set; }
 
-        [JsonPropertyName("Microsoft.AspNetCore.All")]
+        [JsonProperty(PropertyName = "Microsoft.AspNetCore.All")]
         public IEnumerable<string> AspNetCoreAll { get; set; }
     }
 }

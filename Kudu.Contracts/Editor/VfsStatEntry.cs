@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Text.Json.Serialization;
+using Newtonsoft.Json;
 
 namespace Kudu.Contracts.Editor
 {
@@ -9,25 +9,25 @@ namespace Kudu.Contracts.Editor
     /// </summary>
     public class VfsStatEntry
     {
-        [JsonPropertyName("name")]
+        [JsonProperty(PropertyName = "name")]
         public string Name { get; set; }
 
-        [JsonPropertyName("size")]
+        [JsonProperty(PropertyName = "size")]
         public long Size { get; set; }
 
-        [JsonPropertyName("mtime")]
+        [JsonProperty(PropertyName = "mtime")]
         public DateTimeOffset MTime { get; set; }
 
-        [JsonPropertyName("crtime")]
+        [JsonProperty(PropertyName = "crtime")]
         public DateTimeOffset CRTime { get; set; }
 
-        [JsonPropertyName("mime")]
+        [JsonProperty(PropertyName = "mime")]
         public string Mime { get; set; }
 
-        [JsonPropertyName("href")]
+        [JsonProperty(PropertyName = "href")]
         public string Href { get; set; }
 
-        [JsonPropertyName("path")]
+        [JsonProperty(PropertyName = "path")]
         public string Path { get; set; }
     }
 }

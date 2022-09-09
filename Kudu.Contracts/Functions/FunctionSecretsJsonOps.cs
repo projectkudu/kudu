@@ -1,8 +1,6 @@
-﻿using System.Text.Json.Serialization;
-using System.Text.Json.Nodes;
+﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
-using System.Text.Json;
-using System.Text.Json.Serialization.Metadata;
 
 namespace Kudu.Core.Functions
 {
@@ -34,30 +32,30 @@ namespace Kudu.Core.Functions
         {
             try
             {
-                JsonArray hostJson = JsonNode.Parse(json)?.AsArray();
-                if (hostJson["key"]?.GetValue<JsonElement>().ValueKind == JsonValueKind.String)
+                JObject hostJson = JObject.Parse(json);
+                if (hostJson["key"]?.Type == JTokenType.String)
                 {
                     isEncrypted = false;
-                    return (string)hostJson["key"];
+                    return hostJson.Value<string>("key");
                 }
-                else if (hostJson["keys"]?.GetValue<JsonElement>().ValueKind == JsonValueKind.Array)
+                else if (hostJson["keys"]?.Type == JTokenType.Array)
                 {
-                    JsonArray keys = (JsonArray)hostJson["keys"];
+                    JArray keys = hostJson.Value<JArray>("keys");
                     if (keys.Count >= 1)
                     {
-                        JsonObject keyObject = (JsonObject)keys[0];
+                        JObject keyObject = (JObject)keys[0];
                         for (int i = 1; i < keys.Count; i++)
                         {
                             // start from the second
                             // if we can't find the key named default, return the 1st key found
-                            if (string.Equals((string)keys[i]["name"], "default", StringComparison.Ordinal))
+                            if (String.Equals(keys[i].Value<string>("name"), "default"))
                             {
-                                keyObject = (JsonObject)keys[i];
+                                keyObject = (JObject)keys[i];
                                 break;
                             }
                         }
-                        isEncrypted = (bool)keyObject["encrypted"];
-                        return (string)keyObject["value"];
+                        isEncrypted = keyObject.Value<bool>("encrypted");
+                        return keyObject.Value<string>("value");
                     }
                 }
             }

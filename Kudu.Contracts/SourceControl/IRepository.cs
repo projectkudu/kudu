@@ -1,4 +1,5 @@
-﻿namespace Kudu.Core.SourceControl
+﻿
+namespace Kudu.Core.SourceControl
 {
     public interface IRepository : IFileFinder
     {

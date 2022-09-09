@@ -1,41 +1,41 @@
-﻿using Kudu.Contracts.Infrastructure;
+﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
-using System.Text.Json.Nodes;
-using System.Text.Json.Serialization;
+using Kudu.Contracts.Infrastructure;
 
 namespace Kudu.Core.Functions
 {
     public class FunctionEnvelope : INamedObject
     {
-        [JsonPropertyName("name")]
+        [JsonProperty(PropertyName = "name")]
         public string Name { get; set; }
 
-        [JsonPropertyName("function_app_id")]
+        [JsonProperty(PropertyName = "function_app_id")]
         public string FunctionAppId { get; set; }
 
-        [JsonPropertyName("script_root_path_href")]
+        [JsonProperty(PropertyName = "script_root_path_href")]
         public Uri ScriptRootPathHref { get; set; }
 
-        [JsonPropertyName("script_href")]
+        [JsonProperty(PropertyName = "script_href")]
         public Uri ScriptHref { get; set; }
 
-        [JsonPropertyName("config_href")]
+        [JsonProperty(PropertyName = "config_href")]
         public Uri ConfigHref { get; set; }
 
-        [JsonPropertyName("secrets_file_href")]
+        [JsonProperty(PropertyName = "secrets_file_href")]
         public Uri SecretsFileHref { get; set; }
 
-        [JsonPropertyName("href")]
+        [JsonProperty(PropertyName = "href")]
         public Uri Href { get; set; }
 
-        [JsonPropertyName("config")]
-        public JsonNode Config { get; set; }
+        [JsonProperty(PropertyName = "config")]
+        public JObject Config { get; set; }
 
-        [JsonPropertyName("files")]
+        [JsonProperty(PropertyName = "files")]
         public IDictionary<string, string> Files { get; set; }
 
-        [JsonPropertyName("test_data")]
+        [JsonProperty(PropertyName = "test_data")]
         public string TestData { get; set; }
     }
 }

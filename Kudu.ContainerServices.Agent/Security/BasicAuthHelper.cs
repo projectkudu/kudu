@@ -27,7 +27,7 @@ namespace Kudu.ContainerServices.Agent.Security
         }
 
         public async Task Invoke(HttpContext context)
-        {         
+        {
             if (!OSDetector.IsOnWindows())
             {
                 // PrincipalContext method for validating credentials only works on Windows

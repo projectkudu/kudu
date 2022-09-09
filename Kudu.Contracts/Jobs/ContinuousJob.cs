@@ -1,17 +1,17 @@
 ﻿using System;
-using System.Text.Json.Serialization;
+using Newtonsoft.Json;
 
 namespace Kudu.Contracts.Jobs
 {
     public class ContinuousJob : JobBase
     {
-        [JsonPropertyName("status")]
+        [JsonProperty(PropertyName = "status")]
         public string Status { get; set; }
 
-        [JsonPropertyName("detailed_status")]
+        [JsonProperty(PropertyName = "detailed_status")]
         public string DetailedStatus { get; set; }
 
-        [JsonPropertyName("log_url")]
+        [JsonProperty(PropertyName = "log_url")]
         public Uri LogUrl { get; set; }
 
         public override int GetHashCode()

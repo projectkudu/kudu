@@ -6,7 +6,6 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Text;
-using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 using Kudu.Contracts;
 using Kudu.Contracts.Functions;
@@ -222,7 +221,7 @@ namespace Kudu.Core.Functions
             return await GetKeyObjectFromFile<FunctionSecrets>(functionName, new FunctionSecretsJsonOps());
         }
 
-        public async Task<JsonNode> GetHostConfigAsync()
+        public async Task<JObject> GetHostConfigAsync()
         {
             var host = await TryGetHostConfigAsync();
             if (host == null)
@@ -232,13 +231,13 @@ namespace Kudu.Core.Functions
             return host;
         }
 
-        private async Task<JsonNode> TryGetHostConfigAsync()
+        private async Task<JObject> TryGetHostConfigAsync()
         {
             try
             {
-                return (FileSystemHelpers.FileExists(HostJsonPath)
-                    ? JsonObject.Parse(await FileSystemHelpers.ReadAllTextFromFileAsync(HostJsonPath))
-                    : new JsonObject());
+                return FileSystemHelpers.FileExists(HostJsonPath)
+                    ? JObject.Parse(await FileSystemHelpers.ReadAllTextFromFileAsync(HostJsonPath))
+                    : new JObject();
             }
             catch
             {
@@ -248,7 +247,7 @@ namespace Kudu.Core.Functions
             return null;
         }
 
-        public async Task<JsonNode> PutHostConfigAsync(JsonNode content)
+        public async Task<JObject> PutHostConfigAsync(JObject content)
         {
             await FileSystemHelpers.WriteAllTextToFileAsync(HostJsonPath, JsonConvert.SerializeObject(content));
             return await GetHostConfigAsync();
@@ -286,7 +285,7 @@ namespace Kudu.Core.Functions
 
         private async Task<FunctionEnvelope> CreateFunctionConfig(string configContent, string functionName, FunctionTestData packageLimit)
         {
-            var functionConfig = JsonObject.Parse(configContent);
+            var functionConfig = JObject.Parse(configContent);
             var functionPath = GetFuncPathAndCheckExistence(functionName);
             string functionPrimaryScriptFile = DeterminePrimaryScriptFile((string)functionConfig["scriptFile"], functionPath);
 
