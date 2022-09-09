@@ -1,33 +1,34 @@
 ﻿using System;
 using Kudu.Contracts.Infrastructure;
-using System.Text.Json.Serialization;
+using Newtonsoft.Json;
+using System.Xml.Linq;
 
 namespace Kudu.Contracts.Jobs
 {
     public abstract class JobBase : INamedObject
     {
-        [JsonPropertyName("name")]
+        [JsonProperty(PropertyName = "name")]
         public string Name { get; set; }
 
-        [JsonPropertyName("run_command")]
+        [JsonProperty(PropertyName = "run_command")]
         public string RunCommand { get; set; }
 
-        [JsonPropertyName("url")]
+        [JsonProperty(PropertyName = "url")]
         public Uri Url { get; set; }
 
-        [JsonPropertyName("extra_info_url")]
+        [JsonProperty(PropertyName = "extra_info_url")]
         public Uri ExtraInfoUrl { get; set; }
 
-        [JsonPropertyName("type")]
+        [JsonProperty(PropertyName = "type")]
         public string JobType { get; set; }
 
-        [JsonPropertyName("error")]
+        [JsonProperty(PropertyName = "error")]
         public string Error { get; set; }
 
-        [JsonPropertyName("using_sdk")]
+        [JsonProperty(PropertyName = "using_sdk")]
         public bool UsingSdk { get; set; }
 
-        [JsonPropertyName("settings")]
+        [JsonProperty(PropertyName = "settings")]
         public JobSettings Settings { get; set; }
 
         [JsonIgnore]

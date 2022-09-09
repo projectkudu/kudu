@@ -1,6 +1,5 @@
 ﻿using System;
-using System.Text.Json;
-using System.Text.Json.Serialization;
+using Newtonsoft.Json;
 
 namespace Kudu.Core.Hooks
 {
@@ -14,28 +13,28 @@ namespace Kudu.Core.Hooks
             InsecureSsl = insecureSsl;
         }
 
-        [JsonPropertyName("id")]
+        [JsonProperty(PropertyName = "id")]
         public string Id { get; set; }
 
-        [JsonPropertyName("event")]
+        [JsonProperty(PropertyName = "event")]
         public string HookEventType { get; private set; }
 
-        [JsonPropertyName("url")]
+        [JsonProperty(PropertyName = "url")]
         public string HookAddress { get; private set; }
 
-        [JsonPropertyName("insecure_ssl")]
+        [JsonProperty(PropertyName = "insecure_ssl")]
         public bool InsecureSsl { get; private set; }
 
-        [JsonPropertyName("last_status")]
+        [JsonProperty(PropertyName = "last_status")]
         public string LastPublishStatus { get; set; }
 
-        [JsonPropertyName("last_reason")]
+        [JsonProperty(PropertyName = "last_reason")]
         public string LastPublishReason { get; set; }
 
-        [JsonPropertyName("last_datetime")]
+        [JsonProperty(PropertyName = "last_datetime")]
         public DateTime LastPublishDate { get; set; }
 
-        [JsonPropertyName("last_context")]
+        [JsonProperty(PropertyName = "last_context")]
         public string LastContext { get; set; }
     }
 }

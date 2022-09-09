@@ -4,9 +4,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using System.Text.Json.Serialization.Converters;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 
 namespace Kudu.Contracts.Settings
 {
@@ -47,7 +46,7 @@ namespace Kudu.Contracts.Settings
             set { _settings[AzureDriveEnabledKey] = value; }
         }
 
-        [JsonInclude]
+        [JsonProperty]
         [JsonConverter(typeof(StrictStringEnumConverter))]
         public TraceEventType AzureDriveTraceLevel
         {
@@ -55,14 +54,14 @@ namespace Kudu.Contracts.Settings
             set { _settings[AzureDriveTraceLevelKey] = value; }
         }
 
-        [JsonInclude]
+        [JsonProperty]
         public bool AzureTableEnabled
         {
             get { return (bool)_settings[AzureTableEnabledKey]; }
             set { _settings[AzureTableEnabledKey] = value; }
         }
 
-        [JsonInclude]
+        [JsonProperty]
         [JsonConverter(typeof(StrictStringEnumConverter))]
         public TraceEventType AzureTableTraceLevel
         {
@@ -70,14 +69,14 @@ namespace Kudu.Contracts.Settings
             set { _settings[AzureTableTraceLevelKey] = value; }
         }
 
-        [JsonInclude]
+        [JsonProperty]
         public bool AzureBlobEnabled
         {
             get { return (bool)_settings[AzureBlobEnabledKey]; }
             set { _settings[AzureBlobEnabledKey] = value; }
         }
 
-        [JsonInclude]
+        [JsonProperty]
         [JsonConverter(typeof(StrictStringEnumConverter))]
         public TraceEventType AzureBlobTraceLevel
         {
@@ -123,36 +122,33 @@ namespace Kudu.Contracts.Settings
         {
             return _settings.Union(_extraSettings).GetEnumerator();
         }
-        private class StrictStringEnumConverter : JsonConverter<TraceEventType>
+        private class StrictStringEnumConverter : StringEnumConverter
         {
-
-            public override TraceEventType Read(ref Utf8JsonReader reader, Type objectType, JsonSerializerOptions options)
+            public StrictStringEnumConverter()
             {
-                int unused;
-                if (reader.TokenType != JsonTokenType.Number)
-                {
-                    try
-                    {
-                        return (TraceEventType)Enum.Parse(objectType, reader.GetString());
-                    }
-                    catch
-                    {
-                        throw new JsonException(string.Format(CultureInfo.InvariantCulture, "Error converting value '{0}' from type '{1}'", reader.ValueSequence, reader.TokenType));
-                    }
-                }
-
-                throw new JsonException(string.Format(CultureInfo.InvariantCulture, "Error converting value '{0}' from type '{1}'", reader.ValueSequence, reader.TokenType));
+                AllowIntegerValues = false;
             }
 
-            public override void Write(Utf8JsonWriter writer, TraceEventType objectType, JsonSerializerOptions options)
+            public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
             {
-                if (Enum.IsDefined(objectType.GetType(), objectType))
+                int unused;
+                if (reader.Value is string && !int.TryParse((string)reader.Value, out unused))
                 {
-                    writer.WriteStringValue(objectType.ToString());
+                    return base.ReadJson(reader, objectType, existingValue, serializer);
+                }
+
+                throw new JsonSerializationException(string.Format(CultureInfo.InvariantCulture, "Error converting value '{0}' from type '{1}'", reader.Value, reader.TokenType));
+            }
+
+            public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+            {
+                if (Enum.IsDefined(value.GetType(), value))
+                {
+                    base.WriteJson(writer, value, serializer);
                     return;
                 }
 
-                throw new JsonException(string.Format(CultureInfo.InvariantCulture, "Error converting value '{0}'", objectType));
+                throw new JsonSerializationException(string.Format(CultureInfo.InvariantCulture, "Error converting value '{0}'", value));
             }
         }
     }

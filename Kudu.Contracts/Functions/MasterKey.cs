@@ -1,10 +1,10 @@
-﻿using System.Text.Json.Serialization;
+﻿using Newtonsoft.Json;
 
 namespace Kudu.Core.Functions
 {
     public class MasterKey
     {
-        [JsonPropertyName("masterKey")]
+        [JsonProperty(PropertyName = "masterKey")]
         public string Key { get; set; }
     }
 }

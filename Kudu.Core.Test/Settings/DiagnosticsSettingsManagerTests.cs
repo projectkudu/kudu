@@ -11,7 +11,6 @@ using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Settings;
 using Moq;
-using System.Text.Json;
 using Xunit;
 
 namespace Kudu.Core.Test.Settings

@@ -1,17 +1,17 @@
 ﻿using System;
-using System.Text.Json.Serialization;
+using Newtonsoft.Json;
 
 namespace Kudu.Contracts.Jobs
 {
     public class TriggeredJob : JobBase
     {
-        [JsonPropertyName("latest_run")]
+        [JsonProperty(PropertyName = "latest_run")]
         public TriggeredJobRun LatestRun { get; set; }
 
-        [JsonPropertyName("history_url")]
+        [JsonProperty(PropertyName = "history_url")]
         public Uri HistoryUrl { get; set; }
 
-        [JsonPropertyName("scheduler_logs_url")]
+        [JsonProperty(PropertyName = "scheduler_logs_url")]
         public Uri SchedulerLogsUrl { get; set; }
 
         public override int GetHashCode()

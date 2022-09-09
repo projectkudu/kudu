@@ -1,11 +1,11 @@
 ﻿using System.Collections.Generic;
-using System.Text.Json.Serialization;
+using Newtonsoft.Json;
 
 namespace Kudu.Services.Diagnostics
 {
     public class RuntimeInfo
     {
-        [JsonPropertyName("nodejs")]
+        [JsonProperty(PropertyName = "nodejs")]
         public IEnumerable<Dictionary<string, string>> NodeVersions { get; set; }
 
         public object DotNetCore32 { get; set; }

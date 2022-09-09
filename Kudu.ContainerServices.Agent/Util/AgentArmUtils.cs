@@ -5,7 +5,7 @@ using Microsoft.Extensions.Primitives;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.Json.Serialization;
+using Newtonsoft.Json;
 
 namespace Kudu.ContainerServices.Agent.Util
 {
@@ -115,25 +115,25 @@ namespace Kudu.ContainerServices.Agent.Util
 
     public class ArmListEntry<T> where T : INamedObject
     {
-        [JsonPropertyName("value")]
+        [JsonProperty(PropertyName = "value")]
         public IEnumerable<ArmEntry<T>> Value { get; set; }
     }
 
     public class ArmEntry<T> where T : INamedObject
     {
-        [JsonPropertyName("id")]
+        [JsonProperty(PropertyName = "id")]
         public string Id { get; set; }
 
-        [JsonPropertyName("name")]
+        [JsonProperty(PropertyName = "name")]
         public string Name { get; set; }
 
-        [JsonPropertyName("type")]
+        [JsonProperty(PropertyName = "type")]
         public string Type { get; set; }
 
-        [JsonPropertyName("location")]
+        [JsonProperty(PropertyName = "location")]
         public string Location { get; set; }
 
-        [JsonPropertyName("properties")]
+        [JsonProperty(PropertyName = "properties")]
         public T Properties { get; set; }
     }
 }

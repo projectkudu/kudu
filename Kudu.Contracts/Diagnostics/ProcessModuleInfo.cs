@@ -1,9 +1,8 @@
 ﻿using System;
+using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using Kudu.Contracts.Infrastructure;
-using System.Text.Json;
-using System.Text.Json.Nodes;
-using System.Text.Json.Serialization;
+using Newtonsoft.Json;
 
 namespace Kudu.Core.Diagnostics
 {
@@ -13,37 +12,37 @@ namespace Kudu.Core.Diagnostics
         [SuppressMessage("Microsoft.Design", "CA1033:InterfaceMethodsShouldBeCallableByChildTypes", Justification = "to provide ARM specific name")]
         string INamedObject.Name { get { return BaseAddress; } }
 
-        [JsonPropertyName("base_address")]
+        [JsonProperty(PropertyName = "base_address")]
         public string BaseAddress { get; set; }
 
-        [JsonPropertyName("file_name")]
+        [JsonProperty(PropertyName = "file_name")]
         public string FileName { get; set; }
 
-        [JsonPropertyName("href"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+        [JsonProperty(PropertyName = "href", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public Uri Href { get; set; }
 
-        [JsonPropertyName("file_path"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+        [JsonProperty(PropertyName = "file_path", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public string FilePath { get; set; }
 
-        [JsonPropertyName("module_memory_size"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+        [JsonProperty(PropertyName = "module_memory_size", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public int ModuleMemorySize { get; set; }
 
-        [JsonPropertyName("file_version")]
+        [JsonProperty(PropertyName = "file_version")]
         public string FileVersion { get; set; }
 
-        [JsonPropertyName("file_description"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+        [JsonProperty(PropertyName = "file_description", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public string FileDescription { get; set; }
 
-        [JsonPropertyName("product"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+        [JsonProperty(PropertyName = "product", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public string Product { get; set; }
 
-        [JsonPropertyName("product_version"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+        [JsonProperty(PropertyName = "product_version", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public string ProductVersion { get; set; }
 
-        [JsonPropertyName("is_debug"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+        [JsonProperty(PropertyName = "is_debug", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public bool? IsDebug { get; set; }
 
-        [JsonPropertyName("language"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+        [JsonProperty(PropertyName = "language", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public string Language { get; set; }
     }
 }

@@ -1,6 +1,6 @@
 ﻿using System;
-using System.Text.Json;
-using System.Text.Json.Nodes;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Kudu.Core.Functions
 {
@@ -31,17 +31,17 @@ namespace Kudu.Core.Functions
         {
             try
             {
-                JsonArray hostJson = JsonNode.Parse(json)?.AsArray();
-                if (hostJson["masterKey"]?.GetValue<JsonElement>().ValueKind == JsonValueKind.String && hostJson["functionKey"]?.GetValue<JsonElement>().ValueKind == JsonValueKind.String)
+                JObject hostJson = JObject.Parse(json);
+                if (hostJson["masterKey"]?.Type == JTokenType.String && hostJson["functionKey"]?.Type == JTokenType.String)
                 {
                     isEncrypted = false;
-                    return (string)hostJson["masterKey"];
+                    return hostJson.Value<string>("masterKey");
                 }
-                else if (hostJson["masterKey"]?.GetValue<JsonElement>().ValueKind == JsonValueKind.Object && hostJson["functionKeys"]?.GetValue<JsonElement>().ValueKind == JsonValueKind.Array)
+                else if (hostJson["masterKey"]?.Type == JTokenType.Object && hostJson["functionKeys"]?.Type == JTokenType.Array)
                 {
-                    JsonObject keyObject = (JsonObject)hostJson["masterKey"];
-                    isEncrypted = (bool)keyObject["encrypted"];
-                    return (string)keyObject["value"];
+                    JObject keyObject = hostJson.Value<JObject>("masterKey");
+                    isEncrypted = keyObject.Value<bool>("encrypted");
+                    return keyObject.Value<string>("value");
                 }
             }
             catch (JsonException)
