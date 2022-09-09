@@ -71,14 +71,14 @@ namespace Kudu.Core.Tracing
 
         private void HandleCleanup()
         {
-            FileInfoBase[] extentionLogFiles = ListLogFiles();
+            IFileInfo[] extentionLogFiles = ListLogFiles();
 
             if (extentionLogFiles.Sum(file => file.Length) > MaxTotalFilesSize)
             {
                 extentionLogFiles.OrderBy(file => file.LastWriteTimeUtc).First().Delete();
             }
 
-            FileInfoBase currentFileInfo = extentionLogFiles.FirstOrDefault(file => String.Equals(file.Name, _currentFileName, StringComparison.OrdinalIgnoreCase));
+            IFileInfo currentFileInfo = extentionLogFiles.FirstOrDefault(file => String.Equals(file.Name, _currentFileName, StringComparison.OrdinalIgnoreCase));
             if (currentFileInfo != null && currentFileInfo.Length > MaxFileSize)
             {
                 UpdateCurrentPath();
@@ -92,7 +92,7 @@ namespace Kudu.Core.Tracing
             _currentPath = Path.Combine(_directoryPath, _currentFileName);
         }
 
-        private FileInfoBase[] ListLogFiles()
+        private IFileInfo[] ListLogFiles()
         {
             try
             {
@@ -100,7 +100,7 @@ namespace Kudu.Core.Tracing
             }
             catch
             {
-                return new FileInfoBase[0];
+                return new IFileInfo[0];
             }
         }
     }

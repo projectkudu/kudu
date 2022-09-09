@@ -4,6 +4,9 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Web;
 using Kudu.Contracts.Tracing;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Extensions;
+using Microsoft.Extensions.Primitives;
 
 namespace Kudu.Core.Tracing
 {
@@ -108,6 +111,7 @@ namespace Kudu.Core.Tracing
             return _blackList.Contains(key);
         }
 
+#if NETFRAMEWORK
         public static bool ShouldSkipRequest(HttpRequestBase request)
         {
             // Filter out pings to applications.
@@ -151,6 +155,7 @@ namespace Kudu.Core.Tracing
 
             return !String.Equals(request.Url.Host, refererUri.Host, StringComparison.OrdinalIgnoreCase);
         }
+#endif
 
         private static TraceLevel GetTraceLevel(IDictionary<string, string> attributes)
         {

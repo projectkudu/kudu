@@ -9,7 +9,7 @@ namespace Kudu.Common
     public static class RS
     {
         /// <summary>
-        /// Formats the specified resource string using <see cref="System.Globalization.CultureInfo.CurrentCulture"/>.
+        /// Formats the specified resource string using <see cref="CultureInfo.CurrentCulture"/>.
         /// </summary>
         /// <param name="format">A composite format string.</param>
         /// <param name="args">An object array that contains zero or more objects to format.</param>

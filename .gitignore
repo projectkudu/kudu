@@ -27,3 +27,11 @@ Setup/WebPiCmdSetup.log
 Kudu.Services.Web/node_modules/
 .vs/
 Build/7zip/
+*.pubxml
+/Kudu.ContainerServices.Agent/Properties/PublishProfiles
+/Kudu.ContainerServices.Core/Properties/PublishProfiles
+/Kudu.Web/libman.json
+/Kudu.Web/Properties/PublishProfiles
+/Kudu.Core/libman.json
+/Kudu.ContainerServices.Core/Properties/launchSettings.json
+/Kudu.ContainerServices.Agent/Properties/launchSettings.json

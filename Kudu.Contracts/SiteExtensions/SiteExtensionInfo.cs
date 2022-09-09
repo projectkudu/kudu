@@ -4,10 +4,10 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Xml.Linq;
 using Kudu.Contracts.Infrastructure;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
-using Newtonsoft.Json.Linq;
+using System.Text.Json;
 using NuGet.Client.VisualStudio;
+using System.Text.Json.Serialization;
+using System.Text.Json.Nodes;
 
 namespace Kudu.Contracts.SiteExtensions
 {
@@ -48,18 +48,18 @@ namespace Kudu.Contracts.SiteExtensions
             //}
         }
 
-        public SiteExtensionInfo(JObject json)
+        public SiteExtensionInfo(JsonNode json)
         {
-            Id = json.Value<string>("id");
-            Version = json.Value<string>("version");
-            Title = json.Value<string>("title");
-            Description = json.Value<string>("description");
-            Authors = json.Value<string>("authors")?.Split(',').Select(n => n.Trim());
-            ProjectUrl = json.Value<string>("projectUrl");
-            LicenseUrl = json.Value<string>("licenseUrl");
-            Summary = json.Value<string>("description");
-            IconUrl = json.Value<string>("iconUrl") ?? "https://www.nuget.org/Content/Images/packageDefaultIcon-50x50.png";
-            PackageUri = json.Value<string>("packageUri");
+            Id = (string)json["id"];
+            Version = (string)json["version"];
+            Title = (string)json["title"];
+            Description = (string)json["description"];
+            Authors = ((string)json["authors"])?.Split(',').Select(n => n.Trim());
+            ProjectUrl = (string)json["projectUrl"];
+            LicenseUrl = (string)json["licenseUrl"];
+            Summary = (string)json["description"];
+            IconUrl = (string)json["iconUrl"] ?? "https://www.nuget.org/Content/Images/packageDefaultIcon-50x50.png";
+            PackageUri = (string)json["packageUri"];
         }
 
         public SiteExtensionInfo(SiteExtensionInfo info)
@@ -102,99 +102,99 @@ namespace Kudu.Contracts.SiteExtensions
             DownloadCount = data.DownloadCount;
         }
 
-        [JsonProperty(PropertyName = "id")]
+        [JsonPropertyName("id")]
         public string Id
         {
             get;
             set;
         }
 
-        [JsonProperty(PropertyName = "title")]
+        [JsonPropertyName("title")]
         public string Title
         {
             get;
             set;
         }
 
-        [JsonProperty(PropertyName = "type")]
-        [JsonConverter(typeof(StringEnumConverter))]
+        [JsonPropertyName("type")]
+        [JsonConverter(typeof(JsonStringEnumConverter))]
         public SiteExtensionType Type
         {
             get;
             set;
         }
 
-        [JsonProperty(PropertyName = "summary")]
+        [JsonPropertyName("summary")]
         public string Summary
         {
             get;
             set;
         }
 
-        [JsonProperty(PropertyName = "description")]
+        [JsonPropertyName("description")]
         public string Description
         {
             get;
             set;
         }
 
-        [JsonProperty(PropertyName = "version")]
+        [JsonPropertyName("version")]
         public string Version
         {
             get;
             set;
         }
 
-        [JsonProperty(PropertyName = "extension_url")]
+        [JsonPropertyName("extension_url")]
         public string ExtensionUrl
         {
             get;
             set;
         }
 
-        [JsonProperty(PropertyName = "project_url")]
+        [JsonPropertyName("project_url")]
         public string ProjectUrl
         {
             get;
             set;
         }
 
-        [JsonProperty(PropertyName = "icon_url")]
+        [JsonPropertyName("icon_url")]
         public string IconUrl
         {
             get;
             set;
         }
 
-        [JsonProperty(PropertyName = "license_url")]
+        [JsonPropertyName("license_url")]
         public string LicenseUrl
         {
             get;
             set;
         }
 
-        [JsonProperty(PropertyName = "feed_url")]
+        [JsonPropertyName("feed_url")]
         public string FeedUrl
         {
             get;
             set;
         }
 
-        [JsonProperty(PropertyName = "authors")]
+        [JsonPropertyName("authors")]
         public IEnumerable<string> Authors
         {
             get;
             set;
         }
 
-        [JsonProperty(PropertyName = "installer_command_line_params")]
+        [JsonPropertyName("installer_command_line_params")]
         public string InstallationArgs
         {
             get;
             set;
         }
 
-        [JsonProperty(PropertyName = "published_date_time")]
+        [JsonPropertyName("published_date_time")]
         public DateTimeOffset? PublishedDateTime
         {
             get;
@@ -208,28 +208,28 @@ namespace Kudu.Contracts.SiteExtensions
             set;
         }
 
-        [JsonProperty(PropertyName = "download_count")]
+        [JsonPropertyName("download_count")]
         public int DownloadCount
         {
             get;
             set;
         }
 
-        [JsonProperty(PropertyName = "local_is_latest_version")]
+        [JsonPropertyName("local_is_latest_version")]
         public bool? LocalIsLatestVersion
         {
             get;
             set;
         }
 
-        [JsonProperty(PropertyName = "local_path")]
+        [JsonPropertyName("local_path")]
         public string LocalPath
         {
             get;
             set;
         }
 
-        [JsonProperty(PropertyName = "installed_date_time")]
+        [JsonPropertyName("installed_date_time")]
         public DateTimeOffset? InstalledDateTime
         {
             get;
@@ -241,14 +241,14 @@ namespace Kudu.Contracts.SiteExtensions
         [SuppressMessage("Microsoft.Design", "CA1033:InterfaceMethodsShouldBeCallableByChildTypes", Justification = "to provide ARM specific name")]
         string INamedObject.Name { get { return Id; } }
 
-        [JsonProperty(PropertyName = "provisioningState")]
+        [JsonPropertyName("provisioningState")]
         public string ProvisioningState
         {
             get;
             set;
         }
 
-        [JsonProperty(PropertyName = "comment")]
+        [JsonPropertyName("comment")]
         public string Comment
         {
             get;
@@ -258,7 +258,7 @@ namespace Kudu.Contracts.SiteExtensions
         /// <summary>
         /// explicit url to download nupkg such as https://globalcdn.nuget.org/packages/microsoft.applicationinsights.azurewebsites.2.6.5.nupkg
         /// </summary>
-        [JsonProperty(PropertyName = "packageUri")]
+        [JsonPropertyName("packageUri")]
         public string PackageUri
         {
             get;

@@ -4,30 +4,40 @@ using System.IO;
 using System.IO.Abstractions;
 using System.IO.Compression;
 using System.Linq;
-using System.Web;
+#if NETFRAMEWORK
 using System.Web.Hosting;
+#endif
 using Kudu.Contracts.Jobs;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Tracing;
 using Newtonsoft.Json;
+using Microsoft.AspNetCore.Http.Extensions;
+using Kudu.Contracts;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Kudu.Core.Jobs
 {
     public abstract class JobsManagerBase
     {
-        protected static readonly IScriptHost[] ScriptHosts = new IScriptHost[]
+        protected static readonly List<IScriptHost> ScriptHosts = new List<IScriptHost>()
         {
             new WindowsScriptHost(),
             new PowerShellScriptHost(),
-            new BashScriptHost(),
-            new PythonScriptHost(),
-            new PhpScriptHost(),
-            new NodeScriptHost(),
-            new DnxScriptHost(),
-            new FSharpScriptHost()
         };
+
+        public JobsManagerBase()
+        {
+            // Attempt to create job handlers depending on what features are available to the server/container
+            try { ScriptHosts.Add(new BashScriptHost()); } catch { }
+            try { ScriptHosts.Add(new PythonScriptHost()); } catch { }
+            try { ScriptHosts.Add(new PhpScriptHost()); } catch { }
+            try { ScriptHosts.Add(new NodeScriptHost()); } catch { }
+            try { ScriptHosts.Add(new DnxScriptHost()); } catch { }
+            try { ScriptHosts.Add(new FSharpScriptHost()); } catch { }
+        }
 
         public static bool IsUsingSdk(string specificJobDataPath)
         {
@@ -44,10 +54,10 @@ namespace Kudu.Core.Jobs
 
         public static void CleanupDeletedJobs(IEnumerable<string> existingJobs, string jobsDataPath, ITracer tracer)
         {
-            DirectoryInfoBase jobsDataDirectory = FileSystemHelpers.DirectoryInfoFromDirectoryName(jobsDataPath);
+            IDirectoryInfo jobsDataDirectory = FileSystemHelpers.DirectoryInfoFromDirectoryName(jobsDataPath);
             if (jobsDataDirectory.Exists)
             {
-                DirectoryInfoBase[] jobDataDirectories = jobsDataDirectory.GetDirectories("*", SearchOption.TopDirectoryOnly);
+                IDirectoryInfo[] jobDataDirectories = jobsDataDirectory.GetDirectories("*", SearchOption.TopDirectoryOnly);
                 IEnumerable<string> allJobDataDirectories = jobDataDirectories.Select(j => j.Name);
                 IEnumerable<string> directoriesToRemove = allJobDataDirectories.Except(existingJobs, StringComparer.OrdinalIgnoreCase);
                 foreach (string directoryToRemove in directoriesToRemove)
@@ -62,7 +72,11 @@ namespace Kudu.Core.Jobs
         }
     }
 
-    public abstract class JobsManagerBase<TJob> : JobsManagerBase, IJobsManager<TJob>, IDisposable, IRegisteredObject where TJob : JobBase, new()
+    public abstract class JobsManagerBase<TJob> : JobsManagerBase, IJobsManager<TJob>, IDisposable
+#if NETFRAMEWORK
+        , IRegisteredObject 
+#endif
+        where TJob : JobBase, new()
     {
         private const string DefaultScriptFileName = "run";
 
@@ -108,7 +122,10 @@ namespace Kudu.Core.Jobs
             JobsBinariesPath = Path.Combine(basePath, jobsTypePath);
             JobsDataPath = Path.Combine(Environment.JobsDataPath, jobsTypePath);
             JobsWatcher = new JobsFileWatcher(JobsBinariesPath, OnJobChanged, null, ListJobNames, traceFactory, analytics, GetJobType());
+
+#if NETFRAMEWORK
             HostingEnvironment.RegisterObject(this);
+#endif
         }
 
         protected virtual IEnumerable<string> ListJobNames(bool forceRefreshCache)
@@ -208,9 +225,9 @@ namespace Kudu.Core.Jobs
                 });
         }
 
-        private TJob CreateOrReplaceJob(string jobName, Action<DirectoryInfoBase> writeJob)
+        private TJob CreateOrReplaceJob(string jobName, Action<IDirectoryInfo> writeJob)
         {
-            DirectoryInfoBase jobDirectory = GetJobDirectory(jobName);
+            IDirectoryInfo jobDirectory = GetJobDirectory(jobName);
             if (jobDirectory.Exists)
             {
                 // If job binaries already exist, remove them to make place for new job binaries
@@ -267,7 +284,7 @@ namespace Kudu.Core.Jobs
 
         protected TJob GetJobInternal(string jobName)
         {
-            DirectoryInfoBase jobDirectory = GetJobDirectory(jobName);
+            IDirectoryInfo jobDirectory = GetJobDirectory(jobName);
             return BuildJob(jobDirectory);
         }
 
@@ -275,7 +292,7 @@ namespace Kudu.Core.Jobs
         {
             var jobs = new List<TJob>();
 
-            IEnumerable<DirectoryInfoBase> jobDirectories = ListJobDirectories(JobsBinariesPath)
+            IEnumerable<IDirectoryInfo> jobDirectories = ListJobDirectories(JobsBinariesPath)
                 .Where(d => !_excludedJobsNames.Any(e => d.Name.Equals(e, StringComparison.OrdinalIgnoreCase)));
             foreach (DirectoryInfoBase jobDirectory in jobDirectories)
             {
@@ -289,7 +306,7 @@ namespace Kudu.Core.Jobs
             return jobs;
         }
 
-        protected TJob BuildJob(DirectoryInfoBase jobDirectory, bool nullJobOnError = true)
+        protected TJob BuildJob(IDirectoryInfo jobDirectory, bool nullJobOnError = true)
         {
             try
             {
@@ -298,10 +315,10 @@ namespace Kudu.Core.Jobs
                     return null;
                 }
 
-                DirectoryInfoBase jobScriptDirectory = GetJobScriptDirectory(jobDirectory);
+                IDirectoryInfo jobScriptDirectory = GetJobScriptDirectory(jobDirectory);
 
                 string jobName = jobDirectory.Name;
-                FileInfoBase[] files = jobScriptDirectory.GetFiles("*.*", SearchOption.TopDirectoryOnly);
+                IFileInfo[] files = jobScriptDirectory.GetFiles("*.*", SearchOption.TopDirectoryOnly);
                 IScriptHost scriptHost;
                 string scriptFilePath = FindCommandToRun(files, out scriptHost);
 
@@ -377,8 +394,8 @@ namespace Kudu.Core.Jobs
             CleanupExternalJobs(sourceName);
 
             // Move jobs from source path
-            IEnumerable<DirectoryInfoBase> sourceJobDirectories = ListJobDirectories(sourcePath);
-            foreach (DirectoryInfoBase sourceJobDirectory in sourceJobDirectories)
+            IEnumerable<IDirectoryInfo> sourceJobDirectories = ListJobDirectories(sourcePath);
+            foreach (IDirectoryInfo sourceJobDirectory in sourceJobDirectories)
             {
                 // Check whether job was already copied by checking existence of file job.copied
                 string jobPath = sourceJobDirectory.FullName;
@@ -390,8 +407,8 @@ namespace Kudu.Core.Jobs
         {
             // Find all jobs for the source name provided
             // Job name will look like: {source name}({job name}) for example: "daas(sitepinger)"
-            IEnumerable<DirectoryInfoBase> jobDirectories = ListJobDirectories(JobsBinariesPath, sourceName + "(*)");
-            foreach (DirectoryInfoBase jobDirectory in jobDirectories)
+            IEnumerable<IDirectoryInfo> jobDirectories = ListJobDirectories(JobsBinariesPath, sourceName + "(*)");
+            foreach (IDirectoryInfo jobDirectory in jobDirectories)
             {
                 DeleteJob(jobDirectory.Name);
             }
@@ -440,7 +457,13 @@ namespace Kudu.Core.Jobs
             var jobDirectory = GetJobBinariesDirectory(jobName);
 
             var jobSettingsPath = GetJobSettingsPath(jobDirectory);
+            // Serialization depending on Newtonsoft.Json or System.Text.Json
+            // This is necessary because of the System.Text.Json usage of the 'ValueKind' object
+#if NET6_0_OR_GREATER
+            string jobSettingsContent = System.Text.Json.JsonSerializer.Serialize(jobSettings);
+#else
             string jobSettingsContent = JsonConvert.SerializeObject(jobSettings);
+#endif
             FileSystemHelpers.WriteAllTextToFile(jobSettingsPath, jobSettingsContent);
         }
 
@@ -453,14 +476,17 @@ namespace Kudu.Core.Jobs
 
             IsShuttingdown = true;
             OnShutdown();
+
+#if NETFRAMEWORK
             HostingEnvironment.UnregisterObject(this);
+#endif
         }
 
         protected abstract void OnShutdown();
 
         protected bool IsShuttingdown { get; private set; }
 
-        private static string GetJobSettingsPath(DirectoryInfoBase jobDirectory)
+        private static string GetJobSettingsPath(IDirectoryInfo jobDirectory)
         {
             return Path.Combine(jobDirectory.FullName, JobSettings.JobSettingsFileName);
         }
@@ -506,7 +532,7 @@ namespace Kudu.Core.Jobs
         {
             get
             {
-                if (HttpContext.Current == null)
+                if (HttpContextHelper.Current == null)
                 {
                     if (string.IsNullOrEmpty(_lastKnownAppBaseUrlPrefix))
                     {
@@ -520,31 +546,35 @@ namespace Kudu.Core.Jobs
                     return _lastKnownAppBaseUrlPrefix;
                 }
 
-                _lastKnownAppBaseUrlPrefix = HttpContext.Current.Request.Url.GetLeftPart(UriPartial.Authority);
+#if NETFRAMEWORK
+                _lastKnownAppBaseUrlPrefix = HttpContextHelper.Current.Request.Url.GetLeftPart(UriPartial.Authority);
+#else
+                _lastKnownAppBaseUrlPrefix = new Uri(HttpContextHelper.Current.Request.GetEncodedUrl()).GetLeftPart(UriPartial.Authority);
+#endif
                 return _lastKnownAppBaseUrlPrefix;
             }
         }
 
-        private static IEnumerable<DirectoryInfoBase> ListJobDirectories(string path, string searchPattern = "*")
+        private static IEnumerable<IDirectoryInfo> ListJobDirectories(string path, string searchPattern = "*")
         {
             if (!FileSystemHelpers.DirectoryExists(path))
             {
-                return Enumerable.Empty<DirectoryInfoBase>();
+                return Enumerable.Empty<IDirectoryInfo>();
             }
 
-            DirectoryInfoBase jobsDirectory = FileSystemHelpers.DirectoryInfoFromDirectoryName(path);
+            IDirectoryInfo jobsDirectory = FileSystemHelpers.DirectoryInfoFromDirectoryName(path);
             return jobsDirectory.GetDirectories(searchPattern, SearchOption.TopDirectoryOnly);
         }
 
-        private DirectoryInfoBase GetJobDirectory(string jobName)
+        private IDirectoryInfo GetJobDirectory(string jobName)
         {
             string jobPath = Path.Combine(JobsBinariesPath, jobName);
             return FileSystemHelpers.DirectoryInfoFromDirectoryName(jobPath);
         }
 
-        private DirectoryInfoBase GetJobBinariesDirectory(string jobName)
+        private IDirectoryInfo GetJobBinariesDirectory(string jobName)
         {
-            DirectoryInfoBase jobDirectory = GetJobDirectory(jobName);
+            IDirectoryInfo jobDirectory = GetJobDirectory(jobName);
             if (!jobDirectory.Exists)
             {
                 throw new JobNotFoundException($"Cannot find '{jobDirectory.FullName}' directory for '{jobName}' triggered job");
@@ -553,7 +583,7 @@ namespace Kudu.Core.Jobs
             return GetJobScriptDirectory(jobDirectory);
         }
 
-        private DirectoryInfoBase GetJobScriptDirectory(DirectoryInfoBase jobDirectory)
+        private IDirectoryInfo GetJobScriptDirectory(IDirectoryInfo jobDirectory)
         {
             // Return the directory where the script should be found using the following logic:
             // If current directory (jobDirectory) has only one sub-directory and no files recurse this using that sub-directory
@@ -561,16 +591,16 @@ namespace Kudu.Core.Jobs
             if (jobDirectory != null && jobDirectory.Exists)
             {
                 var jobFiles = jobDirectory.GetFileSystemInfos();
-                if (jobFiles.Length == 1 && jobFiles[0] is DirectoryInfoBase)
+                if (jobFiles.Length == 1 && jobFiles[0] is IDirectoryInfo)
                 {
-                    return GetJobScriptDirectory(jobFiles[0] as DirectoryInfoBase);
+                    return GetJobScriptDirectory(jobFiles[0] as IDirectoryInfo);
                 }
             }
 
             return jobDirectory;
         }
 
-        private static string FindCommandToRun(FileInfoBase[] files, out IScriptHost scriptHostFound)
+        private static string FindCommandToRun(IFileInfo[] files, out IScriptHost scriptHostFound)
         {
             string secondaryScriptFound = null;
 

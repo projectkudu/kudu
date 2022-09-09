@@ -334,11 +334,11 @@ namespace Kudu.Core.Deployment
             DeploymentInfoBase deployInfo,
             IEnvironment environment,
             IDeploymentSettingsManager settings,
-            TraceLevel traceLevel,
+            System.Diagnostics.TraceLevel traceLevel,
             Uri uri,
             bool waitForTempDeploymentCreation)
         {
-            var tracer = traceLevel <= TraceLevel.Off ? NullTracer.Instance : new CascadeTracer(new XmlTracer(environment.TracePath, traceLevel), new ETWTracer(environment.RequestId, "POST"));
+            var tracer = traceLevel <= System.Diagnostics.TraceLevel.Off ? NullTracer.Instance : new CascadeTracer(new XmlTracer(environment.TracePath, traceLevel), new ETWTracer(environment.RequestId, "POST"));
             var traceFactory = new TracerFactory(() => tracer);
 
             var backgroundTrace = tracer.Step(XmlTracer.BackgroundTrace, new Dictionary<string, string>

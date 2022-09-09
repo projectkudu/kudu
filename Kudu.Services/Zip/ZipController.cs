@@ -28,7 +28,7 @@ namespace Kudu.Services.Zip
         {
         }
 
-        protected override Task<HttpResponseMessage> CreateDirectoryGetResponse(DirectoryInfoBase info, string localFilePath)
+        protected override Task<HttpResponseMessage> CreateDirectoryGetResponse(IDirectoryInfo info, string localFilePath)
         {
             HttpResponseMessage response = Request.CreateResponse();
             // GetQueryNameValuePairs returns an IEnumerable<KeyValuePair<string, string>>
@@ -54,7 +54,7 @@ namespace Kudu.Services.Zip
             return Task.FromResult(response);
         }
 
-        protected override Task<HttpResponseMessage> CreateItemGetResponse(FileSystemInfoBase info, string localFilePath)
+        protected override Task<HttpResponseMessage> CreateItemGetResponse(IFileSystemInfo info, string localFilePath)
         {
             // We don't support getting a file from the zip controller
             // Conceivably, it could be a zip file containing just the one file, but that's rarely interesting
@@ -62,7 +62,7 @@ namespace Kudu.Services.Zip
             return Task.FromResult(notFoundResponse);
         }
 
-        protected override async Task<HttpResponseMessage> CreateDirectoryPutResponse(DirectoryInfoBase info, string localFilePath)
+        protected override async Task<HttpResponseMessage> CreateDirectoryPutResponse(IDirectoryInfo info, string localFilePath)
         {
             try
             {
@@ -124,7 +124,7 @@ namespace Kudu.Services.Zip
             }
         }
 
-        protected override Task<HttpResponseMessage> CreateItemPutResponse(FileSystemInfoBase info, string localFilePath, bool itemExists)
+        protected override Task<HttpResponseMessage> CreateItemPutResponse(IFileSystemInfo info, string localFilePath, bool itemExists)
         {
             // We don't support putting an individual file using the zip controller
             HttpResponseMessage notFoundResponse = Request.CreateResponse(HttpStatusCode.NotFound);

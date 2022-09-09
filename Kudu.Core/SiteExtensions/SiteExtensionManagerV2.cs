@@ -6,8 +6,12 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
-using System.Web;
 using System.Xml;
+using Kudu.Contracts;
+#if NETFRAMEWORK
+using System.Web;
+using System.Web.Hosting;
+#endif
 using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Jobs;
 using Kudu.Contracts.Settings;
@@ -18,6 +22,10 @@ using Kudu.Core.Helpers;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Settings;
 using Kudu.Core.Tracing;
+#if NET6_0_OR_GREATER
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Extensions;
+#endif
 using Newtonsoft.Json.Linq;
 using NuGet.Client.VisualStudio;
 using NullLogger = Kudu.Core.Deployment.NullLogger;
@@ -49,10 +57,14 @@ namespace Kudu.Core.SiteExtensions
         private const string _installScriptName = "install.cmd";
         private const string _uninstallScriptName = "uninstall.cmd";
 
-        public SiteExtensionManagerV2(IContinuousJobsManager continuousJobManager, ITriggeredJobsManager triggeredJobManager, IEnvironment environment, IDeploymentSettingsManager settings, ITraceFactory traceFactory, HttpContextBase context, IAnalytics analytics)
+        public SiteExtensionManagerV2(IContinuousJobsManager continuousJobManager, ITriggeredJobsManager triggeredJobManager, IEnvironment environment, IDeploymentSettingsManager settings, ITraceFactory traceFactory, HttpContext context, IAnalytics analytics)
         {
             _rootPath = Path.Combine(environment.RootPath, "SiteExtensions");
+#if NETFRAMEWORK
             _baseUrl = context.Request.Url == null ? String.Empty : context.Request.Url.GetLeftPart(UriPartial.Authority).TrimEnd('/');
+#elif NET6_OR_GREATER
+            _baseUrl = context.Request.GetEncodedUrl() == null ? String.Empty : new Uri(context.Request.GetEncodedUrl()).GetLeftPart(UriPartial.Authority).TrimEnd('/');
+#endif
             _continuousJobManager = continuousJobManager;
             _triggeredJobManager = triggeredJobManager;
             _environment = environment;
@@ -684,6 +696,7 @@ namespace Kudu.Core.SiteExtensions
 
         private static string CreateDefaultScmXdtFile(string relativeUrl, string physicalPath)
         {
+#if NETFRAMEWORK
             string template = null;
             // the template has "%XDT_SCMSITENAME%" by default
             Stream stream = typeof(SiteExtensionManager).Assembly.GetManifestResourceStream("Kudu.Core.SiteExtensions." + Constants.ScmApplicationHostXdtFileName + ".xml");
@@ -693,6 +706,10 @@ namespace Kudu.Core.SiteExtensions
             }
 
             return String.Format(template, relativeUrl, physicalPath);
+#else
+            // TODO: Implement this if Kudu.Core site extension functionality needed inside container
+            throw new NotImplementedException();
+#endif
         }
 
         private async Task SetLocalInfo(SiteExtensionInfo info)
@@ -795,7 +812,7 @@ namespace Kudu.Core.SiteExtensions
         private static bool ExtensionRequiresApplicationHost(SiteExtensionInfo info)
         {
             string appSettingName = info.Id.ToUpper(CultureInfo.CurrentCulture) + "_EXTENSION_VERSION";
-            return ConfigurationManager.AppSettings[appSettingName] != "beta";
+            return System.Configuration.ConfigurationManager.AppSettings[appSettingName] != "beta";
         }
 
         private string GetFullUrl(string url)
@@ -857,6 +874,7 @@ namespace Kudu.Core.SiteExtensions
             {
                 using (tracer.Step("Fallback to FeedExtensionsV1 search package by id: {0} and version: {1}.", id, version))
                 {
+#if NETFRAMEWORK
                     UIPackageMetadata data;
                     var remoteRepo = SiteExtensionManager.GetSourceRepository(DeploymentSettingsExtension.NuGetSiteExtensionFeedUrl);
                     if (string.IsNullOrEmpty(version))
@@ -872,7 +890,11 @@ namespace Kudu.Core.SiteExtensions
                     {
                         info = new SiteExtensionInfo(data);
                     }
-                }
+#else
+                    // TODO: Implement this if Kudu.Core site extension functionality needed inside container
+                    throw new NotImplementedException();
+#endif
+                }  
             }
 
             if (info == null)

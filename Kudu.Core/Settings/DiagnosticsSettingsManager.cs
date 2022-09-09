@@ -5,7 +5,8 @@ using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Tracing;
-using Newtonsoft.Json;
+using System.Text.Json;
+using System.Diagnostics;
 
 namespace Kudu.Core.Settings
 {
@@ -70,7 +71,7 @@ namespace Kudu.Core.Settings
                     string fileContent = null;
                     OperationManager.Attempt(() => fileContent = FileSystemHelpers.ReadAllTextFromFile(_path));
 
-                    var settings = JsonConvert.DeserializeObject<DiagnosticsSettings>(fileContent);
+                    var settings = JsonSerializer.Deserialize<DiagnosticsSettings>(fileContent);
                     if (settings == null)
                     {
                         throw new InvalidOperationException($"File '{_path}' content is empty or contains only white spaces.");
@@ -96,8 +97,8 @@ namespace Kudu.Core.Settings
             {
                 FileSystemHelpers.EnsureDirectory(Path.GetDirectoryName(_path));
             }
-
-            string fileContent = JsonConvert.SerializeObject(diagnosticsSettings);
+            
+            string fileContent = JsonSerializer.Serialize(diagnosticsSettings);
             FileSystemHelpers.WriteAllTextToFile(_path, fileContent);
         }
     }

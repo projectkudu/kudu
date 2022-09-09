@@ -39,7 +39,11 @@ namespace Kudu.Core {
         internal static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
+#if NET6_0_OR_GREATER
+                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("Kudu.ContainerServices.Core.Resources", typeof(Resources).Assembly);
+#else
                     global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("Kudu.Core.Resources", typeof(Resources).Assembly);
+#endif
                     resourceMan = temp;
                 }
                 return resourceMan;

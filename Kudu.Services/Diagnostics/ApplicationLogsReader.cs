@@ -87,7 +87,7 @@ namespace Kudu.Services.Diagnostics
 
         internal class LogFileFinder
         {            
-            private readonly DirectoryInfoBase _directory;
+            private readonly IDirectoryInfo _directory;
             private readonly LogFileAccessStats _stats;
             private readonly ITracer _tracer;
 
@@ -104,11 +104,11 @@ namespace Kudu.Services.Diagnostics
                 _directory = FileSystemHelpers.DirectoryInfoFromDirectoryName(env.ApplicationLogFilesPath);
             }
 
-            public IEnumerable<FileInfoBase> FindLogFiles()
+            public IEnumerable<IFileInfo> FindLogFiles()
             {
                 if (!_directory.Exists)
                 {
-                    return new List<FileInfoBase>();
+                    return new List<IFileInfo>();
                 }
 
                 var files = _directory.GetFiles(LogFilenamePattern, SearchOption.TopDirectoryOnly)
@@ -155,7 +155,7 @@ namespace Kudu.Services.Diagnostics
                 return Regex.Match(line, LogEntryRegexPattern, RegexOptions.IgnoreCase).Success;
             }
 
-            private string ReadFirstLine(FileInfoBase fileInfo)
+            private string ReadFirstLine(IFileInfo fileInfo)
             {          
                 Stream stream = null;
                 StreamReader reader = null;
@@ -208,7 +208,7 @@ namespace Kudu.Services.Diagnostics
 
             public DateTimeOffset LastTime { get; private set; }            
 
-            public ResumableLogFileReader(FileInfoBase fileInfo, ITracer tracer, LogFileAccessStats stats = null)
+            public ResumableLogFileReader(IFileInfo fileInfo, ITracer tracer, LogFileAccessStats stats = null)
             {              
                 _stats = stats;
                 _tracer = tracer;                
@@ -276,7 +276,7 @@ namespace Kudu.Services.Diagnostics
                 }
             }
 
-            private IEnumerable<string> CreateReverseLineReader(FileInfoBase fileInfo)
+            private IEnumerable<string> CreateReverseLineReader(IFileInfo fileInfo)
             {
                 return new MiscUtil.IO.ReverseLineReader(() =>
                 {

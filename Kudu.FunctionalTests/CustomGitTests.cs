@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Threading.Tasks;
-using Kudu.Core;
+using Kudu.Core.Commands;
 using Kudu.TestHarness;
 using Kudu.TestHarness.Xunit;
 using Xunit;

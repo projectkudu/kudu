@@ -39,7 +39,7 @@ namespace Kudu.Core.Jobs
             currentETag = null;
             var triggeredJobRuns = new List<TriggeredJobRun>();
 
-            DirectoryInfoBase[] jobRunsDirectories = GetJobRunsDirectories(jobName);
+            IDirectoryInfo[] jobRunsDirectories = GetJobRunsDirectories(jobName);
             if (jobRunsDirectories == null)
             {
                 return null;
@@ -48,7 +48,7 @@ namespace Kudu.Core.Jobs
             bool isLatest = true;
 
             // Order runs by name (date) descending
-            foreach (DirectoryInfoBase jobRunDirectory in jobRunsDirectories.OrderByDescending(j => j.Name))
+            foreach (IDirectoryInfo jobRunDirectory in jobRunsDirectories.OrderByDescending(j => j.Name))
             {
                 TriggeredJobRun triggeredJobRun = BuildJobRun(jobRunDirectory, jobName, isLatest);
                 if (triggeredJobRun != null)
@@ -90,7 +90,7 @@ namespace Kudu.Core.Jobs
         public TriggeredJobRun GetJobRun(string jobName, string runId)
         {
             string triggeredJobRunPath = Path.Combine(JobsDataPath, jobName, runId);
-            DirectoryInfoBase triggeredJobRunDirectory = FileSystemHelpers.DirectoryInfoFromDirectoryName(triggeredJobRunPath);
+            IDirectoryInfo triggeredJobRunDirectory = FileSystemHelpers.DirectoryInfoFromDirectoryName(triggeredJobRunPath);
 
             return BuildJobRun(triggeredJobRunDirectory, jobName, isLatest: true);
         }
@@ -136,21 +136,21 @@ namespace Kudu.Core.Jobs
 
         public TriggeredJobRun GetLatestJobRun(string jobName)
         {
-            DirectoryInfoBase[] jobRunsDirectories = GetJobRunsDirectories(jobName);
+            IDirectoryInfo[] jobRunsDirectories = GetJobRunsDirectories(jobName);
             if (jobRunsDirectories == null || jobRunsDirectories.Length == 0)
             {
                 return null;
             }
 
-            DirectoryInfoBase latestJobRunDirectory = jobRunsDirectories.OrderByDescending(j => j.Name).First();
+            IDirectoryInfo latestJobRunDirectory = jobRunsDirectories.OrderByDescending(j => j.Name).First();
 
             return BuildJobRun(latestJobRunDirectory, jobName, isLatest: true);
         }
 
-        private DirectoryInfoBase[] GetJobRunsDirectories(string jobName)
+        private IDirectoryInfo[] GetJobRunsDirectories(string jobName)
         {
             string jobHistoryPath = Path.Combine(JobsDataPath, jobName);
-            DirectoryInfoBase jobHistoryDirectory = FileSystemHelpers.DirectoryInfoFromDirectoryName(jobHistoryPath);
+            IDirectoryInfo jobHistoryDirectory = FileSystemHelpers.DirectoryInfoFromDirectoryName(jobHistoryPath);
             if (!jobHistoryDirectory.Exists)
             {
                 return null;
@@ -167,7 +167,7 @@ namespace Kudu.Core.Jobs
             }
         }
 
-        private TriggeredJobRun BuildJobRun(DirectoryInfoBase jobRunDirectory, string jobName, bool isLatest)
+        private TriggeredJobRun BuildJobRun(IDirectoryInfo jobRunDirectory, string jobName, bool isLatest)
         {
             if (!jobRunDirectory.Exists)
             {

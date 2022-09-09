@@ -188,7 +188,7 @@ namespace Kudu.Core.Tracing
 
             private static object _lock = new object();
             private static bool _init = false;
-            private static Timer _timer;
+            private static System.Timers.Timer _timer;
             private static Dictionary<string, DateTime> _files = new Dictionary<string, DateTime>();
 
             public static void Initialize(string path)
@@ -236,7 +236,7 @@ namespace Kudu.Core.Tracing
                 {
                     if (_timer == null)
                     {
-                        _timer = new Timer(TimerInterval);
+                        _timer = new System.Timers.Timer(TimerInterval);
                         _timer.Elapsed += OnTimedEvent;
                     }
 

@@ -62,7 +62,7 @@ namespace Kudu.Core.Infrastructure
                         }
 
                         // DWAS checks if write time of this file is in the future then only postpones the recycle
-                        FileInfoBase sentinelFileInfo = FileSystemHelpers.FileInfoFromFileName(sentinelPath);
+                        IFileInfo sentinelFileInfo = FileSystemHelpers.FileInfoFromFileName(sentinelPath);
                         sentinelFileInfo.LastWriteTimeUtc = DateTime.UtcNow.AddMinutes(20);
                     }
                 });

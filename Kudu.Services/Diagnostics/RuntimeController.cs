@@ -77,7 +77,7 @@ namespace Kudu.Services.Diagnostics
             return Enumerable.Empty<Dictionary<string, string>>();
         }
 
-        private static string TryReadNpmVersion(DirectoryInfoBase nodeDir)
+        private static string TryReadNpmVersion(IDirectoryInfo nodeDir)
         {
             var npmRedirectionFile = nodeDir.GetFiles("npm.txt").FirstOrDefault();
             if (npmRedirectionFile == null)

@@ -1,4 +1,6 @@
-﻿using System;
+﻿#if NETFRAMEWORK
+
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -12,7 +14,11 @@ using Kudu.Core.Infrastructure;
 using Kudu.Core.Tracing;
 using NuGet.Client;
 using NuGet.Client.VisualStudio;
+#if NETFRAMEWORK
 using NuGet.PackagingCore;
+#else
+using NuGet.Packaging.Core;
+#endif
 using NuGet.Versioning;
 
 namespace Kudu.Core.SiteExtensions
@@ -415,3 +421,5 @@ namespace Kudu.Core.SiteExtensions
         }
     }
 }
+
+#endif

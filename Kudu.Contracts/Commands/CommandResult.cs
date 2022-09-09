@@ -1,4 +1,4 @@
-﻿namespace Kudu.Core
+﻿namespace Kudu.Core.Commands
 {
     public class CommandResult
     {

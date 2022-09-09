@@ -9,7 +9,8 @@ namespace Kudu.Core.Helpers
 {
     public static class PermissionHelper
     {
-        public static void Chmod(string permission, string filePath, IEnvironment environment, IDeploymentSettingsManager deploymentSettingManager, ILogger logger)
+
+        public static void Chmod(string permission, string filePath, IEnvironment environment, IDeploymentSettingsManager deploymentSettingManager, Deployment.ILogger logger)
         {
             var folder = Path.GetDirectoryName(filePath);
             var exeFactory = new ExternalCommandFactory(environment, deploymentSettingManager, null);

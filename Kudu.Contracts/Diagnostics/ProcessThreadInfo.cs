@@ -1,7 +1,7 @@
-﻿﻿using System;
+﻿using System;
 using System.Diagnostics.CodeAnalysis;
+using System.Text.Json.Serialization;
 using Kudu.Contracts.Infrastructure;
-using Newtonsoft.Json;
 
 namespace Kudu.Core.Diagnostics
 {
@@ -11,43 +11,43 @@ namespace Kudu.Core.Diagnostics
         [SuppressMessage("Microsoft.Design", "CA1033:InterfaceMethodsShouldBeCallableByChildTypes", Justification = "to provide ARM specific name")]
         string INamedObject.Name { get { return Id.ToString(); } }
 
-        [JsonProperty(PropertyName = "id")]
+        [JsonPropertyName("id")]
         public int Id { get; set; }
 
-        [JsonProperty(PropertyName = "href", DefaultValueHandling = DefaultValueHandling.Ignore)]
+        [JsonPropertyName("href"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public Uri Href { get; set; }
 
-        [JsonProperty(PropertyName = "process", DefaultValueHandling = DefaultValueHandling.Ignore)]
+        [JsonPropertyName("process"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public Uri Process { get; set; }
 
-        [JsonProperty(PropertyName = "start_address", DefaultValueHandling = DefaultValueHandling.Ignore)]
+        [JsonPropertyName("start_address"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public string StartAddress { get; set; }
 
-        [JsonProperty(PropertyName = "current_priority", DefaultValueHandling = DefaultValueHandling.Ignore)]
+        [JsonPropertyName("current_priority"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public int CurrentPriority { get; set; }
 
-        [JsonProperty(PropertyName = "priority_level", DefaultValueHandling = DefaultValueHandling.Ignore)]
+        [JsonPropertyName("priority_level"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public string PriorityLevel { get; set; }
 
-        [JsonProperty(PropertyName = "base_priority", DefaultValueHandling = DefaultValueHandling.Ignore)]
+        [JsonPropertyName("base_priority"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public int BasePriority { get; set; }
 
-        [JsonProperty(PropertyName = "start_time", DefaultValueHandling = DefaultValueHandling.Ignore)]
+        [JsonPropertyName("start_time"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public DateTime StartTime { get; set; }
 
-        [JsonProperty(PropertyName = "total_processor_time", DefaultValueHandling = DefaultValueHandling.Ignore)]
+        [JsonPropertyName("total_processor_time"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public TimeSpan TotalProcessorTime { get; set; }
 
-        [JsonProperty(PropertyName = "user_processor_time", DefaultValueHandling = DefaultValueHandling.Ignore)]
+        [JsonPropertyName("user_processor_time"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public TimeSpan UserProcessorTime { get; set; }
 
-        [JsonProperty(PropertyName = "priviledged_processor_time", DefaultValueHandling = DefaultValueHandling.Ignore)]
+        [JsonPropertyName("priviledged_processor_time"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public TimeSpan PriviledgedProcessorTime { get; set; }
 
-        [JsonProperty(PropertyName = "state", DefaultValueHandling = DefaultValueHandling.Ignore)]
+        [JsonPropertyName("state"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public string State { get; set; }
 
-        [JsonProperty(PropertyName = "wait_reason", DefaultValueHandling = DefaultValueHandling.Ignore)]
+        [JsonPropertyName("wait_reason"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public string WaitReason { get; set; }
     }
 }

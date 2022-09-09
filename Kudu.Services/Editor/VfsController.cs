@@ -27,7 +27,7 @@ namespace Kudu.Services.Editor
         {
         }
 
-        protected override Task<HttpResponseMessage> CreateDirectoryPutResponse(DirectoryInfoBase info, string localFilePath)
+        protected override Task<HttpResponseMessage> CreateDirectoryPutResponse(IDirectoryInfo info, string localFilePath)
         {
             if (info != null && info.Exists)
             {
@@ -52,7 +52,7 @@ namespace Kudu.Services.Editor
             return Task.FromResult(successFileResponse);
         }
 
-        protected override Task<HttpResponseMessage> CreateItemGetResponse(FileSystemInfoBase info, string localFilePath)
+        protected override Task<HttpResponseMessage> CreateItemGetResponse(IFileSystemInfo info, string localFilePath)
         {
 
             // Get current etag
@@ -118,7 +118,7 @@ namespace Kudu.Services.Editor
             }
         }
 
-        protected override async Task<HttpResponseMessage> CreateItemPutResponse(FileSystemInfoBase info, string localFilePath, bool itemExists)
+        protected override async Task<HttpResponseMessage> CreateItemPutResponse(IFileSystemInfo info, string localFilePath, bool itemExists)
         {
             // Check that we have a matching conditional If-Match request for existing resources
             if (itemExists)
@@ -195,7 +195,7 @@ namespace Kudu.Services.Editor
             }
         }
 
-        protected override Task<HttpResponseMessage> CreateFileDeleteResponse(FileInfoBase info)
+        protected override Task<HttpResponseMessage> CreateFileDeleteResponse(IFileInfo info)
         {
             // Existing resources require an etag to be updated.
             if (Request.Headers.IfMatch == null)
@@ -223,7 +223,7 @@ namespace Kudu.Services.Editor
         /// <summary>
         /// Create unique etag based on the last modified UTC time
         /// </summary>
-        private static EntityTagHeaderValue CreateEntityTag(FileSystemInfoBase sysInfo)
+        private static EntityTagHeaderValue CreateEntityTag(IFileSystemInfo sysInfo)
         {
             Contract.Assert(sysInfo != null);
             byte[] etag = BitConverter.GetBytes(sysInfo.LastWriteTimeUtc.Ticks);

@@ -5,6 +5,9 @@ using System.IO.Abstractions;
 using System.IO.Compression;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Tracing;
+using Microsoft.Extensions.FileSystemGlobbing.Abstractions;
+using Microsoft.Extensions.FileProviders.Physical;
+using NuGet;
 
 namespace Kudu.Core.Infrastructure
 {
@@ -12,28 +15,28 @@ namespace Kudu.Core.Infrastructure
     {
         public static void AddDirectory(this ZipArchive zipArchive, string directoryPath, ITracer tracer, string directoryNameInArchive = "")
         {
-            var directoryInfo = new DirectoryInfoWrapper(new DirectoryInfo(directoryPath));
-            zipArchive.AddDirectory(directoryInfo, tracer, directoryNameInArchive);
+            var directoryInfo = new PhysicalDirectoryInfo(new DirectoryInfo(directoryPath));
+            zipArchive.AddDirectory((IDirectoryInfo) directoryInfo, tracer, directoryNameInArchive);
         }
 
-        public static void AddDirectory(this ZipArchive zipArchive, DirectoryInfoBase directory, ITracer tracer, string directoryNameInArchive, out IList<ZipArchiveEntry> files)
+        public static void AddDirectory(this ZipArchive zipArchive, IDirectoryInfo directory, ITracer tracer, string directoryNameInArchive, out IList<ZipArchiveEntry> files)
         {
             files = new List<ZipArchiveEntry>();
             InternalAddDirectory(zipArchive, directory, tracer, directoryNameInArchive, files);
         }
 
-        public static void AddDirectory(this ZipArchive zipArchive, DirectoryInfoBase directory, ITracer tracer, string directoryNameInArchive)
+        public static void AddDirectory(this ZipArchive zipArchive, IDirectoryInfo directory, ITracer tracer, string directoryNameInArchive)
         {
             InternalAddDirectory(zipArchive, directory, tracer, directoryNameInArchive);
         }
 
-        private static void InternalAddDirectory(ZipArchive zipArchive, DirectoryInfoBase directory, ITracer tracer, string directoryNameInArchive, IList<ZipArchiveEntry> files = null)
+        private static void InternalAddDirectory(ZipArchive zipArchive, IDirectoryInfo directory, ITracer tracer, string directoryNameInArchive, IList<ZipArchiveEntry> files = null)
         {
             bool any = false;
             foreach (var info in directory.GetFileSystemInfos())
             {
                 any = true;
-                var subDirectoryInfo = info as DirectoryInfoBase;
+                var subDirectoryInfo = info as IDirectoryInfo;
                 if (subDirectoryInfo != null)
                 {
                     string childName = ForwardSlashCombine(directoryNameInArchive, subDirectoryInfo.Name);
@@ -41,7 +44,7 @@ namespace Kudu.Core.Infrastructure
                 }
                 else
                 {
-                    var entry = zipArchive.AddFile((FileInfoBase)info, tracer, directoryNameInArchive);
+                    var entry = zipArchive.AddFile((IFileInfo)info, tracer, directoryNameInArchive);
                     files?.Add(entry);
                 }
             }
@@ -60,11 +63,11 @@ namespace Kudu.Core.Infrastructure
 
         public static ZipArchiveEntry AddFile(this ZipArchive zipArchive, string filePath, ITracer tracer, string directoryNameInArchive = "")
         {
-            var fileInfo = new FileInfoWrapper(new FileInfo(filePath));
-            return zipArchive.AddFile(fileInfo, tracer, directoryNameInArchive);
+            var fileInfo = new PhysicalFileInfo(new FileInfo(filePath));
+            return zipArchive.AddFile((IFileInfo) fileInfo, tracer, directoryNameInArchive);
         }
 
-        public static ZipArchiveEntry AddFile(this ZipArchive zipArchive, FileInfoBase file, ITracer tracer, string directoryNameInArchive)
+        public static ZipArchiveEntry AddFile(this ZipArchive zipArchive, IFileInfo file, ITracer tracer, string directoryNameInArchive)
         {
             Stream fileStream = null;
             try
@@ -133,7 +136,7 @@ namespace Kudu.Core.Infrastructure
                     }
                     else
                     {
-                        FileInfoBase fileInfo = FileSystemHelpers.FileInfoFromFileName(path);
+                        IFileInfo fileInfo = FileSystemHelpers.FileInfoFromFileName(path);
 
                         string message = null;
                         // tracing first/last N files

@@ -17,6 +17,7 @@ using Kudu.Core.Infrastructure;
 using Kudu.Core.Tracing;
 using Kudu.Core.Helpers;
 using Kudu.Contracts.Settings;
+using Kudu.Contracts;
 
 namespace Kudu.Services.Infrastructure
 {
@@ -57,7 +58,7 @@ namespace Kudu.Services.Infrastructure
                 return Task.FromResult(response);
             }
 
-            DirectoryInfoBase info = FileSystemHelpers.DirectoryInfoFromDirectoryName(localFilePath);
+            IDirectoryInfo info = FileSystemHelpers.DirectoryInfoFromDirectoryName(localFilePath);
 
             if (info.Attributes < 0)
             {
@@ -108,7 +109,7 @@ namespace Kudu.Services.Infrastructure
                 return Task.FromResult(response);
             }
 
-            DirectoryInfoBase info = FileSystemHelpers.DirectoryInfoFromDirectoryName(localFilePath);
+            IDirectoryInfo info = FileSystemHelpers.DirectoryInfoFromDirectoryName(localFilePath);
             bool itemExists = info.Attributes >= 0;
 
             if (itemExists && (info.Attributes & FileAttributes.Directory) != 0)
@@ -139,7 +140,7 @@ namespace Kudu.Services.Infrastructure
                 return Task.FromResult(response);
             }
 
-            DirectoryInfoBase dirInfo = FileSystemHelpers.DirectoryInfoFromDirectoryName(localFilePath);
+            IDirectoryInfo dirInfo = FileSystemHelpers.DirectoryInfoFromDirectoryName(localFilePath);
 
             if (dirInfo.Attributes < 0)
             {
@@ -192,7 +193,7 @@ namespace Kudu.Services.Infrastructure
 
         protected MediaTypeMap MediaTypeMap { get; private set; }
 
-        protected virtual Task<HttpResponseMessage> CreateDirectoryGetResponse(DirectoryInfoBase info, string localFilePath)
+        protected virtual Task<HttpResponseMessage> CreateDirectoryGetResponse(IDirectoryInfo info, string localFilePath)
         {
             Contract.Assert(info != null);
             try
@@ -210,18 +211,18 @@ namespace Kudu.Services.Infrastructure
             }
         }
 
-        protected abstract Task<HttpResponseMessage> CreateItemGetResponse(FileSystemInfoBase info, string localFilePath);
+        protected abstract Task<HttpResponseMessage> CreateItemGetResponse(IFileSystemInfo info, string localFilePath);
 
-        protected virtual Task<HttpResponseMessage> CreateDirectoryPutResponse(DirectoryInfoBase info, string localFilePath)
+        protected virtual Task<HttpResponseMessage> CreateDirectoryPutResponse(IDirectoryInfo info, string localFilePath)
         {
             HttpResponseMessage conflictDirectoryResponse = Request.CreateErrorResponse(
                 HttpStatusCode.Conflict, Resources.VfsController_CannotUpdateDirectory);
             return Task.FromResult(conflictDirectoryResponse);
         }
 
-        protected abstract Task<HttpResponseMessage> CreateItemPutResponse(FileSystemInfoBase info, string localFilePath, bool itemExists);
+        protected abstract Task<HttpResponseMessage> CreateItemPutResponse(IFileSystemInfo info, string localFilePath, bool itemExists);
 
-        protected virtual Task<HttpResponseMessage> CreateFileDeleteResponse(FileInfoBase info)
+        protected virtual Task<HttpResponseMessage> CreateFileDeleteResponse(IFileInfo info)
         {
             // Generate file response
             try
@@ -300,7 +301,7 @@ namespace Kudu.Services.Infrastructure
         /// <summary>
         /// Provides a common way for opening a file stream for exclusively deleting the file. 
         /// </summary>
-        private static Stream GetFileDeleteStream(FileInfoBase file)
+        private static Stream GetFileDeleteStream(IFileInfo file)
         {
             Contract.Assert(file != null);
 
@@ -352,7 +353,7 @@ namespace Kudu.Services.Infrastructure
             return result;
         }
 
-        private IEnumerable<VfsStatEntry> GetDirectoryResponse(FileSystemInfoBase[] infos)
+        private IEnumerable<VfsStatEntry> GetDirectoryResponse(IFileSystemInfo[] infos)
         {
             var requestUri = Request.GetRequestUri(Settings.GetUseOriginalHostForReference());
             string baseAddress = requestUri.AbsoluteUri.Split('?').First();

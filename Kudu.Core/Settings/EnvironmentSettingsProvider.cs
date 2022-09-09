@@ -21,9 +21,9 @@ namespace Kudu.Core.Settings
             var settings = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
             // Add all the .net <appSettings> (which themselves include portal settings in Azure!).
-            foreach (string name in ConfigurationManager.AppSettings)
+            foreach (string name in System.Configuration.ConfigurationManager.AppSettings)
             {
-                settings[name] = ConfigurationManager.AppSettings[name];
+                settings[name] = System.Configuration.ConfigurationManager.AppSettings[name];
             }
 
             // Go through all the environment variables and process those that are meant to be app settings.

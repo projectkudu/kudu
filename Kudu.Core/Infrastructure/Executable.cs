@@ -106,7 +106,7 @@ namespace Kudu.Core.Infrastructure
         }
 
         // this is used for long running command that requires ongoing progress such as job, build script etc.
-        public Tuple<string, string> ExecuteWithProgressWriter(ILogger logger, ITracer tracer, string arguments, params object[] args)
+        public Tuple<string, string> ExecuteWithProgressWriter(Deployment.ILogger logger, ITracer tracer, string arguments, params object[] args)
         {
             try
             {
@@ -284,33 +284,47 @@ namespace Kudu.Core.Infrastructure
 
         internal Process CreateProcess(string arguments)
         {
-            var psi = Kudu.Core.Helpers.EnvironmentHelper.IsWindowsContainers() ?
-                new ProcessStartInfo()
-                {
-                    // Always point to the 64-bit folder since Kudu can run in 32-bit or 64-bit mode.
-                    FileName = System.Environment.ExpandEnvironmentVariables(@"%ProgramW6432%\IIS\Microsoft Web Hosting Framework\Containers\Diagnostics\Microsoft.Windows.Containers.Console.exe"),
-                    RedirectStandardInput = true,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    CreateNoWindow = true,
-                    WindowStyle = ProcessWindowStyle.Hidden,
-                    UseShellExecute = false,
-                    ErrorDialog = false,
-                    Arguments = string.Concat(@"base64:", Convert.ToBase64String(Encoding.UTF8.GetBytes(arguments)), " ", "base64:", Convert.ToBase64String(Encoding.UTF8.GetBytes(WorkingDirectory)))
-                } :
-                new ProcessStartInfo()
-                {
-                    FileName = Path,
-                    WorkingDirectory = WorkingDirectory,
-                    RedirectStandardInput = true,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    CreateNoWindow = true,
-                    WindowStyle = ProcessWindowStyle.Hidden,
-                    UseShellExecute = false,
-                    ErrorDialog = false,
-                    Arguments = arguments
-                };
+            /* var psi = Kudu.Core.Helpers.EnvironmentHelper.IsWindowsContainers() ?
+                 new ProcessStartInfo()
+                 {
+                     // Always point to the 64-bit folder since Kudu can run in 32-bit or 64-bit mode.
+                     FileName = System.Environment.ExpandEnvironmentVariables(@"%ProgramW6432%\IIS\Microsoft Web Hosting Framework\Containers\Diagnostics\Microsoft.Windows.Containers.Console.exe"),
+                     RedirectStandardInput = true,
+                     RedirectStandardOutput = true,
+                     RedirectStandardError = true,
+                     CreateNoWindow = true,
+                     WindowStyle = ProcessWindowStyle.Hidden,
+                     UseShellExecute = false,
+                     ErrorDialog = false,
+                     Arguments = string.Concat(@"base64:", Convert.ToBase64String(Encoding.UTF8.GetBytes(arguments)), " ", "base64:", Convert.ToBase64String(Encoding.UTF8.GetBytes(WorkingDirectory)))
+                 } :
+                 new ProcessStartInfo()
+                 {
+                     FileName = Path,
+                     WorkingDirectory = WorkingDirectory,
+                     RedirectStandardInput = true,
+                     RedirectStandardOutput = true,
+                     RedirectStandardError = true,
+                     CreateNoWindow = true,
+                     WindowStyle = ProcessWindowStyle.Hidden,
+                     UseShellExecute = false,
+                     ErrorDialog = false,
+                     Arguments = arguments
+                 };*/
+            var psi =
+                 new ProcessStartInfo()
+                 {
+                     FileName = Path,
+                     WorkingDirectory = WorkingDirectory,
+                     RedirectStandardInput = true,
+                     RedirectStandardOutput = true,
+                     RedirectStandardError = true,
+                     CreateNoWindow = true,
+                     WindowStyle = ProcessWindowStyle.Hidden,
+                     UseShellExecute = false,
+                     ErrorDialog = false,
+                     Arguments = arguments
+                 };
 
             if (Encoding != null)
             {

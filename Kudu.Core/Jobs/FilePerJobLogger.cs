@@ -64,7 +64,7 @@ namespace Kudu.Core.Jobs
         {
             try
             {
-                FileInfoBase logFile = FileSystemHelpers.FileInfoFromFileName(_logFilePath);
+                IFileInfo logFile = FileSystemHelpers.FileInfoFromFileName(_logFilePath);
 
                 if (logFile.Length > MaxLogFileSize)
                 {

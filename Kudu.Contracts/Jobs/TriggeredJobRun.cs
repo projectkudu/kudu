@@ -1,30 +1,30 @@
 ﻿using System;
 using Kudu.Contracts.Infrastructure;
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 
 namespace Kudu.Contracts.Jobs
 {
     public class TriggeredJobRun : INamedObject
     {
-        [JsonProperty(PropertyName = "id")]
+        [JsonPropertyName("id")]
         public string Id { get; set; }
 
-        [JsonProperty(PropertyName = "name")]
+        [JsonPropertyName("name")]
         public string Name
         {
             get { return Id; }
         }
 
-        [JsonProperty(PropertyName = "status")]
+        [JsonPropertyName("status")]
         public string Status { get; set; }
 
-        [JsonProperty(PropertyName = "start_time")]
+        [JsonPropertyName("start_time")]
         public DateTime StartTime { get; set; }
 
-        [JsonProperty(PropertyName = "end_time")]
+        [JsonPropertyName("end_time")]
         public DateTime EndTime { get; set; }
 
-        [JsonProperty(PropertyName = "duration")]
+        [JsonPropertyName("duration")]
         public string Duration
         {
             get
@@ -40,19 +40,19 @@ namespace Kudu.Contracts.Jobs
             }
         }
 
-        [JsonProperty(PropertyName = "output_url")]
+        [JsonPropertyName("output_url")]
         public Uri OutputUrl { get; set; }
 
-        [JsonProperty(PropertyName = "error_url")]
+        [JsonPropertyName("error_url")]
         public Uri ErrorUrl { get; set; }
 
-        [JsonProperty(PropertyName = "url")]
+        [JsonPropertyName("url")]
         public Uri Url { get; set; }
 
-        [JsonProperty(PropertyName = "job_name")]
+        [JsonPropertyName("job_name")]
         public string JobName { get; set; }
 
-        [JsonProperty(PropertyName = "trigger")]
+        [JsonPropertyName("trigger")]
         public string Trigger { get; set; }
 
         public override int GetHashCode()

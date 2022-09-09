@@ -4,7 +4,7 @@ using System.IO.Compression;
 using System.Threading.Tasks;
 using Kudu.Contracts.Functions;
 using Kudu.Contracts.Tracing;
-using Newtonsoft.Json.Linq;
+using System.Text.Json.Nodes;
 
 namespace Kudu.Core.Functions
 {
@@ -16,9 +16,9 @@ namespace Kudu.Core.Functions
         Task<FunctionEnvelope> GetFunctionConfigAsync(string name, FunctionTestData packageLimit);
         Task<FunctionSecrets> GetFunctionSecretsAsync(string name);
         Task<MasterKey> GetMasterKeyAsync();
-        Task<JObject> GetHostConfigAsync();
+        Task<JsonNode> GetHostConfigAsync();
         string GetAdminToken();
-        Task<JObject> PutHostConfigAsync(JObject content);
+        Task<JsonNode> PutHostConfigAsync(JsonNode content);
         void DeleteFunction(string name, bool ignoreErrors);
         void CreateArchive(ZipArchive archive, bool includeAppSettings = false, bool includeCsproj = false, string projectName = null);
     }

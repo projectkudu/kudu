@@ -11,6 +11,7 @@ using Kudu.Core.Tracing;
 
 namespace Kudu.Core.SourceControl
 {
+#if NETFRAMEWORK
     // TODO: Add unit tests via FileSystem once they add support for EnumerateFiles
     public class RepositoryFactory : IRepositoryFactory
     {
@@ -166,4 +167,5 @@ namespace Kudu.Core.SourceControl
             }
         }
     }
+#endif
 }

@@ -19,7 +19,7 @@ namespace Kudu.Services {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "15.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "17.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class Resources {
@@ -376,7 +376,7 @@ namespace Kudu.Services {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to {0}{1}  The application was terminated.{0}.
+        ///   Looks up a localized string similar to {0}{1}  The log-streaming session has ended. Please reconnect to continue streaming logs.{0}.
         /// </summary>
         internal static string LogStream_AppShutdown {
             get {
@@ -403,7 +403,7 @@ namespace Kudu.Services {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to {0}  Stream terminated due to timeout {1} min(s).{2}.
+        ///   Looks up a localized string similar to {0}  The log-streaming session has ended due to timeout {1} min(s).{2}.
         /// </summary>
         internal static string LogStream_Timeout {
             get {
@@ -412,7 +412,7 @@ namespace Kudu.Services {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to {0}  Welcome, you are now connected to log-streaming service.{1}.
+        ///   Looks up a localized string similar to {0}  Welcome, you are now connected to log-streaming service. The default timeout is 2 hours. Change the timeout with the App Setting SCM_LOGSTREAM_TIMEOUT (in seconds). {1}.
         /// </summary>
         internal static string LogStream_Welcome {
             get {

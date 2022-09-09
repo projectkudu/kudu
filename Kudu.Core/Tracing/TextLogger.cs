@@ -6,7 +6,8 @@ using Kudu.Core.Infrastructure;
 
 namespace Kudu.Core.Tracing
 {
-    public class TextLogger : ILogger
+
+    public class TextLogger : Deployment.ILogger
     {
         private readonly LogFileHelper _logFile;
         private readonly int _depth;
@@ -22,7 +23,7 @@ namespace Kudu.Core.Tracing
             _depth = depth;
         }
 
-        public ILogger Log(string value, LogEntryType type)
+        public Deployment.ILogger Log(string value, LogEntryType type)
         {
             _logFile.WriteLine(value, _depth);
             return new TextLogger(_logFile, _depth + 1);
