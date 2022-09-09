@@ -15,6 +15,8 @@ using Kudu.Core.Tracing;
 using Newtonsoft.Json;
 using Microsoft.AspNetCore.Http.Extensions;
 using Kudu.Contracts;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Kudu.Core.Jobs
 {

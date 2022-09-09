@@ -1,8 +1,8 @@
-﻿using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+﻿using Kudu.Contracts.Infrastructure;
 using System;
 using System.Collections.Generic;
-using Kudu.Contracts.Infrastructure;
+using System.Text.Json.Nodes;
+using System.Text.Json.Serialization;
 
 namespace Kudu.Core.Functions
 {

@@ -1,25 +1,25 @@
 ﻿using System;
 using System.Collections.Generic;
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 using Kudu.Contracts.Jobs;
 
 namespace Kudu.ContainerServices.Agent.Jobs
 {
     public class SwaggerApiDef
     {
-        [JsonProperty(PropertyName = "swagger")]
+        [JsonPropertyName("swagger")]
         public string Swagger { get; set; }
 
-        [JsonProperty(PropertyName = "info")]
+        [JsonPropertyName("info")]
         public SwaggerApiDefInfo Info { get; private set; }
 
-        [JsonProperty(PropertyName = "host")]
+        [JsonPropertyName("host")]
         public string Host { get; private set; }
 
-        [JsonProperty(PropertyName = "schemes")]
+        [JsonPropertyName("schemes")]
         public List<String> Schemes { get; private set; }
 
-        [JsonProperty(PropertyName = "paths")]
+        [JsonPropertyName("paths")]
         public Dictionary<String, PathItem> Paths { get; set; }
 
         public SwaggerApiDef(IEnumerable<JobBase> triggeredJobs)
@@ -38,10 +38,10 @@ namespace Kudu.ContainerServices.Agent.Jobs
 
     public class SwaggerApiDefInfo
     {
-        [JsonProperty(PropertyName = "version")]
+        [JsonPropertyName("version")]
         public string Version { get; set; }
 
-        [JsonProperty(PropertyName = "title")]
+        [JsonPropertyName("title")]
         public string Title { get; set; }
 
         public SwaggerApiDefInfo()
@@ -53,7 +53,7 @@ namespace Kudu.ContainerServices.Agent.Jobs
 
     public class PathItem
     {
-        [JsonProperty(PropertyName = "post")]
+        [JsonPropertyName("post")]
         public Operation Post { get; set; }
 
         public static PathItem GetDefaultPathItem(string id)
@@ -66,22 +66,22 @@ namespace Kudu.ContainerServices.Agent.Jobs
 
     public class Operation
     {
-        [JsonProperty(PropertyName = "deprecated")]
+        [JsonPropertyName("deprecated")]
         public bool Deprecated { set; get; }
 
-        [JsonProperty(PropertyName = "operationId")]
+        [JsonPropertyName("operationId")]
         public string OperationId { set; get; }
 
-        [JsonProperty(PropertyName = "consumes")]
+        [JsonPropertyName("consumes")]
         public IEnumerable<String> Consumes { set; get; }
 
-        [JsonProperty(PropertyName = "produces")]
+        [JsonPropertyName("produces")]
         public IEnumerable<String> Produces { set; get; }
 
-        [JsonProperty(PropertyName = "responses")]
+        [JsonPropertyName("responses")]
         public IDictionary<string, Response> Responses { set; get; }
 
-        [JsonProperty(PropertyName = "parameters")]
+        [JsonPropertyName("parameters")]
         public List<Parameter> Parameters { set; get; }
 
         public static Operation GetDefaultOperation(String id)
@@ -101,19 +101,19 @@ namespace Kudu.ContainerServices.Agent.Jobs
 
     public class Parameter
     {
-        [JsonProperty(PropertyName = "name")]
+        [JsonPropertyName("name")]
         public string Name { set; get; }
 
-        [JsonProperty(PropertyName = "in")]
+        [JsonPropertyName("in")]
         public string Input { set; get; }
 
-        [JsonProperty(PropertyName = "description")]
+        [JsonPropertyName("description")]
         public string Description { set; get; }
 
-        [JsonProperty(PropertyName = "required")]
+        [JsonPropertyName("required")]
         public bool Required { set; get; }
 
-        [JsonProperty(PropertyName = "type")]
+        [JsonPropertyName("type")]
         public string Type { set; get; }
 
         public static Parameter GetDefaultParameter()
@@ -131,7 +131,7 @@ namespace Kudu.ContainerServices.Agent.Jobs
     }
     public class Response
     {
-        [JsonProperty(PropertyName = "description")]
+        [JsonPropertyName("description")]
         public string Description { get; set; }
     }
 }

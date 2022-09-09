@@ -65,10 +65,12 @@ namespace Kudu.Core.Diagnostics
         [JsonPropertyName("open_file_handles"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public IEnumerable<string> OpenFileHandles { get; set; }
 
-        [JsonProperty(PropertyName = "modules", DefaultValueHandling = DefaultValueHandling.Ignore)]        
+        [Newtonsoft.Json.JsonProperty(PropertyName = "modules", DefaultValueHandling = Newtonsoft.Json.DefaultValueHandling.Ignore)]        
+        [JsonPropertyName("modules"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public IEnumerable<ProcessModuleInfo> Modules { get; set; }
 
-        [JsonProperty(PropertyName = "file_name", DefaultValueHandling = DefaultValueHandling.Ignore)]        
+        [Newtonsoft.Json.JsonProperty(PropertyName = "file_name", DefaultValueHandling = Newtonsoft.Json.DefaultValueHandling.Ignore)]        
+        [JsonPropertyName("file_name"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public string FileName { get; set; }
 
         [Newtonsoft.Json.JsonProperty(PropertyName = "command_line", DefaultValueHandling = Newtonsoft.Json.DefaultValueHandling.Ignore)]
@@ -82,10 +84,12 @@ namespace Kudu.Core.Diagnostics
         [JsonPropertyName("user_name"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public string UserName { get; set; }
 
-        [JsonProperty(PropertyName = "handle_count", DefaultValueHandling = DefaultValueHandling.Ignore)]        
+        [Newtonsoft.Json.JsonProperty(PropertyName = "handle_count", DefaultValueHandling = Newtonsoft.Json.DefaultValueHandling.Ignore)]        
+        [JsonPropertyName("handle_count"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public int HandleCount { get; set; }
 
-        [JsonProperty(PropertyName = "module_count", DefaultValueHandling = DefaultValueHandling.Ignore)]        
+        [Newtonsoft.Json.JsonProperty(PropertyName = "module_count", DefaultValueHandling = Newtonsoft.Json.DefaultValueHandling.Ignore)]        
+        [JsonPropertyName("module_count"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public int ModuleCount { get; set; }
 
         [Newtonsoft.Json.JsonProperty(PropertyName = "thread_count", DefaultValueHandling = Newtonsoft.Json.DefaultValueHandling.Ignore)]
@@ -108,31 +112,40 @@ namespace Kudu.Core.Diagnostics
         [JsonPropertyName("privileged_cpu_time"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public TimeSpan PrivilegedProcessorTime { get; set; }
 
-        [JsonProperty(PropertyName = "working_set", DefaultValueHandling = DefaultValueHandling.Ignore)]
+        [Newtonsoft.Json.JsonProperty(PropertyName = "working_set", DefaultValueHandling = Newtonsoft.Json.DefaultValueHandling.Ignore)]
+        [JsonPropertyName("working_set"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public long WorkingSet64 { get; set; }
 
-        [JsonProperty(PropertyName = "peak_working_set", DefaultValueHandling = DefaultValueHandling.Ignore)]
+        [Newtonsoft.Json.JsonProperty(PropertyName = "peak_working_set", DefaultValueHandling = Newtonsoft.Json.DefaultValueHandling.Ignore)]
+        [JsonPropertyName("peak_working_set"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public long PeakWorkingSet64 { get; set; }
 
-        [JsonProperty(PropertyName = "private_memory", DefaultValueHandling = DefaultValueHandling.Ignore)]
+        [Newtonsoft.Json.JsonProperty(PropertyName = "private_memory", DefaultValueHandling = Newtonsoft.Json.DefaultValueHandling.Ignore)]
+        [JsonPropertyName("private_memory"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public long PrivateMemorySize64 { get; set; }
 
-        [JsonProperty(PropertyName = "virtual_memory", DefaultValueHandling = DefaultValueHandling.Ignore)]
+        [Newtonsoft.Json.JsonProperty(PropertyName = "virtual_memory", DefaultValueHandling = Newtonsoft.Json.DefaultValueHandling.Ignore)]
+        [JsonPropertyName("virtual_memory"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public long VirtualMemorySize64 { get; set; }
 
-        [JsonProperty(PropertyName = "peak_virtual_memory", DefaultValueHandling = DefaultValueHandling.Ignore)]
+        [Newtonsoft.Json.JsonProperty(PropertyName = "peak_virtual_memory", DefaultValueHandling = Newtonsoft.Json.DefaultValueHandling.Ignore)]
+        [JsonPropertyName("peak_virtual_memory"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public long PeakVirtualMemorySize64 { get; set; }
 
-        [JsonProperty(PropertyName = "paged_system_memory", DefaultValueHandling = DefaultValueHandling.Ignore)]
+        [Newtonsoft.Json.JsonProperty(PropertyName = "paged_system_memory", DefaultValueHandling = Newtonsoft.Json.DefaultValueHandling.Ignore)]
+        [JsonPropertyName("paged_system_memory"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public long PagedSystemMemorySize64 { get; set; }
 
-        [JsonProperty(PropertyName = "non_paged_system_memory", DefaultValueHandling = DefaultValueHandling.Ignore)]
+        [Newtonsoft.Json.JsonProperty(PropertyName = "non_paged_system_memory", DefaultValueHandling = Newtonsoft.Json.DefaultValueHandling.Ignore)]
+        [JsonPropertyName("non_paged_system_memory"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public long NonpagedSystemMemorySize64 { get; set; }
 
-        [JsonProperty(PropertyName = "paged_memory", DefaultValueHandling = DefaultValueHandling.Ignore)]
+        [Newtonsoft.Json.JsonProperty(PropertyName = "paged_memory", DefaultValueHandling = Newtonsoft.Json.DefaultValueHandling.Ignore)]
+        [JsonPropertyName("paged_memory"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public long PagedMemorySize64 { get; set; }
 
-        [JsonProperty(PropertyName = "peak_paged_memory", DefaultValueHandling = DefaultValueHandling.Ignore)]
+        [Newtonsoft.Json.JsonProperty(PropertyName = "peak_paged_memory", DefaultValueHandling = Newtonsoft.Json.DefaultValueHandling.Ignore)]
+        [JsonPropertyName("peak_paged_memory"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public long PeakPagedMemorySize64 { get; set; }
 
         [Newtonsoft.Json.JsonProperty(PropertyName = "time_stamp", DefaultValueHandling = Newtonsoft.Json.DefaultValueHandling.Ignore)]

@@ -98,7 +98,7 @@ namespace Kudu.Core.Settings
                 FileSystemHelpers.EnsureDirectory(Path.GetDirectoryName(_path));
             }
             
-            string fileContent = JsonConvert.SerializeObject(diagnosticsSettings);
+            string fileContent = JsonSerializer.Serialize(diagnosticsSettings);
             FileSystemHelpers.WriteAllTextToFile(_path, fileContent);
         }
     }

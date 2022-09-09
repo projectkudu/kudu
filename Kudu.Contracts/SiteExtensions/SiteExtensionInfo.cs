@@ -4,10 +4,10 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Xml.Linq;
 using Kudu.Contracts.Infrastructure;
+using System.Text.Json;
 using NuGet.Client.VisualStudio;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using Newtonsoft.Json.Converters;
+using System.Text.Json.Serialization;
+using System.Text.Json.Nodes;
 
 namespace Kudu.Contracts.SiteExtensions
 {
