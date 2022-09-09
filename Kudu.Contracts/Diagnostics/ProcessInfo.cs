@@ -25,8 +25,6 @@ namespace Kudu.Core.Diagnostics
         [JsonProperty(PropertyName = "machineName")]
         public string MachineName { get; set; }
 
-        // For now, we have json properties for both Netwonsoft and System.Text json implementations
-        // Both are needed depending on if these are called by the Kudu ContainerServices Agent or standard Kudu
         [JsonProperty(PropertyName = "href", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public Uri Href { get; set; }
 

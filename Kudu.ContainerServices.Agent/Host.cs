@@ -91,7 +91,7 @@ namespace Kudu.ContainerServices.Agent
                     webBuilder
                         .ConfigureServices(services =>
                         {
-                            services.AddControllers();
+                            services.AddControllers().AddNewtonsoftJson();
                             services.Configure<KestrelServerOptions>(options =>
                             {
                                 options.AllowSynchronousIO = true;
