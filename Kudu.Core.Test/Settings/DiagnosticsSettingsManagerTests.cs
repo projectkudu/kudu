@@ -71,8 +71,7 @@ namespace Kudu.Core.Test.Settings
                 }
 
                 Assert.NotNull(exception);
-                //Assert.Equal("Error getting value from 'AzureTableTraceLevel' on 'Kudu.Contracts.Settings.DiagnosticsSettings'.", exception.Message);
-                Assert.Equal("Specified cast is not valid.", exception.Message);
+                Assert.Equal("Error getting value from 'AzureTableTraceLevel' on 'Kudu.Contracts.Settings.DiagnosticsSettings'.", exception.Message);
 
                 try
                 {
@@ -83,8 +82,7 @@ namespace Kudu.Core.Test.Settings
                     exception = ex;
                 }
 
-                //Assert.Equal("Error getting value from 'AzureTableTraceLevel' on 'Kudu.Contracts.Settings.DiagnosticsSettings'.", exception.Message);
-                Assert.Equal("Specified cast is not valid.", exception.Message);
+                Assert.Equal("Error getting value from 'AzureTableTraceLevel' on 'Kudu.Contracts.Settings.DiagnosticsSettings'.", exception.Message);
 
                 try
                 {
@@ -95,8 +93,7 @@ namespace Kudu.Core.Test.Settings
                     exception = ex;
                 }
 
-                //Assert.Equal("Error getting value from 'AzureTableTraceLevel' on 'Kudu.Contracts.Settings.DiagnosticsSettings'.", exception.Message);
-                Assert.Equal("Specified cast is not valid.", exception.Message);
+                Assert.Equal("Error getting value from 'AzureTableTraceLevel' on 'Kudu.Contracts.Settings.DiagnosticsSettings'.", exception.Message);
 
                 try
                 {
