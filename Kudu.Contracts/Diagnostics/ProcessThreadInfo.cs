@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
-using System.Text.Json.Serialization;
+using Newtonsoft.Json;
 using Kudu.Contracts.Infrastructure;
 
 namespace Kudu.Core.Diagnostics

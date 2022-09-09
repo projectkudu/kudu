@@ -123,22 +123,19 @@ namespace Kudu.Contracts.Settings
         {
             return _settings.Union(_extraSettings).GetEnumerator();
         }
-        private class StrictStringEnumConverter : JsonConverter<TraceEventType>
+        private class StrictStringEnumConverter : StringEnumConverter
         {
+            public StrictStringEnumConverter()
+            {
+                AllowIntegerValues = false;
+            }
 
-            public override TraceEventType Read(ref Utf8JsonReader reader, Type objectType, JsonSerializerOptions options)
+            public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
             {
                 int unused;
-                if (reader.TokenType != JsonTokenType.Number)
+                if (reader.Value is string && !int.TryParse((string)reader.Value, out unused))
                 {
-                    try
-                    {
-                        return (TraceEventType)Enum.Parse(objectType, reader.GetString());
-                    }
-                    catch
-                    {
-                        throw new JsonException(string.Format(CultureInfo.InvariantCulture, "Error converting value '{0}' from type '{1}'", reader.ValueSequence, reader.TokenType));
-                    }
+                    return base.ReadJson(reader, objectType, existingValue, serializer);
                 }
 
                 throw new JsonException(string.Format(CultureInfo.InvariantCulture, "Error converting value '{0}' from type '{1}'", reader.ValueSequence, reader.TokenType));
