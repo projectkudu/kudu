@@ -1,7 +1,6 @@
 ﻿using System;
 using Kudu.Contracts.Infrastructure;
 using Newtonsoft.Json;
-using System.Xml.Linq;
 
 namespace Kudu.Contracts.Jobs
 {

@@ -52,10 +52,10 @@ namespace Kudu.Core.Diagnostics
         [JsonProperty(PropertyName = "open_file_handles", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public IEnumerable<string> OpenFileHandles { get; set; }
 
-        [JsonProperty(PropertyName = "modules", DefaultValueHandling = DefaultValueHandling.Ignore)]        
+        [JsonProperty(PropertyName = "modules", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public IEnumerable<ProcessModuleInfo> Modules { get; set; }
 
-        [JsonProperty(PropertyName = "file_name", DefaultValueHandling = DefaultValueHandling.Ignore)]        
+        [JsonProperty(PropertyName = "file_name", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public string FileName { get; set; }
 
         [JsonProperty(PropertyName = "command_line", DefaultValueHandling = DefaultValueHandling.Ignore)]
@@ -67,10 +67,10 @@ namespace Kudu.Core.Diagnostics
         [JsonProperty(PropertyName = "user_name", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public string UserName { get; set; }
 
-        [JsonProperty(PropertyName = "handle_count", DefaultValueHandling = DefaultValueHandling.Ignore)]        
+        [JsonProperty(PropertyName = "handle_count", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public int HandleCount { get; set; }
 
-        [JsonProperty(PropertyName = "module_count", DefaultValueHandling = DefaultValueHandling.Ignore)]        
+        [JsonProperty(PropertyName = "module_count", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public int ModuleCount { get; set; }
 
         [JsonProperty(PropertyName = "thread_count", DefaultValueHandling = DefaultValueHandling.Ignore)]

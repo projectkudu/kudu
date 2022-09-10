@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.Options;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
@@ -40,6 +39,7 @@ namespace Kudu.Contracts.Settings
             AzureBlobTraceLevel = TraceEventType.Error;
         }
 
+        [JsonProperty]
         public bool AzureDriveEnabled
         {
             get { return (bool)_settings[AzureDriveEnabledKey]; }

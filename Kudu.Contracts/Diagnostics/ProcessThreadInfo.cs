@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
-using Newtonsoft.Json;
 using Kudu.Contracts.Infrastructure;
+using Newtonsoft.Json;
 
 namespace Kudu.Core.Diagnostics
 {

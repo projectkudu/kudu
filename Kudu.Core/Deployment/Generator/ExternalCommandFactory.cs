@@ -5,6 +5,7 @@ using System.Linq;
 using Kudu.Contracts.Settings;
 using Kudu.Core.Helpers;
 using Kudu.Core.Infrastructure;
+using Ionic.BZip2;
 
 namespace Kudu.Core.Deployment.Generator
 {

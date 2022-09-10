@@ -94,7 +94,7 @@ namespace Kudu.Core.Deployment
         public string DeploymentTrackingId { get; set; } = null;
 
         // Specifies whether to touch the watched file (example web.config, web.xml, etc) after the deployment
-        public bool WatchedFileEnabled { get; set; }
+        public bool WatchedFileEnabled { get; set;}
 
         // Used to allow / disallow 'restart' on a per deployment basis, if needed.
         // For example: OneDeploy allows clients to enable / disable 'restart'.

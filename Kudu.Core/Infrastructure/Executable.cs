@@ -284,7 +284,8 @@ namespace Kudu.Core.Infrastructure
 
         internal Process CreateProcess(string arguments)
         {
-            /* var psi = Kudu.Core.Helpers.EnvironmentHelper.IsWindowsContainers() ?
+            var isW3WP = Process.GetCurrentProcess().ProcessName.Equals("w3wp");
+            var psi = (isW3WP && Kudu.Core.Helpers.EnvironmentHelper.IsWindowsContainers()) ?
                  new ProcessStartInfo()
                  {
                      // Always point to the 64-bit folder since Kudu can run in 32-bit or 64-bit mode.
@@ -298,20 +299,6 @@ namespace Kudu.Core.Infrastructure
                      ErrorDialog = false,
                      Arguments = string.Concat(@"base64:", Convert.ToBase64String(Encoding.UTF8.GetBytes(arguments)), " ", "base64:", Convert.ToBase64String(Encoding.UTF8.GetBytes(WorkingDirectory)))
                  } :
-                 new ProcessStartInfo()
-                 {
-                     FileName = Path,
-                     WorkingDirectory = WorkingDirectory,
-                     RedirectStandardInput = true,
-                     RedirectStandardOutput = true,
-                     RedirectStandardError = true,
-                     CreateNoWindow = true,
-                     WindowStyle = ProcessWindowStyle.Hidden,
-                     UseShellExecute = false,
-                     ErrorDialog = false,
-                     Arguments = arguments
-                 };*/
-            var psi =
                  new ProcessStartInfo()
                  {
                      FileName = Path,
