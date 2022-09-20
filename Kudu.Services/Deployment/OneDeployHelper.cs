@@ -22,6 +22,7 @@ namespace Kudu.Services.Deployment
         // All paths are relative to HOME directory
         public const string WwwrootDirectoryRelativePath = "site/wwwroot/";
         public const string ScriptsDirectoryRelativePath = "site/scripts/";
+        public const string LibsDirectoryRelativePath = "site/libs/";
 
         public static bool IsLegacyWarPathValid(string path)
         {
