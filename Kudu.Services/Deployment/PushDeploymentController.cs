@@ -384,161 +384,175 @@ namespace Kudu.Services.Deployment
             _tracer.Trace($"Starting {nameof(PushDeployAsync)}");
             var content = Request.Content;
             var isRequestJSON = content.Headers?.ContentType?.MediaType?.Equals("application/json", StringComparison.OrdinalIgnoreCase);
-            if (isRequestJSON == true)
+            try
             {
-                try
+                if (isRequestJSON == true)
                 {
-                    // Read the request body if it hasn't been read already
-                    if (requestObject == null)
+                    try
                     {
-                        requestObject = await Request.Content.ReadAsAsync<JObject>();
-                    }
-
-                    if (ArmUtils.IsArmRequest(Request))
-                    {
-                        _tracer.Trace("Reading the artifact URL from the ARM request JSON");
-                        requestObject = requestObject.Value<JObject>("properties");
-                    }
-
-                    var packageUri = requestObject.Value<string>("packageUri");
-                    if (string.IsNullOrEmpty(packageUri))
-                    {
-                        _tracer.Trace("PackageUri was empty in the JSON request");
-                        throw new ArgumentException($"PackageUri was empty in the JSON request");
-                    }
-                    if (!Uri.TryCreate(packageUri, UriKind.Absolute, out _))
-                    {
-                        _tracer.Trace("Invalid PackageUri in the JSON request");
-                        throw new ArgumentException($"Invalid '{packageUri}' packageUri in the JSON request");
-                    }
-                    deploymentInfo.RemoteURL = packageUri;
-
-                    var targetPath = requestObject.Value<string>("targetPath");
-                    if (!string.IsNullOrEmpty(targetPath))
-                    {
-                        deploymentInfo.TargetRootPath = targetPath;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    return ArmUtils.CreateErrorResponse(Request, HttpStatusCode.BadRequest, ex);
-                }
-            }
-            // For zip artifacts (zipdeploy, wardeploy, onedeploy with type=zip), copy the request body in a temp zip file.
-            // It will be extracted to the appropriate directory by the Fetch handler
-            else if (artifactType == ArtifactType.Zip)
-            {
-                await _deploymentLock.LockHttpOperationAsync(async () =>
-                {
-                    if (_settings.RunFromLocalZip())
-                    {
-                        await WriteSitePackageZip(deploymentInfo, _tracer, Request.Content);
-                    }
-                    else
-                    {
-                        var zipFileName = Path.ChangeExtension(Path.GetRandomFileName(), "zip");
-                        var zipFilePath = Path.Combine(_environment.ZipTempPath, zipFileName);
-
-                        using (_tracer.Step("Saving request content to {0}", zipFilePath))
+                        // Read the request body if it hasn't been read already
+                        if (requestObject == null)
                         {
-                            await content.CopyToAsync(zipFilePath, _tracer);
+                            requestObject = await content.ReadAsAsync<JObject>();
                         }
 
-                        deploymentInfo.RepositoryUrl = zipFilePath;
-                    }
-                }, "Preparing zip package");
-            }
-            // Copy the request body to a temp file.
-            // It will be moved to the appropriate directory by the Fetch handler
-            else if (deploymentInfo.Deployer == Constants.OneDeploy)
-            {
-                await _deploymentLock.LockHttpOperationAsync(async () =>
-                {
-                    var artifactTempPath = Path.Combine(_environment.ZipTempPath, deploymentInfo.TargetFileName);
-                    using (_tracer.Step("Saving request content to {0}", artifactTempPath))
-                    {
-                        await content.CopyToAsync(artifactTempPath, _tracer);
-                    }
-
-                    deploymentInfo.RepositoryUrl = artifactTempPath;
-                }, "Preparing zip package");
-            }
-
-            isAsync = ArmUtils.IsArmRequest(Request) ? true : isAsync;
-
-            var result = await _deploymentManager.FetchDeploy(deploymentInfo, isAsync, Request.GetRequestUri(), "HEAD");
-
-            var response = Request.CreateResponse();
-
-            // Add deploymentId to header for deployment status API
-            if (deploymentInfo != null
-                && !string.IsNullOrEmpty(deploymentInfo.DeploymentTrackingId))
-            {
-                response.Headers.Add(Constants.ScmDeploymentIdHeader, deploymentInfo.DeploymentTrackingId);
-            }
-
-            switch (result)
-            {
-                case FetchDeploymentRequestResult.RunningAynschronously:
-                    if (ArmUtils.IsArmRequest(Request))
-                    {
-                        DeployResult deployResult = new DeployResult();
-                        response = Request.CreateResponse(HttpStatusCode.Accepted, ArmUtils.AddEnvelopeOnArmRequest(deployResult, Request));
-                        string statusURL = GetStatusUrl(Request.Headers.Referrer ?? Request.RequestUri);
-                        // Should not happen: If we couldn't make the URL, there must have been an error in the request
-                        if (string.IsNullOrEmpty(statusURL))
+                        if (ArmUtils.IsArmRequest(Request))
                         {
-                            var badResponse = Request.CreateResponse();
-                            badResponse.StatusCode = HttpStatusCode.BadRequest;
-                            return badResponse;
+                            _tracer.Trace("Reading the artifact URL from the ARM request JSON");
+                            requestObject = requestObject.Value<JObject>("properties");
                         }
-                        // latest deployment keyword reserved to poll till deployment done
-                        response.Headers.Location = new Uri(statusURL +
-                            String.Format("/deployments/{0}?api-version=2018-02-01&deployer={1}&time={2}", Constants.LatestDeployment, deploymentInfo.Deployer, DateTime.UtcNow.ToString("yyy-MM-dd_HH-mm-ssZ")));
-                        response.Headers.RetryAfter = new RetryConditionHeaderValue(TimeSpan.FromSeconds(ScmHostingConfigurations.ArmRetryAfterSeconds));
-                    }
-                    else if (isAsync)
-                    {
-                        // latest deployment keyword reserved to poll till deployment done
-                        response.Headers.Location = new Uri(Request.GetRequestUri(),
-                            String.Format("/api/deployments/{0}?deployer={1}&time={2}", Constants.LatestDeployment, deploymentInfo.Deployer, DateTime.UtcNow.ToString("yyy-MM-dd_HH-mm-ssZ")));
-                        response.Headers.RetryAfter = new RetryConditionHeaderValue(TimeSpan.FromSeconds(ScmHostingConfigurations.ArmRetryAfterSeconds));
-                    }
-                    response.StatusCode = HttpStatusCode.Accepted;
-                    break;
-                case FetchDeploymentRequestResult.ForbiddenScmDisabled:
-                    // Should never hit this for zip push deploy
-                    response.StatusCode = HttpStatusCode.Forbidden;
-                    _tracer.Trace("Scm is not enabled, reject all requests.");
-                    break;
-                case FetchDeploymentRequestResult.ConflictAutoSwapOngoing:
-                    response.StatusCode = HttpStatusCode.Conflict;
-                    response.Content = new StringContent(Resources.Error_AutoSwapDeploymentOngoing);
-                    _tracer.Trace(Resources.Error_AutoSwapDeploymentOngoing);
-                    break;
-                case FetchDeploymentRequestResult.Pending:
-                    // Shouldn't happen here, as we disallow deferral for this use case
-                    response.StatusCode = HttpStatusCode.Accepted;
-                    break;
-                case FetchDeploymentRequestResult.RanSynchronously:
-                    response.StatusCode = HttpStatusCode.OK;
-                    break;
-                case FetchDeploymentRequestResult.ConflictDeploymentInProgress:
-                    response.StatusCode = HttpStatusCode.Conflict;
-                    response.Content = new StringContent(Resources.Error_DeploymentInProgress);
-                    _tracer.Trace(Resources.Error_DeploymentInProgress);
-                    break;
-                case FetchDeploymentRequestResult.ConflictRunFromRemoteZipConfigured:
-                    response.StatusCode = HttpStatusCode.Conflict;
-                    response.Content = new StringContent(Resources.Error_RunFromRemoteZipConfigured);
-                    _tracer.Trace(Resources.Error_RunFromRemoteZipConfigured);
-                    break;
-                default:
-                    response.StatusCode = HttpStatusCode.BadRequest;
-                    break;
-            }
 
-            return response;
+                        var packageUri = requestObject.Value<string>("packageUri");
+                        if (string.IsNullOrEmpty(packageUri))
+                        {
+                            _tracer.Trace("PackageUri was empty in the JSON request");
+                            throw new ArgumentException($"PackageUri was empty in the JSON request");
+                        }
+                        if (!Uri.TryCreate(packageUri, UriKind.Absolute, out _))
+                        {
+                            _tracer.Trace("Invalid PackageUri in the JSON request");
+                            throw new ArgumentException($"Invalid '{packageUri}' packageUri in the JSON request");
+                        }
+                        deploymentInfo.RemoteURL = packageUri;
+
+                        var targetPath = requestObject.Value<string>("targetPath");
+                        if (!string.IsNullOrEmpty(targetPath))
+                        {
+                            deploymentInfo.TargetRootPath = targetPath;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        return ArmUtils.CreateErrorResponse(Request, HttpStatusCode.BadRequest, ex);
+                    }
+                }
+                // For zip artifacts (zipdeploy, wardeploy, onedeploy with type=zip), copy the request body in a temp zip file.
+                // It will be extracted to the appropriate directory by the Fetch handler
+                else if (artifactType == ArtifactType.Zip)
+                {
+                    await _deploymentLock.LockHttpOperationAsync(async () =>
+                    {
+                        if (_settings.RunFromLocalZip())
+                        {
+                            await WriteSitePackageZip(deploymentInfo, _tracer, content, true);
+                        }
+                        else
+                        {
+                            var zipFileName = Path.ChangeExtension(Path.GetRandomFileName(), "zip");
+                            var zipFilePath = Path.Combine(_environment.ZipTempPath, zipFileName);
+
+                            using (_tracer.Step("Saving request content to {0}", zipFilePath))
+                            {
+                                await content.CopyToAsync(zipFilePath, _tracer);
+                            }
+
+                            deploymentInfo.RepositoryUrl = zipFilePath;
+                        }
+                    }, "Preparing zip package");
+                }
+                // Copy the request body to a temp file.
+                // It will be moved to the appropriate directory by the Fetch handler
+                else if (deploymentInfo.Deployer == Constants.OneDeploy)
+                {
+                    await _deploymentLock.LockHttpOperationAsync(async () =>
+                    {
+                        var artifactTempPath = Path.Combine(_environment.ZipTempPath, deploymentInfo.TargetFileName);
+                        using (_tracer.Step("Saving request content to {0}", artifactTempPath))
+                        {
+                            await content.CopyToAsync(artifactTempPath, _tracer);
+                        }
+
+                        deploymentInfo.RepositoryUrl = artifactTempPath;
+                    }, "Preparing zip package");
+                }
+
+                isAsync = ArmUtils.IsArmRequest(Request) ? true : isAsync;
+
+                var result = await _deploymentManager.FetchDeploy(deploymentInfo, isAsync, Request.GetRequestUri(), "HEAD");
+
+                var response = Request.CreateResponse();
+
+                // Add deploymentId to header for deployment status API
+                if (deploymentInfo != null
+                    && !string.IsNullOrEmpty(deploymentInfo.DeploymentTrackingId))
+                {
+                    response.Headers.Add(Constants.ScmDeploymentIdHeader, deploymentInfo.DeploymentTrackingId);
+                }
+
+                switch (result)
+                {
+                    case FetchDeploymentRequestResult.RunningAynschronously:
+                        if (ArmUtils.IsArmRequest(Request))
+                        {
+                            DeployResult deployResult = new DeployResult();
+                            response = Request.CreateResponse(HttpStatusCode.Accepted, ArmUtils.AddEnvelopeOnArmRequest(deployResult, Request));
+                            string statusURL = GetStatusUrl(Request.Headers.Referrer ?? Request.RequestUri);
+                            // Should not happen: If we couldn't make the URL, there must have been an error in the request
+                            if (string.IsNullOrEmpty(statusURL))
+                            {
+                                var badResponse = Request.CreateResponse();
+                                badResponse.StatusCode = HttpStatusCode.BadRequest;
+                                return badResponse;
+                            }
+                            // latest deployment keyword reserved to poll till deployment done
+                            response.Headers.Location = new Uri(statusURL +
+                                String.Format("/deployments/{0}?api-version=2018-02-01&deployer={1}&time={2}", Constants.LatestDeployment, deploymentInfo.Deployer, DateTime.UtcNow.ToString("yyy-MM-dd_HH-mm-ssZ")));
+                            response.Headers.RetryAfter = new RetryConditionHeaderValue(TimeSpan.FromSeconds(ScmHostingConfigurations.ArmRetryAfterSeconds));
+                        }
+                        else if (isAsync)
+                        {
+                            // latest deployment keyword reserved to poll till deployment done
+                            response.Headers.Location = new Uri(Request.GetRequestUri(),
+                                String.Format("/api/deployments/{0}?deployer={1}&time={2}", Constants.LatestDeployment, deploymentInfo.Deployer, DateTime.UtcNow.ToString("yyy-MM-dd_HH-mm-ssZ")));
+                            response.Headers.RetryAfter = new RetryConditionHeaderValue(TimeSpan.FromSeconds(ScmHostingConfigurations.ArmRetryAfterSeconds));
+                        }
+                        response.StatusCode = HttpStatusCode.Accepted;
+                        break;
+                    case FetchDeploymentRequestResult.ForbiddenScmDisabled:
+                        // Should never hit this for zip push deploy
+                        response.StatusCode = HttpStatusCode.Forbidden;
+                        _tracer.Trace("Scm is not enabled, reject all requests.");
+                        break;
+                    case FetchDeploymentRequestResult.ConflictAutoSwapOngoing:
+                        response.StatusCode = HttpStatusCode.Conflict;
+                        response.Content = new StringContent(Resources.Error_AutoSwapDeploymentOngoing);
+                        _tracer.Trace(Resources.Error_AutoSwapDeploymentOngoing);
+                        break;
+                    case FetchDeploymentRequestResult.Pending:
+                        // Shouldn't happen here, as we disallow deferral for this use case
+                        response.StatusCode = HttpStatusCode.Accepted;
+                        break;
+                    case FetchDeploymentRequestResult.RanSynchronously:
+                        response.StatusCode = HttpStatusCode.OK;
+                        break;
+                    case FetchDeploymentRequestResult.ConflictDeploymentInProgress:
+                        response.StatusCode = HttpStatusCode.Conflict;
+                        response.Content = new StringContent(Resources.Error_DeploymentInProgress);
+                        _tracer.Trace(Resources.Error_DeploymentInProgress);
+                        break;
+                    case FetchDeploymentRequestResult.ConflictRunFromRemoteZipConfigured:
+                        response.StatusCode = HttpStatusCode.Conflict;
+                        response.Content = new StringContent(Resources.Error_RunFromRemoteZipConfigured);
+                        _tracer.Trace(Resources.Error_RunFromRemoteZipConfigured);
+                        break;
+                    default:
+                        response.StatusCode = HttpStatusCode.BadRequest;
+                        break;
+                }
+
+                return response;
+            }
+            finally
+            {
+                if (isRequestJSON != true && artifactType == ArtifactType.Zip && _settings.RunFromLocalZip()) 
+                {
+                    var src = await content.ReadAsStreamAsync();
+                    if (src != null)
+                    {
+                        src.Dispose();
+                    }
+                }                
+            }
         }
 
         public static string GetStatusUrl(Uri uri)
@@ -582,14 +596,47 @@ namespace Kudu.Services.Deployment
                 {
                     if (deploymentInfo.DeploymentPath.Contains("Functions App") && ex.Message.Contains("Offset to Central Directory cannot be held in an Int64"))
                     {
-                        BackupErrorZip(zipDeploymentInfo);
+                        await RetryZipDownload(repository, zipDeploymentInfo, tracer);
+                        ExtractTriggers(repository, zipDeploymentInfo);
                     }
-                    throw ex;
+                    else
+                    {
+                        throw ex;
+                    }
                 }
             }
             else
             {
                 await LocalZipFetch(repository, deploymentInfo, targetBranch, logger, tracer);
+            }
+        }
+
+        private async Task RetryZipDownload(IRepository repository, ArtifactDeploymentInfo zipDeploymentInfo, ITracer tracer)
+        {
+            try
+            {
+                _tracer.Trace($"Starting {nameof(RetryZipDownload)}");
+                if (_settings.RunFromLocalZip() && zipDeploymentInfo is ArtifactDeploymentInfo)
+                {
+                    //delete existing file
+                    var filePath = Path.Combine(_environment.SitePackagesPath, zipDeploymentInfo.ArtifactFileName);
+                    FileSystemHelpers.DeleteFile(filePath);
+
+                    //download zip file again
+                    if (!string.IsNullOrEmpty(zipDeploymentInfo.RemoteURL))
+                    {
+                        await WriteSitePackageZip(zipDeploymentInfo, tracer, await DeploymentHelper.GetArtifactContentFromURLAsync(zipDeploymentInfo, tracer));
+                    }
+                    else
+                    {
+                        await WriteSitePackageZip(zipDeploymentInfo, _tracer, Request.Content);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _tracer.Trace("{0}: {1}", nameof(RetryZipDownload), ex.Message);
+                throw ex;
             }
         }
 
@@ -790,7 +837,7 @@ namespace Kudu.Services.Deployment
             repository.Commit(deploymentInfo.Message, deploymentInfo.Author, deploymentInfo.AuthorEmail);
         }
 
-        private async Task WriteSitePackageZip(ArtifactDeploymentInfo zipDeploymentInfo, ITracer tracer, HttpContent content)
+        private async Task WriteSitePackageZip(ArtifactDeploymentInfo zipDeploymentInfo, ITracer tracer, HttpContent content, bool leaveOpen = false)
         {
             var filePath = Path.Combine(_environment.SitePackagesPath, zipDeploymentInfo.ArtifactFileName);
 
@@ -799,7 +846,14 @@ namespace Kudu.Services.Deployment
 
             using (tracer.Step("Saving request content to {0}", filePath))
             {
-                await content.CopyToAsync(filePath, tracer);
+                if (leaveOpen && zipDeploymentInfo.DeploymentPath.Contains("Functions App"))
+                {
+                    await content.CopyToAsync(filePath, tracer, leaveOpen);
+                }
+                else
+                {
+                    await content.CopyToAsync(filePath, tracer);
+                }
             }
 
             DeploymentHelper.PurgeZipsIfNecessary(_environment.SitePackagesPath, tracer, _settings.GetMaxZipPackageCount());
@@ -1037,29 +1091,39 @@ namespace Kudu.Services.Deployment
 
             using (var client = new HttpClient(new HttpClientHandler()))
             {
-                using (var request = new HttpRequestMessage(HttpMethod.Head, uri))
+                client.Timeout = TimeSpan.FromSeconds(15);
+
+                try
                 {
-                    using (var response = await client.SendAsync(request))
-                    {
-                        try
-                        {
-                            response.EnsureSuccessStatusCode();
-                            packageSize = (ulong)response.Content.Headers.ContentLength;
-                        }
-                        catch (Exception ex)
-                        {
-                            _tracer.TraceError(ex);
-                            // BadRequest: Package URL is inaccessible.
-                            string error = string.Format("{0}: Package URI is inaccessible. Failed HEAD request to {1}. Please follow these steps to verify: " +
-                                "1. Regenerate the SAS URL, in case the url has expired. " +
-                                "2. Navigate to Kudu debug console and curl on the URI to verify any accessibility restrictions. " +
-                                "3. If accessible, then redeploy. ", ZipDeployValidationError, PackageURL);
-                            throw new ArgumentException(error);
-                        }
-                    }
+                    packageSize = await OperationManager.AttemptAsync(async () => await IsPackageUrlAccessible(client, uri),
+                        retries: 2, delayBeforeRetry: 1000);
+                }
+                catch (Exception ex)
+                {
+                    // BadRequest: Package URL is inaccessible.
+                    string error = string.Format("{0}: Package URI is inaccessible. Failed HEAD request to package URI with error: {1}. Please follow these steps to verify: " +
+                        "1. Regenerate the SAS URL, in case the url has expired. " +
+                        "2. Navigate to Kudu debug console (if accessible) and curl on the URI to verify any accessibility restrictions. " +
+                        "3. If accessible, then redeploy. ", ZipDeployValidationError, ex.Message);
+                    throw new ArgumentException(error);
                 }
             }
             
+            return packageSize;
+        }
+
+        private async Task<ulong> IsPackageUrlAccessible(HttpClient client, Uri uri)
+        {
+            _tracer.Trace("{0}: {1}", nameof(ValidateZipDeploy), nameof(IsPackageUrlAccessible));
+            ulong packageSize = 0;
+            using (var request = new HttpRequestMessage(HttpMethod.Head, uri))
+            {
+                using (var response = await client.SendAsync(request))
+                {
+                    response.EnsureSuccessStatusCode();
+                    packageSize = (ulong)response.Content.Headers.ContentLength;
+                }
+            }
             return packageSize;
         }
 

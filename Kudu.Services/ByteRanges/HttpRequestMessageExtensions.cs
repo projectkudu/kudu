@@ -1,6 +1,7 @@
 ﻿using System;
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
+using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -69,6 +70,50 @@ namespace Kudu.Services.ByteRanges
             }
 
             return total;
+        }
+
+        public static async Task<long> CopyToAsync(this HttpContent content, string filePath, ITracer tracer, bool leaveOpen = false)
+        {
+            var nextTraceTime = DateTime.UtcNow.AddSeconds(30);
+            long total = 0;
+            var buffer = new byte[ScmHostingConfigurations.StreamCopyBufferSize];
+            var src = await content.ReadAsStreamAsync();
+            try
+            {
+                if (src.CanSeek)
+                {
+                    src.Seek(0, SeekOrigin.Begin);
+                }
+                using (var dst = FileSystemHelpers.CreateFile(filePath))
+                {
+                    while (true)
+                    {
+                        int read = await src.ReadAsync(buffer, 0, buffer.Length);
+                        if (read <= 0)
+                        {
+                            tracer.Trace("Total {0:n0} bytes written to {1}", total, filePath);
+                            break;
+                        }
+                        else if (DateTime.UtcNow > nextTraceTime)
+                        {
+                            tracer.Trace("Writing {0:n0} bytes to {1}", total, filePath);
+                            nextTraceTime = DateTime.UtcNow.AddSeconds(30);
+                        }
+
+                        await dst.WriteAsync(buffer, 0, read);
+                        total += read;
+                    }
+                }
+
+                return total;
+            }
+            finally
+            {
+                if (!leaveOpen)
+                {
+                    src.Dispose();
+                }
+            }
         }
     }
 }
