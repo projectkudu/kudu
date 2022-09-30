@@ -20,8 +20,9 @@ namespace Kudu.Services.Deployment
         private const string StackEnvVarName = "WEBSITE_STACK";
 
         // All paths are relative to HOME directory
-        public const string WwwrootDirectoryRelativePath = "site/wwwroot/";
-        public const string ScriptsDirectoryRelativePath = "site/scripts/";
+        public const string WwwrootDirectoryRelativePath = "site/wwwroot";
+        public const string ScriptsDirectoryRelativePath = "site/scripts";
+        public const string LibsDirectoryRelativePath = "site/libs";
 
         public static bool IsLegacyWarPathValid(string path)
         {
@@ -52,7 +53,7 @@ namespace Kudu.Services.Deployment
             return false;
         }
 
-        public static bool EnsureValidPath(ArtifactType artifactType, ref string path, out string error, string designatedDirectoryRelativePath = "")
+        public static bool EnsureValidPath(ArtifactType artifactType, string designatedDirectoryRelativePath, ref string path, out string error)
         {
             if (string.IsNullOrWhiteSpace(path))
             {
@@ -70,7 +71,7 @@ namespace Kudu.Services.Deployment
             // If specified path is absolute, make sure it points to the designated directory for the artifact type
             if (path.StartsWith("/", StringComparison.Ordinal))
             {
-                string designatedRootAbsolutePath = $"/home/{designatedDirectoryRelativePath}";
+                string designatedRootAbsolutePath = $"/home/{designatedDirectoryRelativePath}/";
 
                 if (!path.StartsWith($"{designatedRootAbsolutePath}", StringComparison.Ordinal))
                 {
@@ -85,6 +86,47 @@ namespace Kudu.Services.Deployment
                 {
                     error = $"Absolute path for artifact type = '{artifactType}' should be of the form {designatedRootAbsolutePath}[directoryname/]<filename>";
                     return false;
+                }
+            }
+
+            error = null;
+            return true;
+        }
+
+        public static bool EnsureValidStaticPath(ref string path, out string error, out bool deployToRoot)
+        {
+            string[] rootPathKeyWords = { "home/", "%home%/", "$home/", "/home/", "/%home%/", "/$home/" };
+
+            deployToRoot = false;
+            if (string.IsNullOrWhiteSpace(path))
+            {
+                error = $"Path must be defined for type=static";
+                return false;
+            }
+
+            // Keep things simple by disallowing trailing slash
+            if (path.EndsWith("/", StringComparison.Ordinal))
+            {
+                error = $"Path cannot end with a '/'";
+                return false;
+            }
+
+            // Path is absolute iif it begins with one of the rootPathKeyWords
+            foreach (string keyWord in rootPathKeyWords)
+            {
+                if (path.StartsWith(keyWord))
+                {
+                    path = path.Substring(keyWord.Length);
+                    // If absolute path points to wwwroot set path relative to wwwroot
+                    if (path.StartsWith(WwwrootDirectoryRelativePath, StringComparison.OrdinalIgnoreCase))
+                    {
+                        path = path.Substring(WwwrootDirectoryRelativePath.Length);
+                    }
+                    else
+                    {
+                        deployToRoot = true;
+                    }
+                    break;
                 }
             }
 

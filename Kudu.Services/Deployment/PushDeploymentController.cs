@@ -243,6 +243,8 @@ namespace Kudu.Services.Deployment
                 };
 
                 string error;
+                bool deployToRoot;
+
                 switch (artifactType)
                 {
                     case ArtifactType.War:
@@ -258,7 +260,7 @@ namespace Kudu.Services.Deployment
                             // For legacy war deployments, the only path allowed is webapps/<directory-name>
                             //
 
-                            if (!OneDeployHelper.EnsureValidPath(artifactType, ref path, out error, OneDeployHelper.WwwrootDirectoryRelativePath))
+                            if (!OneDeployHelper.EnsureValidPath(artifactType, OneDeployHelper.WwwrootDirectoryRelativePath, ref path, out error))
                             {
                                 return StatusCode400(error);
                             }
@@ -303,22 +305,48 @@ namespace Kudu.Services.Deployment
                         deploymentInfo.TargetFileName = "app.ear";
                         break;
 
+                    case ArtifactType.Lib:
+                        if (!OneDeployHelper.EnsureValidPath(artifactType, OneDeployHelper.LibsDirectoryRelativePath, ref path, out error))
+                        {
+                            return StatusCode400(error);
+                        }
+
+                        deploymentInfo.TargetRootPath = OneDeployHelper.GetAbsolutePath(_environment, OneDeployHelper.LibsDirectoryRelativePath);
+                        OneDeployHelper.SetTargetSubDirectoyAndFileNameFromRelativePath(deploymentInfo, path);
+                        break;
+
                     case ArtifactType.Startup:
                         deploymentInfo.TargetRootPath = OneDeployHelper.GetAbsolutePath(_environment, OneDeployHelper.ScriptsDirectoryRelativePath);
                         OneDeployHelper.SetTargetSubDirectoyAndFileNameFromRelativePath(deploymentInfo, OneDeployHelper.GetStartupFileName());
                         break;
 
-                    case ArtifactType.Static:
-                        if (!OneDeployHelper.EnsureValidPath(artifactType, ref path, out error))
+                    case ArtifactType.Script:
+                        if (!OneDeployHelper.EnsureValidPath(artifactType, OneDeployHelper.ScriptsDirectoryRelativePath, ref path, out error))
                         {
                             return StatusCode400(error);
                         }
-                        if (deploymentInfo.CleanupTargetDirectory)
+
+                        deploymentInfo.TargetRootPath = OneDeployHelper.GetAbsolutePath(_environment, OneDeployHelper.ScriptsDirectoryRelativePath);
+                        OneDeployHelper.SetTargetSubDirectoyAndFileNameFromRelativePath(deploymentInfo, path);
+
+                        break;
+
+                    case ArtifactType.Static:
+                        if (!OneDeployHelper.EnsureValidStaticPath(ref path, out error, out deployToRoot))
                         {
-                            return StatusCode400("Clean deployments cannot be performed for type=static");
+                            return StatusCode400(error);
                         }
 
-                        deploymentInfo.TargetRootPath = _environment.RootPath;
+                        if (deployToRoot)
+                        {
+                            if (deploymentInfo.CleanupTargetDirectory)
+                            {
+                                return StatusCode400("Clean deployments cannot be performed outside of wwwroot");
+                            }
+
+                            deploymentInfo.TargetRootPath = _environment.RootPath;
+                        }
+
                         OneDeployHelper.SetTargetSubDirectoyAndFileNameFromRelativePath(deploymentInfo, path);
 
                         break;
