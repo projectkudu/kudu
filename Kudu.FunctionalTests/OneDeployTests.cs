@@ -182,9 +182,6 @@ namespace Kudu.FunctionalTests
 
                 // Clean deployment
                 {
-                    // Clean deployment outside of wwwroot is expected to fail
-                    await DeployNonZippedArtifact(appManager, "static", "/home/test/a.txt", isAsync, true, "", false);
-
                     await DeployNonZippedArtifact(appManager, "static", "dir2/dir2a.txt", isAsync, true, "site/wwwroot/dir2/dir2a.txt");
                     await DeploymentTestHelper.AssertSuccessfulDeploymentByFilenames(appManager, new string[] { "dir2" }, "site/wwwroot");
                     await DeploymentTestHelper.AssertSuccessfulDeploymentByFilenames(appManager, new string[] { "dir2a.txt" }, "site/wwwroot/dir2");
