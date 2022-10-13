@@ -116,6 +116,12 @@ namespace Kudu.Core.Settings
             get { return GetValue("UseHttpCompletionOptionResponseHeadersRead", "1") != "0"; }
         }
 
+        public static int DeploymentBackupMemoryKBytes
+        {
+            // this is disabled by default
+            get { return int.TryParse(GetValue("DeploymentBackupMemoryKBytes", "0"), out int value) ? value : 0; }
+        }
+
         public static IPAddress ILBVip
         {
             get { return IPAddress.TryParse(GetValue(SettingsKeys.ILBVip), out var address) ? address : null; }
