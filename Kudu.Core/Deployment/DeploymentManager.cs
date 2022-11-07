@@ -604,7 +604,7 @@ namespace Kudu.Core.Deployment
             }
         }
 
-        private DeployResult GetResult(string id, string activeDeploymentId, bool isDeploying)
+        public DeployResult GetResult(string id, string activeDeploymentId, bool isDeploying)
         {
             var file = VerifyDeployment(id, isDeploying);
 

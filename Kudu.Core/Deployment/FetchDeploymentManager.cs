@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Kudu.Contracts.Infrastructure;
@@ -327,6 +328,11 @@ namespace Kudu.Core.Deployment
             }
 
             return true;
+        }
+
+        public DeployResult GetDeployResult()
+        {
+            return _deploymentManager.GetResults().First();
         }
 
         // key goal is to create background tracer that is independent of request.
