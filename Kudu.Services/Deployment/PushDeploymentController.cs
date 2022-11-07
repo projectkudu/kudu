@@ -196,6 +196,7 @@ namespace Kudu.Services.Deployment
                         restart = armProperties.Value<bool?>("restart");
                         clean = armProperties.Value<bool?>("clean");
                         ignoreStack = armProperties.Value<bool>("ignorestack");
+                        trackDeploymentProgress = armProperties.Value<bool>("trackdeploymentprogress");
                     }
                 }
                 catch (Exception ex)
@@ -480,6 +481,13 @@ namespace Kudu.Services.Deployment
 
             var response = Request.CreateResponse();
 
+            if (ArmUtils.IsArmRequest(Request))
+            {
+                DeployResult deployResult = _deploymentManager.GetDeployResult();
+                deployResult.Id = deploymentInfo.DeploymentTrackingId;
+                response = Request.CreateResponse(HttpStatusCode.Accepted, ArmUtils.AddEnvelopeOnArmRequest(deployResult, Request));
+            }
+
             // Add deploymentId to header for deployment status API
             if (deploymentInfo != null
                 && !string.IsNullOrEmpty(deploymentInfo.DeploymentTrackingId))
@@ -492,8 +500,6 @@ namespace Kudu.Services.Deployment
                 case FetchDeploymentRequestResult.RunningAynschronously:
                     if (ArmUtils.IsArmRequest(Request))
                     {
-                        DeployResult deployResult = new DeployResult();
-                        response = Request.CreateResponse(HttpStatusCode.Accepted, ArmUtils.AddEnvelopeOnArmRequest(deployResult, Request));
                         string statusURL = GetStatusUrl(Request.Headers.Referrer ?? Request.RequestUri);
                         // Should not happen: If we couldn't make the URL, there must have been an error in the request
                         if (string.IsNullOrEmpty(statusURL))

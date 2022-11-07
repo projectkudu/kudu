@@ -10,5 +10,7 @@ namespace Kudu.Core.Deployment
             bool asyncRequested,
             Uri requestUri,
             string targetBranch);
+
+        DeployResult GetDeployResult();
     }
 }
