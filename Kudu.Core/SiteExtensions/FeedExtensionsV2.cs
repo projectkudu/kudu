@@ -18,6 +18,7 @@ using Kudu.Core.Infrastructure;
 using Kudu.Core.Tracing;
 using Newtonsoft.Json.Linq;
 using NuGet.Client;
+using NuGet.Protocol.Core.Types;
 
 namespace Kudu.Core.SiteExtensions
 {
@@ -68,10 +69,8 @@ namespace Kudu.Core.SiteExtensions
             // always include pre-release package
             if (filterOptions == null)
             {
-                filterOptions = new SearchFilter();
+                filterOptions = new SearchFilter(true);
             }
-
-            filterOptions.IncludePrerelease = true; // keep the good old behavior
 
             List<string> installedPackages = new List<string>(Directory.EnumerateDirectories(siteExtensionRootPath));
             int countEntries = 0;

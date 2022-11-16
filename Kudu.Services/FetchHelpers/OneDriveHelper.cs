@@ -15,6 +15,7 @@ using Kudu.Core.Deployment;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.SourceControl;
 using Kudu.Core.Tracing;
+using Newtonsoft.Json;
 
 namespace Kudu.Services.FetchHelpers
 {
@@ -173,9 +174,8 @@ namespace Kudu.Services.FetchHelpers
         {
             string content = response.Content != null ? await response.Content.ReadAsStringAsync() : null;
             if (response.IsSuccessStatusCode)
-            {
-                var serializer = new JavaScriptSerializer();
-                return serializer.Deserialize<T>(content);
+            {             
+                return JsonConvert.DeserializeObject<T>(content);
             }
 
             throw new Exception(string.Format(CultureInfo.InvariantCulture, "'{0}' : '{1}', {2}", response.StatusCode, operation, content));
@@ -220,8 +220,7 @@ namespace Kudu.Services.FetchHelpers
             {
                 var next = cursor;
                 var ids = new Dictionary<string, OneDriveModel.ItemInfo>();
-                Dictionary<string, object> changes = null;
-                var serializer = new JavaScriptSerializer();
+                Dictionary<string, object> changes = null;              
                 do
                 {
                     var uri = requestUri;
@@ -255,7 +254,8 @@ namespace Kudu.Services.FetchHelpers
                         continue;
                     }
 
-                    var items = serializer.ConvertToType<OneDriveModel.OneDriveItemCollection>(changes);
+                    var jsonChanges = JsonConvert.SerializeObject(changes);
+                    var items = JsonConvert.DeserializeObject<OneDriveModel.OneDriveItemCollection>(jsonChanges);                    
 
                     // changes
                     if (items != null && items.value != null && items.value.Count > 0)

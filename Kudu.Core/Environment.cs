@@ -4,7 +4,11 @@ using System.Globalization;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Security;
+#if NETFRAMEWORK
 using System.Web;
+#else
+using Microsoft.AspNetCore.Http.Extensions;
+#endif
 using Kudu.Contracts.Settings;
 using Kudu.Core.Helpers;
 using Kudu.Core.Infrastructure;
@@ -350,7 +354,11 @@ namespace Kudu.Core
             get
             {
                 // GetLeftPart(Authority) returns the https://www.example.com of any Uri
+#if NETFRAMEWORK
                 var url = HttpContext.Current?.Request?.Url?.GetLeftPart(UriPartial.Authority);
+#else
+                var url = new Uri(HttpContextHelper.Current.Request.GetEncodedUrl()).GetLeftPart(UriPartial.Authority);
+#endif
                 if (string.IsNullOrEmpty(url))
                 {
                     // if call is not done in Request context (eg. in BGThread), fall back to %host%

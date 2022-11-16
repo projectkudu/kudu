@@ -2,6 +2,7 @@
 using Microsoft.Azure.Web.DataProtection;
 using System;
 using System.Security.Cryptography;
+using DataProtectionProvider = Microsoft.AspNetCore.DataProtection.DataProtectionProvider;
 
 namespace Kudu.Core.Infrastructure
 {
@@ -24,7 +25,7 @@ namespace Kudu.Core.Infrastructure
         public static Tuple<string, string>[] GenerateSecretStringsKeyPair(int number)
         {
             var unencryptedToEncryptedKeyPair = new Tuple<string, string>[number];
-            var protector = DataProtectionProvider.CreateAzureDataProtector().CreateProtector(DefaultProtectorPurpose);
+            var protector = DataProtectionProvider.Create(DefaultProtectorPurpose).CreateProtector(DefaultProtectorPurpose);
             for (int i = 0; i < number; i++)
             {
                 string unencryptedKey = GenerateSecretString();
@@ -37,7 +38,7 @@ namespace Kudu.Core.Infrastructure
         {
             try
             {
-                var protector = DataProtectionProvider.CreateAzureDataProtector().CreateProtector(DefaultProtectorPurpose);
+                var protector = DataProtectionProvider.Create(DefaultProtectorPurpose).CreateProtector(DefaultProtectorPurpose);
                 return protector.Unprotect(content);
             }
             catch (CryptographicException ex)

@@ -10,7 +10,7 @@
     <RootNamespace>Kudu.Performance</RootNamespace>
     <AssemblyName>Kudu.Performance</AssemblyName>
     <PlatformTarget>x86</PlatformTarget>
-    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <TargetFrameworkProfile />
     <EnableNETAnalyzers>true</EnableNETAnalyzers>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>

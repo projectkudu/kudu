@@ -5,7 +5,11 @@ using System.IO.Abstractions;
 using System.IO.Compression;
 using System.Linq;
 using System.Web;
+#if NETFRAMEWORK
 using System.Web.Hosting;
+#else
+using Microsoft.AspNetCore.Http.Extensions;
+#endif
 using Kudu.Contracts.Jobs;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
@@ -62,7 +66,13 @@ namespace Kudu.Core.Jobs
         }
     }
 
-    public abstract class JobsManagerBase<TJob> : JobsManagerBase, IJobsManager<TJob>, IDisposable, IRegisteredObject where TJob : JobBase, new()
+    public abstract class JobsManagerBase<TJob> : JobsManagerBase,
+        IJobsManager<TJob>, 
+        IDisposable
+#if NETFRAMEWORK
+        ,IRegisteredObject
+#endif
+        where TJob : JobBase, new()
     {
         private const string DefaultScriptFileName = "run";
 
@@ -108,7 +118,10 @@ namespace Kudu.Core.Jobs
             JobsBinariesPath = Path.Combine(basePath, jobsTypePath);
             JobsDataPath = Path.Combine(Environment.JobsDataPath, jobsTypePath);
             JobsWatcher = new JobsFileWatcher(JobsBinariesPath, OnJobChanged, null, ListJobNames, traceFactory, analytics, GetJobType());
+
+#if NETFRAMEWORK
             HostingEnvironment.RegisterObject(this);
+#endif
         }
 
         protected virtual IEnumerable<string> ListJobNames(bool forceRefreshCache)
@@ -453,7 +466,10 @@ namespace Kudu.Core.Jobs
 
             IsShuttingdown = true;
             OnShutdown();
+
+#if NETFRAMEWORK
             HostingEnvironment.UnregisterObject(this);
+#endif
         }
 
         protected abstract void OnShutdown();
@@ -506,7 +522,7 @@ namespace Kudu.Core.Jobs
         {
             get
             {
-                if (HttpContext.Current == null)
+                if (HttpContextHelper.Current == null)
                 {
                     if (string.IsNullOrEmpty(_lastKnownAppBaseUrlPrefix))
                     {
@@ -518,9 +534,13 @@ namespace Kudu.Core.Jobs
                     }
 
                     return _lastKnownAppBaseUrlPrefix;
-                }
+                }                
 
+#if NETFRAMEWORK
                 _lastKnownAppBaseUrlPrefix = HttpContext.Current.Request.Url.GetLeftPart(UriPartial.Authority);
+#else
+                _lastKnownAppBaseUrlPrefix = new Uri(HttpContextHelper.Current.Request.GetEncodedUrl()).GetLeftPart(UriPartial.Authority);
+#endif
                 return _lastKnownAppBaseUrlPrefix;
             }
         }

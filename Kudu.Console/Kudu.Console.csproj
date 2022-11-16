@@ -10,7 +10,7 @@
     <AssemblyName>kudu</AssemblyName>
     <Platform>x86</Platform>
     <PlatformTarget>x86</PlatformTarget>
-    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <TargetFrameworkProfile />
     <EnableNETAnalyzers>true</EnableNETAnalyzers>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
@@ -64,16 +64,6 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Kudu.Contracts\Kudu.Contracts.csproj">
-      <Project>{EC0ED988-2C60-4F31-A434-645E048BFD95}</Project>
-      <Name>Kudu.Contracts</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Kudu.Core\Kudu.Core.csproj">
-      <Project>{5320177C-725A-44BD-8FA6-F88D9725B46C}</Project>
-      <Name>Kudu.Core</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <EmbeddedResource Include="Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
@@ -82,6 +72,16 @@
   <ItemGroup>
     <Analyzer Include="..\packages\Microsoft.CodeAnalysis.Analyzers.2.9.8\analyzers\dotnet\cs\Microsoft.CodeAnalysis.Analyzers.dll" />
     <Analyzer Include="..\packages\Microsoft.CodeAnalysis.Analyzers.2.9.8\analyzers\dotnet\cs\Microsoft.CodeAnalysis.CSharp.Analyzers.dll" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Kudu.Contracts\Kudu.Contracts.csproj">
+      <Project>{ec0ed988-2c60-4f31-a434-645e048bfd95}</Project>
+      <Name>Kudu.Contracts</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Kudu.Core\Kudu.Core.csproj">
+      <Project>{5320177c-725a-44bd-8fa6-f88d9725b46c}</Project>
+      <Name>Kudu.Core</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="..\packages\Microsoft.Diagnostics.Tracing.EventRegister.1.0.26\build\Microsoft.Diagnostics.Tracing.EventRegister.targets" Condition="Exists('..\packages\Microsoft.Diagnostics.Tracing.EventRegister.1.0.26\build\Microsoft.Diagnostics.Tracing.EventRegister.targets')" />

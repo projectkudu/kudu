@@ -10,9 +10,11 @@ using Kudu.Contracts.SiteExtensions;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Tracing;
-using NuGet.Client;
-using NuGet.Client.VisualStudio;
-using NuGet.PackagingCore;
+using NuGet.Common;
+using NuGet.Configuration;
+using NuGet.Packaging;
+using NuGet.Packaging.Core;
+using NuGet.Protocol.Core.Types;
 using NuGet.Versioning;
 
 namespace Kudu.Core.SiteExtensions
@@ -25,16 +27,15 @@ namespace Kudu.Core.SiteExtensions
         /// <summary>
         /// Query result by search term, always include pre-released
         /// </summary>
-        public static async Task<IEnumerable<UIPackageMetadata>> Search(this SourceRepository srcRepo, string searchTerm, SearchFilter filterOptions = null, int skip = 0, int take = 1000)
+        public static async Task<IEnumerable<IPackageSearchMetadata>> Search(this SourceRepository srcRepo, string searchTerm, SearchFilter filterOptions = null, int skip = 0, int take = 1000)
         {
             // always include pre-release package
             if (filterOptions == null)
             {
-                filterOptions = new SearchFilter();
+                filterOptions = new SearchFilter(true);
             }
 
-            filterOptions.IncludePrerelease = true; // keep the good old behavior
-            var searchResource = await srcRepo.GetResourceAndValidateAsync<SearchLatestResource>();
+            var searchResource = await srcRepo.GetResourceAndValidateAsync<PackageSearchResource>();
 
             // When using nuget.org, we only look at packages that have our tag. Later, we should switch to filtering
             // by PackageType once nuget.org starts supporting that
@@ -58,25 +59,26 @@ namespace Kudu.Core.SiteExtensions
                 }
             }
 
-            return await searchResource.Search(searchTerm, filterOptions, skip, take, CancellationToken.None);
+           
+            return await searchResource.SearchAsync(searchTerm, filterOptions, skip, take, NullLogger.Instance, CancellationToken.None);
         }
 
         /// <summary>
         /// Query source repository for latest package base given package id
         /// </summary>
-        internal static async Task<UIPackageMetadata> GetLatestPackageByIdFromSrcRepo(this SourceRepository srcRepo, string packageId)
+        internal static async Task<IPackageSearchMetadata> GetLatestPackageByIdFromSrcRepo(this SourceRepository srcRepo, string packageId)
         {
             // 7 references none of which uses bool includePrerelease = true, bool includeUnlisted = false
-            var metadataResource = await srcRepo.GetResourceAndValidateAsync<UIMetadataResource>();
+            var metadataResource = await srcRepo.GetResourceAndValidateAsync<PackageMetadataResource>();
             return await metadataResource.GetLatestPackageByIdFromMetaRes(packageId,
                 explicitTag: IsNuGetRepo(srcRepo.PackageSource.Source));
         }
 
         // can be called concurrently if metaDataResource is provided
-        internal static async Task<UIPackageMetadata> GetLatestPackageByIdFromMetaRes(this UIMetadataResource metadataResource, string packageId, bool includePrerelease = true, bool includeUnlisted = false, bool explicitTag = false)
+        internal static async Task<IPackageSearchMetadata> GetLatestPackageByIdFromMetaRes(this PackageMetadataResource metadataResource, string packageId, bool includePrerelease = true, bool includeUnlisted = false, bool explicitTag = false)
         {
-            UIPackageMetadata latestPackage = null;
-            IEnumerable<UIPackageMetadata> packages = await metadataResource.GetMetadata(packageId, includePrerelease, includeUnlisted, token: CancellationToken.None);
+            IPackageSearchMetadata latestPackage = null;
+            IEnumerable<IPackageSearchMetadata> packages = await metadataResource.GetMetadataAsync(packageId, includePrerelease, includeUnlisted, new SourceCacheContext(), NullLogger.Instance, token: CancellationToken.None);
 
             // When using nuget.org, we only look at packages that have our tag.
             if (explicitTag)
@@ -111,12 +113,12 @@ namespace Kudu.Core.SiteExtensions
         /// <param name="packageId">Package id, must not be null</param>
         /// <param name="version">Package version, must not be null</param>
         /// <returns>Package metadata</returns>
-        public static async Task<UIPackageMetadata> GetPackageByIdentity(this SourceRepository srcRepo, string packageId, string version)
+        public static async Task<IPackageSearchMetadata> GetPackageByIdentity(this SourceRepository srcRepo, string packageId, string version)
         {
-            var metadataResource = await srcRepo.GetResourceAndValidateAsync<UIMetadataResource>();
+            var metadataResource = await srcRepo.GetResourceAndValidateAsync<PackageMetadataResource>();
             NuGetVersion expectedVersion = NuGetVersion.Parse(version);
             var identity = new PackageIdentity(packageId, expectedVersion);
-            UIPackageMetadata ret = await metadataResource.GetMetadata(identity, CancellationToken.None);
+            IPackageSearchMetadata ret = await metadataResource.GetMetadataAsync(identity, new SourceCacheContext(), NullLogger.Instance, CancellationToken.None);
 
             // When using nuget.org, we only look at packages that have our tag.
             if (ret != null &&
@@ -342,7 +344,14 @@ namespace Kudu.Core.SiteExtensions
 
             try
             {
-                sourceStream = await downloadResource.GetStream(identity, CancellationToken.None);
+                var result = await downloadResource.GetDownloadResourceResultAsync(
+                    identity, 
+                    new PackageDownloadContext(new SourceCacheContext()), 
+                    SettingsUtility.GetGlobalPackagesFolder(NuGet.Configuration.Settings.LoadDefaultSettings(root: null)), 
+                    NullLogger.Instance, 
+                    CancellationToken.None);
+                //sourceStream = await downloadResource.GetStream(identity, CancellationToken.None);
+                sourceStream = result.PackageStream;
                 if (sourceStream == null)
                 {
                     // package not exist from feed

@@ -6,7 +6,14 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
+#if NETFRAMEWORK
 using System.Web;
+using System.Web.Hosting;
+#endif
+#if NET6_0_OR_GREATER
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Extensions;
+#endif
 using System.Xml;
 using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Jobs;
@@ -19,7 +26,8 @@ using Kudu.Core.Infrastructure;
 using Kudu.Core.Settings;
 using Kudu.Core.Tracing;
 using Newtonsoft.Json.Linq;
-using NuGet.Client.VisualStudio;
+using NuGet.Packaging;
+using NuGet.Protocol.Core.Types;
 using NullLogger = Kudu.Core.Deployment.NullLogger;
 
 namespace Kudu.Core.SiteExtensions
@@ -49,10 +57,23 @@ namespace Kudu.Core.SiteExtensions
         private const string _installScriptName = "install.cmd";
         private const string _uninstallScriptName = "uninstall.cmd";
 
-        public SiteExtensionManagerV2(IContinuousJobsManager continuousJobManager, ITriggeredJobsManager triggeredJobManager, IEnvironment environment, IDeploymentSettingsManager settings, ITraceFactory traceFactory, HttpContextBase context, IAnalytics analytics)
+        public SiteExtensionManagerV2(
+            IContinuousJobsManager continuousJobManager, 
+            ITriggeredJobsManager triggeredJobManager, 
+            IEnvironment environment, 
+            IDeploymentSettingsManager settings, 
+            ITraceFactory traceFactory
+#if NETFRAMEWORK
+            ,HttpContextBase context
+#endif
+            ,IAnalytics analytics)
         {
             _rootPath = Path.Combine(environment.RootPath, "SiteExtensions");
+#if NETFRAMEWORK
             _baseUrl = context.Request.Url == null ? String.Empty : context.Request.Url.GetLeftPart(UriPartial.Authority).TrimEnd('/');
+#elif NET6_OR_GREATER           
+            _baseUrl = HttpContextHelper.Current.Request.GetEncodedUrl() == null ? String.Empty : new Uri(HttpContextHelper.Current.Request.GetEncodedUrl()).GetLeftPart(UriPartial.Authority).TrimEnd('/');
+#endif           
             _continuousJobManager = continuousJobManager;
             _triggeredJobManager = triggeredJobManager;
             _environment = environment;
@@ -857,7 +878,7 @@ namespace Kudu.Core.SiteExtensions
             {
                 using (tracer.Step("Fallback to FeedExtensionsV1 search package by id: {0} and version: {1}.", id, version))
                 {
-                    UIPackageMetadata data;
+                    IPackageSearchMetadata data;
                     var remoteRepo = SiteExtensionManager.GetSourceRepository(DeploymentSettingsExtension.NuGetSiteExtensionFeedUrl);
                     if (string.IsNullOrEmpty(version))
                     {

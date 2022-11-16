@@ -1,5 +1,4 @@
 ﻿using System.IO;
-using System.IO.Abstractions;
 using Kudu.Core.Helpers;
 using Kudu.Core.Infrastructure;
 

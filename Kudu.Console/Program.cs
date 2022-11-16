@@ -20,7 +20,7 @@ using Kudu.Core.Settings;
 using Kudu.Core.SourceControl;
 using Kudu.Core.SourceControl.Git;
 using Kudu.Core.Tracing;
-using XmlSettings;
+using Kudu.Core.Xml;
 
 namespace Kudu.Console
 {
@@ -62,7 +62,7 @@ namespace Kudu.Console
             System.Environment.SetEnvironmentVariable(Constants.ScmDeploymentKind, "GitPush");
 
             IEnvironment env = GetEnvironment(appRoot, requestId);
-            ISettings settings = new XmlSettings.Settings(GetSettingsPath(env));
+            ISettings settings = new Settings(GetSettingsPath(env));
             IDeploymentSettingsManager settingsManager = new DeploymentSettingsManager(settings);
 
             // Setup the trace

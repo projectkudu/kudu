@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Kudu.Contracts.Settings;
-using XmlSettings;
+using Kudu.Core.Xml;
 
 namespace Kudu.Core.Settings
 {

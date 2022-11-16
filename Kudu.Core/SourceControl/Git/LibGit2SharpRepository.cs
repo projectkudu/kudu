@@ -332,7 +332,7 @@ echo $i > pushinfo
 
         public void CreateOrResetBranch(string branchName, string startPoint)
         {
-            using (var repo = new LibGit2Sharp.Repository(RepositoryPath))
+            using (var repo = new Repository(RepositoryPath))
             {
                 if (string.IsNullOrWhiteSpace(startPoint))
                 {
@@ -360,7 +360,7 @@ echo $i > pushinfo
 
         public void UpdateRawRef(string toBeUpdatedRef, string toBeUpdatedToRef)
         {
-            using (var repo = new LibGit2Sharp.Repository(RepositoryPath))
+            using (var repo = new Repository(RepositoryPath))
             {
                 repo.Refs.UpdateTarget(toBeUpdatedRef, toBeUpdatedToRef);
             }
@@ -368,7 +368,7 @@ echo $i > pushinfo
 
         public bool DoesBranchContainCommit(string branchName, string commitOrBranchName)
         {
-            using (var repo = new LibGit2Sharp.Repository(RepositoryPath))
+            using (var repo = new Repository(RepositoryPath))
             {
                 var branch = repo.Branches[branchName];
                 if (branch == null) return false;
@@ -389,7 +389,7 @@ echo $i > pushinfo
 
             if (!Directory.Exists(path)) return Enumerable.Empty<string>();
 
-            using (var repo = new LibGit2Sharp.Repository(RepositoryPath))
+            using (var repo = new Repository(RepositoryPath))
             {
                 var files = repo.Diff.Compare<TreeChanges>(null, DiffTargets.Index, lookupList, compareOptions: new CompareOptions() { IncludeUnmodified = true, Similarity = SimilarityOptions.None })
                                       .Select(d => Path.Combine(repo.Info.WorkingDirectory, d.Path))
@@ -435,7 +435,7 @@ echo $i > pushinfo
                     return false;
                 }
 
-                if (LibGit2Sharp.Repository.IsValid(RepositoryPath))
+                if (Repository.IsValid(RepositoryPath))
                 {
                     // This should no-op if HEAD size > 0
                     // Corrupted HEAD might happen if the process was terminated during a long running git operation.

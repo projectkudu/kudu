@@ -10,7 +10,13 @@ using System.Net;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
+#if NETFRAMEWORK
 using System.Web;
+#endif
+#if NET6_0_OR_GREATER
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Extensions;
+#endif
 using System.Xml;
 using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Jobs;
@@ -23,16 +29,16 @@ using Kudu.Core.Infrastructure;
 using Kudu.Core.Settings;
 using Kudu.Core.Tracing;
 using Newtonsoft.Json.Linq;
-using NuGet.Client;
-using NuGet.Client.VisualStudio;
+using NuGet.Packaging;
+using NuGet.Protocol.Core.Types;
 using NuGet.Versioning;
 using NullLogger = Kudu.Core.Deployment.NullLogger;
 namespace Kudu.Core.SiteExtensions
 {
     public class SiteExtensionManager : ISiteExtensionManager
     {
-        private static Lazy<IEnumerable<Lazy<INuGetResourceProvider, INuGetResourceProviderMetadata>>> _providers
-            = new Lazy<IEnumerable<Lazy<INuGetResourceProvider, INuGetResourceProviderMetadata>>>(GetNugetProviders);
+        private static Lazy<IEnumerable<Lazy<INuGetResourceProvider, PackageMetadataResource>>> _providers
+            = new Lazy<IEnumerable<Lazy<INuGetResourceProvider, PackageMetadataResource>>>(GetNugetProviders);
 
         private readonly SourceRepository _localRepository;
         private readonly IEnvironment _environment;
@@ -58,10 +64,23 @@ namespace Kudu.Core.SiteExtensions
         private const string _installScriptName = "install.cmd";
         private const string _uninstallScriptName = "uninstall.cmd";
 
-        public SiteExtensionManager(IContinuousJobsManager continuousJobManager, ITriggeredJobsManager triggeredJobManager, IEnvironment environment, IDeploymentSettingsManager settings, ITraceFactory traceFactory, HttpContextBase context, IAnalytics analytics)
+        public SiteExtensionManager(
+            IContinuousJobsManager continuousJobManager, 
+            ITriggeredJobsManager triggeredJobManager, 
+            IEnvironment environment, 
+            IDeploymentSettingsManager settings, 
+            ITraceFactory traceFactory
+#if NETFRAMEWORK
+            , HttpContextBase context
+#endif
+            , IAnalytics analytics)
         {
             _rootPath = Path.Combine(environment.RootPath, "SiteExtensions");
+#if NETFRAMEWORK
             _baseUrl = context.Request.Url == null ? String.Empty : context.Request.Url.GetLeftPart(UriPartial.Authority).TrimEnd('/');
+#elif NET6_OR_GREATER           
+            _baseUrl = HttpContextHelper.Current.Request.GetEncodedUrl() == null ? String.Empty : new Uri(HttpContextHelper.Current.Request.GetEncodedUrl()).GetLeftPart(UriPartial.Authority).TrimEnd('/');
+#endif  
 
             _localRepository = GetSourceRepository(_rootPath);
             _continuousJobManager = continuousJobManager;
@@ -85,10 +104,9 @@ namespace Kudu.Core.SiteExtensions
             var extensions = new List<SiteExtensionInfo>();
             IEnumerable<SourceRepository> remoteRepos = GetRemoteRepositories(feedUrl);
 
-            SearchFilter filterOptions = new SearchFilter();
-            filterOptions.IncludePrerelease = allowPrereleaseVersions;
+            SearchFilter filterOptions = new SearchFilter(allowPrereleaseVersions);
 
-            IEnumerable<UIPackageMetadata> packages = new List<UIPackageMetadata>();
+            IEnumerable<IPackageSearchMetadata> packages = new List<IPackageSearchMetadata>();
 
             using (tracer.Step("Search site extensions by filter: {0}", filter))
             {
@@ -100,13 +118,15 @@ namespace Kudu.Core.SiteExtensions
                         packages = packages.Concat(foundUIPackages);
                     }
                 }
-                packages = packages.OrderByDescending(p => p.DownloadCount);
+
+                //packages = packages.OrderByDescending(p => p.DownloadCount);
+
             }
 
             using (tracer.Step("Convert search result to SiteExtensionInfos with max concurrent requests: {0}", System.Environment.ProcessorCount))
             {
                 // GetResourceAsync is not thread safe
-                var metadataResource = await _localRepository.GetResourceAndValidateAsync<UIMetadataResource>();
+                var metadataResource = await _localRepository.GetResourceAndValidateAsync<PackageSearchResource>();
                 var convertedResult = await ConvertNuGetPackagesToSiteExtensionInfos(
                     packages,
                     async (uiPackage) =>
@@ -126,7 +146,7 @@ namespace Kudu.Core.SiteExtensions
             ITracer tracer = _traceFactory.GetTracer();
 
             IEnumerable<SourceRepository> remoteRepos = GetRemoteRepositories(feedUrl);
-            UIPackageMetadata package = null;
+            IPackageSearchMetadata package = null;
 
             if (string.IsNullOrWhiteSpace(version))
             {
@@ -163,14 +183,14 @@ namespace Kudu.Core.SiteExtensions
                 return null;
             }
 
-            var metadataResource = await _localRepository.GetResourceAndValidateAsync<UIMetadataResource>();
+            var metadataResource = await _localRepository.GetResourceAndValidateAsync<PackageSearchResource>();
             return await ConvertRemotePackageToSiteExtensionInfo(package, feedUrl, metadataResource);
         }
 
         public async Task<IEnumerable<SiteExtensionInfo>> GetLocalExtensions(string filter, bool checkLatest)
         {
             ITracer tracer = _traceFactory.GetTracer();
-            IEnumerable<UIPackageMetadata> searchResult = null;
+            IEnumerable<IPackageSearchMetadata> searchResult = null;
             List<SiteExtensionInfo> siteExtensionInfos = new List<SiteExtensionInfo>();
 
             using (tracer.Step("Search packages locally with filter: {0}", filter))
@@ -194,7 +214,7 @@ namespace Kudu.Core.SiteExtensions
         public async Task<SiteExtensionInfo> GetLocalExtension(string id, bool checkLatest = true)
         {
             ITracer tracer = _traceFactory.GetTracer();
-            UIPackageMetadata package = null;
+            IPackageSearchMetadata package = null;
             using (tracer.Step("Now querying from local repo for package '{0}'.", id))
             {
                 package = await _localRepository.GetLatestPackageByIdFromSrcRepo(id);
@@ -295,8 +315,8 @@ namespace Kudu.Core.SiteExtensions
                     JsonSettings siteExtensionSettings = GetSettingManager(id);
                     feedUrl = (string.IsNullOrEmpty(feedUrl) ? siteExtensionSettings.GetValue(_feedUrlSetting) : feedUrl);
                     IEnumerable<SourceRepository> remoteRepos = GetRemoteRepositories(feedUrl);
-                    UIPackageMetadata localPackage = null;
-                    UIPackageMetadata repoPackage = null;
+                    IPackageSearchMetadata localPackage = null;
+                    IPackageSearchMetadata repoPackage = null;
                     SourceRepository remoteRepo = null;
 
                     if (this.IsInstalledToWebRoot(id))
@@ -459,7 +479,7 @@ namespace Kudu.Core.SiteExtensions
         /// <para>3. Deploy site extension job</para>
         /// <para>4. Execute install.cmd if exist</para>
         /// </summary>
-        private async Task<UIPackageMetadata> InstallExtension(UIPackageMetadata package, string installationDirectory, SourceRepository remoteRepo, SiteExtensionInfo.SiteExtensionType type, ITracer tracer, string installationArgs)
+        private async Task<IPackageSearchMetadata> InstallExtension(IPackageSearchMetadata package, string installationDirectory, SourceRepository remoteRepo, SiteExtensionInfo.SiteExtensionType type, ITracer tracer, string installationArgs)
         {
             try
             {
@@ -658,7 +678,7 @@ namespace Kudu.Core.SiteExtensions
                          && string.Equals(localPackageInstallationArgs, installationArgs))
                 {
                     // case 3
-                    UIPackageMetadata remotePackage = await rr.GetLatestPackageByIdFromSrcRepo(id);
+                    IPackageSearchMetadata remotePackage = await rr.GetLatestPackageByIdFromSrcRepo(id);
                     if (remotePackage != null)
                     {
                         tracer.Trace("Found version: {0} on feed: {1}",
@@ -885,7 +905,7 @@ namespace Kudu.Core.SiteExtensions
             _triggeredJobManager.CleanupExternalJobs(siteExtensionName);
         }
 
-        private async Task<SiteExtensionInfo> ConvertRemotePackageToSiteExtensionInfo(UIPackageMetadata package, string feedUrl, UIMetadataResource metadataResource)
+        private async Task<SiteExtensionInfo> ConvertRemotePackageToSiteExtensionInfo(IPackageSearchMetadata package, string feedUrl, PackageSearchResource metadataResource)
         {
             // convert uipackagemetadata structure to siteextensioninfo structure
             var siteExtensionInfo = new SiteExtensionInfo(package);
@@ -894,7 +914,7 @@ namespace Kudu.Core.SiteExtensions
             return await CheckRemotePackageLatestVersion(siteExtensionInfo, metadataResource);
         }
 
-        private async Task<SiteExtensionInfo> CheckRemotePackageLatestVersion(SiteExtensionInfo info, UIMetadataResource metadataResource)
+        private async Task<SiteExtensionInfo> CheckRemotePackageLatestVersion(SiteExtensionInfo info, PackageSearchResource metadataResource)
         {
             bool isNuGetPackage = false;
 
@@ -903,20 +923,25 @@ namespace Kudu.Core.SiteExtensions
                 isNuGetPackage = FeedExtensions.IsNuGetRepo(info.FeedUrl);
             }
 
-            UIPackageMetadata localPackage = await metadataResource.GetLatestPackageByIdFromMetaRes(info.Id,
-                explicitTag: isNuGetPackage);
+            var localPackage = await metadataResource.SearchAsync(
+                info.Id,
+                new SearchFilter(includePrerelease: true),
+                0,
+                1,
+                null,
+                CancellationToken.None);
 
-            if (localPackage != null)
+            if (localPackage != null && localPackage.Any())
             {
                 SetLocalInfo(info);
                 // Assume input package (from remote) is always the latest version.
-                info.LocalIsLatestVersion = NuGetVersion.Parse(info.Version).Equals(localPackage.Identity.Version);
+                info.LocalIsLatestVersion = NuGetVersion.Parse(info.Version).Equals(localPackage.First().Identity.Version);
             }
 
             return info;
         }
 
-        private async Task<SiteExtensionInfo> ConvertLocalPackageToSiteExtensionInfo(UIPackageMetadata package, bool checkLatest, ITracer tracer = null)
+        private async Task<SiteExtensionInfo> ConvertLocalPackageToSiteExtensionInfo(IPackageSearchMetadata package, bool checkLatest, ITracer tracer = null)
         {
             if (package == null)
             {
@@ -944,13 +969,13 @@ namespace Kudu.Core.SiteExtensions
                     IEnumerable<SourceRepository> remoteRepos = GetRemoteRepositories(info.FeedUrl);
                     foreach (SourceRepository remoteRepo in remoteRepos)
                     {
-                        UIPackageMetadata latestPackage = await remoteRepo.GetLatestPackageByIdFromSrcRepo(info.Id);
+                        IPackageSearchMetadata latestPackage = await remoteRepo.GetLatestPackageByIdFromSrcRepo(info.Id);
                         if (latestPackage != null)
                         {
                             NuGetVersion currentVersion = NuGetVersion.Parse(info.Version);
                             info.LocalIsLatestVersion = NuGetVersion.Parse(info.Version).Equals(latestPackage.Identity.Version);
-                            info.DownloadCount = latestPackage.DownloadCount;
-                            info.PublishedDateTime = latestPackage.Published;
+                            //info.DownloadCount = latestPackage.DownloadCount;
+                            //info.PublishedDateTime = latestPackage.Published;
                             break;
                         }
                     }
@@ -997,23 +1022,28 @@ namespace Kudu.Core.SiteExtensions
             return new SourceRepository(source, _providers.Value);
         }
 
-        private static IEnumerable<Lazy<INuGetResourceProvider, INuGetResourceProviderMetadata>> GetNugetProviders()
+        private static IEnumerable<Lazy<INuGetResourceProvider, PackageMetadataResource>> GetNugetProviders()
         {
             var aggregateCatalog = new AggregateCatalog();
             var path = BinDirectory;
             if (string.IsNullOrEmpty(path))
             {
+#if NETFRAMEWORK
                 path = HttpRuntime.BinDirectory;
+#endif
+#if NET6_0_OR_GREATER
+                // Need equivalet of DOTNET
+#endif
             }
             var directoryCatalog = new DirectoryCatalog(path, "NuGet.Client*.dll");
             aggregateCatalog.Catalogs.Add(directoryCatalog);
             var container = new CompositionContainer(aggregateCatalog);
-            return container.GetExports<INuGetResourceProvider, INuGetResourceProviderMetadata>();
+            return container.GetExports<INuGetResourceProvider, PackageMetadataResource>();
         }
 
         private static async Task<List<SiteExtensionInfo>> ConvertNuGetPackagesToSiteExtensionInfos(
-            IEnumerable<UIPackageMetadata> packages,
-            Func<UIPackageMetadata, Task<SiteExtensionInfo>> convertor)
+            IEnumerable<IPackageSearchMetadata> packages,
+            Func<IPackageSearchMetadata, Task<SiteExtensionInfo>> convertor)
         {
             List<SiteExtensionInfo> siteExtensionInfos = new List<SiteExtensionInfo>();
             List<Task<SiteExtensionInfo>> convertTasks = new List<Task<SiteExtensionInfo>>();

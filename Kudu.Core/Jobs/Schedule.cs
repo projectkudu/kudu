@@ -1,7 +1,5 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using Kudu.Core.Tracing;
 using NCrontab;
 
 namespace Kudu.Core.Jobs

@@ -24,8 +24,7 @@ namespace Kudu.Contracts.Settings
         // Holds the required settings
         private readonly Dictionary<string, object> _settings = new Dictionary<string, object>();
 
-        // Holds the dynamic optional settings
-        [JsonExtensionData]
+        // Holds the dynamic optional settings        
         private readonly Dictionary<string, object> _extraSettings = new Dictionary<string, object>();
 
         public DiagnosticsSettings()
@@ -127,7 +126,6 @@ namespace Kudu.Contracts.Settings
         {
             public StrictStringEnumConverter()
             {
-                AllowIntegerValues = false;
             }
 
             public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)

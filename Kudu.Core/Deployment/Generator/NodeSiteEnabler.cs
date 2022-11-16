@@ -1,5 +1,4 @@
 ﻿using System.IO;
-using System.IO.Abstractions;
 using Kudu.Core.Infrastructure;
 
 namespace Kudu.Core.Deployment.Generator

@@ -47,7 +47,8 @@ using Microsoft.Owin;
 using Ninject;
 using Ninject.Web.Common;
 using Owin;
-using XmlSettings;
+using Kudu.Core.Xml;
+
 
 [assembly: WebActivatorEx.PreApplicationStartMethod(typeof(Kudu.Services.Web.App_Start.NinjectServices), "Start")]
 [assembly: WebActivatorEx.ApplicationShutdownMethodAttribute(typeof(Kudu.Services.Web.App_Start.NinjectServices), "Stop")]
@@ -181,7 +182,7 @@ namespace Kudu.Services.Web.App_Start
             shutdownDetector.Initialize();
 
             IDeploymentSettingsManager noContextDeploymentsSettingsManager =
-                new DeploymentSettingsManager(new XmlSettings.Settings(GetSettingsPath(environment)));
+                new DeploymentSettingsManager(new Core.Xml.Settings(GetSettingsPath(environment)));
 
             TraceServices.TraceLevel = noContextDeploymentsSettingsManager.GetTraceLevel();
 
@@ -230,7 +231,7 @@ namespace Kudu.Services.Web.App_Start
                                                      .InRequestScope();
 
             // Deployment Service
-            kernel.Bind<ISettings>().ToMethod(context => new XmlSettings.Settings(GetSettingsPath(environment)))
+            kernel.Bind<ISettings>().ToMethod(context => new Core.Xml.Settings(GetSettingsPath(environment)))
                                              .InRequestScope();
             kernel.Bind<IDeploymentSettingsManager>().To<DeploymentSettingsManager>()
                                              .InRequestScope();
@@ -881,7 +882,7 @@ namespace Kudu.Services.Web.App_Start
             {
                 try
                 {
-                    var settings = new DeploymentSettingsManager(new XmlSettings.Settings(path));
+                    var settings = new DeploymentSettingsManager(new Core.Xml.Settings(path));
                     settings.GetValue(SettingsKeys.TraceLevel);
                 }
                 catch (Exception ex)

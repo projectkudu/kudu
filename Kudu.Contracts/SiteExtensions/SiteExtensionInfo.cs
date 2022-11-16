@@ -7,7 +7,9 @@ using Kudu.Contracts.Infrastructure;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Linq;
-using NuGet.Client.VisualStudio;
+//using NuGet.Client.VisualStudio;
+using NuGet.Packaging;
+using NuGet.Protocol.Core.Types;
 
 namespace Kudu.Contracts.SiteExtensions
 {
@@ -85,7 +87,8 @@ namespace Kudu.Contracts.SiteExtensions
             PackageUri = info.PackageUri;
         }
 
-        public SiteExtensionInfo(UIPackageMetadata data)
+
+        public SiteExtensionInfo(IPackageSearchMetadata data)
         {
             Id = data.Identity.Id;
             Title = data.Title;
@@ -96,10 +99,10 @@ namespace Kudu.Contracts.SiteExtensions
             ProjectUrl = data.ProjectUrl == null ? null : data.ProjectUrl.ToString();
             IconUrl = data.IconUrl == null ? "https://www.nuget.org/Content/Images/packageDefaultIcon-50x50.png" : data.IconUrl.ToString();
             LicenseUrl = data.LicenseUrl == null ? null : data.LicenseUrl.ToString();
-            Authors = data.Authors.Split(new string[] { "  " }, StringSplitOptions.RemoveEmptyEntries);
+            Authors = data.Authors.Split(',');
             PublishedDateTime = data.Published;
             IsLatestVersion = true;
-            DownloadCount = data.DownloadCount;
+            DownloadCount = (int)data.DownloadCount;
         }
 
         [JsonProperty(PropertyName = "id")]

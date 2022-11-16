@@ -1,5 +1,5 @@
 ﻿using System.Diagnostics.CodeAnalysis;
-using Microsoft.Diagnostics.Tracing;
+using System.Diagnostics.Tracing;
 
 namespace Kudu.Core.Tracing
 {

@@ -4,7 +4,7 @@ using System.Linq;
 using Kudu.Contracts.Settings;
 using Kudu.Core.Settings;
 using Moq;
-using XmlSettings;
+using Kudu.Core.Xml;
 using Xunit;
 
 namespace Kudu.Core.Test.Settings

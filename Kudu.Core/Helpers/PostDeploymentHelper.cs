@@ -49,7 +49,7 @@ namespace Kudu.Core.Helpers
                 {
                     if (Environment.SkipSslValidation || Environment.SkipAseSslValidation)
                     {
-                        return new HttpClient(new WebRequestHandler { ServerCertificateValidationCallback = delegate { return true; } });
+                        ServicePointManager.ServerCertificateValidationCallback += (sender, cert, chain, sslPolicyErrors) => true;
                     }
 
                     return new HttpClient();

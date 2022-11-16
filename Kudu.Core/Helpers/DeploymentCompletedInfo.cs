@@ -1,9 +1,9 @@
 ﻿using System;
 using System.IO;
-using System.Web.Script.Serialization;
 using Kudu.Core.Deployment;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Tracing;
+using Newtonsoft.Json;
 
 namespace Kudu.Core.Helpers
 {
@@ -27,8 +27,7 @@ namespace Kudu.Core.Helpers
                 kind = status.Deployer;
             }
 
-            var serializer = new JavaScriptSerializer();
-            Persist(status.SiteName, kind, requestId, status.Status.ToString(), serializer.Serialize(status), status.ProjectType ?? string.Empty, status.VsProjectId ?? string.Empty);
+            Persist(status.SiteName, kind, requestId, status.Status.ToString(), JsonConvert.SerializeObject(status), status.ProjectType ?? string.Empty, status.VsProjectId ?? string.Empty);
         }
 
         public static void Persist(string siteName, string kind, string requestId, string status, string details, string projectType, string vsProjectId)
@@ -46,9 +45,8 @@ namespace Kudu.Core.Helpers
             try
             {
                 var path = Path.Combine(System.Environment.ExpandEnvironmentVariables(@"%HOME%"), "site", "deployments");
-                var file = Path.Combine(path, $"{Constants.LatestDeployment}.json");
-                var serializer = new JavaScriptSerializer();
-                var content = serializer.Serialize(info);
+                var file = Path.Combine(path, $"{Constants.LatestDeployment}.json");               
+                var content = JsonConvert.SerializeObject(info);
                 FileSystemHelpers.EnsureDirectory(path);
 
                 // write deployment info to %home%\site\deployments\LatestDeployment.json
