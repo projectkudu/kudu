@@ -25,7 +25,11 @@ namespace Kudu.Core.Infrastructure
         public static Tuple<string, string>[] GenerateSecretStringsKeyPair(int number)
         {
             var unencryptedToEncryptedKeyPair = new Tuple<string, string>[number];
+#if NETFRAMEWORK
+            var protector = Microsoft.Azure.Web.DataProtection.DataProtectionProvider.CreateAzureDataProtector().CreateProtector(DefaultProtectorPurpose);
+#else
             var protector = DataProtectionProvider.Create(DefaultProtectorPurpose).CreateProtector(DefaultProtectorPurpose);
+# endif
             for (int i = 0; i < number; i++)
             {
                 string unencryptedKey = GenerateSecretString();
@@ -38,7 +42,11 @@ namespace Kudu.Core.Infrastructure
         {
             try
             {
+#if NETFRAMEWORK
+                var protector = Microsoft.Azure.Web.DataProtection.DataProtectionProvider.CreateAzureDataProtector().CreateProtector(DefaultProtectorPurpose);
+#else
                 var protector = DataProtectionProvider.Create(DefaultProtectorPurpose).CreateProtector(DefaultProtectorPurpose);
+#endif
                 return protector.Unprotect(content);
             }
             catch (CryptographicException ex)

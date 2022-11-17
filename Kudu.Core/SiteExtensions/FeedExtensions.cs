@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.IO.Packaging;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -10,6 +11,8 @@ using Kudu.Contracts.SiteExtensions;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Tracing;
+using LibGit2Sharp;
+using Microsoft.Extensions.Logging;
 using NuGet.Common;
 using NuGet.Configuration;
 using NuGet.Packaging;
@@ -59,7 +62,7 @@ namespace Kudu.Core.SiteExtensions
                 }
             }
 
-           
+
             return await searchResource.SearchAsync(searchTerm, filterOptions, skip, take, NullLogger.Instance, CancellationToken.None);
         }
 
@@ -338,80 +341,19 @@ namespace Kudu.Core.SiteExtensions
 
         private static async Task<Stream> GetPackageStream(this SourceRepository srcRepo, PackageIdentity identity)
         {
-            var downloadResource = await srcRepo.GetResourceAsync<DownloadResource>();
-            Stream sourceStream = null;
-            Stream packageStream = null;
-
-            try
+            var pakgByIdResource = await srcRepo.GetResourceAsync<FindPackageByIdResource>();
+            using (MemoryStream sourceStream = new MemoryStream())
             {
-                var result = await downloadResource.GetDownloadResourceResultAsync(
-                    identity, 
-                    new PackageDownloadContext(new SourceCacheContext()), 
-                    SettingsUtility.GetGlobalPackagesFolder(NuGet.Configuration.Settings.LoadDefaultSettings(root: null)), 
-                    NullLogger.Instance, 
+                // sourceStream returned from CopyNupkgToStreamAsync supports seek
+                await pakgByIdResource.CopyNupkgToStreamAsync(
+                    identity.Id,
+                    identity.Version,
+                    sourceStream,
+                    new SourceCacheContext(),
+                    NullLogger.Instance,
                     CancellationToken.None);
-                //sourceStream = await downloadResource.GetStream(identity, CancellationToken.None);
-                sourceStream = result.PackageStream;
-                if (sourceStream == null)
-                {
-                    // package not exist from feed
-                    throw new FileNotFoundException(string.Format(CultureInfo.InvariantCulture, "Package {0} - {1} not found when try to download.", identity.Id, identity.Version.ToNormalizedString()));
-                }
 
-                packageStream = sourceStream;
-                if (!sourceStream.CanSeek)
-                {
-                    // V3 DownloadResource.GetStream does not support seek operations.
-                    // https://github.com/NuGet/NuGet.Protocol/issues/15
-
-                    MemoryStream memStream = new MemoryStream();
-
-                    try
-                    {
-                        byte[] buffer = new byte[2048];
-
-                        int bytesRead = 0;
-                        do
-                        {
-                            bytesRead = sourceStream.Read(buffer, 0, buffer.Length);
-                            memStream.Write(buffer, 0, bytesRead);
-                        } while (bytesRead != 0);
-
-                        await memStream.FlushAsync();
-                        memStream.Position = 0;
-
-                        packageStream = memStream;
-                    }
-                    catch
-                    {
-                        memStream.Dispose();
-                        throw;
-                    }
-                }
-
-                return packageStream;
-            }
-            catch
-            {
-                if (packageStream != null && packageStream != sourceStream)
-                {
-                    packageStream.Dispose();
-                }
-
-                if (sourceStream != null)
-                {
-                    sourceStream.Dispose();
-                }
-
-                throw;
-            }
-            finally
-            {
-                if (packageStream != null && sourceStream != null && !sourceStream.CanSeek)
-                {
-                    // packageStream is a copy of sourceStream, dispose sourceStream
-                    sourceStream.Dispose();
-                }
+                return sourceStream;
             }
         }
 

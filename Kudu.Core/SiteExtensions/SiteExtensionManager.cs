@@ -28,6 +28,7 @@ using Kudu.Core.Helpers;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Settings;
 using Kudu.Core.Tracing;
+using Microsoft.Extensions.Hosting;
 using Newtonsoft.Json.Linq;
 using NuGet.Packaging;
 using NuGet.Protocol.Core.Types;
@@ -1030,9 +1031,8 @@ namespace Kudu.Core.SiteExtensions
             {
 #if NETFRAMEWORK
                 path = HttpRuntime.BinDirectory;
-#endif
-#if NET6_0_OR_GREATER
-                // Need equivalet of DOTNET
+#else                
+                path = AppContext.BaseDirectory;
 #endif
             }
             var directoryCatalog = new DirectoryCatalog(path, "NuGet.Client*.dll");
