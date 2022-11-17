@@ -248,10 +248,14 @@ namespace Kudu.Services.Deployment
                 string error;
                 bool deployToRoot;
 
+                // The name of WAR and JAR files can be defined with the WEBSITE_JAVA_WAR_FILE_NAME and
+                // WEBSITE_JAVA_JAR_FILE_NAME app settings respectively
+                string appSettingArtifactName = OneDeployHelper.GetArtifactNameFromAppSetting(artifactType);
+
                 switch (artifactType)
                 {
                     case ArtifactType.War:
-                        if (!OneDeployHelper.EnsureValidStack(artifactType, new List<string> { OneDeployHelper.Tomcat, OneDeployHelper.JBossEap }, ignoreStack, out error))
+                        if (!OneDeployHelper.EnsureValidStack(artifactType, new List<string> { OneDeployHelper.Tomcat, OneDeployHelper.JBossEap, OneDeployHelper.JavaSE }, ignoreStack, out error))
                         {
                             return StatusCode400(error);
                         }
@@ -285,7 +289,7 @@ namespace Kudu.Services.Deployment
                         else
                         {
                             // For type=war, if no path is specified, the target file is app.war
-                            deploymentInfo.TargetFileName = "app.war";
+                            deploymentInfo.TargetFileName = OneDeployHelper.GetArtifactNameFromAppSetting(artifactType);
                         }
 
                         break;
@@ -296,7 +300,7 @@ namespace Kudu.Services.Deployment
                             return StatusCode400(error);
                         }
 
-                        deploymentInfo.TargetFileName = "app.jar";
+                        deploymentInfo.TargetFileName = OneDeployHelper.GetArtifactNameFromAppSetting(artifactType);
                         break;
 
                     case ArtifactType.Ear:
@@ -360,6 +364,7 @@ namespace Kudu.Services.Deployment
                         {
                             SetRunFromZipDeploymentInfo(deploymentInfo);
                         }
+
                         else
                         {
                             deploymentInfo.TargetSubDirectoryRelativePath = path;

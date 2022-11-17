@@ -6,7 +6,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 
 namespace Kudu.Services.Deployment
 {
@@ -18,6 +17,8 @@ namespace Kudu.Services.Deployment
         public const string JBossEap = "JBOSSEAP";
 
         private const string StackEnvVarName = "WEBSITE_STACK";
+        private const string JarNameAppSetting = "WEBSITE_JAVA_JAR_FILE_NAME";
+        private const string WarNameAppSetting = "WEBSITE_JAVA_WAR_FILE_NAME";
 
         // All paths are relative to HOME directory
         public const string WwwrootDirectoryRelativePath = "site/wwwroot";
@@ -132,6 +133,36 @@ namespace Kudu.Services.Deployment
 
             error = null;
             return true;
+        }
+
+        public static string GetArtifactNameFromAppSetting(ArtifactType artifactType)
+        {
+            // App Settings are read from EnvVars with the prefix APPSETTING_
+            //string appSettingsPrefix = "APPSETTING_";
+            string appSettingArtifactName = null;
+            switch (artifactType)
+            {
+                case ArtifactType.War:
+                    appSettingArtifactName = System.Environment.GetEnvironmentVariable(WarNameAppSetting);
+                    if(String.IsNullOrEmpty(appSettingArtifactName))
+                    {
+                        // Default of app.war if WEBSITE_JAVA_WAR_FILE_NAME is not defined by user
+                        return "app.war";
+                    }
+
+                    break;
+                case ArtifactType.Jar:
+                    appSettingArtifactName = System.Environment.GetEnvironmentVariable(JarNameAppSetting);
+                    if (String.IsNullOrEmpty(appSettingArtifactName))
+                    {
+                        // Default of app.war if WEBSITE_JAVA_JAR_FILE_NAME is not defined by user
+                        return "app.jar";
+                    }
+
+                    break;
+            }
+
+            return appSettingArtifactName;
         }
 
         public static string GetWebsiteStack()
