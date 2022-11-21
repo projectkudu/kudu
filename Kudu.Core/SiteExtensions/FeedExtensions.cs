@@ -342,18 +342,35 @@ namespace Kudu.Core.SiteExtensions
         private static async Task<Stream> GetPackageStream(this SourceRepository srcRepo, PackageIdentity identity)
         {
             var pakgByIdResource = await srcRepo.GetResourceAsync<FindPackageByIdResource>();
-            using (MemoryStream sourceStream = new MemoryStream())
-            {
-                // sourceStream returned from CopyNupkgToStreamAsync supports seek
-                await pakgByIdResource.CopyNupkgToStreamAsync(
-                    identity.Id,
-                    identity.Version,
-                    sourceStream,
-                    new SourceCacheContext(),
-                    NullLogger.Instance,
-                    CancellationToken.None);
 
-                return sourceStream;
+            MemoryStream sourceStream = null;
+            {
+                try
+                {
+                    sourceStream = new MemoryStream();
+                    await pakgByIdResource.CopyNupkgToStreamAsync(
+                        identity.Id,
+                        identity.Version,
+                        sourceStream,
+                        new SourceCacheContext(),
+                        NullLogger.Instance,
+                        CancellationToken.None);
+
+                    if (sourceStream == null)
+                    {
+                        // package not exist from feed
+                        throw new FileNotFoundException(string.Format(CultureInfo.InvariantCulture, "Package {0} - {1} not found when try to download.", identity.Id, identity.Version.ToNormalizedString()));
+                    }
+
+                    // Move the stream at Position 0, the head of the stream, so that the complete stream can be read successfully
+                    sourceStream.Position = 0;
+                    return sourceStream;
+                }
+                catch
+                {
+                    sourceStream.Dispose();
+                    throw;
+                }
             }
         }
 
