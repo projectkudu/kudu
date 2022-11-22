@@ -10,6 +10,7 @@
    <ItemGroup Condition=" '$(PackageSources)' == '' ">
        <!-- Package sources used to restore packages. By default will used the registered sources under %APPDATA%\NuGet\NuGet.Config -->
        <PackageSource Include="https://nuget.org/api/v2/" />
+	   <PackageSource Include="https://api.nuget.org/v3/index.json" />   
    </ItemGroup>
 
     <PropertyGroup>
