@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
+#if NETFRAMEWORK
 using System.Web;
+#endif
 using Kudu.Contracts.Tracing;
 
 namespace Kudu.Core.Tracing

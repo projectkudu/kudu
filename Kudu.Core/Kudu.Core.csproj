@@ -4,19 +4,26 @@
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 		<SignAssembly>true</SignAssembly>
 		<GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+		<AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+		<GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
 	</PropertyGroup>
 	<ItemGroup Condition=" '$(TargetFramework)' == 'net472' ">
 		<Reference Include="System.Web" />
+		<PackageReference Include="Microsoft.AspNetCore.DataProtection" Version="1.0.2" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="1.0.2" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="1.0.2.0" />
+		<PackageReference Include="Microsoft.Azure.WebSites.DataProtection" Version="0.1.77-alpha" />		
 	</ItemGroup>
-	<ItemGroup>	
+	<ItemGroup Condition=" '$(TargetFramework)' == 'net6.0' ">
+		<PackageReference Include="Microsoft.AspNetCore.Http" Version="2.2.2" />
+	</ItemGroup>
+	<ItemGroup>
 		<PackageReference Include="DotNetZip" Version="1.16.0" />
 		<PackageReference Include="LibGit2Sharp" Version="0.21.0.176" />
-		<PackageReference Include="Mercurial.Net" Version="1.1.1.607" />
-		<PackageReference Include="Microsoft.AspNetCore.DataProtection.Extensions" Version="7.0.0" />
-		<PackageReference Include="Microsoft.AspNetCore.Http" Version="2.2.2" />
-		<PackageReference Include="Microsoft.AspNetCore.Http.Extensions" Version="2.2.0" />
-		<PackageReference Include="Microsoft.Azure.WebSites.DataProtection" Version="0.1.77-alpha" />
-		<PackageReference Include="NCrontab.Signed" Version="3.3.2" />
+		<PackageReference Include="Mercurial.Net" Version="1.1.1.607" />		
+		<PackageReference Include="Microsoft.AspNetCore.Http.Extensions" Version="2.2.0" />		
+		<PackageReference Include="NCrontab.Signed" Version="3.3.2" />		
+		<PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
 		<PackageReference Include="NuGet.Common" Version="6.4.0" />
 		<PackageReference Include="NuGet.Configuration" Version="6.4.0" />
 		<PackageReference Include="NuGet.Packaging" Version="6.4.0" />
@@ -24,7 +31,7 @@
 		<PackageReference Include="System.ComponentModel.Composition" Version="7.0.0" />
 		<PackageReference Include="System.Configuration.ConfigurationManager" Version="7.0.0" />
 		<PackageReference Include="System.IO.Abstractions" Version="1.4.0.74" />
-		<PackageReference Include="System.Text.RegularExpressions" Version="4.3.0" />
+		<PackageReference Include="System.Text.RegularExpressions" Version="4.3.0" />		
 	</ItemGroup>
 	<ItemGroup>
 		<ProjectReference Include="..\Kudu.Contracts\Kudu.Contracts.csproj" />

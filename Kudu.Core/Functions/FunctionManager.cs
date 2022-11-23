@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if NETFRAMEWORK
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Configuration;
@@ -577,3 +578,4 @@ namespace Kudu.Core.Functions
         }
     }
 }
+#endif

@@ -28,7 +28,6 @@ using Kudu.Core.Helpers;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Settings;
 using Kudu.Core.Tracing;
-using Microsoft.Extensions.Hosting;
 using Newtonsoft.Json.Linq;
 using NuGet.Packaging;
 using NuGet.Protocol.Core.Types;

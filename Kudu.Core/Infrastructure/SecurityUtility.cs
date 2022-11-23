@@ -1,8 +1,8 @@
-﻿using Microsoft.AspNetCore.DataProtection;
+﻿#if NETFRAMEWORK
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Azure.Web.DataProtection;
 using System;
 using System.Security.Cryptography;
-using DataProtectionProvider = Microsoft.AspNetCore.DataProtection.DataProtectionProvider;
 
 namespace Kudu.Core.Infrastructure
 {
@@ -25,11 +25,8 @@ namespace Kudu.Core.Infrastructure
         public static Tuple<string, string>[] GenerateSecretStringsKeyPair(int number)
         {
             var unencryptedToEncryptedKeyPair = new Tuple<string, string>[number];
-#if NETFRAMEWORK
-            var protector = Microsoft.Azure.Web.DataProtection.DataProtectionProvider.CreateAzureDataProtector().CreateProtector(DefaultProtectorPurpose);
-#else
-            var protector = DataProtectionProvider.Create(DefaultProtectorPurpose).CreateProtector(DefaultProtectorPurpose);
-# endif
+            var protector = DataProtectionProvider.CreateAzureDataProtector().CreateProtector(DefaultProtectorPurpose);
+
             for (int i = 0; i < number; i++)
             {
                 string unencryptedKey = GenerateSecretString();
@@ -42,11 +39,7 @@ namespace Kudu.Core.Infrastructure
         {
             try
             {
-#if NETFRAMEWORK
-                var protector = Microsoft.Azure.Web.DataProtection.DataProtectionProvider.CreateAzureDataProtector().CreateProtector(DefaultProtectorPurpose);
-#else
-                var protector = DataProtectionProvider.Create(DefaultProtectorPurpose).CreateProtector(DefaultProtectorPurpose);
-#endif
+                var protector = DataProtectionProvider.CreateAzureDataProtector().CreateProtector(DefaultProtectorPurpose);
                 return protector.Unprotect(content);
             }
             catch (CryptographicException ex)
@@ -64,4 +57,4 @@ namespace Kudu.Core.Infrastructure
         }
     }
 }
-
+#endif
