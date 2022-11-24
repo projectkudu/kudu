@@ -12,11 +12,14 @@ using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Tracing;
 using LibGit2Sharp;
-using NuGet.Common;
+using NuGet.Client;
+using NuGet.Client.VisualStudio;
+//using NuGet.Common;
 using NuGet.Configuration;
 using NuGet.Packaging;
-using NuGet.Packaging.Core;
-using NuGet.Protocol.Core.Types;
+using NuGet.PackagingCore;
+//using NuGet.Packaging.Core;
+//using NuGet.Protocol.Core.Types;
 using NuGet.Versioning;
 
 namespace Kudu.Core.SiteExtensions
@@ -29,15 +32,16 @@ namespace Kudu.Core.SiteExtensions
         /// <summary>
         /// Query result by search term, always include pre-released
         /// </summary>
-        public static async Task<IEnumerable<IPackageSearchMetadata>> Search(this SourceRepository srcRepo, string searchTerm, SearchFilter filterOptions = null, int skip = 0, int take = 1000)
+        public static async Task<IEnumerable<UIPackageMetadata>> Search(this SourceRepository srcRepo, string searchTerm, SearchFilter filterOptions = null, int skip = 0, int take = 1000)
         {
             // always include pre-release package
             if (filterOptions == null)
             {
-                filterOptions = new SearchFilter(true);
+                filterOptions = new SearchFilter();
             }
 
-            var searchResource = await srcRepo.GetResourceAndValidateAsync<PackageSearchResource>();
+            filterOptions.IncludePrerelease = true; // keep the good old behavior
+            var searchResource = await srcRepo.GetResourceAndValidateAsync<SearchLatestResource>();
 
             // When using nuget.org, we only look at packages that have our tag. Later, we should switch to filtering
             // by PackageType once nuget.org starts supporting that
@@ -62,25 +66,32 @@ namespace Kudu.Core.SiteExtensions
             }
 
 
-            return await searchResource.SearchAsync(searchTerm, filterOptions, skip, take, NullLogger.Instance, CancellationToken.None);
+            return await searchResource.Search(searchTerm, filterOptions, skip, take, CancellationToken.None);
         }
 
         /// <summary>
         /// Query source repository for latest package base given package id
         /// </summary>
-        internal static async Task<IPackageSearchMetadata> GetLatestPackageByIdFromSrcRepo(this SourceRepository srcRepo, string packageId)
+        internal static async Task<UIPackageMetadata> GetLatestPackageByIdFromSrcRepo(this SourceRepository srcRepo, string packageId)
         {
             // 7 references none of which uses bool includePrerelease = true, bool includeUnlisted = false
-            var metadataResource = await srcRepo.GetResourceAndValidateAsync<PackageMetadataResource>();
-            return await metadataResource.GetLatestPackageByIdFromMetaRes(packageId,
-                explicitTag: IsNuGetRepo(srcRepo.PackageSource.Source));
+            try
+            {
+                var metadataResource = await srcRepo.GetResourceAndValidateAsync<UIMetadataResource>();
+                return await metadataResource.GetLatestPackageByIdFromMetaRes(packageId,
+                    explicitTag: IsNuGetRepo(srcRepo.PackageSource.Source));
+            }
+            catch (Exception e)
+            {
+                throw;
+            }
         }
 
         // can be called concurrently if metaDataResource is provided
-        internal static async Task<IPackageSearchMetadata> GetLatestPackageByIdFromMetaRes(this PackageMetadataResource metadataResource, string packageId, bool includePrerelease = true, bool includeUnlisted = false, bool explicitTag = false)
+        internal static async Task<UIPackageMetadata> GetLatestPackageByIdFromMetaRes(this UIMetadataResource metadataResource, string packageId, bool includePrerelease = true, bool includeUnlisted = false, bool explicitTag = false)
         {
-            IPackageSearchMetadata latestPackage = null;
-            IEnumerable<IPackageSearchMetadata> packages = await metadataResource.GetMetadataAsync(packageId, includePrerelease, includeUnlisted, new SourceCacheContext(), NullLogger.Instance, token: CancellationToken.None);
+            UIPackageMetadata latestPackage = null;
+            IEnumerable<UIPackageMetadata> packages = await metadataResource.GetMetadata(packageId, includePrerelease, includeUnlisted, token: CancellationToken.None);
 
             // When using nuget.org, we only look at packages that have our tag.
             if (explicitTag)
@@ -115,12 +126,12 @@ namespace Kudu.Core.SiteExtensions
         /// <param name="packageId">Package id, must not be null</param>
         /// <param name="version">Package version, must not be null</param>
         /// <returns>Package metadata</returns>
-        public static async Task<IPackageSearchMetadata> GetPackageByIdentity(this SourceRepository srcRepo, string packageId, string version)
+        public static async Task<UIPackageMetadata> GetPackageByIdentity(this SourceRepository srcRepo, string packageId, string version)
         {
-            var metadataResource = await srcRepo.GetResourceAndValidateAsync<PackageMetadataResource>();
+            var metadataResource = await srcRepo.GetResourceAndValidateAsync<UIMetadataResource>();
             NuGetVersion expectedVersion = NuGetVersion.Parse(version);
             var identity = new PackageIdentity(packageId, expectedVersion);
-            IPackageSearchMetadata ret = await metadataResource.GetMetadataAsync(identity, new SourceCacheContext(), NullLogger.Instance, CancellationToken.None);
+            UIPackageMetadata ret = await metadataResource.GetMetadata(identity, CancellationToken.None);
 
             // When using nuget.org, we only look at packages that have our tag.
             if (ret != null &&
@@ -340,35 +351,72 @@ namespace Kudu.Core.SiteExtensions
 
         private static async Task<Stream> GetPackageStream(this SourceRepository srcRepo, PackageIdentity identity)
         {
-            var pakgByIdResource = await srcRepo.GetResourceAsync<FindPackageByIdResource>();
+            var downloadResource = await srcRepo.GetResourceAsync<DownloadResource>();
+            Stream sourceStream = null;
+            Stream packageStream = null;
 
-            MemoryStream sourceStream = null;
+            try
             {
-                try
+                sourceStream = await downloadResource.GetStream(identity, CancellationToken.None);
+                if (sourceStream == null)
                 {
-                    sourceStream = new MemoryStream();
-                    await pakgByIdResource.CopyNupkgToStreamAsync(
-                        identity.Id,
-                        identity.Version,
-                        sourceStream,
-                        new SourceCacheContext(),
-                        NullLogger.Instance,
-                        CancellationToken.None);
-
-                    if (sourceStream == null)
-                    {
-                        // package not exist from feed
-                        throw new FileNotFoundException(string.Format(CultureInfo.InvariantCulture, "Package {0} - {1} not found when try to download.", identity.Id, identity.Version.ToNormalizedString()));
-                    }
-
-                    // Move the stream at Position 0, the head of the stream, so that the complete stream can be read successfully
-                    sourceStream.Position = 0;
-                    return sourceStream;
+                    // package not exist from feed
+                    throw new FileNotFoundException(string.Format(CultureInfo.InvariantCulture, "Package {0} - {1} not found when try to download.", identity.Id, identity.Version.ToNormalizedString()));
                 }
-                catch
+
+                packageStream = sourceStream;
+                if (!sourceStream.CanSeek)
+                {
+                    // V3 DownloadResource.GetStream does not support seek operations.
+                    // https://github.com/NuGet/NuGet.Protocol/issues/15
+
+                    MemoryStream memStream = new MemoryStream();
+
+                    try
+                    {
+                        byte[] buffer = new byte[2048];
+
+                        int bytesRead = 0;
+                        do
+                        {
+                            bytesRead = sourceStream.Read(buffer, 0, buffer.Length);
+                            memStream.Write(buffer, 0, bytesRead);
+                        } while (bytesRead != 0);
+
+                        await memStream.FlushAsync();
+                        memStream.Position = 0;
+
+                        packageStream = memStream;
+                    }
+                    catch
+                    {
+                        memStream.Dispose();
+                        throw;
+                    }
+                }
+
+                return packageStream;
+            }
+            catch
+            {
+                if (packageStream != null && packageStream != sourceStream)
+                {
+                    packageStream.Dispose();
+                }
+
+                if (sourceStream != null)
                 {
                     sourceStream.Dispose();
-                    throw;
+                }
+
+                throw;
+            }
+            finally
+            {
+                if (packageStream != null && sourceStream != null && !sourceStream.CanSeek)
+                {
+                    // packageStream is a copy of sourceStream, dispose sourceStream
+                    sourceStream.Dispose();
                 }
             }
         }

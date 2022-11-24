@@ -26,8 +26,9 @@ using Kudu.Core.Infrastructure;
 using Kudu.Core.Settings;
 using Kudu.Core.Tracing;
 using Newtonsoft.Json.Linq;
+using NuGet.Client.VisualStudio;
 using NuGet.Packaging;
-using NuGet.Protocol.Core.Types;
+//using NuGet.Protocol.Core.Types;
 using NullLogger = Kudu.Core.Deployment.NullLogger;
 
 namespace Kudu.Core.SiteExtensions
@@ -878,7 +879,7 @@ namespace Kudu.Core.SiteExtensions
             {
                 using (tracer.Step("Fallback to FeedExtensionsV1 search package by id: {0} and version: {1}.", id, version))
                 {
-                    IPackageSearchMetadata data;
+                    UIPackageMetadata data;
                     var remoteRepo = SiteExtensionManager.GetSourceRepository(DeploymentSettingsExtension.NuGetSiteExtensionFeedUrl);
                     if (string.IsNullOrEmpty(version))
                     {

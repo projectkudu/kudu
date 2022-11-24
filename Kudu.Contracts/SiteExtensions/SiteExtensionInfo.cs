@@ -7,9 +7,8 @@ using Kudu.Contracts.Infrastructure;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Linq;
-//using NuGet.Client.VisualStudio;
+using NuGet.Client.VisualStudio;
 using NuGet.Packaging;
-using NuGet.Protocol.Core.Types;
 
 namespace Kudu.Contracts.SiteExtensions
 {
@@ -88,7 +87,7 @@ namespace Kudu.Contracts.SiteExtensions
         }
 
 
-        public SiteExtensionInfo(IPackageSearchMetadata data)
+        public SiteExtensionInfo(UIPackageMetadata data)
         {
             Id = data.Identity.Id;
             Title = data.Title;
