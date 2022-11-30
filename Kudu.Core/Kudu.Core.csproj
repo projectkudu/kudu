@@ -6,6 +6,7 @@
 		<GenerateAssemblyInfo>false</GenerateAssemblyInfo>
 		<AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
 		<GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
+		<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
 	</PropertyGroup>
 	<ItemGroup Condition=" '$(TargetFramework)' == 'net472' ">
 		<Reference Include="System.Web" />
@@ -26,12 +27,9 @@
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
 		<PackageReference Include="NuGet.Protocol.V2V3" Version="3.0.0-pre-20150220053309" />
 		<PackageReference Include="NuGet.Protocol.Types" Version="3.0.0-pre-20150220053306" />
-		<PackageReference Include="NuGet.Client.BaseTypes" Version="0.2.0-pre-20150112215135" />		
-		<!--<PackageReference Include="NuGet.Common" Version="6.4.0" />-->
+		<PackageReference Include="NuGet.Client.BaseTypes" Version="0.2.0-pre-20150112215135" />
 		<PackageReference Include="NuGet.Configuration" Version="1.0.0-pre-20150220022717" />
 		<PackageReference Include="NuGet.Packaging" Version="1.0.0-pre-20150220044603" />
-		<!--<PackageReference Include="NuGet.Packaging" Version="6.4.0" />-->
-		<!--<PackageReference Include="NuGet.Protocol" Version="6.4.0" />-->
 		<PackageReference Include="System.ComponentModel.Composition" Version="7.0.0" />
 		<PackageReference Include="System.Configuration.ConfigurationManager" Version="7.0.0" />
 		<PackageReference Include="System.IO.Abstractions" Version="1.4.0.74" />
