@@ -17,59 +17,86 @@ namespace Kudu.Core.Xml
 
         public string GetValue(string section, string key)
         {
-            if (string.IsNullOrEmpty(section))
+            if (String.IsNullOrEmpty(section))
             {
                 throw new ArgumentException("", "section");
             }
-            if (string.IsNullOrEmpty(key))
+
+            if (String.IsNullOrEmpty(key))
             {
                 throw new ArgumentException("", "key");
             }
+
             try
             {
-                return (from s in GetDocument()?.Root.Element(section)?.Elements("add")
-                        where s.GetOptionalAttributeValue("key") == key
-                        select s).FirstOrDefault()?.GetOptionalAttributeValue("value");
+                var document = GetDocument();
+
+                if (document == null)
+                {
+                    return null;
+                }
+
+                // Get the section and return null if it doesnt exist
+                var sectionElement = document.Root.Element(section);
+                if (sectionElement == null)
+                {
+                    return null;
+                }
+
+                // Get the add element that matches the key and return null if it doesnt exist
+                var element = sectionElement.Elements("add").Where(s => s.GetOptionalAttributeValue("key") == key).FirstOrDefault();
+                if (element == null)
+                {
+                    return null;
+                }
+
+                // Return the optional value which if not there will be null;
+                return element.GetOptionalAttributeValue("value");
             }
-            catch (Exception innerException)
+            catch (Exception e)
             {
-                throw new InvalidOperationException("Unable to parse settings file", innerException);
+                throw new InvalidOperationException("Unable to parse settings file", e);
             }
         }
 
         public IList<KeyValuePair<string, string>> GetValues(string section)
         {
-            if (string.IsNullOrEmpty(section))
+            if (String.IsNullOrEmpty(section))
             {
                 throw new ArgumentException("", "section");
             }
+
             try
             {
-                XDocument document = GetDocument();
-                if (document == null)
+                XDocument config = GetDocument();
+
+                if (config == null)
                 {
                     return null;
                 }
-                XElement xElement = document.Root.Element(section);
-                if (xElement == null)
+
+                XElement sectionElement = config.Root.Element(section);
+                if (sectionElement == null)
                 {
                     return null;
                 }
-                List<KeyValuePair<string, string>> list = new List<KeyValuePair<string, string>>();
-                foreach (XElement item in xElement.Elements("add"))
+
+                var kvps = new List<KeyValuePair<string, string>>();
+                foreach (var e in sectionElement.Elements("add"))
                 {
-                    string optionalAttributeValue = item.GetOptionalAttributeValue("key");
-                    string optionalAttributeValue2 = item.GetOptionalAttributeValue("value");
-                    if (!string.IsNullOrEmpty(optionalAttributeValue) && optionalAttributeValue2 != null)
+                    var key = e.GetOptionalAttributeValue("key");
+                    var value = e.GetOptionalAttributeValue("value");
+                    if (!String.IsNullOrEmpty(key) && value != null)
                     {
-                        list.Add(new KeyValuePair<string, string>(optionalAttributeValue, optionalAttributeValue2));
+                        kvps.Add(new KeyValuePair<string, string>(key, value));
                     }
                 }
-                return list.AsReadOnly();
+
+                return kvps.AsReadOnly();
             }
-            catch (Exception innerException)
+            catch (Exception e)
             {
-                throw new InvalidOperationException("Unable to parse settings file.", innerException);
+                throw new InvalidOperationException("Unable to parse settings file.", e);
             }
         }
 
@@ -84,106 +111,126 @@ namespace Kudu.Core.Xml
             {
                 throw new ArgumentNullException("values");
             }
-            foreach (KeyValuePair<string, string> value in values)
+
+            foreach (var kvp in values)
             {
-                SetValueInternal(section, value.Key, value.Value);
+                SetValueInternal(section, kvp.Key, kvp.Value);
             }
         }
 
         private void SetValueInternal(string section, string key, string value)
         {
-            if (string.IsNullOrEmpty(section))
+            if (String.IsNullOrEmpty(section))
             {
                 throw new ArgumentException("", "section");
             }
-            if (string.IsNullOrEmpty(key))
+
+            if (String.IsNullOrEmpty(key))
             {
                 throw new ArgumentException("", "key");
             }
+
             if (value == null)
             {
                 throw new ArgumentNullException("value");
             }
-            XDocument document = GetDocument(createIfNotExists: true);
-            XElement xElement = document.Root.Element(section);
-            if (xElement == null)
+
+            XDocument config = GetDocument(createIfNotExists: true);
+
+            XElement sectionElement = config.Root.Element(section);
+            if (sectionElement == null)
             {
-                xElement = new XElement(section);
-                document.Root.Add(xElement);
+                sectionElement = new XElement(section);
+                config.Root.Add(sectionElement);
             }
-            foreach (XElement item in xElement.Elements("add"))
+
+            foreach (var e in sectionElement.Elements("add"))
             {
-                string optionalAttributeValue = item.GetOptionalAttributeValue("key");
-                if (optionalAttributeValue == key)
+                var tempKey = e.GetOptionalAttributeValue("key");
+
+                if (tempKey == key)
                 {
-                    item.SetAttributeValue("value", value);
-                    Save(document);
+                    e.SetAttributeValue("value", value);
+                    Save(config);
                     return;
                 }
             }
-            XElement xElement2 = new XElement("add");
-            xElement2.SetAttributeValue("key", key);
-            xElement2.SetAttributeValue("value", value);
-            xElement.Add(xElement2);
-            Save(document);
+
+            var addElement = new XElement("add");
+            addElement.SetAttributeValue("key", key);
+            addElement.SetAttributeValue("value", value);
+            sectionElement.Add(addElement);
+            Save(config);
         }
 
         public bool DeleteValue(string section, string key)
         {
-            if (string.IsNullOrEmpty(section))
+            if (String.IsNullOrEmpty(section))
             {
                 throw new ArgumentException("", "section");
             }
-            if (string.IsNullOrEmpty(key))
+
+            if (String.IsNullOrEmpty(key))
             {
                 throw new ArgumentException("", "key");
             }
-            XDocument document = GetDocument();
-            if (document == null)
+
+            XDocument config = GetDocument();
+
+            if (config == null)
             {
                 return false;
             }
-            XElement xElement = document.Root.Element(section);
-            if (xElement == null)
+
+            XElement sectionElement = config.Root.Element(section);
+            if (sectionElement == null)
             {
                 return false;
             }
-            XElement xElement2 = null;
-            foreach (XElement item in xElement.Elements("add"))
+
+            XElement elementToDelete = null;
+            foreach (var e in sectionElement.Elements("add"))
             {
-                if (item.GetOptionalAttributeValue("key") == key)
+                if (e.GetOptionalAttributeValue("key") == key)
                 {
-                    xElement2 = item;
+                    elementToDelete = e;
                     break;
                 }
             }
-            if (xElement2 == null)
+
+            if (elementToDelete == null)
             {
                 return false;
             }
-            xElement2.Remove();
-            Save(document);
+
+            elementToDelete.Remove();
+            Save(config);
             return true;
+
         }
 
         public bool DeleteSection(string section)
         {
-            if (string.IsNullOrEmpty(section))
+            if (String.IsNullOrEmpty(section))
             {
                 throw new ArgumentException("", "section");
             }
-            XDocument document = GetDocument();
-            if (document == null)
+
+            XDocument config = GetDocument();
+
+            if (config == null)
             {
                 return false;
             }
-            XElement xElement = document.Root.Element(section);
-            if (xElement == null)
+
+            XElement sectionElement = config.Root.Element(section);
+            if (sectionElement == null)
             {
                 return false;
             }
-            xElement.Remove();
-            Save(document);
+
+            sectionElement.Remove();
+            Save(config);
             return true;
         }
 
@@ -197,5 +244,4 @@ namespace Kudu.Core.Xml
             return XmlUtility.GetDocument("settings", _path, createIfNotExists);
         }
     }
-
 }
