@@ -36,11 +36,58 @@
 		<PackageReference Include="System.Text.RegularExpressions" Version="4.3.0" />
 	</ItemGroup>
 	<ItemGroup>
-		<Reference Include="NuGet.Core" Version="2.8.3" >
+		<Reference Include="NuGet.Core" Version="2.8.3">
 			<Aliases>nugetcore</Aliases>
 		</Reference>
 	</ItemGroup>
 	<ItemGroup>
 		<ProjectReference Include="..\Kudu.Contracts\Kudu.Contracts.csproj" />
+	</ItemGroup>
+	<ItemGroup>
+	  <None Update="Scripts\deployedJob.html.template">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
+	  <None Update="Scripts\deploy_webjobs.cmd">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
+	  <None Update="Scripts\dnvm.ps1">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
+	  <None Update="Scripts\firstDeploymentManifest">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
+	  <None Update="Scripts\go.web.config.template">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
+	  <None Update="Scripts\iisnode.config.template">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
+	  <None Update="Scripts\kudusync">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
+	  <None Update="Scripts\kudusync.cmd">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
+	  <None Update="Scripts\runDnxWebJob.cmd">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
+	  <None Update="Scripts\selectLatestVersion.ps1">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
+	  <None Update="Scripts\selectNodeVersion.js">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
+	  <None Update="Scripts\select_python_version.py">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
+	  <None Update="Scripts\semver.js">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
+	  <None Update="Scripts\starter.cmd">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
+	  <None Update="Scripts\starter.sh">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
 	</ItemGroup>
 </Project>
