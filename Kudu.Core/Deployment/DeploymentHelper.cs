@@ -100,7 +100,7 @@ namespace Kudu.Core.Deployment
                 }
                 catch (Exception ex)
                 {
-                    tracer.TraceError(ex, "Could not make a successful GET request to {0}", uri.AbsoluteUri);
+                    tracer.TraceError(ex, "Could not make a successful GET request to {0}", StringUtils.ObfuscatePath(artifactDeploymentInfo.RemoteURL));
                     throw;
                 }
             }
