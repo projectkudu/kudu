@@ -62,5 +62,15 @@ namespace Kudu.Contracts.Infrastructure
 
             return StringUtils.ObfuscatePath(url);
         }
+
+        public static string ObfuscateUserName(this string value)
+        {
+            if (string.IsNullOrEmpty(value) || string.Equals("N/A", value, StringComparison.OrdinalIgnoreCase))
+            {
+                return value;
+            }
+
+            return $"##{value.Length}##";
+        }
     }
 }

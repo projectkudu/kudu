@@ -134,5 +134,17 @@ namespace Kudu.Core.Test
             var actual = VsHelper.IsDotNet7Version(target);
             Assert.Equal(expected, actual);
         }
+
+        [Theory]
+        [InlineData(null, null)]
+        [InlineData("", "")]
+        [InlineData("N/A", "N/A")]
+        [InlineData("smith", "##5##")]
+        [InlineData("john@tempuri.org", "##16##")]
+        public void ObfuscateUserNameTests(string value, string expected)
+        {
+            var actual = value.ObfuscateUserName();
+            Assert.Equal(expected, actual);
+        }
     }
 }

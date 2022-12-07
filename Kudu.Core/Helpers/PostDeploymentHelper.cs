@@ -154,7 +154,7 @@ namespace Kudu.Core.Helpers
         /// <param name="tracer">tracing</param>
         public static async Task InvokeWithDetails(string kind, string requestId, string status, string details, TraceListener tracer)
         {
-            DeploymentCompletedInfo.Persist(System.Environment.GetEnvironmentVariable("WEBSITE_SITE_NAME"), kind, requestId, status, details, string.Empty, string.Empty);
+            DeploymentCompletedInfo.Persist(System.Environment.GetEnvironmentVariable("WEBSITE_SITE_NAME"), kind, requestId, status, details, string.Empty, string.Empty, details);
 
             if (string.Equals("Success", status, StringComparison.OrdinalIgnoreCase))
             {
