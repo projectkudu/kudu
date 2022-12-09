@@ -150,11 +150,11 @@ namespace Kudu.TestHarness
                     string upTime = null;
                     try
                     {
-                        upTime = appManager.GetKuduUpTime();
+                        upTime = appManager.GetKuduUpTimeAsync().Result;
                     }
                     catch (Exception exception)
                     {
-                        TestTracer.Trace("GetKuduUpTime failed with exception\n{0}", exception);
+                        TestTracer.Trace("GetKuduUpTimeAsync failed with exception\n{0}", exception);
                     }
 
                     if (!String.IsNullOrEmpty(upTime))

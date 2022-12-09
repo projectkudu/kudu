@@ -231,17 +231,18 @@ namespace Kudu.TestHarness
             File.WriteAllText(fullPath, content);
         }
 
-        public string GetKuduUpTime()
+        public async Task<string> GetKuduUpTimeAsync()
         {
             const string pattern = @"<div class=""col-xs-2"">\s*<strong>Site up time</strong>\s*</div>\s*<div>([^<]*)</div>";
 
-            string content = OperationManager.Attempt<string>(() =>
+            string content = await OperationManager.AttemptAsync<string>(async () =>
             {
                 using (HttpClient client = HttpClientHelper.CreateClient(this.ServiceUrl, this.DeploymentManager.Credentials))
                 {
-                    using (HttpResponseMessage response = client.GetAsync(String.Empty).Result.EnsureSuccessStatusCode())
+                    using (HttpResponseMessage response = await client.GetAsync(String.Empty))
                     {
-                        return response.Content.ReadAsStringAsync().Result;
+                        response.EnsureSuccessStatusCode();
+                        return await response.Content.ReadAsStringAsync();
                     }
                 }
             }, 3, 1000);
