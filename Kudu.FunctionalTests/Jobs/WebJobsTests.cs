@@ -792,7 +792,7 @@ namespace Kudu.FunctionalTests.Jobs
         {
             WaitUntilAssertVerified(
                 "continuous job enabled",
-                TimeSpan.FromSeconds(30),
+                TimeSpan.FromSeconds(60),
                 () =>
                 {
                     var jobs = appManager.JobsManager.ListContinuousJobsAsync().Result;
@@ -802,7 +802,7 @@ namespace Kudu.FunctionalTests.Jobs
 
             WaitUntilAssertVerified(
                 "make sure process is up",
-                TimeSpan.FromSeconds(30),
+                TimeSpan.FromSeconds(60),
                 () =>
                 {
                     var allProcesses = appManager.ProcessManager.GetProcessesAsync().Result;
@@ -815,7 +815,7 @@ namespace Kudu.FunctionalTests.Jobs
         {
             WaitUntilAssertVerified(
                 "continuous job disabled",
-                TimeSpan.FromSeconds(40),
+                TimeSpan.FromSeconds(60),
                 () =>
                 {
                     var jobs = appManager.JobsManager.ListContinuousJobsAsync().Result;
@@ -825,7 +825,7 @@ namespace Kudu.FunctionalTests.Jobs
 
             WaitUntilAssertVerified(
                 "make sure process is down",
-                TimeSpan.FromSeconds(40),
+                TimeSpan.FromSeconds(60),
                 () =>
                 {
                     var allProcesses = appManager.ProcessManager.GetProcessesAsync().Result;
