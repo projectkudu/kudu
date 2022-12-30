@@ -64,7 +64,9 @@
 
                    Log.LogMessage("Downloading NuGet.exe latest version ...");
                    WebClient webClient = new WebClient();
-                   webClient.DownloadFile("https://dist.nuget.org/win-x86-commandline/latest/nuget.exe", OutputFilename);
+                   webClient.DownloadFile("https://dist.nuget.org/win-x86-commandline/v6.3.1/nuget.exe", OutputFilename);
+                   // issue with nuget 6.4.0 error MSB4066: The attribute "Version" in element <PackageReference> is unrecognized.
+                   // webClient.DownloadFile("https://dist.nuget.org/win-x86-commandline/latest/nuget.exe", OutputFilename);
 
                    return true;
                }
