@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace Kudu.Services.Deployment
 {
@@ -117,6 +118,7 @@ namespace Kudu.Services.Deployment
                 if (path.StartsWith(keyWord))
                 {
                     path = path.Substring(keyWord.Length);
+
                     // If absolute path points to wwwroot set path relative to wwwroot
                     if (path.StartsWith(WwwrootDirectoryRelativePath, StringComparison.OrdinalIgnoreCase))
                     {
@@ -132,6 +134,27 @@ namespace Kudu.Services.Deployment
 
             error = null;
             return true;
+        }
+
+        public static string CustomWarName(string path)
+        {
+            string designatedRootAbsolutePath = $"/home/{WwwrootDirectoryRelativePath}/";
+
+            // Only matches files names (i.e app.war, anyname.war)
+            // Will not match relative paths (webapps/app.war, webapps/ROOT)
+            string warPattern = @"^[\w-]+\.war$";
+
+            if (Regex.IsMatch(path, warPattern))
+            {
+                return path;
+            }
+
+            else if (path.Contains(designatedRootAbsolutePath) && Regex.IsMatch(path.Substring(designatedRootAbsolutePath.Length + 1), warPattern))
+            {
+                return path.Substring(designatedRootAbsolutePath.Length + 1);
+            }
+
+            return null;
         }
 
         public static string GetWebsiteStack()
