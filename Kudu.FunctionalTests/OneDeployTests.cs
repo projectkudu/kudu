@@ -33,7 +33,9 @@ namespace Kudu.FunctionalTests
                 // Default deployment mode - overwrite app.war
                 {
                     await DeployNonZippedArtifact(appManager, "war", null, isAsync, null, "site/wwwroot/app.war");
-                    await DeploymentTestHelper.AssertSuccessfulDeploymentByFilenames(appManager, new string[] { initialFileName, "webapps", "hostingstart.html", "app.war" }, "site/wwwroot");
+                    await DeployNonZippedArtifact(appManager, "war", "test.war", isAsync, null, "site/wwwroot/test.war");
+                    await DeployNonZippedArtifact(appManager, "war", "/home/site/wwwroot/nonroot.war", isAsync, null, "site/wwwroot/nonroot.war");
+                    await DeploymentTestHelper.AssertSuccessfulDeploymentByFilenames(appManager, new string[] { initialFileName, "webapps", "hostingstart.html", "app.war", "test.war", "nonroot.war"}, "site/wwwroot");
                 }
 
                 // Clean deployment

@@ -251,7 +251,7 @@ namespace Kudu.Services.Deployment
                 switch (artifactType)
                 {
                     case ArtifactType.War:
-                        if (!OneDeployHelper.EnsureValidStack(artifactType, new List<string> { OneDeployHelper.Tomcat, OneDeployHelper.JBossEap }, ignoreStack, out error))
+                        if (!OneDeployHelper.EnsureValidStack(artifactType, new List<string> { OneDeployHelper.Tomcat, OneDeployHelper.JBossEap, OneDeployHelper.JavaSE }, ignoreStack, out error))
                         {
                             return StatusCode400(error);
                         }
@@ -268,19 +268,27 @@ namespace Kudu.Services.Deployment
                                 return StatusCode400(error);
                             }
 
-                            if (!OneDeployHelper.IsLegacyWarPathValid(path))
+                            if (!string.IsNullOrEmpty(OneDeployHelper.CustomWarName(path)))
                             {
-                                return StatusCode400($"path='{path}' is invalid. When type={artifactType}, the only allowed paths are webapps/<directory-name> or /home/site/wwwroot/webapps/<directory-name>. " +
-                                                     $"Example: path=webapps/ROOT or path=/home/site/wwwroot/webapps/ROOT");
+                                deploymentInfo.TargetFileName = OneDeployHelper.CustomWarName(path);
                             }
 
-                            deploymentInfo.TargetRootPath = Path.Combine(_environment.WebRootPath, path);
-                            deploymentInfo.Fetch = LocalZipHandler;
+                            else
+                            {
+                                if (!OneDeployHelper.IsLegacyWarPathValid(path))
+                                {
+                                    return StatusCode400($"path='{path}' is invalid. When type={artifactType}, the only allowed paths are webapps/<directory-name> or /home/site/wwwroot/webapps/<directory-name>. " +
+                                                         $"Example: path=webapps/ROOT or path=/home/site/wwwroot/webapps/ROOT");
+                                }
 
-                            // Legacy war deployment is equivalent to wardeploy
-                            // So always do clean deploy.
-                            deploymentInfo.CleanupTargetDirectory = true;
-                            artifactType = ArtifactType.Zip;
+                                deploymentInfo.TargetRootPath = Path.Combine(_environment.WebRootPath, path);
+                                deploymentInfo.Fetch = LocalZipHandler;
+
+                                // Legacy war deployment is equivalent to wardeploy
+                                // So always do clean deploy.
+                                deploymentInfo.CleanupTargetDirectory = true;
+                                artifactType = ArtifactType.Zip;
+                            }
                         }
                         else
                         {
