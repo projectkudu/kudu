@@ -127,6 +127,18 @@ namespace Kudu.Core.Settings
             get { return IPAddress.TryParse(GetValue(SettingsKeys.ILBVip), out var address) ? address : null; }
         }
 
+        public static bool UseLatestMSBuild16InsteadOfMSBuild14
+        {
+            // this is disabled by default
+            get { return GetValue("UseLatestMSBuild16InsteadOfMSBuild14", "0") == "1"; }
+        }
+
+        public static bool UseLatestMSBuild16InsteadOfMSBuild15
+        {
+            // this is disabled by default
+            get { return GetValue("UseLatestMSBuild16InsteadOfMSBuild15", "0") == "1"; }
+        }
+
         public static string GetValue(string key, string defaultValue = null)
         {
             var env = System.Environment.GetEnvironmentVariable($"SCM_{key}");
