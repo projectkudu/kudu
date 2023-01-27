@@ -8,6 +8,7 @@ using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Web;
+using System.Web.DynamicData;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Helpers;
@@ -36,7 +37,7 @@ namespace Kudu.Services.Web.Tracing
         };
 
         // list of paths returning potentially sensitive data
-        private static readonly HashSet<string> DisallowedPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        private static readonly String[] DisallowedPaths = new String[]
         {
             "/api/functions/admin/masterkey",
             "/api/functions/admin/token"
@@ -150,7 +151,8 @@ namespace Kudu.Services.Web.Tracing
 
         public static bool IsRbacWhiteListPaths(string path)
         {
-            return !DisallowedPaths.Any(path.Contains) && _rbacWhiteListPaths.Any(r => r.IsMatch(path));
+            string newPath = path.ToLower();
+            return !DisallowedPaths.Any(newPath.Contains) && _rbacWhiteListPaths.Any(r => r.IsMatch(newPath));
         }
 
         private static void OnEndRequest(object sender, EventArgs e)
