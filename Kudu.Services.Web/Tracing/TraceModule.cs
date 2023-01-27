@@ -37,7 +37,7 @@ namespace Kudu.Services.Web.Tracing
         };
 
         // list of paths returning potentially sensitive data
-        private static readonly String[] DisallowedPaths = new String[]
+        private static readonly string[] DisallowedPaths = new string[]
         {
             "/api/functions/admin/masterkey",
             "/api/functions/admin/token"
@@ -151,8 +151,8 @@ namespace Kudu.Services.Web.Tracing
 
         public static bool IsRbacWhiteListPaths(string path)
         {
-            string newPath = path.ToLower();
-            return !DisallowedPaths.Any(newPath.Contains) && _rbacWhiteListPaths.Any(r => r.IsMatch(newPath));
+            path = path.ToLower();
+            return !DisallowedPaths.Any(p => path.ToLower().Contains(p.ToLower())) && _rbacWhiteListPaths.Any(r => r.IsMatch(path));
         }
 
         private static void OnEndRequest(object sender, EventArgs e)
