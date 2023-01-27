@@ -65,6 +65,10 @@ namespace Kudu.Core.Test
         [InlineData("/api/functions/admin/masterkey/key", false)]
         [InlineData("/api/functions/admin/token", false)]
         [InlineData("/api/functions/admin/token?key=1", false)]
+        [InlineData("/API/funCtions/admin/MaSTerKey",false)]
+        [InlineData("/API/functions/ADMIN/mAsterkEy/key", false)]
+        [InlineData("/api/FUNCTIONS/ADMIN/token", false)]
+        [InlineData("/API/FUNCtions/admin/TOKEN?key=1", false)]
         public void IsRbacWhiteListPathsTests(string path, bool expected)
         {
             // Test
