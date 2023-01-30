@@ -56,6 +56,8 @@ namespace Kudu.Core.Test
         [InlineData("/api/continuouswebjobs/1/dump", false)]
         [InlineData("/api/functions", true)]
         [InlineData("/api/functions/", true)]
+        [InlineData("/api/functions/config", true)]
+        [InlineData("/api/functions/config/", true)]
         [InlineData("/api/functions/myfunc", true)]
         [InlineData("/api/functions/myfunc/", true)]
         [InlineData("/api/functions/myfunc/foo", true)]
@@ -69,6 +71,10 @@ namespace Kudu.Core.Test
         [InlineData("/API/functions/ADMIN/mAsterkEy/key", false)]
         [InlineData("/api/FUNCTIONS/ADMIN/token", false)]
         [InlineData("/API/FUNCtions/admin/TOKEN?key=1", false)]
+        [InlineData("api/functions/admin/download", false)]
+        [InlineData("api/FUNCtions/admin/download", false)]
+        [InlineData("API/functions/admin/download", false)]
+        [InlineData("api/functions/ADMin/DOWNload", false)]
         public void IsRbacWhiteListPathsTests(string path, bool expected)
         {
             // Test

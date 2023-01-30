@@ -8,7 +8,6 @@ using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Web;
-using System.Web.DynamicData;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Helpers;
@@ -40,7 +39,8 @@ namespace Kudu.Services.Web.Tracing
         private static readonly String[] DisallowedPaths = new String[]
         {
             "/api/functions/admin/masterkey",
-            "/api/functions/admin/token"
+            "/api/functions/admin/token",
+            "/api/functions/admin/download"
         };
 
         public static TimeSpan UpTime
@@ -151,8 +151,8 @@ namespace Kudu.Services.Web.Tracing
 
         public static bool IsRbacWhiteListPaths(string path)
         {
-            string newPath = path.ToLower();
-            return !DisallowedPaths.Any(newPath.Contains) && _rbacWhiteListPaths.Any(r => r.IsMatch(newPath));
+            path = path.ToLower();
+            return !DisallowedPaths.Any(p => path.ToLower().Contains(p.ToLower())) && _rbacWhiteListPaths.Any(r => r.IsMatch(path));
         }
 
         private static void OnEndRequest(object sender, EventArgs e)
