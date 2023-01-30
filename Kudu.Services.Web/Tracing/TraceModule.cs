@@ -152,7 +152,7 @@ namespace Kudu.Services.Web.Tracing
         public static bool IsRbacWhiteListPaths(string path)
         {
             path = path.ToLower();
-            return !DisallowedPaths.Any(p => path.Contains(p.ToLower())) && _rbacWhiteListPaths.Any(r => r.IsMatch(path));
+            return !DisallowedPaths.Any(p => path.ToLower().Contains(p.ToLower())) && _rbacWhiteListPaths.Any(r => r.IsMatch(path));
         }
 
         private static void OnEndRequest(object sender, EventArgs e)
