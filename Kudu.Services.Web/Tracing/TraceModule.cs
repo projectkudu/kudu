@@ -36,7 +36,7 @@ namespace Kudu.Services.Web.Tracing
         };
 
         // list of paths returning potentially sensitive data
-        private static readonly String[] DisallowedPaths = new String[]
+        private static readonly string[] DisallowedPaths = new string[]
         {
             "/api/functions/admin/masterkey",
             "/api/functions/admin/token",
