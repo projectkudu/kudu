@@ -8,7 +8,6 @@ using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Web;
-using System.Web.DynamicData;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Helpers;
@@ -40,7 +39,8 @@ namespace Kudu.Services.Web.Tracing
         private static readonly string[] DisallowedPaths = new string[]
         {
             "/api/functions/admin/masterkey",
-            "/api/functions/admin/token"
+            "/api/functions/admin/token",
+            "/api/functions/admin/download"
         };
 
         public static TimeSpan UpTime
