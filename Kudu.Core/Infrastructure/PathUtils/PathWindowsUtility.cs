@@ -108,6 +108,11 @@ namespace Kudu.Core.Infrastructure
 
         internal override string ResolveMSBuild15Dir()
         {
+            if (ScmHostingConfigurations.UseLatestMSBuild16InsteadOfMSBuild15)
+            {
+                return ResolveLatestMSBuild16Dir();
+            }
+
             string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);
             List<string> probPaths = new List<string>
             {
@@ -140,7 +145,7 @@ namespace Kudu.Core.Infrastructure
             }
             else if (VsHelper.IsDotNet7Version(targetFramework))
             {
-                // Using ResolveMSBuild1670Dir as it's picking the latest MSBuild version.
+                // Using ResolveLatestMSBuildDir as it's picking the latest MSBuild version.
                 probPaths.Add(ResolveLatestMSBuildDir());
             }
 
@@ -204,6 +209,11 @@ namespace Kudu.Core.Infrastructure
 
         internal override string ResolveMSBuildPath()
         {
+            if (ScmHostingConfigurations.UseLatestMSBuild16InsteadOfMSBuild14)
+            {
+                return Path.Combine(ResolveLatestMSBuild16Dir(), "MSBuild.exe");
+            }
+
             string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);
             return Path.Combine(programFiles, "MSBuild", "14.0", "Bin", "MSBuild.exe");
         }
@@ -259,6 +269,12 @@ namespace Kudu.Core.Infrastructure
             }
 
             throw new InvalidOperationException(Resources.Error_FailedToLocateGit);
+        }
+
+        private static string ResolveLatestMSBuild16Dir()
+        {
+            string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);
+            return Path.Combine(programFiles, "MSBuilds", "16.11.2", "MSBuild", "Current", "Bin");
         }
 
         private static string ResolveNodeVersion()
