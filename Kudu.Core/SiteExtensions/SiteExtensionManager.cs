@@ -703,13 +703,13 @@ namespace Kudu.Core.SiteExtensions
         {
             ITracer tracer = _traceFactory.GetTracer();
 
-            string installationDirectory = GetInstallationDirectory(id);
-
             SiteExtensionInfo info = await GetLocalExtension(id, checkLatest: false);
 
-            if (info == null || !FileSystemHelpers.DirectoryExists(info.LocalPath))
+            string installationDirectory = GetInstallationDirectory(info.Id);
+
+            if (info == null || !FileSystemHelpers.DirectoryExists(info.LocalPath) || installationDirectory == null)
             {
-                tracer.TraceError("Site extension {0} not found.", id);
+                tracer.TraceError("Site extension {0} not found during uninstall.", id);
                 throw new DirectoryNotFoundException(installationDirectory);
             }
 
