@@ -1,13 +1,55 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.IO.Abstractions;
 using System.Linq;
 using System.Threading.Tasks;
+using Kudu.Core.Helpers;
+using Kudu.Core.Settings;
+using Kudu.Core.Tracing;
 
 namespace Kudu.Core.Infrastructure
 {
+    internal class DataCopiedTracer
+    {
+        private int _numDirectoriesCreated;
+        private int _numFilesCopied;
+        private long _totalBytesCopied;
+
+        public DataCopiedTracer()
+        {
+            _numDirectoriesCreated = 0;
+            _numFilesCopied = 0;
+            _totalBytesCopied = 0;
+        }
+
+        public DataCopiedTracer(int numDirectoriesCreated, int numFilesCopied, long totalBytesCopied)
+        {
+            _numDirectoriesCreated = numDirectoriesCreated;
+            _numFilesCopied = numFilesCopied;
+            _totalBytesCopied = totalBytesCopied;
+        }
+
+        public int NumDirectoriesCreated
+        {
+            get { return _numDirectoriesCreated; }
+            set { _numDirectoriesCreated = value; }
+        }
+
+        public int NumFilesCopied
+        {
+            get { return _numFilesCopied; }
+            set { _numFilesCopied = value; }
+        }
+
+        public long TotalBytesCopied
+        {
+            get { return _totalBytesCopied; }
+            set { _totalBytesCopied = value; }
+        }
+    }
     public static class FileSystemHelpers
     {
         [SuppressMessage("Microsoft.Usage", "CA2211:Non-constant fields should not be visible", Justification = "Make accessable for testing")]
@@ -215,6 +257,35 @@ namespace Kudu.Core.Infrastructure
         // From MSDN: http://msdn.microsoft.com/en-us/library/bb762914.aspx
         public static void CopyDirectoryRecursive(string sourceDirPath, string destinationDirPath, bool overwrite = true)
         {
+            if (ScmHostingConfigurations.DataCopyingTelemetryEnabled)
+            {
+                DataCopiedTracer dataCopiedTracer = new DataCopiedTracer();
+
+                int startTick = System.Environment.TickCount;
+                CopyDirectoryRecursiveInternal(sourceDirPath, destinationDirPath, overwrite, dataCopiedTracer);
+                int elapsedTime = System.Environment.TickCount - startTick;
+
+                KuduEventSource.Log.GenericEvent(ServerConfiguration.GetRuntimeSiteName(),
+                    string.Format("Directories created: {0}, Files copied: {1}, Bytes copied: {2}, Time elapsed (ms): {3}",
+                                dataCopiedTracer.NumDirectoriesCreated,
+                                dataCopiedTracer.NumFilesCopied,
+                                dataCopiedTracer.TotalBytesCopied,
+                                elapsedTime),
+                    string.Empty,
+                    string.Empty,
+                    string.Empty,
+                    EnvironmentHelper.KuduVersion.Value,
+                    EnvironmentHelper.AppServiceVersion.Value);
+            }
+            else
+            {
+                CopyDirectoryRecursiveInternal(sourceDirPath, destinationDirPath, overwrite);
+            }
+        }
+
+        // From MSDN: http://msdn.microsoft.com/en-us/library/bb762914.aspx
+        private static void CopyDirectoryRecursiveInternal(string sourceDirPath, string destinationDirPath, bool overwrite = true, DataCopiedTracer dataCopiedTracer = null)
+        {
             // Get the subdirectories for the specified directory.
             var sourceDir = new DirectoryInfo(sourceDirPath);
 
@@ -229,6 +300,11 @@ namespace Kudu.Core.Infrastructure
             if (!DirectoryExists(destinationDirPath))
             {
                 CreateDirectory(destinationDirPath);
+
+                if (ScmHostingConfigurations.DataCopyingTelemetryEnabled && dataCopiedTracer != null)
+                {
+                    dataCopiedTracer.NumDirectoriesCreated++;
+                }
             }
 
             // Get the files in the directory and copy them to the new location.
@@ -239,6 +315,12 @@ namespace Kudu.Core.Infrastructure
                 {
                     string destinationFilePath = Path.Combine(destinationDirPath, sourceFile.Name);
                     Instance.File.Copy(sourceFile.FullName, destinationFilePath, overwrite);
+
+                    if (ScmHostingConfigurations.DataCopyingTelemetryEnabled && dataCopiedTracer != null)
+                    {
+                        dataCopiedTracer.NumFilesCopied++;
+                        dataCopiedTracer.TotalBytesCopied += sourceFile.Length;
+                    }
                 }
                 else
                 {
@@ -247,7 +329,7 @@ namespace Kudu.Core.Infrastructure
                     {
                         // Copy sub-directories and their contents to new location.
                         string destinationSubDirPath = Path.Combine(destinationDirPath, sourceSubDir.Name);
-                        CopyDirectoryRecursive(sourceSubDir.FullName, destinationSubDirPath, overwrite);
+                        CopyDirectoryRecursiveInternal(sourceSubDir.FullName, destinationSubDirPath, overwrite, dataCopiedTracer);
                     }
                 }
             }

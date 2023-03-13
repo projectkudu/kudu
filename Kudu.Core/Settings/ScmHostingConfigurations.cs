@@ -139,6 +139,12 @@ namespace Kudu.Core.Settings
             get { return GetValue("UseLatestMSBuild16InsteadOfMSBuild15", "0") == "1"; }
         }
 
+        public static bool DataCopyingTelemetryEnabled
+        {
+            // this is disabled by default
+            get { return GetValue("DataCopyingTelemetryEnabled", "0") != "0"; }
+        }
+
         public static string GetValue(string key, string defaultValue = null)
         {
             var env = System.Environment.GetEnvironmentVariable($"SCM_{key}");
