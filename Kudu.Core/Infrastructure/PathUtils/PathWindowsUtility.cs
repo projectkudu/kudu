@@ -15,12 +15,12 @@ namespace Kudu.Core.Infrastructure
         /// <summary>
         /// The version of node.exe that would be on PATH, when the user does not specify/specifies invalid node versions.
         /// </summary>
-        private const string DefaultNodeVersion = "0.10.28";
+        private const string DefaultNodeVersion = "18.12.1";
 
         /// <summary>
         /// Maps to the version of NPM that shipped with the DefaultNodeVersion
         /// </summary>
-        private const string DefaultNpmVersion = "1.4.9";
+        private const string DefaultNpmVersion = "8.19.2";
 
         // this api is used to add git path to %path% and pick git.exe to be used for GitExecutable
         internal override string ResolveGitPath()
