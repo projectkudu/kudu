@@ -82,6 +82,9 @@ namespace Kudu.Services.Web.App_Start
                 HttpApplication.RegisterModule(typeof(TraceModule));
 
                 _bootstrapper.Initialize(CreateKernel);
+
+                // Adding Git Config for Safe.Directory
+                Helpers.AddSafeDirectoryConfigIfNotExist();
             }
             catch (Exception ex)
             {

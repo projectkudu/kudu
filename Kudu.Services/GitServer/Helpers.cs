@@ -23,6 +23,7 @@
 namespace Kudu.Services.GitServer
 {
     using System;
+    using System.Diagnostics;
     using System.IO;
     using System.Net.Http;
     using System.Net.Http.Headers;
@@ -58,6 +59,68 @@ namespace Kudu.Services.GitServer
         {
             var toWrite = "0000";
             response.Write(Encoding.UTF8.GetBytes(toWrite), 0, Encoding.UTF8.GetByteCount(toWrite));
+        }
+
+        public static void AddSafeDirectoryConfigIfNotExist()
+        {
+            ProcessStartInfo processInfo = new ProcessStartInfo("git.exe", string.Format("config --global --get-all safe.directory"));
+            processInfo.UseShellExecute = false;
+            processInfo.RedirectStandardInput = true;
+            processInfo.RedirectStandardError = true;
+            processInfo.RedirectStandardOutput = true;
+
+            StringBuilder error = new StringBuilder();
+            DataReceivedEventHandler stderrHandler = (object sender, DataReceivedEventArgs e) =>
+            {
+                if (!string.IsNullOrWhiteSpace(e.Data))
+                {
+                    error.Append(e.Data);
+                }
+            };
+
+            var process = Process.Start(processInfo);
+            var processName = process.ProcessName;
+            var processId = process.Id;
+
+            string output = process.StandardOutput.ReadToEnd();
+
+            Console.WriteLine(output);
+            process.ErrorDataReceived += stderrHandler;
+            process.BeginErrorReadLine();
+
+            // waiting for 10 seconds
+            process.WaitForExit(10000);
+
+            if(process.ExitCode != 0 || error.Length != 0)
+            {
+                throw new Exception($"Process exited with {process.ExitCode} and error: {error}");
+            }
+            if (!string.IsNullOrWhiteSpace(output) && output.IndexOf('*') == -1)
+            {
+                ProcessStartInfo addSafeDirectoryProcessInfo = new ProcessStartInfo("git.exe", "config --global --add safe.directory *");
+                addSafeDirectoryProcessInfo.UseShellExecute = false;
+                addSafeDirectoryProcessInfo.RedirectStandardInput = true;
+                addSafeDirectoryProcessInfo.RedirectStandardError = true;
+                addSafeDirectoryProcessInfo.RedirectStandardOutput = true;
+
+                StringBuilder addError = new StringBuilder();
+                DataReceivedEventHandler errHandler = (object sender, DataReceivedEventArgs e) =>
+                {
+                    if (!string.IsNullOrWhiteSpace(e.Data))
+                    {
+                        addError.Append(e.Data);
+                    }
+                };
+
+                var addprocess = Process.Start(addSafeDirectoryProcessInfo);
+                addprocess.ErrorDataReceived += errHandler;
+                addprocess.BeginErrorReadLine();
+                addprocess.WaitForExit(10000);
+                if (process.ExitCode != 0 || addError.Length != 0)
+                {
+                    throw new Exception($"Process exited with {process.ExitCode} and error: {addError}");
+                }
+            }
         }
     }
 }
