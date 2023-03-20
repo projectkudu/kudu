@@ -409,6 +409,30 @@ namespace Kudu.FunctionalTests
             });
         }
 
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public Task TestResetToDefault(bool isAsync)
+        {
+            return ApplicationManager.RunAsync("TestResetToDefault", async appManager =>
+            {
+                // Default deployment mode - overwrite app.jar
+                {
+                    DeploymentTestHelper.DeployRandomFilesEverywhere(appManager);
+                    await DeployEmptyArtifact(appManager, null, isAsync, true, true);
+                    await DeploymentTestHelper.AssertSuccessfulDeploymentByFilenames(appManager, new string[] {"hostingstart.html"}, "site/wwwroot");
+                }
+
+                DeploymentTestHelper.DeployRandomFilesEverywhere(appManager);
+
+                // Clean deployment
+                {
+                    DeploymentTestHelper.DeployRandomFilesEverywhere(appManager);
+                    await DeployEmptyArtifact(appManager, null, isAsync, true, true);
+                    await DeploymentTestHelper.AssertSuccessfulDeploymentByFilenames(appManager, new string[] { "hostingstart.html" }, "site/wwwroot");
+                }
+            });
+        }
         #endregion
 
         #region Helper methods
@@ -494,7 +518,38 @@ namespace Kudu.FunctionalTests
             TestTracer.Trace($"Validation successful!");
         }
 
-        private static IList<KeyValuePair<string, string>> GetOneDeployQueryParams(string type, string path, bool isAsync, bool? isClean)
+        private static async Task<string> DeployEmptyArtifact(
+            ApplicationManager appManager,
+            string type,
+            bool isAsync,
+            bool reset,
+            bool expectedSuccess)
+        {
+            TestTracer.Trace($"Deploying file type={type} isAsync={isAsync}");
+
+            IList<KeyValuePair<string, string>> queryParams = GetOneDeployQueryParams(type, null, isAsync, null, reset);
+
+            var response = await appManager.OneDeployManager.PushDeployFromStream(null, new ZipDeployMetadata(), queryParams);
+            TestTracer.Trace($"Response code={response.StatusCode}");
+            if (expectedSuccess)
+            {
+                response.EnsureSuccessStatusCode();
+            }
+            else
+            {
+                Assert.True(response.StatusCode == System.Net.HttpStatusCode.BadRequest, $"This test is expected to fail with status code == 400. Observed status code == {response.StatusCode}");
+            }
+
+            if (isAsync)
+            {
+                await DeploymentTestHelper.WaitForDeploymentCompletionAsync(appManager, deployer);
+            }
+
+            TestTracer.Trace($"Validation successful!");
+            return "reset";
+        }
+
+        private static IList<KeyValuePair<string, string>> GetOneDeployQueryParams(string type, string path, bool isAsync, bool? isClean, bool reset = false)
         {
             IList<KeyValuePair<string, string>> queryParams = new List<KeyValuePair<string, string>>();
 
@@ -516,6 +571,11 @@ namespace Kudu.FunctionalTests
             if (isClean.HasValue)
             {
                 queryParams.Add(new KeyValuePair<string, string>("clean", $"{isClean}"));
+            }
+
+            if (reset != false)
+            {
+                queryParams.Add(new KeyValuePair<string, string>("reset", $"{reset}"));
             }
 
             queryParams.Add(new KeyValuePair<string, string>("ignorestack", "true"));

@@ -60,7 +60,11 @@ namespace Kudu.Client.Deployment
                 }
 
                 request.Method = HttpMethod.Post;
-                request.Content = new StreamContent(zipFile);
+                if (zipFile != null)
+                {
+                    request.Content = new StreamContent(zipFile);
+                }
+
                 return await Client.SendAsync(request);
             }
         }
