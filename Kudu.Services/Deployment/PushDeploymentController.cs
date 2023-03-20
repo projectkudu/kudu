@@ -176,7 +176,8 @@ namespace Kudu.Services.Deployment
             [FromUri] bool? restart = true,
             [FromUri] bool? clean = null,
             [FromUri] bool ignoreStack = false,
-            [FromUri] bool trackDeploymentProgress = false
+            [FromUri] bool trackDeploymentProgress = false,
+            [FromUri] bool reset = false
             )
         {
             using (_tracer.Step(Constants.OneDeploy))
@@ -197,6 +198,7 @@ namespace Kudu.Services.Deployment
                         clean = armProperties.Value<bool?>("clean");
                         ignoreStack = armProperties.Value<bool>("ignorestack");
                         trackDeploymentProgress = armProperties.Value<bool>("trackdeploymentprogress");
+                        reset = armProperties.Value<bool>("reset");
                     }
                 }
                 catch (Exception ex)
@@ -216,7 +218,10 @@ namespace Kudu.Services.Deployment
                 ArtifactType artifactType = ArtifactType.Unknown;
                 try
                 {
-                    artifactType = (ArtifactType)Enum.Parse(typeof(ArtifactType), type, ignoreCase: true);
+                    if (!string.IsNullOrEmpty(type))
+                    {
+                        artifactType = (ArtifactType)Enum.Parse(typeof(ArtifactType), type, ignoreCase: true);
+                    }
                 }
                 catch
                 {
@@ -376,6 +381,16 @@ namespace Kudu.Services.Deployment
                         }
 
                         break;
+
+                    case ArtifactType.Unknown:
+                        if (reset)
+                        {
+                            deploymentInfo.CleanupTargetDirectory = true;
+                            deploymentInfo.TargetFileName = "hostingstart.html";
+                            return await PushDeployAsync(deploymentInfo, isAsync, requestObject, artifactType);
+                        }
+
+                        return StatusCode400($"Artifact type '{type}' not supported");
 
                     default:
                         return StatusCode400($"Artifact type '{artifactType}' not supported");
