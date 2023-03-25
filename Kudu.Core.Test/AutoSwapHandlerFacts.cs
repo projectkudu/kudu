@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Deployment;
 using Kudu.Core.Helpers;
+using Kudu.Core.Settings;
 using Kudu.Services.Test;
 using Kudu.TestHarness;
 using Moq;
@@ -56,11 +57,26 @@ namespace Kudu.Core.Test
             }
         }
 
-        [Fact]
-        public async Task HandleAutoSwapTests()
+        [Theory]
+        [InlineData(null, true, true)]
+        [InlineData(0, true, true)]
+        [InlineData(1, true, false)]
+        [InlineData(2, false, true)]
+        [InlineData(3, true, true)]
+        public async Task HandleAutoSwapTests(int? siteTokenIssuingMode, bool addSiteRestrictedToken, bool addSiteToken)
         {
             var homePath = System.Environment.GetEnvironmentVariable("HOME");
             var tempPath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+            ScmHostingConfigurations.Config = new Dictionary<string, string>();
+            if (siteTokenIssuingMode != null)
+            {
+                ScmHostingConfigurations.Config["SiteTokenIssuingMode"] = siteTokenIssuingMode.ToString();
+            };
+
+            Assert.True(SiteTokenHelper.ShouldAddSiteRestrictedToken() || SiteTokenHelper.ShouldAddSiteToken());
+            Assert.Equal(addSiteRestrictedToken, SiteTokenHelper.ShouldAddSiteRestrictedToken());
+            Assert.Equal(addSiteToken, SiteTokenHelper.ShouldAddSiteToken());
+
             try
             {
                 System.Environment.SetEnvironmentVariable(Constants.HttpHost, null);
@@ -93,11 +109,13 @@ namespace Kudu.Core.Test
                 string newDeploymentId = Guid.NewGuid().ToString();
 
                 string autoSwapRequestUrl = null;
-                string swtToken = null;
+                string siteRestrictedToken = null;
+                string siteToken = null;
                 PostDeploymentHelper.HttpClientFactory = () => new HttpClient(new TestMessageHandler((HttpRequestMessage requestMessage) =>
                 {
                     autoSwapRequestUrl = requestMessage.RequestUri.AbsoluteUri;
-                    swtToken = requestMessage.Headers.GetValues(Constants.SiteRestrictedToken).First();
+                    siteRestrictedToken = requestMessage.Headers.TryGetValues(Constants.SiteRestrictedToken, out var values) ? values.Single() : null;
+                    siteToken = requestMessage.Headers.TryGetValues(SiteTokenHelper.SiteTokenHeader, out values) ? values.Single() : null;
                     return new HttpResponseMessage(HttpStatusCode.OK);
                 }));
 
@@ -110,10 +128,12 @@ namespace Kudu.Core.Test
                 Assert.NotNull(autoSwapRequestUrl);
                 Assert.True(autoSwapRequestUrl.StartsWith("https://foo.scm.bar/operations/autoswap?slot=someslot&operationId=AUTOSWAP"));
 
-                Assert.NotNull(swtToken);
+                Assert.Equal(addSiteRestrictedToken, siteRestrictedToken != null);
+                Assert.Equal(addSiteToken, siteToken != null);
             }
             finally
             {
+                ScmHostingConfigurations.Config = null;
                 System.Environment.SetEnvironmentVariable(Constants.HttpHost, null);
                 System.Environment.SetEnvironmentVariable("HOME", homePath);
                 System.Environment.SetEnvironmentVariable(Constants.WebSiteSwapSlotName, null);

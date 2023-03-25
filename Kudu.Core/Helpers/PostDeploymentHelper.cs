@@ -664,7 +664,14 @@ namespace Kudu.Core.Helpers
                     }
 
                     client.DefaultRequestHeaders.UserAgent.Add(_userAgent.Value);
-                    client.DefaultRequestHeaders.Add(Constants.SiteRestrictedToken, SimpleWebTokenHelper.CreateToken(DateTime.UtcNow.AddMinutes(5)));
+                    if (SiteTokenHelper.ShouldAddSiteRestrictedToken())
+                    {
+                        client.DefaultRequestHeaders.Add(Constants.SiteRestrictedToken, SimpleWebTokenHelper.CreateToken(DateTime.UtcNow.AddMinutes(5)));
+                    }
+                    if (SiteTokenHelper.ShouldAddSiteToken())
+                    {
+                        client.DefaultRequestHeaders.Add(SiteTokenHelper.SiteTokenHeader, SiteTokenHelper.IssueToken(TimeSpan.FromMinutes(5)));
+                    }
                     client.DefaultRequestHeaders.Add(Constants.RequestIdHeader, requestId);
 
                     var payload = new StringContent(content ?? string.Empty, Encoding.UTF8, "application/json");

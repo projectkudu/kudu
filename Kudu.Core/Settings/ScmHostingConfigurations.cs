@@ -145,6 +145,12 @@ namespace Kudu.Core.Settings
             get { return GetValue("DataCopyingTelemetryEnabled", "0") != "0"; }
         }
 
+        // SiteTokenIssuingMode
+        // 0: (default) add both x-ms-site-restricted-token and x-ms-site-token
+        // 1: add x-ms-site-restricted-token only
+        // 2: add x-ms-site-token only
+        public static int SiteTokenIssuingMode => int.TryParse(GetValue("SiteTokenIssuingMode"), out int value) ? value : 0;
+
         public static string GetValue(string key, string defaultValue = null)
         {
             var env = System.Environment.GetEnvironmentVariable($"SCM_{key}");
