@@ -394,6 +394,7 @@ namespace Kudu.Services.Web.App_Start
             // Temporary fix for https://github.com/npm/npm/issues/5905
             EnsureNpmGlobalDirectory();
             EnsureUserProfileDirectory();
+            EnsureGitConfigFile(environment);
         }
 
         public static class SignalRStartup
@@ -626,6 +627,19 @@ namespace Kudu.Services.Web.App_Start
         private static void RemoveTempFileFromUserDrive(IEnvironment environment)
         {
             FileSystemHelpers.DeleteDirectorySafe(Path.Combine(environment.RootPath, "data", "Temp"), ignoreErrors: true);
+        }
+
+        private static void EnsureGitConfigFile(IEnvironment environment)
+        {
+            OperationManager.SafeExecute(() =>
+            {
+                var gitconfig = Path.Combine(environment.RootPath, ".gitconfig");
+                if (!File.Exists(gitconfig))
+                {
+                    // git config --global --add safe.directory "*"
+                    File.WriteAllLines(gitconfig, new[] { "[safe]", "    directory = *" });
+                }
+            });
         }
 
         // Perform migration tasks to deal with legacy sites that had different file layout
