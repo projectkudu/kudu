@@ -61,6 +61,14 @@
                <![CDATA[
                try {
                    OutputFilename = Path.GetFullPath(OutputFilename);
+                   
+                   // this is hack to workaround SSL/TLS issue from https://dist.nuget.org/.
+                   string cachedFile = Path.GetFullPath(Environment.ExpandEnvironmentVariables(@"%SystemDrive%\nuget.exe"));
+                   if (File.Exists(cachedFile))
+                   {
+                       File.Copy(cachedFile, OutputFilename, overwrite: true);
+                       return true;
+                   }
 
                    Log.LogMessage("Downloading NuGet.exe latest version ...");
                    WebClient webClient = new WebClient();
