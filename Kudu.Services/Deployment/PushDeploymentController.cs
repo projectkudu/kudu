@@ -375,7 +375,7 @@ namespace Kudu.Services.Deployment
                         }
                         else
                         {
-                            deploymentInfo.TargetSubDirectoryRelativePath = path;
+                            deploymentInfo.TargetRootPath = path;
                             // Deployments for type=zip default to clean=true
                             deploymentInfo.CleanupTargetDirectory = clean.GetValueOrDefault(true);
                         }
