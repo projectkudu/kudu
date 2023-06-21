@@ -394,6 +394,11 @@ namespace Kudu.Services.Web.App_Start
             // Temporary fix for https://github.com/npm/npm/issues/5905
             EnsureNpmGlobalDirectory();
             EnsureUserProfileDirectory();
+            
+            if(ScmHostingConfigurations.EnsureGitSafeDirectoryEnabled)
+            {
+                EnsureGitConfigFileWithSafeDirectoryConfig(environment);
+            }
         }
 
         public static class SignalRStartup
@@ -626,6 +631,23 @@ namespace Kudu.Services.Web.App_Start
         private static void RemoveTempFileFromUserDrive(IEnvironment environment)
         {
             FileSystemHelpers.DeleteDirectorySafe(Path.Combine(environment.RootPath, "data", "Temp"), ignoreErrors: true);
+        }
+
+        // add/update gitconfig file to be equivalent of running
+        // git config --global --add safe.directory "*"
+        private static void EnsureGitConfigFileWithSafeDirectoryConfig(IEnvironment environment)
+        {
+            var markerFilePath = Path.Combine(environment.RootPath, "gitsafedirectory.marker");
+            if (File.Exists(markerFilePath))
+            {
+                return;
+            }
+            OperationManager.SafeExecute(() =>
+            {
+                var gitConfigPath = Path.Combine(environment.RootPath, ".gitconfig");
+                File.AppendAllLines(gitConfigPath, new[] {"[safe]", "    directory = *" });
+                File.WriteAllText(markerFilePath, string.Empty);
+            });
         }
 
         // Perform migration tasks to deal with legacy sites that had different file layout
