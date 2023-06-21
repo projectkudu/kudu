@@ -145,6 +145,12 @@ namespace Kudu.Core.Settings
             get { return GetValue("DataCopyingTelemetryEnabled", "0") != "0"; }
         }
 
+        public static bool EnsureGitSafeDirectoryEnabled
+        {
+            // this is disabled by default
+            get { return GetValue("EnsureGitSafeDirectoryEnabled", "0") == "1"; }
+        }
+
         // SiteTokenIssuingMode
         // 0: (default) add both x-ms-site-restricted-token and x-ms-site-token
         // 1: add x-ms-site-restricted-token only
