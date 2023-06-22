@@ -224,7 +224,7 @@ namespace Kudu.FunctionalTests
                     await DeploymentTestHelper.AssertSuccessfulDeploymentByFilenames(appManager, expectedFiles1.ToArray(), "site/wwwroot");
                 }
 
-                // Custom path
+                // Custom path - clean
                 {
                     var initialFileName = DeploymentTestHelper.DeployRandomFilesEverywhere(appManager);
 

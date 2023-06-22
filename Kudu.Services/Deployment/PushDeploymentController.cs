@@ -372,13 +372,28 @@ namespace Kudu.Services.Deployment
                         if (_settings.RunFromLocalZip())
                         {
                             SetRunFromZipDeploymentInfo(deploymentInfo);
+                            break;
                         }
-                        else
+
+                        if (!string.IsNullOrEmpty(path))
                         {
-                            deploymentInfo.TargetRootPath = path;
-                            // Deployments for type=zip default to clean=true
-                            deploymentInfo.CleanupTargetDirectory = clean.GetValueOrDefault(true);
+                            deployToRoot = OneDeployHelper.IsDeployToRoot(ref path);
+                            if (deployToRoot)
+                            {
+                                if (deploymentInfo.CleanupTargetDirectory)
+                                {
+                                    return StatusCode400("Clean deployments cannot be performed outside of wwwroot");
+                                }
+
+                                deploymentInfo.TargetRootPath = _environment.RootPath;
+                            }
+
+                            deploymentInfo.TargetSubDirectoryRelativePath = path;
                         }
+
+                        //deploymentInfo.TargetRootPath = path;
+                        // Deployments for type=zip default to clean=true
+                        deploymentInfo.CleanupTargetDirectory = clean.GetValueOrDefault(true);
 
                         break;
 
