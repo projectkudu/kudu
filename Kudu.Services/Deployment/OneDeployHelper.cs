@@ -94,6 +94,31 @@ namespace Kudu.Services.Deployment
             return true;
         }
 
+        public static bool IsDeployToRoot(ref string path)
+        {
+            string[] rootPathKeyWords = { "home/", "%home%/", "$home/", "/home/", "/%home%/", "/$home/" };
+            // Path is absolute iif it begins with one of the rootPathKeyWords
+            foreach (string keyWord in rootPathKeyWords)
+            {
+                if (path.StartsWith(keyWord))
+                {
+                    path = path.Substring(keyWord.Length);
+
+                    // If absolute path points to wwwroot set path relative to wwwroot
+                    if (path.StartsWith(WwwrootDirectoryRelativePath, StringComparison.OrdinalIgnoreCase))
+                    {
+                        path = path.Substring(WwwrootDirectoryRelativePath.Length);
+                    }
+                    else
+                    {
+                        return true;
+                    }
+                    break;
+                }
+            }
+            return false;
+        }
+
         public static bool EnsureValidStaticPath(ref string path, out string error, out bool deployToRoot)
         {
             string[] rootPathKeyWords = { "home/", "%home%/", "$home/", "/home/", "/%home%/", "/$home/" };
@@ -112,25 +137,7 @@ namespace Kudu.Services.Deployment
                 return false;
             }
 
-            // Path is absolute iif it begins with one of the rootPathKeyWords
-            foreach (string keyWord in rootPathKeyWords)
-            {
-                if (path.StartsWith(keyWord))
-                {
-                    path = path.Substring(keyWord.Length);
-
-                    // If absolute path points to wwwroot set path relative to wwwroot
-                    if (path.StartsWith(WwwrootDirectoryRelativePath, StringComparison.OrdinalIgnoreCase))
-                    {
-                        path = path.Substring(WwwrootDirectoryRelativePath.Length);
-                    }
-                    else
-                    {
-                        deployToRoot = true;
-                    }
-                    break;
-                }
-            }
+            deployToRoot = IsDeployToRoot(ref path);
 
             error = null;
             return true;
