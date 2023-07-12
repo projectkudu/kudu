@@ -147,8 +147,8 @@ namespace Kudu.Core.Settings
 
         public static bool EnsureGitSafeDirectoryEnabled
         {
-            // this is disabled by default
-            get { return GetValue("EnsureGitSafeDirectoryEnabled", "0") == "1"; }
+            // this is enabled by default
+            get { return GetValue("EnsureGitSafeDirectoryEnabled", "1") != "0"; }
         }
 
         // SiteTokenIssuingMode
