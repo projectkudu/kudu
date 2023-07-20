@@ -11,10 +11,10 @@ namespace Kudu.Core.Helpers
         {
             try
             {
-                var assembly = Assembly.Load("Microsoft.Web.Hosting, Version=7.1.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35");
+                var assembly = Assembly.ReflectionOnlyLoad("Microsoft.Web.Hosting, Version=7.1.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35");
                 var fvi = FileVersionInfo.GetVersionInfo(assembly.Location);
                 return fvi.FileVersion;
-            } 
+            }
             catch (Exception)
             {
                 return string.Empty;
