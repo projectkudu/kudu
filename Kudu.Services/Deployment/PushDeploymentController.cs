@@ -9,9 +9,7 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
-using System.Web;
 using System.Web.Http;
 using Kudu.Contracts.Deployment;
 using Kudu.Contracts.Infrastructure;
@@ -251,7 +249,6 @@ namespace Kudu.Services.Deployment
                 };
 
                 string error;
-                bool deployToRoot;
 
                 switch (artifactType)
                 {
@@ -348,23 +345,42 @@ namespace Kudu.Services.Deployment
                         break;
 
                     case ArtifactType.Static:
-                        if (!OneDeployHelper.EnsureValidStaticPath(ref path, out error, out deployToRoot))
+                        if (string.IsNullOrWhiteSpace(path))
                         {
-                            return StatusCode400(error);
+                            return StatusCode400("Path must be defined for type=static");
                         }
 
-                        if (deployToRoot)
+                        // Keep things simple by disallowing trailing slash
+                        if (path.EndsWith("/", StringComparison.Ordinal))
                         {
-                            if (deploymentInfo.CleanupTargetDirectory)
-                            {
-                                return StatusCode400("Clean deployments cannot be performed outside of wwwroot");
-                            }
-
-                            deploymentInfo.TargetRootPath = _environment.RootPath;
+                            return StatusCode400("Path cannot end with a '/'");
                         }
 
-                        OneDeployHelper.SetTargetSubDirectoyAndFileNameFromRelativePath(deploymentInfo, path);
+                        if (Path.GetDirectoryName(path).Contains(".."))
+                        {
+                            return StatusCode400("Path cannot contain '..' Please provide an absolute path.");
+                        }
 
+                        if (clean.GetValueOrDefault(false) && !OneDeployHelper.EnsureValidCleanPath(Path.GetDirectoryName(path), _environment.RootPath))
+                        {
+                            return StatusCode400($"Clean deployments cannot be performed in the requested directory: {path}. Please perform an incremental deployment (clean = false) or deploy to a subdirectory.");
+
+                        }
+
+                        if (OneDeployHelper.IsAbsolutePath(ref path, _environment.RootPath))
+                        {
+                            string fileName = Path.GetFileName(path);
+                            string directory = Path.GetDirectoryName(path);
+                            directory = Path.Combine(_environment.RootPath, directory);
+
+                            deploymentInfo.TargetRootPath = directory;
+                            deploymentInfo.TargetFileName = fileName;
+                        }
+
+                        else
+                        {
+                            OneDeployHelper.SetTargetSubDirectoyAndFileNameFromRelativePath(deploymentInfo, path);
+                        }
                         break;
 
                     case ArtifactType.Zip:
@@ -377,21 +393,26 @@ namespace Kudu.Services.Deployment
 
                         if (!string.IsNullOrEmpty(path))
                         {
-                            deployToRoot = OneDeployHelper.IsDeployToRoot(ref path);
-                            if (deployToRoot)
+                            if (path.Contains(".."))
                             {
-                                if (deploymentInfo.CleanupTargetDirectory)
-                                {
-                                    return StatusCode400("Clean deployments cannot be performed outside of wwwroot");
-                                }
-
-                                deploymentInfo.TargetRootPath = _environment.RootPath;
+                                return StatusCode400("Path cannot contain '..' Please provide an absolute path.");
                             }
 
-                            deploymentInfo.TargetSubDirectoryRelativePath = path;
+                            if (clean.GetValueOrDefault(true) && !OneDeployHelper.EnsureValidCleanPath(path, _environment.RootPath))
+                            {
+                                return StatusCode400($"Clean deployments cannot be performed in the requested directory: {path}. Please perform an incremental deployment (clean = false) or deploy to a subdirectory.");
+                            }  
+
+                            if (OneDeployHelper.IsAbsolutePath(ref path, _environment.RootPath))
+                            {
+                                deploymentInfo.TargetRootPath = Path.Combine(_environment.RootPath, path);
+                            }
+                            else
+                            {
+                                deploymentInfo.TargetSubDirectoryRelativePath = path;
+                            }
                         }
 
-                        //deploymentInfo.TargetRootPath = path;
                         // Deployments for type=zip default to clean=true
                         deploymentInfo.CleanupTargetDirectory = clean.GetValueOrDefault(true);
 

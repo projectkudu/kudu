@@ -6,7 +6,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
 
 namespace Kudu.Services.Deployment
@@ -94,9 +93,10 @@ namespace Kudu.Services.Deployment
             return true;
         }
 
-        public static bool IsDeployToRoot(ref string path)
+        public static bool IsAbsolutePath(ref string path, string rootPath)
         {
-            string[] rootPathKeyWords = { "home/", "%home%/", "$home/", "/home/", "/%home%/", "/$home/" };
+            string[] rootPathKeyWords = {rootPath, "home/", "%home%/", "$home/", "/home/", "/%home%/", "/$home/"};
+
             // Path is absolute iif it begins with one of the rootPathKeyWords
             foreach (string keyWord in rootPathKeyWords)
             {
@@ -104,42 +104,21 @@ namespace Kudu.Services.Deployment
                 {
                     path = path.Substring(keyWord.Length);
 
-                    // If absolute path points to wwwroot set path relative to wwwroot
-                    if (path.StartsWith(WwwrootDirectoryRelativePath, StringComparison.OrdinalIgnoreCase))
-                    {
-                        path = path.Substring(WwwrootDirectoryRelativePath.Length);
-                    }
-                    else
-                    {
-                        return true;
-                    }
-                    break;
+                    return true;
                 }
             }
             return false;
         }
 
-        public static bool EnsureValidStaticPath(ref string path, out string error, out bool deployToRoot)
+        public static bool EnsureValidCleanPath(string path, string rootPath)
         {
-            string[] rootPathKeyWords = { "home/", "%home%/", "$home/", "/home/", "/%home%/", "/$home/" };
-
-            deployToRoot = false;
-            if (string.IsNullOrWhiteSpace(path))
+            // Matches against the following /home and /home/site
+            // with or without trailing slashes
+            // with forward and back slashes
+            if (Regex.IsMatch(path, @"(([/\\])home)([/\\]site)?[/\\]?$") || path == rootPath || path == Path.Combine(rootPath, "site"))
             {
-                error = $"Path must be defined for type=static";
                 return false;
             }
-
-            // Keep things simple by disallowing trailing slash
-            if (path.EndsWith("/", StringComparison.Ordinal))
-            {
-                error = $"Path cannot end with a '/'";
-                return false;
-            }
-
-            deployToRoot = IsDeployToRoot(ref path);
-
-            error = null;
             return true;
         }
 
