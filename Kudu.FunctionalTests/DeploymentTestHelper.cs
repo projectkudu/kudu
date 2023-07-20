@@ -114,6 +114,8 @@ namespace Kudu.FunctionalTests
             appManager.VfsManager.WriteAllText($"site/wwwroot/webapps/{testFile.Filename}", testFile.Content);
             appManager.VfsManager.WriteAllText($"site/wwwroot/webapps/ROOT/{testFile.Filename}", testFile.Content);
             appManager.VfsManager.WriteAllText($"site/wwwroot/webapps/ROOT2/{testFile.Filename}", testFile.Content);
+            appManager.VfsManager.WriteAllText($"site/test/{testFile.Filename}", testFile.Content);
+            appManager.VfsManager.WriteAllText($"site/test/test2/{testFile.Filename}", testFile.Content);
 
             return testFile.Content;
         }
