@@ -147,8 +147,9 @@ namespace Kudu.Core.Settings
 
         public static bool EnsureGitSafeDirectoryEnabled
         {
-            // this is enabled by default
-            get { return GetValue("EnsureGitSafeDirectoryEnabled", "1") != "0"; }
+            // this is disabled by default
+            // for Azure env, the "%SystemDrive%\Program Files\Git\etc\gitconfig" allows safe.directory=*
+            get { return GetValue("EnsureGitSafeDirectoryEnabled", "0") == "1"; }
         }
 
         // SiteTokenIssuingMode
