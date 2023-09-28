@@ -9,8 +9,10 @@ Kudu is the engine behind [git deployments in Azure App Service](https://azure.m
 
 ### Help
 
-Please file incidents in Azure, so we can better track and assist on this case: [Create an Azure support request](https://learn.microsoft.com/en-us/azure/azure-portal/supportability/how-to-create-azure-support-request)
-Post an issue in this GitHub project only for non-Azure related issues or questions for the Open Source project
+Please file incidents in Azure, so we can better track issues and assist you.
+[Create an Azure support request](https://learn.microsoft.com/en-us/azure/azure-portal/supportability/how-to-create-azure-support-request)
+
+Post an issue in this GitHub project only for non-Azure related issues or questions for the Open Source project.
 
 ### Documentation
 
