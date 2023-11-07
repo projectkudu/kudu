@@ -344,6 +344,11 @@ namespace Kudu.Core.Infrastructure
             return target != null && target.StartsWith("net7.0", StringComparison.OrdinalIgnoreCase);
         }
 
+        public static bool IsDotNet8Version(string target)
+        {
+            return target != null && target.StartsWith("net8.0", StringComparison.OrdinalIgnoreCase);
+        }
+
         // 01, 10, 11 in binares
         public enum Csproj { oldFormat = 1, newFormat, bothFormat }
     }
