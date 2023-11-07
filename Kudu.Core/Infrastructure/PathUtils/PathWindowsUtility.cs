@@ -143,7 +143,7 @@ namespace Kudu.Core.Infrastructure
             {
                 probPaths.Add(Path.Combine(programFiles, "MSBuilds", "16.7.0", "MSBuild", "Current", "Bin"));
             }
-            else if (VsHelper.IsDotNet7Version(targetFramework))
+            else if (VsHelper.IsDotNet7Version(targetFramework) || VsHelper.IsDotNet8Version(targetFramework))
             {
                 // Using ResolveLatestMSBuildDir as it's picking the latest MSBuild version.
                 probPaths.Add(ResolveLatestMSBuildDir());
