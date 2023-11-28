@@ -297,7 +297,7 @@ namespace Kudu.Core.Helpers
                 var functionsSiteHostName = string.Join(".", scmSplit.Where((el, idx) => idx != 1));
 
                 await OperationManager.AttemptAsync(async () => await PostAsync(Constants.FunctionsSyncTriggersApiPath, requestId,
-                    hostName: functionsSiteHostName), retries: 3, delayBeforeRetry: 1000);
+                    hostName: functionsSiteHostName, audience: SiteTokenHelper.FunctionSiteAudience.Value), retries: 3, delayBeforeRetry: 1000);
 
                 return true;
             }
@@ -637,7 +637,7 @@ namespace Kudu.Core.Helpers
         }
 
         // Throws on failure
-        public static async Task PostAsync(string path, string requestId, string hostName = null, string content = null)
+        public static async Task PostAsync(string path, string requestId, string hostName = null, string content = null, string audience = null)
         {
             var hostOrAuthority = IsLocalHost ? HttpAuthority : HttpHost;
             hostName = hostName ?? hostOrAuthority;
@@ -670,7 +670,7 @@ namespace Kudu.Core.Helpers
                     }
                     if (SiteTokenHelper.ShouldAddSiteToken())
                     {
-                        client.DefaultRequestHeaders.Add(SiteTokenHelper.SiteTokenHeader, SiteTokenHelper.IssueToken(TimeSpan.FromMinutes(5)));
+                        client.DefaultRequestHeaders.Add(SiteTokenHelper.SiteTokenHeader, SiteTokenHelper.IssueToken(validity: TimeSpan.FromMinutes(5), audience: audience));
                     }
                     client.DefaultRequestHeaders.Add(Constants.RequestIdHeader, requestId);
 

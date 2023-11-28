@@ -28,14 +28,20 @@ namespace Kudu.Core.Helpers
             return $"https://{webSiteName}.scm.azurewebsites.net";
         });
 
-        public static string IssueToken(TimeSpan? validity = null)
+        public static readonly Lazy<string> FunctionSiteAudience = new Lazy<string>(() =>
+        {
+            var webSiteName = System.Environment.GetEnvironmentVariable("WEBSITE_SITE_NAME");
+            return $"https://{webSiteName}.azurewebsites.net";
+        });
+
+        public static string IssueToken(TimeSpan? validity = null, string audience = null)
         {
             var utcNow = DateTime.UtcNow;
             var expires = utcNow.Add(validity.GetValueOrDefault(SiteTokenValidity));
 
             return new JwtSecurityTokenHandler().CreateEncodedJwt(
                 issuer: SiteTokenIssuer.Value,
-                audience: AppServiceAudience,
+                audience: !string.IsNullOrEmpty(audience) ? audience : AppServiceAudience,
                 subject: null,
                 notBefore: utcNow,
                 expires: expires,
