@@ -37,14 +37,7 @@ namespace Kudu.Services.Performance
 
         static ProfileManager()
         {
-            if(Environment.OSVersion.Version.Major < 10)
-            {
-                _processName = Environment.ExpandEnvironmentVariables("%SystemDrive%\\msvsmon\\profiler\\VSStandardCollector.Dev14.exe");
-            }
-            else
-            {
-                _processName = Environment.ExpandEnvironmentVariables("%SystemDrive%\\Program Files\\Microsoft Visual Studio 15.0\\Team Tools\\DiagnosticsHub\\Collector\\VSDiagnostics.exe");
-            }
+            _processName = Environment.ExpandEnvironmentVariables("%SystemDrive%\\Program Files\\Microsoft Visual Studio 17.0\\Team Tools\\DiagnosticsHub\\Collector\\VSDiagnostics.exe");
         }
 
         internal static async Task<ProfileResultInfo> StartProfileAsync(int processId, ITracer tracer = null, bool iisProfiling = false)
