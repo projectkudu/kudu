@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics.CodeAnalysis;
+using System.Text.RegularExpressions;
 using Microsoft.Diagnostics.Tracing;
 
 namespace Kudu.Core.Tracing
@@ -31,7 +32,7 @@ namespace Kudu.Core.Tracing
         {
             if (IsEnabled())
             {
-                WriteEvent(65512, siteName, method, path, result, Message, exception);
+                WriteEvent(65512, siteName, method, path, result, RedactSasUriIfPresent(Message), exception);
             }
         }
 
@@ -49,7 +50,7 @@ namespace Kudu.Core.Tracing
         {
             if (IsEnabled())
             {
-                WriteEvent(65511, siteName, method, path, result, deploymentDurationInMilliseconds, Message);
+                WriteEvent(65511, siteName, method, path, result, deploymentDurationInMilliseconds, RedactSasUriIfPresent(Message));
             }
         }
 
@@ -58,7 +59,7 @@ namespace Kudu.Core.Tracing
         {
             if (IsEnabled())
             {
-                WriteEvent(65513, siteName, jobName, Message, jobType, error);
+                WriteEvent(65513, siteName, jobName, RedactSasUriIfPresent(Message), jobType, error);
             }
         }
 
@@ -68,7 +69,7 @@ namespace Kudu.Core.Tracing
         {
             if (IsEnabled())
             {
-                WriteEvent(65514, siteName, Message, requestId, scmType, siteMode, buildVersion, appServiceVersion);
+                WriteEvent(65514, siteName, RedactSasUriIfPresent(Message), requestId, scmType, siteMode, buildVersion, appServiceVersion);
             }
         }
 
@@ -78,7 +79,7 @@ namespace Kudu.Core.Tracing
         {
             if (IsEnabled())
             {
-                WriteEvent(65515, siteName, Message, address, verb, requestId, statusCode, latencyInMilliseconds, userAgent);
+                WriteEvent(65515, siteName, RedactSasUriIfPresent(Message), address, verb, requestId, statusCode, latencyInMilliseconds, userAgent);
             }
         }
 
@@ -102,6 +103,22 @@ namespace Kudu.Core.Tracing
             {
                 WriteEvent(65516, siteName, kind, requestId, status, details, buildVersion, appServiceVersion, projectType, vsProjectId);
             }
+        }
+
+        public static string RedactSasUriIfPresent(string message)
+        {
+            // Return the message as is in case if it's null or empty
+            if (string.IsNullOrEmpty(message))
+            {
+                return message;
+            }
+
+            // RegEx pattern to match the signature part
+            string pattern = @"(\b(sig=)[^&\s]+)";
+
+            // Redact the signature part if found
+            message = Regex.Replace(message, pattern, "sig=REDACTED");
+            return message;
         }
     }
 }
