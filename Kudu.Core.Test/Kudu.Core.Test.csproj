@@ -27,6 +27,7 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\Microsoft.AspNet.SignalR.Core.2.1.1\lib\net45\Microsoft.AspNet.SignalR.Core.dll</HintPath>
     </Reference>
+    <Reference Include="Microsoft.Diagnostics.Tracing.EventSource, Version=1.0.26.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
     <Reference Include="Moq, Version=4.2.1312.1622, Culture=neutral, PublicKeyToken=69f491c39445e920, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\Moq.4.2.1312.1622\lib\net40\Moq.dll</HintPath>
@@ -139,6 +140,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="PurgeDeploymentsTests.cs" />
     <Compile Include="RepositoryFactoryFacts.cs" />
+    <Compile Include="SASUriRedactedMessageTest.cs" />
     <Compile Include="Settings\DeploymentSettingsPrioritiesTests.cs" />
     <Compile Include="Settings\DiagnosticsSettingsManagerTests.cs" />
     <Compile Include="Settings\SettingsProvidersTests.cs" />
