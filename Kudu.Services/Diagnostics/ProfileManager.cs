@@ -275,6 +275,16 @@ namespace Kudu.Services.Performance
                 else if (!string.IsNullOrEmpty(error))
                 {
                     tracer.TraceError(error);
+
+                    // Detect, specifically "HRESULT: 0xE111005E" which indicates that we've exceeded the
+                    // maximum number of concurrent profiling sessions.
+                    // VSHUB_E_MAX_NUMBER_OF_SESSIONS_ALREADY_REACHED = 0xE111005E
+                    if (error.IndexOf("HRESULT: 0xE111005E", StringComparison.Ordinal) >= 0)
+                    {
+                        const HttpStatusCode retryLaterStatusCode = (HttpStatusCode)429;
+                        return new ProfileResultInfo(retryLaterStatusCode, "Starting a profiling session now would exceed the maximum allowed number of concurrent profiling sessions. Please try again in a few minutes.");
+                    }
+
                     return new ProfileResultInfo(HttpStatusCode.InternalServerError, "Profiling process failed with the following error: " + error);
                 }
 
