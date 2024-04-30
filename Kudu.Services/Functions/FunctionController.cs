@@ -188,7 +188,7 @@ namespace Kudu.Services.Functions
             var tracer = _traceFactory.GetTracer();
             using (tracer.Step("FunctionController.SyncTriggers"))
             {
-                await PostDeploymentHelper.SyncFunctionsTriggers(_environment.RequestId, new PostDeploymentTraceListener(tracer));
+                await PostDeploymentHelper.SyncTriggersIfFunctionsSite(_environment.RequestId, new PostDeploymentTraceListener(tracer), tracePath: _environment.TracePath);
 
                 // Return a dummy body to make it valid in ARM template action evaluation
                 return Request.CreateResponse(HttpStatusCode.OK, new { status = "success" });
@@ -262,7 +262,7 @@ namespace Kudu.Services.Functions
                 {
                     try
                     {
-                        await PostDeploymentHelper.SyncFunctionsTriggers(_environment.RequestId, new PostDeploymentTraceListener(bgTracer));
+                        await PostDeploymentHelper.SyncTriggersIfFunctionsSite(_environment.RequestId, new PostDeploymentTraceListener(bgTracer), tracePath: _environment.TracePath);
                     }
                     catch (Exception ex)
                     {

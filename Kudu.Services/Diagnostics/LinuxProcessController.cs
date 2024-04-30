@@ -56,7 +56,7 @@ namespace Kudu.Services.Performance
         }
 
         [SuppressMessage("Microsoft.Usage", "CA1801:ReviewUnusedParameters", Justification = "Parameters preserved for equivalent route binding")]
-        [HttpDelete]
+        [HttpDelete, HttpPost]
         public HttpResponseMessage KillProcess(int id)
         {
             return Request.CreateErrorResponse(HttpStatusCode.BadRequest, ERRORMSG);

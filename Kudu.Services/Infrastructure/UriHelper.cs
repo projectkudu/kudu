@@ -10,38 +10,79 @@ namespace Kudu.Services.Infrastructure
     public static class UriHelper
     {
         private const string DisguisedHostHeaderName = "DISGUISED-HOST";
+        private const string ForwardedHostHeaderName = "X-FORWARDED-HOST";
+        private const string OriginalHostHeaderName = "X-ORIGINAL-HOST";
 
-        public static Uri GetBaseUri(HttpRequestMessage request)
+        public static Uri GetBaseUri(this HttpRequestMessage request, bool useOriginalHost = false)
         {
-            return new Uri(GetRequestUri(request).GetComponents(UriComponents.SchemeAndServer, UriFormat.Unescaped));
+            return new Uri(request.GetRequestUri(useOriginalHost).GetComponents(UriComponents.SchemeAndServer, UriFormat.Unescaped));
         }
 
-        public static Uri GetRequestUri(HttpRequestMessage request)
+        public static Uri GetRequestUri(this HttpRequestMessage request, bool useOriginalHost = false)
         {
             string disguisedHost = null;
+            IEnumerable<string> values;
 
-            IEnumerable<string> disguisedHostValues;
-            if (request.Headers.TryGetValues(DisguisedHostHeaderName, out disguisedHostValues)
-                && disguisedHostValues.Count() > 0)
+            if (useOriginalHost)
             {
-                disguisedHost = disguisedHostValues.First();
+                if (request.Headers.TryGetValues(ForwardedHostHeaderName, out values)
+                    && values.Count() > 0)
+                {
+                    disguisedHost = values.First();
+                }
+
+                if (string.IsNullOrWhiteSpace(disguisedHost)
+                    && request.Headers.TryGetValues(OriginalHostHeaderName, out values)
+                    && values.Count() > 0)
+                {
+                    disguisedHost = values.First();
+                }
+            }
+
+            // On Linux, corrections to the request URI are needed due to the way the request is handled on the worker:
+            // - Set scheme to https
+            // - Set host to the value of DISGUISED-HOST
+            // - Remove port value
+            if (!OSDetector.IsOnWindows()
+                && string.IsNullOrWhiteSpace(disguisedHost)
+                && request.Headers.TryGetValues(DisguisedHostHeaderName, out values)
+                && values.Count() > 0)
+            {
+                disguisedHost = values.First();
             }
 
             return GetRequestUriInternal(request.RequestUri, disguisedHost);
         }
 
-        public static Uri GetRequestUri(HttpRequest request)
+        public static Uri GetRequestUri(this HttpRequest request, bool useOriginalHost = false)
         {
-            return GetRequestUriInternal(request.Url, request.Headers[DisguisedHostHeaderName]);
-        }
+            string disguisedHost = null;
 
-        private static Uri GetRequestUriInternal(Uri uri, string disguisedHostValue)
-        {
+            if (useOriginalHost)
+            {
+                disguisedHost = request.Headers[ForwardedHostHeaderName];
+                if (string.IsNullOrWhiteSpace(disguisedHost))
+                {
+                    disguisedHost = request.Headers[OriginalHostHeaderName];
+                }
+            }
+
             // On Linux, corrections to the request URI are needed due to the way the request is handled on the worker:
             // - Set scheme to https
             // - Set host to the value of DISGUISED-HOST
             // - Remove port value
-            if (!OSDetector.IsOnWindows() && disguisedHostValue != null)
+            if (!OSDetector.IsOnWindows()
+                && string.IsNullOrWhiteSpace(disguisedHost))
+            {
+                disguisedHost = request.Headers[DisguisedHostHeaderName];
+            }
+
+            return GetRequestUriInternal(request.Url, disguisedHost);
+        }
+
+        private static Uri GetRequestUriInternal(Uri uri, string disguisedHostValue)
+        {
+            if (!string.IsNullOrWhiteSpace(disguisedHostValue))
             {
                 uri = (new UriBuilder(uri)
                 {

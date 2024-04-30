@@ -94,6 +94,12 @@ namespace Kudu.Core.Test.Jobs
         }
 
         [Fact]
+        public void CheckJobType_Continuous_JobTypeIsNonSdk_ByDefault()
+        {
+            Assert.Equal("continuous", _runner.GetJobType());
+        }
+
+        [Fact]
         public void CheckAlwaysOn_OnlyLogsOncePerLogFile()
         {
             System.Environment.SetEnvironmentVariable(ContinuousJobRunner.WebsiteSCMAlwaysOnEnabledKey, "0");

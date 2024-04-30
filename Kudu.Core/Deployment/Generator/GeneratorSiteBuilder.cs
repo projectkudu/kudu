@@ -65,7 +65,7 @@ namespace Kudu.Core.Deployment.Generator
             {
                 using (context.Tracer.Step("Generating deployment script"))
                 {
-                    var scriptGenerator = ExternalCommandFactory.BuildExternalCommandExecutable(RepositoryPath, context.OutputPath, buildLogger);
+                    var scriptGenerator = ExternalCommandFactory.BuildExternalCommandExecutable(RepositoryPath, context.OutputPath, buildLogger, TargetFramework);
 
                     // Set home path to the user profile so cache directories created by azure-cli are created there
                     scriptGenerator.SetHomePath(System.Environment.GetEnvironmentVariable("APPDATA"));

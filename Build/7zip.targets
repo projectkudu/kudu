@@ -43,6 +43,13 @@
                try {
                    OutputFileName = Path.GetFullPath(OutputFileName);
                    String outputFolderName = Path.Combine(Path.GetDirectoryName(OutputFileName), "7zip");
+                   String existingFile = Environment.ExpandEnvironmentVariables(@"%SystemDrive%\7zip\7za.exe");
+                   if (File.Exists(existingFile)) {
+                       Log.LogMessage(string.Format("Use existing {0}", existingFile));
+                       Directory.CreateDirectory(outputFolderName);
+                       File.Copy(existingFile, Path.Combine(outputFolderName, "7za.exe"), true);
+                       return true;
+                   }
 
                    Log.LogMessage("Downloading 7zip ...");
                    WebClient webClient = new WebClient();

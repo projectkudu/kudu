@@ -39,7 +39,7 @@ namespace Kudu.Services.Docker
                 {
                     if (_settings.IsDockerCiEnabled())
                     {
-                        DockerContainerRestartTrigger.RequestContainerRestart(_environment, RESTART_REASON);
+                        DockerContainerRestartTrigger.RequestContainerRestart(_environment, RESTART_REASON, tracer);
                     }
                 }
                 catch (Exception e)

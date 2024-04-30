@@ -28,7 +28,7 @@
         Assembly assembly;
         try
         {
-            assembly = Assembly.Load("Microsoft.Web.Hosting, Version=7.1.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35");
+            assembly = Assembly.ReflectionOnlyLoad("Microsoft.Web.Hosting, Version=7.1.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35");
             var fileVersionInfo = System.Diagnostics.FileVersionInfo.GetVersionInfo(assembly.Location);
             return fileVersionInfo.ProductVersion;
         }
@@ -90,6 +90,9 @@
             @Kudu.Services.Web.Tracing.TraceModule.UpTime.ToString(@"dd\.hh\:mm\:ss")
         </div>
     </div>
+
+    @if (!Kudu.Core.Helpers.EnvironmentHelper.IsWindowsContainers())
+    {
     <div class="row">
         <div class="col-xs-2">
             <strong>Site folder</strong>
@@ -106,6 +109,14 @@
             @Path.GetTempPath()
         </div>
     </div>
+    }
+
+    @if (Kudu.Core.Helpers.EnvironmentHelper.IsRunFromPackage())
+    {
+    <div class="alert alert-warning" role="alert">
+      Your app is currently in read only mode because you are running from a package file. To make any changes, please update the content in your zip file and WEBSITE_RUN_FROM_PACKAGE app setting.
+    </div>
+    }
 
     <h3>REST API <small>(works best when using a JSON viewer extension)</small></h3>
     <ul>
@@ -121,7 +132,7 @@
         <li>
             <a href="api/vfs">Files</a>
         </li>
-        @if (Kudu.Core.Helpers.OSDetector.IsOnWindows())
+        @if (Kudu.Core.Helpers.OSDetector.IsOnWindows() && !Kudu.Core.Helpers.EnvironmentHelper.IsWindowsContainers())
         {
             <li>
                 <a href="api/logstream">Log streaming</a> (use curl, not browser!)
@@ -143,7 +154,16 @@
             </li>
             <li>
             Functions: <a href="api/functions">list</a> | <a href="api/functions/config">host config</a>
-        </li>
+            </li>
+        }
+        else if (Kudu.Core.Helpers.OSDetector.IsOnWindows() && Kudu.Core.Helpers.EnvironmentHelper.IsWindowsContainers())
+        {
+            <li>
+                <a href="api/logstream">Log streaming</a> (use curl, not browser!)
+            </li>
+            <li>
+                <a href="api/logs/docker">Current Container logs</a> (<a href="api/logs/docker/zip">Download as zip</a>)
+            </li>
         }
         else
         {

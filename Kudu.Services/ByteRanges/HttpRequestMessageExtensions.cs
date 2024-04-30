@@ -1,11 +1,13 @@
 ﻿using System;
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
+using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
+using Kudu.Core.Settings;
 using Kudu.Core.Tracing;
 
 namespace Kudu.Services.ByteRanges
@@ -40,13 +42,11 @@ namespace Kudu.Services.ByteRanges
             return rangeNotSatisfiableResponse;
         }
 
-        public static async Task<int> CopyToAsync(this HttpContent content, string filePath, ITracer tracer)
+        public static async Task<long> CopyToAsync(this HttpContent content, string filePath, ITracer tracer)
         {
-            const int ReadBufferSize = 4096;
-
             var nextTraceTime = DateTime.UtcNow.AddSeconds(30);
-            var total = 0;
-            var buffer = new byte[ReadBufferSize];
+            long total = 0;
+            var buffer = new byte[ScmHostingConfigurations.StreamCopyBufferSize];
             using (var src = await content.ReadAsStreamAsync())
             using (var dst = FileSystemHelpers.CreateFile(filePath))
             {
@@ -67,6 +67,92 @@ namespace Kudu.Services.ByteRanges
                     await dst.WriteAsync(buffer, 0, read);
                     total += read;
                 }
+            }
+
+            return total;
+        }
+
+        public static async Task<long> CopyToAsync(this HttpContent content, string filePath, ITracer tracer, MemoryStream backupStream)
+        {
+            var nextTraceTime = DateTime.UtcNow.AddSeconds(30);
+            long total = 0;
+            var buffer = new byte[ScmHostingConfigurations.StreamCopyBufferSize];
+            using (var src = await content.ReadAsStreamAsync())
+            using (var dst = FileSystemHelpers.CreateFile(filePath))
+            {
+                while (true)
+                {
+                    int read = await src.ReadAsync(buffer, 0, buffer.Length);
+                    if (read <= 0)
+                    {
+                        tracer.Trace("Total {0:n0} bytes written to {1}", total, filePath);
+                        break;
+                    }
+                    else if (DateTime.UtcNow > nextTraceTime)
+                    {
+                        tracer.Trace("Writing {0:n0} bytes to {1}", total, filePath);
+                        nextTraceTime = DateTime.UtcNow.AddSeconds(30);
+                    }
+
+                    await dst.WriteAsync(buffer, 0, read);
+                    total += read;
+                }
+
+                //backupStream is for copy retry
+                try
+                {
+                    if (src.CanSeek)
+                    {
+                        src.Seek(0, SeekOrigin.Begin);
+                        long limit = ScmHostingConfigurations.DeploymentBackupMemoryKBytes;
+                        tracer.Trace("DeploymentBackupMemoryKBytes: {0} KB", limit);
+                        if (total < (limit * 1_024))
+                        {
+                            tracer.Trace("backupStream start");
+                            await src.CopyToAsync(backupStream);
+                            backupStream.Seek(0, SeekOrigin.Begin);
+                            tracer.Trace("backupStream successful");
+                        }                        
+                    }                    
+                }
+                catch (Exception ex)
+                {
+                    tracer.Trace("backupStream failed: {0}", ex.Message);
+                }                
+            }
+
+            return total;
+        }
+
+        public static async Task<long> CopyFromBackupAsync(this HttpContent content, string filePath, ITracer tracer, MemoryStream backupStream)
+        {
+            tracer.Trace("Starting CopyFromBackupAsync");
+            var nextTraceTime = DateTime.UtcNow.AddSeconds(30);
+            long total = 0;
+            var buffer = new byte[ScmHostingConfigurations.StreamCopyBufferSize];
+            using (var dst = FileSystemHelpers.CreateFile(filePath))
+            {
+                if (backupStream != null)
+                {
+                    backupStream.Seek(0, SeekOrigin.Begin);
+                    while (true)
+                    {
+                        int read = await backupStream.ReadAsync(buffer, 0, buffer.Length);
+                        if (read <= 0)
+                        {
+                            tracer.Trace("Total {0:n0} bytes written to {1}", total, filePath);
+                            break;
+                        }
+                        else if (DateTime.UtcNow > nextTraceTime)
+                        {
+                            tracer.Trace("Writing {0:n0} bytes to {1}", total, filePath);
+                            nextTraceTime = DateTime.UtcNow.AddSeconds(30);
+                        }
+
+                        await dst.WriteAsync(buffer, 0, read);
+                        total += read;
+                    }
+                }                
             }
 
             return total;

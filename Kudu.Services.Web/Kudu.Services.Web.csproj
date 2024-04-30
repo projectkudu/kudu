@@ -1,5 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="..\packages\Microsoft.CodeAnalysis.Analyzers.2.9.8\build\Microsoft.CodeAnalysis.Analyzers.props" Condition="Exists('..\packages\Microsoft.CodeAnalysis.Analyzers.2.9.8\build\Microsoft.CodeAnalysis.Analyzers.props')" />
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory),Kudu.sln))\Build\Kudu.targets" />
   <PropertyGroup>
@@ -18,6 +19,10 @@
     <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
     <TargetFrameworkProfile />
     <UseGlobalApplicationHostFile />
+    <Use64BitIISExpress />
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <AnalysisMode>AllEnabledByDefault</AnalysisMode>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Microsoft.AspNet.SignalR.Core, Version=2.1.1.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
@@ -143,6 +148,7 @@
     <Content Include="Content\Scripts\knockout-2.2.1.js" />
     <Content Include="Content\Scripts\knockout.mapping.js" />
     <Content Include="Content\Scripts\theme-github.js" />
+    <Content Include="Content\Scripts\NavigateToInstance.js" />
     <Content Include="Content\Styles\font-awesome.css" />
     <Content Include="Content\fonts\glyphicons-halflings-regular.svg" />
     <Content Include="Content\Images\collapse.gif" />
@@ -203,6 +209,7 @@
     </Compile>
     <Compile Include="App_Start\TraceDeprecatedActionAttribute.cs" />
     <Compile Include="SafeOnePerRequestHttpModule.cs" />
+    <Compile Include="Infrastruture\BackgroundTask.cs" />
     <Compile Include="Infrastruture\HttpHandlerRouteHandler.cs" />
     <Compile Include="Infrastruture\RouteCollectionExtensions.cs" />
     <Compile Include="SafeOnePerRequestNinjectModule.cs" />
@@ -292,7 +299,10 @@
   <ItemGroup>
     <Content Include="Detectors\Default.cshtml" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Analyzer Include="..\packages\Microsoft.CodeAnalysis.Analyzers.2.9.8\analyzers\dotnet\cs\Microsoft.CodeAnalysis.Analyzers.dll" />
+    <Analyzer Include="..\packages\Microsoft.CodeAnalysis.Analyzers.2.9.8\analyzers\dotnet\cs\Microsoft.CodeAnalysis.CSharp.Analyzers.dll" />
+  </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
     <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
@@ -333,8 +343,9 @@
     </PropertyGroup>
     <Message Text="Running post build events" Importance="High" />
     <Exec Command="&quot;$(ProjectDir)\updateNodeModules.cmd&quot; &quot;$(TargetDir)&quot;" Condition=" '$(BuildOutputsUpdated)' == 'true' " />
-    <Exec Command="&quot;$(ProgramW6432)\Git\bin\git.exe&quot; rev-parse HEAD &gt; &quot;$(MsBuildProjectDirectory)\commit.txt&quot;" Condition=" '$(BuildOutputsUpdated)' == 'true' AND Exists('$(ProgramW6432)\Git\bin\git.exe') " />
-    <Exec Command="&quot;$(ProgramFiles)\Git\bin\git.exe&quot; rev-parse HEAD &gt; &quot;$(MsBuildProjectDirectory)\commit.txt&quot;" Condition=" '$(BuildOutputsUpdated)' == 'true' AND !Exists('$(ProgramW6432)\Git\bin\git.exe') AND Exists('$(ProgramFiles)\Git\bin\git.exe') " />
+    <Exec Command="echo $(GIT_SHA) &gt; &quot;$(MsBuildProjectDirectory)\commit.txt&quot;" Condition=" '$(GIT_SHA)' != '' " />
+    <Exec Command="&quot;$(ProgramW6432)\Git\bin\git.exe&quot; rev-parse HEAD &gt; &quot;$(MsBuildProjectDirectory)\commit.txt&quot;" Condition=" '$(GIT_SHA)' == '' AND '$(BuildOutputsUpdated)' == 'true' AND Exists('$(ProgramW6432)\Git\bin\git.exe') " />
+    <Exec Command="&quot;$(ProgramFiles)\Git\bin\git.exe&quot; rev-parse HEAD &gt; &quot;$(MsBuildProjectDirectory)\commit.txt&quot;" Condition=" '$(GIT_SHA)' == '' AND '$(BuildOutputsUpdated)' == 'true' AND !Exists('$(ProgramW6432)\Git\bin\git.exe') AND Exists('$(ProgramFiles)\Git\bin\git.exe') " />
     <Copy SourceFiles="$(SolutionDir)\Kudu.Console\bin\$(ConfigurationName)\kudu.exe" DestinationFolder="$(TargetDir)" SkipUnchangedFiles="true" />
     <Copy SourceFiles="$(SolutionDir)\Kudu.Console\bin\$(ConfigurationName)\kudu.exe.config" DestinationFolder="$(TargetDir)" SkipUnchangedFiles="true" />
     <ItemGroup>
@@ -351,6 +362,7 @@
     </PropertyGroup>
     <Error Condition="!Exists('..\packages\Microsoft.Diagnostics.Tracing.EventRegister.1.0.26\build\Microsoft.Diagnostics.Tracing.EventRegister.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Diagnostics.Tracing.EventRegister.1.0.26\build\Microsoft.Diagnostics.Tracing.EventRegister.targets'))" />
     <Error Condition="!Exists('..\packages\Microsoft.Bcl.Build.1.0.21\build\Microsoft.Bcl.Build.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Bcl.Build.1.0.21\build\Microsoft.Bcl.Build.targets'))" />
+    <Error Condition="!Exists('..\packages\Microsoft.CodeAnalysis.Analyzers.2.9.8\build\Microsoft.CodeAnalysis.Analyzers.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.CodeAnalysis.Analyzers.2.9.8\build\Microsoft.CodeAnalysis.Analyzers.props'))" />
   </Target>
   <Import Project="..\packages\Microsoft.Bcl.Build.1.0.21\build\Microsoft.Bcl.Build.targets" Condition="Exists('..\packages\Microsoft.Bcl.Build.1.0.21\build\Microsoft.Bcl.Build.targets')" />
 </Project>

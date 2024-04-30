@@ -8,6 +8,7 @@ using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using System.Web.Http.Hosting;
 using System.Web.Http.Routing;
+using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
 using Kudu.Core;
 using Kudu.Core.Infrastructure;
@@ -238,7 +239,7 @@ namespace Kudu.Services.Test
 
             request.Properties[HttpPropertyKeys.HttpRouteDataKey] = new HttpRouteData(Mock.Of<IHttpRoute>(), new HttpRouteValueDictionary(new { path = routePath }));
             
-            return new VfsController(Mock.Of<ITracer>(), env.Object)
+            return new VfsController(Mock.Of<ITracer>(), env.Object, Mock.Of<IDeploymentSettingsManager>())
             {
                 Request = request
             };

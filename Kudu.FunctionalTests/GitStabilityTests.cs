@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Threading.Tasks;
 using Kudu.Core.Deployment;
 using Kudu.FunctionalTests.Infrastructure;
 using Kudu.TestHarness;
@@ -36,11 +37,11 @@ namespace Kudu.FunctionalTests
         }
 
         [Fact]
-        public void KuduUpTimeTest()
+        public async Task KuduUpTimeTest()
         {
-            ApplicationManager.Run("KuduUpTimeTest", appManager =>
+            await ApplicationManager.RunAsync("KuduUpTimeTest", async appManager =>
             {
-                TimeSpan upTime = TimeSpan.Parse(appManager.GetKuduUpTime());
+                TimeSpan upTime = TimeSpan.Parse(await appManager.GetKuduUpTimeAsync());
 
                 TestTracer.Trace("UpTime: {0}", upTime);
 

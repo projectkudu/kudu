@@ -91,6 +91,15 @@ namespace Kudu.FunctionalTests
                 Assert.True(allProcesses.Any(p => p.Id == currentId));
                 Assert.True(allProcesses.Any(p => p.UserName == currentUser));
 
+                // Test process environment list
+                var envs = await appManager.ProcessManager.GetEnvironmentAsync(0, "all");
+                Assert.True(envs.Count > 1);
+                Assert.True(envs.ContainsKey("COMPUTERNAME"));
+
+                envs = await appManager.ProcessManager.GetEnvironmentAsync(0, "COMPUTERNAME");
+                Assert.True(envs.Count == 1);
+                Assert.True(envs.ContainsKey("COMPUTERNAME"));
+
                 // Test process dumps
                 foreach (var format in new[] { "raw", "zip" })
                 {

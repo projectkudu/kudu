@@ -13,6 +13,7 @@ using Kudu.Services.ServiceHookHandlers;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Kudu.Core.Deployment;
+using Kudu.Core.Settings;
 
 namespace Kudu.Services
 {
@@ -82,7 +83,7 @@ namespace Kudu.Services
 
                 bool asyncRequested = String.Equals(context.Request.QueryString["isAsync"], "true", StringComparison.OrdinalIgnoreCase);
 
-                var response = await _manager.FetchDeploy(deployInfo, asyncRequested, UriHelper.GetRequestUri(context.Request), targetBranch);
+                var response = await _manager.FetchDeploy(deployInfo, asyncRequested, context.Request.GetRequestUri(), targetBranch);
 
                 switch (response)
                 {
@@ -91,8 +92,9 @@ namespace Kudu.Services
                         if (asyncRequested)
                         {
                             // latest deployment keyword reserved to poll till deployment done
-                            context.Response.Headers["Location"] = new Uri(UriHelper.GetRequestUri(context.Request),
+                            context.Response.Headers["Location"] = new Uri(context.Request.GetRequestUri(),
                                 String.Format("/api/deployments/{0}?deployer={1}&time={2}", Constants.LatestDeployment, deployInfo.Deployer, DateTime.UtcNow.ToString("yyy-MM-dd_HH-mm-ssZ"))).ToString();
+                            context.Response.Headers["Retry-After"] = ScmHostingConfigurations.ArmRetryAfterSeconds.ToString();
                         }
                         context.Response.StatusCode = (int)HttpStatusCode.Accepted;
                         context.ApplicationInstance.CompleteRequest();

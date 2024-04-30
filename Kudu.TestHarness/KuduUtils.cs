@@ -3,6 +3,7 @@ using System.Configuration;
 using System.IO;
 using System.Net;
 using System.Net.Http;
+using System.Text;
 using System.Xml.Linq;
 using Kudu.Client.Infrastructure;
 using Kudu.Core.Infrastructure;
@@ -43,7 +44,8 @@ namespace Kudu.TestHarness
             {
                 var clientHandler = HttpClientHelper.CreateClientHandler(serviceUrl, credentials);
                 var client = new HttpClient(clientHandler);
-                client.DeleteAsync(serviceUrl + "api/processes/0").Wait();
+                client.PostAsync(serviceUrl + "api/processes/0/kill", new StringContent(string.Empty, Encoding.UTF8, "text/plain")).Wait();
+                //client.DeleteAsync(serviceUrl + "api/processes/0").Wait();
             }
             catch (Exception)
             {
@@ -92,6 +94,22 @@ namespace Kudu.TestHarness
             get
             {
                 return GetBooleanTestSetting("StopAfterFirstTestFailure");
+            }
+        }
+        
+        public static string CustomKuduUrl
+        {
+            get
+            {
+                return GetTestSetting("CustomKuduUrl");
+            }
+        }
+
+        public static bool RunningAgainstLinuxKudu
+        {
+            get
+            {
+                return GetBooleanTestSetting("RunningAgainstLinuxKudu");
             }
         }
 

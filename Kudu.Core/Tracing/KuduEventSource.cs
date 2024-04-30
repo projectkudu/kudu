@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics.CodeAnalysis;
+using System.Text.RegularExpressions;
 using Microsoft.Diagnostics.Tracing;
 
 namespace Kudu.Core.Tracing
@@ -31,7 +32,7 @@ namespace Kudu.Core.Tracing
         {
             if (IsEnabled())
             {
-                WriteEvent(65512, siteName, method, path, result, Message, exception);
+                WriteEvent(65512, siteName, method, path, result, RedactSasUriIfPresent(Message), exception);
             }
         }
 
@@ -49,7 +50,7 @@ namespace Kudu.Core.Tracing
         {
             if (IsEnabled())
             {
-                WriteEvent(65511, siteName, method, path, result, deploymentDurationInMilliseconds, Message);
+                WriteEvent(65511, siteName, method, path, result, deploymentDurationInMilliseconds, RedactSasUriIfPresent(Message));
             }
         }
 
@@ -58,17 +59,17 @@ namespace Kudu.Core.Tracing
         {
             if (IsEnabled())
             {
-                WriteEvent(65513, siteName, jobName, Message, jobType, error);
+                WriteEvent(65513, siteName, jobName, RedactSasUriIfPresent(Message), jobType, error);
             }
         }
 
         [SuppressMessage("Microsoft.Performance", "CA1801:ReviewUnusedParameters")]
         [Event(65514, Level = EventLevel.Informational, Message = "Generic event for site {0}", Channel = EventChannel.Operational)]
-        public void GenericEvent(string siteName, string Message, string requestId, string scmType, string siteMode, string buildVersion)
+        public void GenericEvent(string siteName, string Message, string requestId, string scmType, string siteMode, string buildVersion, string appServiceVersion)
         {
             if (IsEnabled())
             {
-                WriteEvent(65514, siteName, Message, requestId, scmType, siteMode, buildVersion);
+                WriteEvent(65514, siteName, RedactSasUriIfPresent(Message), requestId, scmType, siteMode, buildVersion, appServiceVersion);
             }
         }
 
@@ -78,8 +79,46 @@ namespace Kudu.Core.Tracing
         {
             if (IsEnabled())
             {
-                WriteEvent(65515, siteName, Message, address, verb, requestId, statusCode, latencyInMilliseconds, userAgent);
+                WriteEvent(65515, siteName, RedactSasUriIfPresent(Message), address, verb, requestId, statusCode, latencyInMilliseconds, userAgent);
             }
+        }
+
+        /// <summary>
+        /// DeploymentCompleted event
+        /// </summary>
+        /// <param name="siteName">WEBSITE_SITE_NAME</param>
+        /// <param name="kind">MSDeploy, ZipDeploy, Git, ...</param>
+        /// <param name="requestId">requestId</param>
+        /// <param name="status">Success, Failed</param>
+        /// <param name="details">deployment-specific json</param>
+        /// <param name="buildVersion">runtime version</param>
+        /// <param name="appServiceVersion">appservice version</param>
+        /// <param name="projectType">project type</param>
+        /// <param name="vsProjectId">vs project id</param>
+        [SuppressMessage("Microsoft.Performance", "CA1801:ReviewUnusedParameters")]
+        [Event(65516, Level = EventLevel.Informational, Message = "Deployment completed for site {0}", Channel = EventChannel.Operational)]
+        public void DeploymentCompleted(string siteName, string kind, string requestId, string status, string details, string buildVersion, string appServiceVersion, string projectType, string vsProjectId)
+        {
+            if (IsEnabled())
+            {
+                WriteEvent(65516, siteName, kind, requestId, status, details, buildVersion, appServiceVersion, projectType, vsProjectId);
+            }
+        }
+
+        public static string RedactSasUriIfPresent(string message)
+        {
+            // Return the message as is in case if it's null or empty
+            if (string.IsNullOrEmpty(message))
+            {
+                return message;
+            }
+
+            // RegEx pattern to match the signature part
+            string pattern = @"(\b(sig=)[^&\s]+)";
+
+            // Redact the signature part if found
+            message = Regex.Replace(message, pattern, "sig=REDACTED");
+            return message;
         }
     }
 }

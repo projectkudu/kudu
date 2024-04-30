@@ -48,6 +48,24 @@ namespace Kudu.Core.Hooks
             _hooksFilePath = Path.Combine(_environment.DeploymentsPath, HooksFileName);
         }
 
+        public bool ShouldSkipWebHooks
+        {
+            get
+            {
+                try
+                {
+                    // this is optimization to skip WebHook logic if no webhook file
+                    // majority of sites have no hook
+                    return !FileSystemHelpers.FileExists(_hooksFilePath);
+                }
+                catch
+                {
+                    // any error - proceed with webhook logic optimistically
+                    return false;
+                }
+            }
+        }
+
         public IEnumerable<WebHook> WebHooks
         {
             get
@@ -129,6 +147,11 @@ namespace Kudu.Core.Hooks
 
         public async Task PublishEventAsync(string hookEventType, object eventContent)
         {
+            if (ShouldSkipWebHooks)
+            {
+                return;
+            }
+
             using (_tracer.Step("WebHooksManager.PublishEventAsync: " + hookEventType))
             {
                 string jsonString = JsonConvert.SerializeObject(eventContent, JsonSerializerSettings);

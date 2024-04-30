@@ -28,6 +28,7 @@ namespace Kudu.Services.Deployment
     public class DeploymentController : ApiController
     {
         private static DeploymentsCacheItem _cachedDeployments = DeploymentsCacheItem.None;
+        private static DeploymentCacheItem _cachedLatestDeployment = null;
 
         private readonly IEnvironment _environment;
         private readonly IAnalytics _analytics;
@@ -115,7 +116,7 @@ namespace Kudu.Services.Deployment
 
                                 // e.g if final url is "https://kudutry.scm.azurewebsites.net/api/deployments/ef52ec67fc9574e726955a9cbaf7bcba791e4e95/log"
                                 // deploymentUri should be "https://kudutry.scm.azurewebsites.net/api/deployments/ef52ec67fc9574e726955a9cbaf7bcba791e4e95"
-                                Uri deploymentUri = UriHelper.MakeRelative(UriHelper.GetBaseUri(Request), Request.RequestUri.AbsolutePath);
+                                Uri deploymentUri = UriHelper.MakeRelative(Request.GetBaseUri(), Request.RequestUri.AbsolutePath);
                                 deployResult.Url = deploymentUri;
                                 deployResult.LogUrl = UriHelper.MakeRelative(deploymentUri, "log");
 
@@ -377,7 +378,7 @@ namespace Kudu.Services.Deployment
                     {
                         if (entry.HasDetails)
                         {
-                            Uri baseUri = UriHelper.MakeRelative(UriHelper.GetBaseUri(Request), Request.RequestUri.AbsolutePath);
+                            Uri baseUri = UriHelper.MakeRelative(Request.GetBaseUri(), Request.RequestUri.AbsolutePath);
                             entry.DetailsUrl = UriHelper.MakeRelative(baseUri, entry.Id);
                         }
                     }
@@ -429,16 +430,25 @@ namespace Kudu.Services.Deployment
         {
             using (_tracer.Step("DeploymentService.GetResult"))
             {
-                DeployResult pending;
-                if (IsLatestPendingDeployment(ref id, out pending))
+                var latestEtag = (ScmHostingConfigurations.GetLatestDeploymentOptimized && string.Equals(Constants.LatestDeployment, id)) ? GetCurrentEtag(Request) : null;
+                if (TryGetCachedLatestDeployment(latestEtag, out HttpResponseMessage cachedResponse))
                 {
+                    return cachedResponse;
+                }
+
+                if (IsLatestPendingDeployment(Request, id, out DeployResult pending, out DeployResult latest))
+                {
+                    _cachedLatestDeployment = (latestEtag != null && pending != null) ? new DeploymentCacheItem { Etag = latestEtag , Result = pending} : null;
+
                     var response = Request.CreateResponse(HttpStatusCode.Accepted, ArmUtils.AddEnvelopeOnArmRequest(pending, Request));
-                    response.Headers.Location = Request.RequestUri;
+                    response.Headers.Location = GetResponseLocation(Request);
+                    response.Headers.RetryAfter = new RetryConditionHeaderValue(TimeSpan.FromSeconds(ScmHostingConfigurations.ArmRetryAfterSeconds));
                     return response;
                 }
 
-                DeployResult result = _deploymentManager.GetResult(id);
+                _cachedLatestDeployment = (latestEtag != null && latest != null) ? new DeploymentCacheItem { Etag = latestEtag, Result = latest } : null;
 
+                var result = latest ?? _deploymentManager.GetResult(id);
                 if (result == null)
                 {
                     var response = Request.CreateErrorResponse(HttpStatusCode.NotFound, String.Format(CultureInfo.CurrentCulture,
@@ -447,9 +457,19 @@ namespace Kudu.Services.Deployment
                     throw new HttpResponseException(response);
                 }
 
-                Uri baseUri = UriHelper.MakeRelative(UriHelper.GetBaseUri(Request), Request.RequestUri.AbsolutePath);
+                Uri baseUri = UriHelper.MakeRelative(Request.GetBaseUri(), Request.RequestUri.AbsolutePath);
                 result.Url = baseUri;
                 result.LogUrl = UriHelper.MakeRelative(baseUri, "log");
+
+                if (ScmHostingConfigurations.GetLatestDeploymentOptimized
+                    && (result.Status == DeployStatus.Building || result.Status == DeployStatus.Deploying || result.Status == DeployStatus.Pending)
+                    && (ArmUtils.IsAzureResourceManagerUserAgent(Request) || ArmUtils.IsVSTSDevOpsUserAgent(Request)))
+                {
+                    var responseMessage = Request.CreateResponse(HttpStatusCode.Accepted, ArmUtils.AddEnvelopeOnArmRequest(result, Request));
+                    responseMessage.Headers.Location = GetResponseLocation(Request);
+                    responseMessage.Headers.RetryAfter = new RetryConditionHeaderValue(TimeSpan.FromSeconds(ScmHostingConfigurations.ArmRetryAfterSeconds));
+                    return responseMessage;
+                }
 
                 if (ArmUtils.IsArmRequest(Request))
                 {
@@ -458,15 +478,12 @@ namespace Kudu.Services.Deployment
                         case DeployStatus.Building:
                         case DeployStatus.Deploying:
                         case DeployStatus.Pending:
-                            result.ProvisioningState = "InProgress";
-                            HttpResponseMessage responseMessage = Request.CreateResponse(HttpStatusCode.OK, ArmUtils.AddEnvelopeOnArmRequest(result, Request));
-                            responseMessage.Headers.Location = Request.RequestUri;
+                            var responseMessage = Request.CreateResponse(HttpStatusCode.OK, ArmUtils.AddEnvelopeOnArmRequest(result, Request));
+                            responseMessage.Headers.Location = GetResponseLocation(Request);
+                            responseMessage.Headers.RetryAfter = new RetryConditionHeaderValue(TimeSpan.FromSeconds(ScmHostingConfigurations.ArmRetryAfterSeconds));
                             return responseMessage;
                         case DeployStatus.Failed:
-                            result.ProvisioningState = "Failed";
-                            break;
                         case DeployStatus.Success:
-                            result.ProvisioningState = "Succeeded";
                             break;
                         default:
                             return Request.CreateResponse(HttpStatusCode.BadRequest, ArmUtils.AddEnvelopeOnArmRequest(result, Request));
@@ -476,10 +493,58 @@ namespace Kudu.Services.Deployment
             }
         }
 
-        private bool IsLatestPendingDeployment(ref string id, out DeployResult pending)
+        private bool TryGetCachedLatestDeployment(EntityTagHeaderValue latestEtag, out HttpResponseMessage cachedResponse)
         {
-            if (String.Equals(Constants.LatestDeployment, id))
+            cachedResponse = null;
+
+            var cachedLatestDeployment = _cachedLatestDeployment;
+            if (latestEtag != null
+                && cachedLatestDeployment != null
+                && !cachedLatestDeployment.Expired
+                && latestEtag.Equals(cachedLatestDeployment.Etag)
+                && (ArmUtils.IsAzureResourceManagerUserAgent(Request) || ArmUtils.IsVSTSDevOpsUserAgent(Request)))
             {
+                var result = cachedLatestDeployment.Result;
+                switch (result.Status)
+                {
+                    case DeployStatus.Building:
+                    case DeployStatus.Deploying:
+                    case DeployStatus.Pending:
+                        cachedResponse = Request.CreateResponse(HttpStatusCode.Accepted, ArmUtils.AddEnvelopeOnArmRequest(result, Request));
+                        cachedResponse.Headers.Location = GetResponseLocation(Request);
+                        cachedResponse.Headers.RetryAfter = new RetryConditionHeaderValue(TimeSpan.FromSeconds(ScmHostingConfigurations.ArmRetryAfterSeconds));
+                        break;
+                    case DeployStatus.Failed:
+                    case DeployStatus.Success:
+                        cachedResponse = Request.CreateResponse(HttpStatusCode.OK, ArmUtils.AddEnvelopeOnArmRequest(result, Request));
+                        break;
+                    default:
+                        cachedResponse = null;
+                        break;
+                }
+            }
+
+            return cachedResponse != null;
+        }
+
+        private Uri GetResponseLocation(HttpRequestMessage request)
+        {
+            return (ArmUtils.IsArmRequest(request) && request.Headers.Referrer != null) ? request.Headers.Referrer : Request.RequestUri;
+        }
+
+        private bool IsLatestPendingDeployment(HttpRequestMessage request, string id, out DeployResult pending, out DeployResult latest)
+        {
+            latest = null;
+            if (string.Equals(Constants.LatestDeployment, id))
+            {
+                if (ScmHostingConfigurations.GetLatestDeploymentOptimized
+                    && (ArmUtils.IsAzureResourceManagerUserAgent(request) || ArmUtils.IsVSTSDevOpsUserAgent(request))
+                    && _deploymentLock.IsHeld)
+                {
+                    pending = DeployResult.PendingResult;
+                    return true;
+                }
+
                 using (_tracer.Step("DeploymentService.GetLatestDeployment"))
                 {
                     var results = _deploymentManager.GetResults();
@@ -490,12 +555,10 @@ namespace Kudu.Services.Deployment
                         return true;
                     }
 
-                    var latest = results.Where(r => r.EndTime != null).OrderBy(r => r.EndTime.Value).LastOrDefault();
+                    latest = results.Where(r => r.EndTime != null).OrderBy(r => r.EndTime.Value).LastOrDefault();
                     if (latest != null)
                     {
                         _tracer.Trace("Deployment {0} is {1} at {2}", latest.Id, latest.Status, latest.EndTime.Value.ToString("o"));
-
-                        id = latest.Id;
                     }
                     else
                     {
@@ -558,7 +621,7 @@ namespace Kudu.Services.Deployment
         {
             foreach (var result in _deploymentManager.GetResults())
             {
-                Uri baseUri = UriHelper.MakeRelative(UriHelper.GetBaseUri(request), Request.RequestUri.AbsolutePath);
+                Uri baseUri = UriHelper.MakeRelative(request.GetBaseUri(), Request.RequestUri.AbsolutePath);
                 result.Url = UriHelper.MakeRelative(baseUri, result.Id);
                 result.LogUrl = UriHelper.MakeRelative(baseUri, result.Id + "/log");
                 yield return result;
@@ -593,6 +656,18 @@ namespace Kudu.Services.Deployment
             public List<DeployResult> Results { get; set; }
 
             public EntityTagHeaderValue Etag { get; set; }
+        }
+
+        class DeploymentCacheItem
+        {
+            // defend-in-depth
+            private readonly DateTime _expiredUtc = DateTime.UtcNow.AddMinutes(10);
+
+            public DeployResult Result { get; set; }
+
+            public EntityTagHeaderValue Etag { get; set; }
+
+            public bool Expired { get { return DateTime.UtcNow > _expiredUtc; } }
         }
     }
 }

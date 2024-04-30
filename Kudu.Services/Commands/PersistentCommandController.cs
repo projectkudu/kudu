@@ -106,7 +106,12 @@ namespace Kudu.Services
                 WorkingDirectory = _environment.RootPath
             };
 
-            if (shell.Equals("powershell", StringComparison.OrdinalIgnoreCase))
+            if (Kudu.Core.Helpers.EnvironmentHelper.IsWindowsContainers())
+            {
+                // Always point to the 64-bit folder since Kudu can run in 32-bit or 64-bit mode.
+                startInfo.FileName = System.Environment.ExpandEnvironmentVariables(@"%ProgramW6432%\IIS\Microsoft Web Hosting Framework\Containers\Diagnostics\Microsoft.Windows.Containers.Console.exe");
+            }
+            else if (shell.Equals("powershell", StringComparison.OrdinalIgnoreCase))
             {
                 startInfo.FileName = System.Environment.ExpandEnvironmentVariables(@"%windir%\System32\WindowsPowerShell\v1.0\powershell.exe");
                 startInfo.Arguments = "-ExecutionPolicy RemoteSigned -File -";

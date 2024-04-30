@@ -48,6 +48,7 @@ namespace Kudu.Services.Performance
             _settings = settings;
         }
 
+
         [HttpGet]
         public HttpResponseMessage GetThread(int processId, int threadId)
         {
@@ -74,10 +75,11 @@ namespace Kudu.Services.Performance
             {
                 var process = GetProcessById(id);
                 var results = new List<ProcessThreadInfo>();
+                var requestUri = Request.GetRequestUri(_settings.GetUseOriginalHostForReference()).AbsoluteUri.TrimEnd('/');
 
                 foreach (ProcessThread thread in process.Threads)
                 {
-                    results.Add(GetProcessThreadInfo(thread, Request.RequestUri.AbsoluteUri.TrimEnd('/') + '/' + thread.Id, false));
+                    results.Add(GetProcessThreadInfo(thread, $"{requestUri}/{thread.Id}", false));
                 }
 
                 return Request.CreateResponse(HttpStatusCode.OK, ArmUtils.AddEnvelopeOnArmRequest(results, Request));
@@ -114,14 +116,38 @@ namespace Kudu.Services.Performance
         }
 
         [HttpGet]
+        public HttpResponseMessage GetEnvironments(int id, string filter)
+        {
+            using (_tracer.Step("ProcessController.GetEnvironments"))
+            {
+                var envs = GetProcessById(id).GetEnvironmentVariables()
+                    .Where(p => string.Equals("all", filter, StringComparison.OrdinalIgnoreCase) || p.Key.IndexOf(filter, StringComparison.OrdinalIgnoreCase) >= 0)
+                    .ToDictionary(p => p.Key, p => p.Value);
+
+                if (ArmUtils.IsArmRequest(Request))
+                {
+                    // No need to hide the secrets if the request is from contributor or admin.
+                    if (!(ArmUtils.IsRbacContributorRequest(Request) || ArmUtils.IsLegacyAuthorizationSource(Request)))
+                    {
+                        envs = envs.Where(kv => _armWhitelistedVariables.Contains(kv.Key, StringComparer.OrdinalIgnoreCase))
+                            .ToDictionary(k => k.Key, v => v.Value);
+                    }
+                }
+
+                return Request.CreateResponse(HttpStatusCode.OK, ArmUtils.AddEnvelopeOnArmRequest(new ProcessEnvironmentInfo(filter, envs), Request));
+            }
+        }
+
+        [HttpGet]
         public HttpResponseMessage GetAllProcesses(bool allUsers = false)
         {
+            var requestUri = Request.GetRequestUri(_settings.GetUseOriginalHostForReference()).GetLeftPart(UriPartial.Path).TrimEnd('/');
             using (_tracer.Step("ProcessController.GetAllProcesses"))
             {
                 var currentUser = Process.GetCurrentProcess().GetUserName();
                 var results = Process.GetProcesses()
                     .Where(p => allUsers || Kudu.Core.Environment.IsAzureEnvironment() || String.Equals(currentUser, SafeGetValue(p.GetUserName, null), StringComparison.OrdinalIgnoreCase))
-                    .Select(p => GetProcessInfo(p, Request.RequestUri.GetLeftPart(UriPartial.Path).TrimEnd('/') + '/' + p.Id)).OrderBy(p => p.Name.ToLowerInvariant())
+                    .Select(p => GetProcessInfo(p, $"{requestUri}/{p.Id}")).OrderBy(p => p.Name.ToLowerInvariant())
                     .ToList();
                 return Request.CreateResponse(HttpStatusCode.OK, ArmUtils.AddEnvelopeOnArmRequest(results, Request));
             }
@@ -133,11 +159,11 @@ namespace Kudu.Services.Performance
             using (_tracer.Step("ProcessController.GetProcess"))
             {
                 var process = GetProcessById(id);
-                return Request.CreateResponse(HttpStatusCode.OK, ArmUtils.AddEnvelopeOnArmRequest(GetProcessInfo(process, Request.RequestUri.AbsoluteUri, details: true), Request));
+                return Request.CreateResponse(HttpStatusCode.OK, ArmUtils.AddEnvelopeOnArmRequest(GetProcessInfo(process, Request.GetRequestUri(_settings.GetUseOriginalHostForReference()).AbsoluteUri, details: true), Request));
             }
         }
 
-        [HttpDelete]
+        [HttpDelete, HttpPost]
         public void KillProcess(int id)
         {
             using (_tracer.Step("ProcessController.KillProcess"))
@@ -435,6 +461,7 @@ namespace Kudu.Services.Performance
                 Id = process.Id,
                 Name = process.ProcessName,
                 Href = selfLink,
+                MachineName = System.Environment.MachineName,
                 UserName = SafeGetValue(process.GetUserName, null)
             };
 

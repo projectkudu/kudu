@@ -102,5 +102,10 @@ namespace Kudu.Core.Settings
                 _perSiteSettings.DeleteValue(key);
             }
         }
+
+        public string GetHostingConfiguration(string key, string defaultValue)
+        {
+            return ScmHostingConfigurations.GetValue(key, defaultValue);
+        }
     }
 }

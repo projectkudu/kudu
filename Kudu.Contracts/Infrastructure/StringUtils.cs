@@ -36,5 +36,41 @@ namespace Kudu.Contracts.Infrastructure
                 return false;
             }
         }
+
+        public static string ObfuscatePath(string path)
+        {
+            if (string.IsNullOrEmpty(path))
+            {
+                return path;
+            }
+
+            var index = path.IndexOf('?');
+            if (index < 0)
+            {
+                return path;
+            }
+
+            return $"{path.Substring(0, index + 1)}...";
+        }
+
+        public static string ObfuscateUrl(string url)
+        {
+            if (Uri.TryCreate(url, UriKind.Absolute, out var uri))
+            {
+                return $"{uri.Scheme}://{uri.Authority}{StringUtils.ObfuscatePath(uri.PathAndQuery)}";
+            }
+
+            return StringUtils.ObfuscatePath(url);
+        }
+
+        public static string ObfuscateUserName(this string value)
+        {
+            if (string.IsNullOrEmpty(value) || string.Equals("N/A", value, StringComparison.OrdinalIgnoreCase))
+            {
+                return value;
+            }
+
+            return $"##{value.Length}##";
+        }
     }
 }

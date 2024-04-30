@@ -44,6 +44,7 @@ namespace Kudu.Core.Infrastructure
         private IEnumerable<Guid> _projectTypeGuids;
         private string _projectName;
         private string _absolutePath;
+        private string _targetFramework;
 
         private bool _initialized;
 
@@ -167,6 +168,7 @@ namespace Kudu.Core.Infrastructure
                 _isWap = VsHelper.IsWap(_projectTypeGuids);
                 _isExecutable = VsHelper.IsExecutableProject(_absolutePath);
                 _isFunctionApp = FunctionAppHelper.LooksLikeFunctionApp();
+                _targetFramework = VsHelper.GetTargetFramework(_absolutePath);
             }
             else
             {
@@ -175,6 +177,16 @@ namespace Kudu.Core.Infrastructure
 
             _initialized = true;
         }
+
+        public string TargetFramework
+        {
+            get
+            {
+                EnsureProperties();
+                return _targetFramework;
+            }
+        }
+
 
         // Microsoft.Build.Construction.SolutionProjectType
         private enum SolutionProjectType

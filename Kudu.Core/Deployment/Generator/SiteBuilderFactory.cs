@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
+using Kudu.Core.Helpers;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.SourceControl;
 using Kudu.Core.Tracing;
@@ -22,7 +23,7 @@ namespace Kudu.Core.Deployment.Generator
             _environment = environment;
         }
 
-        public ISiteBuilder CreateBuilder(ITracer tracer, ILogger logger, IDeploymentSettingsManager settings, IRepository repository)
+        public ISiteBuilder CreateBuilder(ITracer tracer, ILogger logger, IDeploymentSettingsManager settings, IRepository repository, DeploymentInfoBase deploymentInfo)
         {
             string repositoryRoot = repository.RepositoryPath;
 
@@ -52,6 +53,17 @@ namespace Kudu.Core.Deployment.Generator
                 targetProjectPath = Path.GetFullPath(Path.Combine(repositoryRoot, targetProjectPath.TrimStart('/', '\\')));
             }
 
+            if (deploymentInfo != null && deploymentInfo.Deployer == Constants.OneDeploy)
+            {
+                // Return OneDeployBuilder when SCM_DO_BUILD_DURING_DEPLOYMENT or WEBSITE_RUN_FROM_PACKAGE is not enabled
+                // Otherwise the respective builder needs to be returned
+                if (!settings.DoBuildDuringDeployment() && !settings.RunFromLocalZip())
+                {
+                    var projectPath = !String.IsNullOrEmpty(targetProjectPath) ? targetProjectPath : repositoryRoot;
+                    return new OneDeployBuilder(_environment, settings, _propertyProvider, repositoryRoot, projectPath, deploymentInfo);
+                }
+            }
+
             if (settings.RunFromLocalZip())
             {
                 return new RunFromZipSiteBuilder();
@@ -62,6 +74,18 @@ namespace Kudu.Core.Deployment.Generator
                 var projectPath = !String.IsNullOrEmpty(targetProjectPath) ? targetProjectPath : repositoryRoot;
                 return new BasicBuilder(_environment, settings, _propertyProvider, repositoryRoot, projectPath);
             }
+
+            string msbuild16Log = String.Format("UseMSBuild16: {0}", VsHelper.UseMSBuild16().ToString());
+            tracer.Trace(msbuild16Log);
+            KuduEventSource.Log.GenericEvent(
+                ServerConfiguration.GetRuntimeSiteName(),
+                msbuild16Log,
+                string.Empty,
+                string.Empty,
+                string.Empty,
+                EnvironmentHelper.KuduVersion.Value,
+                EnvironmentHelper.AppServiceVersion.Value
+            );
 
             if (!String.IsNullOrEmpty(targetProjectPath))
             {
@@ -94,6 +118,12 @@ namespace Kudu.Core.Deployment.Generator
 
             // We have a solution
             VsSolution solution = solutions[0];
+            return DetermineProjectFromSolution(logger, settings, repository, solution);
+        }
+
+        private ISiteBuilder DetermineProjectFromSolution(ILogger logger, IDeploymentSettingsManager settings, IRepository repository, VsSolution solution)
+        {
+            string repositoryRoot = repository.RepositoryPath;
 
             // We need to determine what project to deploy so get a list of all web projects and
             // figure out with some heuristic, which one to deploy.
@@ -108,12 +138,33 @@ namespace Kudu.Core.Deployment.Generator
                 project = solution.Projects.Where(p => p.IsExecutable).FirstOrDefault();
                 if (project != null)
                 {
-                    return new DotNetConsoleBuilder(_environment,
-                                              settings,
-                                              _propertyProvider,
-                                              repositoryRoot,
-                                              project.AbsolutePath,
-                                              solution.Path);
+                    if (VsHelper.UseMSBuild1607() || VsHelper.IsNewDotNetCoreMajorVersion(project.TargetFramework))
+                    {
+                        return new DotNetConsoleMSBuild1607Builder(_environment,
+                                                                     settings,
+                                                                     _propertyProvider,
+                                                                     repositoryRoot,
+                                                                     project.AbsolutePath,
+                                                                     solution.Path);
+                    }
+                    else if (VsHelper.UseMSBuild16())
+                    {
+                        return new DotNetCoreConsoleMSBuild16Builder(_environment,
+                                                                     settings,
+                                                                     _propertyProvider,
+                                                                     repositoryRoot,
+                                                                     project.AbsolutePath,
+                                                                     solution.Path);
+                    }
+                    else
+                    {
+                        return new DotNetConsoleBuilder(_environment,
+                                                        settings,
+                                                        _propertyProvider,
+                                                        repositoryRoot,
+                                                        project.AbsolutePath,
+                                                        solution.Path);
+                    }
                 }
 
                 logger.Log(Resources.Log_NoDeployableProjects, solution.Path);
@@ -135,30 +186,73 @@ namespace Kudu.Core.Deployment.Generator
 
             if (project.IsAspNetCore)
             {
-                return new AspNetCoreBuilder(_environment,
-                                      settings,
-                                      _propertyProvider,
-                                      repositoryRoot,
-                                      project.AbsolutePath,
-                                      solution.Path);
+                if (VsHelper.UseMSBuild1607() || VsHelper.IsNewDotNetCoreMajorVersion(project.TargetFramework))
+                {
+                    return new AspNetCoreMSBuild1607Builder(_environment,
+                                                          settings,
+                                                          _propertyProvider,
+                                                          repositoryRoot,
+                                                          project.AbsolutePath,
+                                                          solution.Path);
+                }
+                else if (VsHelper.UseMSBuild16())
+                {
+                    return new AspNetCoreMSBuild16Builder(_environment,
+                                                          settings,
+                                                          _propertyProvider,
+                                                          repositoryRoot,
+                                                          project.AbsolutePath,
+                                                          solution.Path);
+                }
+                else
+                {
+                    return new AspNetCoreBuilder(_environment,
+                                                 settings,
+                                                 _propertyProvider,
+                                                 repositoryRoot,
+                                                 project.AbsolutePath,
+                                                 solution.Path);
+                }
             }
+
 
             if (project.IsWebSite)
             {
                 return new WebSiteBuilder(_environment,
-                                      settings,
-                                      _propertyProvider,
-                                      repositoryRoot,
-                                      project.AbsolutePath,
-                                      solution.Path);
+                                          settings,
+                                          _propertyProvider,
+                                          repositoryRoot,
+                                          project.AbsolutePath,
+                                          solution.Path);
             }
 
-            return new FunctionMsbuildBuilder(_environment,
-                                            settings,
-                                            _propertyProvider,
-                                            repositoryRoot,
-                                            project.AbsolutePath,
-                                            solution.Path);
+            if (VsHelper.UseMSBuild1607() || VsHelper.IsNewDotNetCoreMajorVersion(project.TargetFramework))
+            {
+                return new FunctionMSBuild1607Builder(_environment,
+                                                    settings,
+                                                    _propertyProvider,
+                                                    repositoryRoot,
+                                                    project.AbsolutePath,
+                                                    solution.Path);
+            }
+            else if (VsHelper.UseMSBuild16())
+            {
+                return new FunctionMSBuild16Builder(_environment,
+                                                    settings,
+                                                    _propertyProvider,
+                                                    repositoryRoot,
+                                                    project.AbsolutePath,
+                                                    solution.Path);
+            }
+            else
+            {
+                return new FunctionMsbuildBuilder(_environment,
+                                                  settings,
+                                                  _propertyProvider,
+                                                  repositoryRoot,
+                                                  project.AbsolutePath,
+                                                  solution.Path);
+            }
         }
 
         private ISiteBuilder ResolveNonAspProject(string repositoryRoot, string projectPath, IDeploymentSettingsManager perDeploymentSettings)
@@ -256,12 +350,34 @@ namespace Kudu.Core.Deployment.Generator
             string projectJson;
             if (AspNetCoreHelper.TryAspNetCoreWebProject(targetPath, fileFinder, out projectJson))
             {
-                return new AspNetCoreBuilder(_environment,
-                                           perDeploymentSettings,
-                                           _propertyProvider,
-                                           repositoryRoot,
-                                           projectJson,
-                                           null);
+                string targetFramework = VsHelper.GetTargetFrameworkJson(projectJson);
+                if (VsHelper.UseMSBuild1607() || VsHelper.IsNewDotNetCoreMajorVersion(targetFramework))
+                {
+                    return new AspNetCoreMSBuild1607Builder(_environment,
+                                                 perDeploymentSettings,
+                                                 _propertyProvider,
+                                                 repositoryRoot,
+                                                 projectJson,
+                                                 null);
+                }
+                else if (VsHelper.UseMSBuild16())
+                {
+                    return new AspNetCoreMSBuild16Builder(_environment,
+                                                 perDeploymentSettings,
+                                                 _propertyProvider,
+                                                 repositoryRoot,
+                                                 projectJson,
+                                                 null);
+                }
+                else
+                {
+                    return new AspNetCoreBuilder(_environment,
+                                                 perDeploymentSettings,
+                                                 _propertyProvider,
+                                                 repositoryRoot,
+                                                 projectJson,
+                                                 null);
+                }
             }
 
             if (tryWebSiteProject)
@@ -306,6 +422,8 @@ namespace Kudu.Core.Deployment.Generator
             var solution = VsHelper.FindContainingSolution(repositoryRoot, targetPath, fileFinder);
             string solutionPath = solution?.Path;
             var projectTypeGuids = VsHelper.GetProjectTypeGuids(targetPath);
+            var targetFramework = VsHelper.GetTargetFramework(targetPath);
+
             if (VsHelper.IsWap(projectTypeGuids))
             {
                 return new WapBuilder(_environment,
@@ -317,33 +435,96 @@ namespace Kudu.Core.Deployment.Generator
             }
             else if (AspNetCoreHelper.IsDotnetCoreFromProjectFile(targetPath, projectTypeGuids))
             {
-                return new AspNetCoreBuilder(_environment,
-                                            perDeploymentSettings,
-                                            _propertyProvider,
-                                            repositoryRoot,
-                                            targetPath,
-                                            solutionPath);
+                if (VsHelper.UseMSBuild1607() || VsHelper.IsNewDotNetCoreMajorVersion(targetFramework))
+                {
+                    return new AspNetCoreMSBuild1607Builder(_environment,
+                                                          perDeploymentSettings,
+                                                          _propertyProvider,
+                                                          repositoryRoot,
+                                                          targetPath,
+                                                          solutionPath);
+                }
+                else if (VsHelper.UseMSBuild16())
+                {
+                    return new AspNetCoreMSBuild16Builder(_environment,
+                                                          perDeploymentSettings,
+                                                          _propertyProvider,
+                                                          repositoryRoot,
+                                                          targetPath,
+                                                          solutionPath);
+                }
+                else
+                {
+                    return new AspNetCoreBuilder(_environment,
+                                                 perDeploymentSettings,
+                                                 _propertyProvider,
+                                                 repositoryRoot,
+                                                 targetPath,
+                                                 solutionPath);
+                }
             }
             else if (VsHelper.IsExecutableProject(targetPath))
             {
-                // This is a console app
-                return new DotNetConsoleBuilder(_environment,
-                                      perDeploymentSettings,
-                                      _propertyProvider,
-                                      repositoryRoot,
-                                      targetPath,
-                                      solutionPath);
-            }
-            else if (FunctionAppHelper.LooksLikeFunctionApp())
-            {
-                if (FunctionAppHelper.IsCSharpFunctionFromProjectFile(targetPath))
+                if (VsHelper.UseMSBuild1607() || VsHelper.IsNewDotNetCoreMajorVersion(targetFramework))
                 {
-                    return new FunctionMsbuildBuilder(_environment,
+                    return new DotNetConsoleMSBuild1607Builder(_environment,
+                                                             perDeploymentSettings,
+                                                             _propertyProvider,
+                                                             repositoryRoot,
+                                                             targetPath,
+                                                             solutionPath);
+                }
+                else if (VsHelper.UseMSBuild16())
+                {
+                    return new DotNetCoreConsoleMSBuild16Builder(_environment,
+                                                             perDeploymentSettings,
+                                                             _propertyProvider,
+                                                             repositoryRoot,
+                                                             targetPath,
+                                                             solutionPath);
+                }
+                else
+                {
+                    // This is a console app
+                    return new DotNetConsoleBuilder(_environment,
                                                     perDeploymentSettings,
                                                     _propertyProvider,
                                                     repositoryRoot,
                                                     targetPath,
                                                     solutionPath);
+                }
+            }
+            else if (FunctionAppHelper.LooksLikeFunctionApp())
+            {
+                if (FunctionAppHelper.IsCSharpFunctionFromProjectFile(targetPath))
+                {
+                    if (VsHelper.UseMSBuild1607() || VsHelper.IsNewDotNetCoreMajorVersion(targetFramework))
+                    {
+                        return new FunctionMSBuild1607Builder(_environment,
+                                                            perDeploymentSettings,
+                                                            _propertyProvider,
+                                                            repositoryRoot,
+                                                            targetPath,
+                                                            solutionPath);
+                    }
+                    else if (VsHelper.UseMSBuild16())
+                    {
+                        return new FunctionMSBuild16Builder(_environment,
+                                                            perDeploymentSettings,
+                                                            _propertyProvider,
+                                                            repositoryRoot,
+                                                            targetPath,
+                                                            solutionPath);
+                    }
+                    else
+                    {
+                        return new FunctionMsbuildBuilder(_environment,
+                                                          perDeploymentSettings,
+                                                          _propertyProvider,
+                                                          repositoryRoot,
+                                                          targetPath,
+                                                          solutionPath);
+                    }
                 }
                 else
                 {
@@ -354,7 +535,6 @@ namespace Kudu.Core.Deployment.Generator
                                                     repositoryRoot,
                                                     Path.GetDirectoryName(targetPath));
                 }
-
             }
 
             throw new InvalidOperationException(String.Format(CultureInfo.CurrentCulture,

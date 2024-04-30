@@ -46,6 +46,12 @@ namespace Kudu.TestHarness.Xunit
                     runner.SetMessageBus(delayedMessageBus);
                     summary = await RunTestInternalAsync(runner);
 
+                    if (delayedMessageBus.TestSkipped)
+                    {
+                        summary.Failed -= 1;
+                        summary.Skipped += 1;
+                    }
+
                     // if succeeded
                     if (summary.Failed == 0 || aggregator.HasExceptions)
                     {
@@ -55,8 +61,15 @@ namespace Kudu.TestHarness.Xunit
                 }
 
                 // Final run
-                runner.SetMessageBus(new KuduTraceMessageBus(messageBus));
+                var kuduMessageBus = new KuduTraceMessageBus(messageBus);
+                runner.SetMessageBus(kuduMessageBus);
                 summary = await RunTestInternalAsync(runner);
+
+                if (kuduMessageBus.TestSkipped)
+                {
+                    summary.Failed -= 1;
+                    summary.Skipped += 1;
+                }
 
                 // flush delay messages
                 if (delayedMessageBus != null)
@@ -133,6 +146,8 @@ namespace Kudu.TestHarness.Xunit
             private readonly IMessageBus _innerBus;
             private readonly List<IMessageSinkMessage> _messages;
 
+            public bool TestSkipped { get; private set; }
+
             public DelayedMessageBus(IMessageBus innerBus)
             {
                 _innerBus = innerBus;
@@ -149,6 +164,13 @@ namespace Kudu.TestHarness.Xunit
 
                 lock (_messages)
                 {
+                    var testFailed = result as TestFailed;
+                    if (testFailed != null && testFailed.ExceptionTypes.LastOrDefault() == typeof(KuduXunitTestSkippedException).FullName)
+                    {
+                        TestSkipped = true;
+                        message = new TestSkipped(result.Test, testFailed.Messages.LastOrDefault() ?? "unknown");
+                    }
+
                     _messages.Add(message);
                 }
 

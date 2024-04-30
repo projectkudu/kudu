@@ -244,8 +244,25 @@ echo $i > pushinfo
 
                     using (tracer.Step("LibGit2SharpRepository Fetch"))
                     {
-                        // This will only retrieve the "master"
-                        repo.Network.Fetch(remote);
+                        // usercred need to be specify explicitly.
+                        if (Uri.TryCreate(remoteUrl, UriKind.Absolute, out Uri uri)
+                            && (string.Equals(uri.Scheme, Uri.UriSchemeHttp, StringComparison.OrdinalIgnoreCase) || string.Equals(uri.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase))
+                            && !string.IsNullOrEmpty(uri.UserInfo))
+                        {
+                            var parts = uri.UserInfo.Split(':');
+                            var creds = new UsernamePasswordCredentials 
+                            { 
+                                Username = parts[0],
+                                Password = parts.Length > 1 ? parts[1] : string.Empty
+                            };
+
+                            repo.Network.Fetch(remote, new FetchOptions { CredentialsProvider = delegate { return creds; } });
+                        }
+                        else
+                        {
+                            // This will only retrieve the "master"
+                            repo.Network.Fetch(remote);
+                        }
                     }
                     
                     using (tracer.Step("LibGit2SharpRepository Update"))

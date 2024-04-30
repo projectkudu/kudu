@@ -27,6 +27,11 @@ namespace Kudu.Client.Deployment
                     parms.Add("isAsync=true");
                 }
 
+                if (metadata.TrackDeploymentProgress)
+                {
+                    parms.Add("trackDeploymentProgress=true");
+                }
+
                 var map = new List<KeyValuePair<string, string>>
                 {
                     new KeyValuePair<string, string>("author", metadata.Author),
@@ -55,7 +60,11 @@ namespace Kudu.Client.Deployment
                 }
 
                 request.Method = HttpMethod.Post;
-                request.Content = new StreamContent(zipFile);
+                if (zipFile != null)
+                {
+                    request.Content = new StreamContent(zipFile);
+                }
+
                 return await Client.SendAsync(request);
             }
         }
@@ -72,6 +81,7 @@ namespace Kudu.Client.Deployment
     public class ZipDeployMetadata
     {
         public bool IsAsync { get; set; }
+        public bool TrackDeploymentProgress { get; set; }
         public string Author { get; set; }
         public string AuthorEmail { get; set; }
         public string Deployer { get; set; }

@@ -4,6 +4,8 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Net;
+using System.Net.Security;
 using System.Text;
 using System.Threading.Tasks;
 using Kudu.Contracts.Infrastructure;
@@ -15,6 +17,7 @@ using Kudu.Core.Infrastructure;
 using Kudu.Core.Settings;
 using Kudu.Core.SourceControl;
 using Kudu.Core.Tracing;
+using Newtonsoft.Json;
 
 namespace Kudu.Core.Deployment
 {
@@ -193,7 +196,7 @@ namespace Kudu.Core.Deployment
                     statusFile = GetOrCreateStatusFile(changeSet, tracer, deployer);
                     statusFile.MarkPending();
 
-                    ILogger logger = GetLogger(changeSet.Id);
+                    ILogger logger = GetLogger(changeSet.Id, tracer, deploymentInfo);
 
                     if (needFileUpdate)
                     {
@@ -233,12 +236,6 @@ namespace Kudu.Core.Deployment
 
                     // Perform the build deployment of this changeset
                     await Build(changeSet, tracer, deployStep, repository, deploymentInfo, deploymentAnalytics, fullBuildByDefault);
-
-                    if (!(OSDetector.IsOnWindows() && !EnvironmentHelper.IsWindowsContainers()) && _settings.RestartAppContainerOnGitDeploy())
-                    {
-                        logger.Log(Resources.Log_TriggeringContainerRestart);
-                        DockerContainerRestartTrigger.RequestContainerRestart(_environment, RestartTriggerReason);
-                    }
                 }
                 catch (Exception ex)
                 {
@@ -251,7 +248,7 @@ namespace Kudu.Core.Deployment
 
                     if (statusFile != null)
                     {
-                        MarkStatusComplete(statusFile, success: false);
+                        MarkStatusComplete(statusFile, success: false, deploymentAnalytics: deploymentAnalytics);
                     }
 
                     tracer.TraceError(ex);
@@ -263,6 +260,9 @@ namespace Kudu.Core.Deployment
                         deployStep.Dispose();
                     }
                 }
+
+                // Remove leftover AppOffline file
+                PostDeploymentHelper.RemoveAppOfflineIfLeft(_environment, null, tracer);
 
                 // Reload status file with latest updates
                 statusFile = _status.Open(id);
@@ -278,12 +278,96 @@ namespace Kudu.Core.Deployment
 
                 if (statusFile != null && statusFile.Status == DeployStatus.Success && _settings.RunFromLocalZip())
                 {
-                    var zipDeploymentInfo = deploymentInfo as ZipDeploymentInfo;
+                    var zipDeploymentInfo = deploymentInfo as ArtifactDeploymentInfo;
                     if (zipDeploymentInfo != null)
                     {
                         await PostDeploymentHelper.UpdateSiteVersion(zipDeploymentInfo, _environment, tracer);
                     }
                 }
+
+                if (statusFile.Status == DeployStatus.Success
+                    && ScmHostingConfigurations.FunctionsSyncTriggersDelaySeconds > 0)
+                {
+                    await PostDeploymentHelper.SyncTriggersIfFunctionsSite(_environment.RequestId, new PostDeploymentTraceListener(tracer),
+                        deploymentInfo?.SyncFunctionsTriggersPath, tracePath: _environment.TracePath);
+                }
+            }
+        }
+
+        public async Task<bool> SendDeployStatusUpdate(DeployStatusApiResult updateStatusObj)
+        {
+            ITracer tracer = _traceFactory.GetTracer();
+            int attemptCount = 0;
+
+            try
+            {
+                await OperationManager.AttemptAsync(async () =>
+                {
+                    attemptCount++;
+
+                    tracer.Trace($" PostAsync - Trying to send {updateStatusObj.DeploymentStatus} deployment status to {Constants.UpdateDeployStatusPath}. Deployment Id is {updateStatusObj.DeploymentId}");
+                    await PostDeploymentHelper.PostAsync(Constants.UpdateDeployStatusPath, _environment.RequestId, content: JsonConvert.SerializeObject(updateStatusObj));
+
+                }, 3, 5 * 1000);
+
+                // If no exception is thrown, the operation was a success
+                return true;
+            }
+            catch (Exception ex)
+            {
+                tracer.TraceError($"Failed to request a post deployment status. Number of attempts: {attemptCount}. Exception: {ex}");
+                // Do not throw the exception
+                // We fail silently so that we do not fail the build altogether if this call fails
+                //throw;
+
+                return false;
+            }
+        }
+
+        public async Task RestartMainSiteIfNeeded(ITracer tracer, ILogger logger, DeploymentInfoBase deploymentInfo)
+        {
+            // If post-deployment restart is disabled, do nothing.
+            if (!_settings.RestartAppOnGitDeploy())
+            {
+                return;
+            }
+
+            // Proceed only if 'restart' is allowed for this deployment
+            if (deploymentInfo != null && !deploymentInfo.RestartAllowed)
+            {
+                return;
+            }
+
+            if (deploymentInfo != null && !string.IsNullOrEmpty(deploymentInfo.DeploymentTrackingId))
+            {
+                // Send deployment status update to FE
+                // FE will modify the operations table with the PostBuildRestartRequired status
+                DeployStatusApiResult updateStatusObj = new DeployStatusApiResult(Constants.PostBuildRestartRequired, deploymentInfo.DeploymentTrackingId);
+                bool isSuccess = await SendDeployStatusUpdate(updateStatusObj);
+
+                if (isSuccess)
+                {
+                    // If operation is a success and PostBuildRestartRequired was posted successfully to the operations DB, then return
+                    // Else fallthrough to RestartMainSiteAsync
+                    return;
+                }
+            }
+
+            if (deploymentInfo != null && deploymentInfo.Deployer == Constants.OneDeploy)
+            {
+                await PostDeploymentHelper.RestartMainSiteAsync(_environment.RequestId, new PostDeploymentTraceListener(tracer, logger));
+                return;
+            }
+
+            if (_settings.RecylePreviewEnabled())
+            {
+                logger.Log("Triggering recycle (preview mode enabled).");
+                await PostDeploymentHelper.RestartMainSiteAsync(_environment.RequestId, new PostDeploymentTraceListener(tracer, logger));
+            }
+            else
+            {
+                logger.Log("Triggering recycle (preview mode disabled).");
+                DockerContainerRestartTrigger.RequestContainerRestart(_environment, RestartTriggerReason, tracer);
             }
         }
 
@@ -327,11 +411,25 @@ namespace Kudu.Core.Deployment
             };
         }
 
-        private IEnumerable<DeployResult> PurgeAndGetDeployments()
+        private IEnumerable<DeployResult> PurgeAndGetDeployments(bool throwOnError = true)
         {
             // Order the results by date (newest first). Previously, we supported OData to allow
             // arbitrary queries, but that was way overkill and brought in too many large binaries.
-            IEnumerable<DeployResult> results = EnumerateResults().OrderByDescending(t => t.ReceivedTime).ToList();
+            IEnumerable<DeployResult> results = null;
+            try
+            {
+                results = EnumerateResults().OrderByDescending(t => t.ReceivedTime).ToList();
+            }
+            catch (Exception)
+            {
+                if (throwOnError)
+                {
+                    throw;
+                }
+
+                return results;
+            }
+
             try
             {
                 results = PurgeDeployments(results);
@@ -345,8 +443,11 @@ namespace Kudu.Core.Deployment
             return results;
         }
 
-        private void MarkStatusComplete(IDeploymentStatusFile status, bool success)
+        private void MarkStatusComplete(IDeploymentStatusFile status, bool success, DeploymentAnalytics deploymentAnalytics = null)
         {
+            status.ProjectType = deploymentAnalytics?.ProjectType;
+            status.VsProjectId = deploymentAnalytics?.VsProjectId;
+
             if (success)
             {
                 status.MarkSuccess();
@@ -356,8 +457,11 @@ namespace Kudu.Core.Deployment
                 status.MarkFailed();
             }
 
+            // Report deployment completion
+            DeploymentCompletedInfo.Persist(_environment.RequestId, status);
+
             // Cleanup old deployments
-            PurgeAndGetDeployments();
+            PurgeAndGetDeployments(throwOnError: false);
         }
 
         // since the expensive part (reading all files) is done,
@@ -500,7 +604,7 @@ namespace Kudu.Core.Deployment
             }
         }
 
-        private DeployResult GetResult(string id, string activeDeploymentId, bool isDeploying)
+        public DeployResult GetResult(string id, string activeDeploymentId, bool isDeploying)
         {
             var file = VerifyDeployment(id, isDeploying);
 
@@ -555,7 +659,7 @@ namespace Kudu.Core.Deployment
 
             try
             {
-                logger = GetLogger(id);
+                logger = GetLogger(id, tracer, deploymentInfo);
                 ILogger innerLogger = logger.Log(Resources.Log_PreparingDeployment, TrimId(id));
 
                 currentStatus = _status.Open(id);
@@ -598,7 +702,7 @@ namespace Kudu.Core.Deployment
                 {
                     using (tracer.Step("Determining deployment builder"))
                     {
-                        builder = _builderFactory.CreateBuilder(tracer, innerLogger, perDeploymentSettings, repository);
+                        builder = _builderFactory.CreateBuilder(tracer, innerLogger, perDeploymentSettings, repository, deploymentInfo);
                         deploymentAnalytics.ProjectType = builder.ProjectType;
                         tracer.Trace("Builder is {0}", builder.GetType().Name);
                     }
@@ -617,9 +721,9 @@ namespace Kudu.Core.Deployment
 
                     innerLogger.Log(ex);
 
-                    MarkStatusComplete(currentStatus, success: false);
+                    MarkStatusComplete(currentStatus, success: false, deploymentAnalytics: deploymentAnalytics);
 
-                    FailDeployment(tracer, deployStep, deploymentAnalytics, ex);
+                    FailDeployment(tracer, deployStep, deploymentAnalytics, ex, GetLogger(id, tracer, deploymentInfo));
 
                     return;
                 }
@@ -670,23 +774,26 @@ namespace Kudu.Core.Deployment
                         await builder.Build(context);
                         builder.PostBuild(context);
 
-                        await PostDeploymentHelper.SyncFunctionsTriggers(_environment.RequestId, new PostDeploymentTraceListener(tracer, logger), deploymentInfo?.SyncFunctionsTriggersPath);
+                        await RestartMainSiteIfNeeded(tracer, logger, deploymentInfo);
 
-                        if (!_settings.RunFromZip() && _settings.TouchWatchedFileAfterDeployment())
+                        if (ScmHostingConfigurations.FunctionsSyncTriggersDelaySeconds == 0)
                         {
-                            TryTouchWatchedFile(context, deploymentInfo);
+                            await PostDeploymentHelper.SyncTriggersIfFunctionsSite(_environment.RequestId, new PostDeploymentTraceListener(tracer, logger),
+                                deploymentInfo?.SyncFunctionsTriggersPath, tracePath: _environment.TracePath);
                         }
 
-                        FinishDeployment(id, deployStep);
+                        TouchWatchedFileIfNeeded(_settings, deploymentInfo, context);
+
+                        FinishDeployment(id, deployStep, deploymentAnalytics, GetLogger(id, tracer, deploymentInfo));
 
                         deploymentAnalytics.VsProjectId = TryGetVsProjectId(context);
                         deploymentAnalytics.Result = DeployStatus.Success.ToString();
                     }
                     catch (Exception ex)
                     {
-                        MarkStatusComplete(currentStatus, success: false);
+                        MarkStatusComplete(currentStatus, success: false, deploymentAnalytics: deploymentAnalytics);
 
-                        FailDeployment(tracer, deployStep, deploymentAnalytics, ex);
+                        FailDeployment(tracer, deployStep, deploymentAnalytics, ex, GetLogger(id, tracer, deploymentInfo));
 
                         return;
                     }
@@ -694,12 +801,25 @@ namespace Kudu.Core.Deployment
             }
             catch (Exception ex)
             {
-                FailDeployment(tracer, deployStep, deploymentAnalytics, ex);
+                FailDeployment(tracer, deployStep, deploymentAnalytics, ex, GetLogger(id, tracer, deploymentInfo));
             }
             finally
             {
                 // Clean the temp folder up
                 CleanBuild(tracer, buildTempPath);
+            }
+        }
+
+        private static void TouchWatchedFileIfNeeded(IDeploymentSettingsManager settings, DeploymentInfoBase deploymentInfo, DeploymentContext context)
+        {
+            if (deploymentInfo != null && !deploymentInfo.WatchedFileEnabled)
+            {
+                return;
+            }
+
+            if (!settings.RunFromZip() && settings.TouchWatchedFileAfterDeployment())
+            {
+                TryTouchWatchedFile(context, deploymentInfo);
             }
         }
 
@@ -742,7 +862,7 @@ namespace Kudu.Core.Deployment
             }
         }
 
-        private static void FailDeployment(ITracer tracer, IDisposable deployStep, DeploymentAnalytics deploymentAnalytics, Exception ex)
+        private static void FailDeployment(ITracer tracer, IDisposable deployStep, DeploymentAnalytics deploymentAnalytics, Exception ex, ILogger logger)
         {
             // End the deploy step
             deployStep.Dispose();
@@ -751,21 +871,31 @@ namespace Kudu.Core.Deployment
 
             deploymentAnalytics.Result = "Failed";
             deploymentAnalytics.Error = ex.ToString();
+
+            logger.Log(Resources.Log_DeploymentFailed);
         }
 
         private static string GetOutputPath(DeploymentInfoBase deploymentInfo, IEnvironment environment, IDeploymentSettingsManager perDeploymentSettings)
         {
-            string targetPath = perDeploymentSettings.GetTargetPath();
-
-            if (String.IsNullOrWhiteSpace(targetPath))
+            if (deploymentInfo?.Deployer == Constants.OneDeploy || deploymentInfo?.Deployer == Constants.ZipDeploy)
             {
-                targetPath = deploymentInfo?.TargetPath;
+                if (!string.IsNullOrWhiteSpace(deploymentInfo.TargetRootPath))
+                {
+                    return deploymentInfo.TargetRootPath;
+                }
             }
 
-            if (!String.IsNullOrWhiteSpace(targetPath))
+            string targetSubDirectoryRelativePath = perDeploymentSettings.GetTargetPath();
+
+            if (String.IsNullOrWhiteSpace(targetSubDirectoryRelativePath))
             {
-                targetPath = targetPath.Trim('\\', '/');
-                return Path.GetFullPath(Path.Combine(environment.WebRootPath, targetPath));
+                targetSubDirectoryRelativePath = deploymentInfo?.TargetSubDirectoryRelativePath;
+            }
+
+            if (!String.IsNullOrWhiteSpace(targetSubDirectoryRelativePath))
+            {
+                targetSubDirectoryRelativePath = targetSubDirectoryRelativePath.Trim('\\', '/');
+                return Path.GetFullPath(Path.Combine(environment.WebRootPath, targetSubDirectoryRelativePath));
             }
 
             return environment.WebRootPath;
@@ -781,7 +911,7 @@ namespace Kudu.Core.Deployment
             string activeDeploymentId = _status.ActiveDeploymentId;
             bool isDeploying = IsDeploying;
 
-            foreach (var id in FileSystemHelpers.GetDirectories(_environment.DeploymentsPath))
+            foreach (var id in FileSystemHelpers.GetDirectoryNames(_environment.DeploymentsPath).Where(p => !p.Equals(@"tools", StringComparison.OrdinalIgnoreCase)))
             {
                 DeployResult result = GetResult(id, activeDeploymentId, isDeploying);
 
@@ -827,15 +957,14 @@ namespace Kudu.Core.Deployment
         /// - Marks the active deployment
         /// - Sets the complete flag
         /// </summary>
-        private void FinishDeployment(string id, IDisposable deployStep)
+        private void FinishDeployment(string id, IDisposable deployStep, DeploymentAnalytics deploymentAnalytics, ILogger logger)
         {
             using (deployStep)
             {
-                ILogger logger = GetLogger(id);
                 logger.Log(Resources.Log_DeploymentSuccessful);
 
                 IDeploymentStatusFile currentStatus = _status.Open(id);
-                MarkStatusComplete(currentStatus, success: true);
+                MarkStatusComplete(currentStatus, success: true, deploymentAnalytics: deploymentAnalytics);
 
                 _status.ActiveDeploymentId = id;
 
@@ -902,6 +1031,14 @@ namespace Kudu.Core.Deployment
             var logger = GetLoggerForFile(path);
             return new ProgressLogger(id, _status, new CascadeLogger(logger, _globalLogger));
         }
+
+        public ILogger GetLogger(string id, ITracer tracer, DeploymentInfoBase deploymentInfo)
+        {
+            var path = GetLogPath(id);
+            var logger = GetLoggerForFile(path); 
+            ProgressLogger progressLogger = new ProgressLogger(id, _status, new CascadeLogger(logger, new DeploymentLogger(_globalLogger, tracer, deploymentInfo)));
+            return progressLogger;
+        }                
 
         /// <summary>
         /// Prepare a directory with the deployment script and .deployment file.

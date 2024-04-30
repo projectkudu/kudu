@@ -19,7 +19,7 @@ namespace Kudu.Core {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "4.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "16.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class Resources {
@@ -232,6 +232,15 @@ namespace Kudu.Core {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to SiteExtension id: {0} not installed locally. Searched directory : {1}.
+        /// </summary>
+        internal static string Error_SiteExtensionNotFound {
+            get {
+                return ResourceManager.GetString("Error_SiteExtensionNotFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Unable to delete &apos;{0}&apos;. The deployment is currently active..
         /// </summary>
         internal static string Error_UnableToDeleteDeploymentActive {
@@ -286,6 +295,15 @@ namespace Kudu.Core {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Deployment Failed..
+        /// </summary>
+        internal static string Log_DeploymentFailed {
+            get {
+                return ResourceManager.GetString("Log_DeploymentFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Using the following command to generate deployment script: &apos;azure site deploymentscript {0}&apos;..
         /// </summary>
         internal static string Log_DeploymentScriptGeneratorCommand {
@@ -320,7 +338,7 @@ namespace Kudu.Core {
                 return ResourceManager.GetString("Log_GeneratingDeploymentScript", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Reached maximum allowed output lines for this run, to see all of the job&apos;s logs you can enable website application diagnostics.
         /// </summary>

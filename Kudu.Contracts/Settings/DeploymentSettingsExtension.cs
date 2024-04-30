@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.IO;
 using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.SourceControl;
 
@@ -9,15 +10,31 @@ namespace Kudu.Contracts.Settings
     {
         public static readonly TimeSpan DefaultCommandIdleTimeout = TimeSpan.FromMinutes(1);
         public static readonly TimeSpan DefaultLogStreamTimeout = TimeSpan.FromMinutes(120);  // remember to update help message
+        public static readonly TimeSpan DefaultHttpClientTimeout = TimeSpan.FromSeconds(100);
+        public static readonly TimeSpan MoonCakeDefaultHttpClientTimeout = TimeSpan.FromMinutes(5); // Mooncake default should be 5 min
         public static readonly TimeSpan DefaultWebJobsRestartTime = TimeSpan.FromMinutes(1);
         public static readonly TimeSpan DefaultJobsIdleTimeout = TimeSpan.FromMinutes(2);
         public const TraceLevel DefaultTraceLevel = TraceLevel.Error;
 
         public const int DefaultMaxJobRunsHistoryCount = 50;
 
-        // The siteextensions.net feed is no longer used
-        //public static readonly string DefaultSiteExtensionFeedUrl = "https://www.siteextensions.net/api/v2/";
         public static readonly string NuGetSiteExtensionFeedUrl = "https://www.nuget.org/api/v2/";
+
+        // in the future, it should come from HostingConfiguration (@sanmeht)
+        public static readonly Lazy<bool> UseSiteExtensionV1 = new Lazy<bool>(() =>
+        {
+            try
+            {
+                var path = Path.Combine(System.Environment.GetEnvironmentVariable("SystemRoot"), "temp", SettingsKeys.UseSiteExtensionV1);
+                return File.Exists(path);
+            }
+            catch (Exception)
+            {
+                // no-op
+            }
+
+            return false;
+        });
 
         public static string GetValue(this IDeploymentSettingsManager settings, string key)
         {
@@ -55,6 +72,35 @@ namespace Kudu.Contracts.Settings
         public static TimeSpan GetLogStreamTimeout(this IDeploymentSettingsManager settings)
         {
             return GetTimeSpan(settings, SettingsKeys.LogStreamTimeout, DefaultLogStreamTimeout);
+        }
+
+        public static TimeSpan GetHttpClientTimeout(this IDeploymentSettingsManager settings)
+        {
+            TimeSpan defaultTimeout = DefaultHttpClientTimeout;
+            string stampName = GetCurrentStampName();
+
+            if (IsMoonCake(stampName))
+            {
+                // Update default timeout for SettingsKeys.HttpClientTimeout for Mooncake
+                defaultTimeout = MoonCakeDefaultHttpClientTimeout;
+            }
+
+            return GetTimeSpan(settings, SettingsKeys.HttpClientTimeout, defaultTimeout);
+        }
+
+        public static bool IsMoonCake(string stampName)
+        {
+            if(!string.IsNullOrEmpty(stampName) && stampName.StartsWith("cnws", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        public static string GetCurrentStampName()
+        {
+            return System.Environment.GetEnvironmentVariable("WEBSITE_CURRENT_STAMPNAME");
         }
 
         public static string GetPostDeploymentActionsDir(this IDeploymentSettingsManager settings, string defaultPath)
@@ -235,12 +281,24 @@ namespace Kudu.Contracts.Settings
             return StringUtils.IsTrueLike(value);
         }
 
-        public static bool RestartAppContainerOnGitDeploy(this IDeploymentSettingsManager settings)
+        public static bool RestartAppOnGitDeploy(this IDeploymentSettingsManager settings)
         {
-            string value = settings.GetValue(SettingsKeys.LinuxRestartAppContainerAfterDeployment);
+            string value = settings.GetValue(SettingsKeys.RestartAppAfterDeployment);
 
             // Default is true
             return value == null || StringUtils.IsTrueLike(value);
+        }
+
+        public static bool RecylePreviewEnabled(this IDeploymentSettingsManager settings)
+        {
+            string value = settings.GetValue(SettingsKeys.RecyclePreviewEnabled);
+
+            if (!string.IsNullOrEmpty(value))
+            {
+                return StringUtils.IsTrueLike(value);
+            }
+
+            return "1" == settings.GetHostingConfiguration(SettingsKeys.RecyclePreviewEnabled, defaultValue: null);
         }
 
         public static bool DoBuildDuringDeployment(this IDeploymentSettingsManager settings)
@@ -250,6 +308,22 @@ namespace Kudu.Contracts.Settings
             // A default value should be set on a per-deployment basis depending on the context, but
             // returning true by default here as an indicator of generally expected behavior
             return value == null || StringUtils.IsTrueLike(value);
+        }
+
+        public static string GetDoBuildDuringDeploymentAppSettingValue(this IDeploymentSettingsManager settings)
+        {
+            return settings.GetValue(SettingsKeys.DoBuildDuringDeployment);
+        }
+
+        public static bool GetUseSiteExtensionV2(this IDeploymentSettingsManager settings)
+        {
+            var value = settings.GetValue(SettingsKeys.UseSiteExtensionV1);
+            if (!string.IsNullOrEmpty(value))
+            {
+                return !StringUtils.IsTrueLike(value);
+            }
+
+            return !UseSiteExtensionV1.Value;
         }
 
         public static bool RunFromLocalZip(this IDeploymentSettingsManager settings)
@@ -296,6 +370,11 @@ namespace Kudu.Contracts.Settings
         public static bool GetZipDeployDoNotPreserveFileTime(this IDeploymentSettingsManager settings)
         {
             return "1" == settings.GetValue(SettingsKeys.ZipDeployDoNotPreserveFileTime);
+        }
+
+        public static bool GetUseOriginalHostForReference(this IDeploymentSettingsManager settings)
+        {
+            return "1" == settings.GetValue(SettingsKeys.UseOriginalHostForReference);
         }
     }
 }

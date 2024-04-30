@@ -21,6 +21,9 @@ namespace Kudu.Core.Diagnostics
         [JsonProperty(PropertyName = "name")]
         public string Name { get; set; }
 
+        [JsonProperty(PropertyName = "machineName")]
+        public string MachineName { get; set; }
+
         [JsonProperty(PropertyName = "href", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public Uri Href { get; set; }
 

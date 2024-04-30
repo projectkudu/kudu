@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Net;
@@ -474,7 +475,9 @@ namespace Kudu.FunctionalTests
     [KuduXunitTestClass]
     public class PullApiTestBitbucketFormatWithMercurialTests : DeploymentManagerTests
     {
-        [Fact]
+        // bitbucket.org no longer support mercurial
+        // https://bitbucket.org/blog/sunsetting-mercurial-support-in-bitbucket
+        // [Fact]
         public async Task PullApiTestBitbucketFormatWithMercurial()
         {
             string bitbucketPayload = @"{""canon_url"":""https://bitbucket.org"",""commits"":[{""author"":""pranavkm"",""branch"":""default"",""files"":[{""file"":""Hello.txt"",""type"":""modified""}],""message"":""Some more changes"",""node"":""0bbefd70c4c4"",""parents"":[""3cb8bf8aec0a""],""raw_author"":""Pranav <pranavkm@outlook.com>"",""raw_node"":""0bbefd70c4c4213bba1e91998141f6e861cec24d"",""revision"":4,""size"":-1,""timestamp"":""2012-12-17 19:41:28"",""utctimestamp"":""2012-12-17 18:41:28+00:00""}],""repository"":{""absolute_url"":""/kudutest/hellomercurial/"",""fork"":false,""is_private"":false,""name"":""HelloMercurial"",""owner"":""kudutest"",""scm"":""hg"",""slug"":""hellomercurial"",""website"":""""},""user"":""kudutest""}";
@@ -601,7 +604,9 @@ namespace Kudu.FunctionalTests
     [KuduXunitTestClass]
     public class PullApiTestKilnHgFormatTests : DeploymentManagerTests
     {
-        [Fact]
+        // bitbucket.org no longer support mercurial
+        // https://bitbucket.org/blog/sunsetting-mercurial-support-in-bitbucket
+        // [Fact]
         public async Task PullApiTestKilnHgFormat()
         {
             string kilnPayload = @"{ ""commits"": [ { ""author"": ""Brian Surowiec <xtorted@optonline.net>"", ""branch"": ""default"", ""id"": ""0bbefd70c4c4213bba1e91998141f6e861cec24d"", ""message"": ""more fun text"", ""revision"": 20, ""tags"": [ ""tip"" ], ""timestamp"": ""1/16/2013 3:32:04 AM"", ""url"": ""https://13degrees.kilnhg.com/Code/Kudu-Public/Group/Site/History/d2415cbaa78e"" } ], ""pusher"": { ""accesstoken"": false, ""email"": ""xtorted@optonline.net"", ""fullName"": ""Brian Surowiec"" }, ""repository"": { ""central"": true, ""description"": """", ""id"": 113336, ""name"": ""Site"", ""url"": ""https://bitbucket.org/kudutest/hellomercurial/"" } }";
@@ -805,6 +810,53 @@ namespace Kudu.FunctionalTests
     }
 
     [KuduXunitTestClass]
+    public class PullApiTestHelloLfsWithAsyncTests : DeploymentManagerTests
+    {
+        [Fact]
+        public async Task PullApiTestHelloLfsWithAsync()
+        {
+            var payload = new JObject();
+            payload["url"] = "https://github.com/KuduApps/HelloLfs";
+            payload["format"] = "basic";
+            string appName = "HelloLfs";
+
+            await ApplicationManager.RunAsync(appName, async appManager =>
+            {
+                // LibGit2Sharp does not expand lfs entry
+                await appManager.SettingsManager.SetValue("SCM_USE_LIBGIT2SHARP_REPOSITORY", "0");
+
+                // Fetch master branch from first repo
+                await DeployPayloadHelperAsync(appManager, client => client.PostAsJsonAsync("deploy?isAsync=true", payload), isContinuous: true);
+
+                var results = (await appManager.DeploymentManager.GetResultsAsync()).ToList();
+                Assert.Equal(1, results.Count);
+                Assert.Equal(DeployStatus.Success, results[0].Status);
+                Assert.Equal("GitHub", results[0].Deployer);
+
+                // sanity
+                KuduAssert.VerifyUrl(appManager.SiteUrl, "<h1>Hello Kudu Lfs</h1>");
+
+                // verify lfs
+                using (var zipStream = await appManager.VfsManager.ReadAsStreamAsync("site/wwwroot/HelloKudu.zip"))
+                {
+                    using (var zip = new ZipArchive(zipStream, ZipArchiveMode.Read))
+                    {
+                        Assert.Equal(1, zip.Entries.Count);
+
+                        var entry = zip.Entries[0];
+                        Assert.Equal("index.htm", entry.FullName);
+                        using (var stream = entry.Open())
+                        using (var reader = new StreamReader(stream))
+                        {
+                            Assert.Equal("<h1>Hello Kudu ZipDeploy</h1>", await reader.ReadToEndAsync());
+                        }
+                    }
+                }
+            });
+        }
+    }
+
+    [KuduXunitTestClass]
     public class PullApiTestSimpleFormatMultiBranchWithUpdatesTests : DeploymentManagerTests
     {
         [Fact]
@@ -850,7 +902,9 @@ namespace Kudu.FunctionalTests
     [KuduXunitTestClass]
     public class PullApiTestSimpleFormatWithMercurialTests : DeploymentManagerTests
     {
-        [Fact]
+        // bitbucket.org no longer support mercurial
+        // https://bitbucket.org/blog/sunsetting-mercurial-support-in-bitbucket
+        // [Fact]
         public async Task PullApiTestSimpleFormatWithMercurial()
         {
             string payload = @"{""url"":""https://bitbucket.org/kudutest/hellomercurial/"",""format"":""basic"",""scm"":""hg""}";
@@ -933,7 +987,9 @@ namespace Kudu.FunctionalTests
     [KuduXunitTestClass]
     public class PullApiTestHgSimpleFormatWithSpecificCommitIdTests : DeploymentManagerTests
     {
-        [Fact]
+        // bitbucket.org no longer support mercurial
+        // https://bitbucket.org/blog/sunsetting-mercurial-support-in-bitbucket
+        // [Fact]
         public async Task PullApiTestHgSimpleFormatWithSpecificCommitId()
         {
             await ApplicationManager.RunAsync("HgSimpleFormatWithBranch", async appManager =>
@@ -1004,7 +1060,9 @@ namespace Kudu.FunctionalTests
     {
         [Theory]
         [InlineData("https://github.com/KuduApps/EmptyGitRepo", null)]
-        [InlineData("https://bitbucket.org/kudutest/emptyhgrepo", "hg")]
+        // bitbucket.org no longer support mercurial
+        // https://bitbucket.org/blog/sunsetting-mercurial-support-in-bitbucket
+        // [InlineData("https://bitbucket.org/kudutest/emptyhgrepo", "hg")]
         public async Task PullApiTestEmptyRepo(string url, string scm)
         {
             var payload = new JObject();

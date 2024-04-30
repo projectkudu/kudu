@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Net.Http;
 using System.Text;
 using Kudu.Contracts.Tracing;
+using Kudu.Core.Helpers;
 using Kudu.Core.Infrastructure;
 
 namespace Kudu.Core.Tracing
@@ -76,12 +77,13 @@ namespace Kudu.Core.Tracing
                 strb.AppendFormat("{0}=\"{1}\" ", attrib.Key, attrib.Value);
             }
 
-            KuduEventSource.Log.GenericEvent(ServerConfiguration.GetApplicationName(),
+            KuduEventSource.Log.GenericEvent(ServerConfiguration.GetRuntimeSiteName(),
                                          strb.ToString(),
                                          _requestId,
                                          string.Empty,
                                          string.Empty,
-                                         string.Empty);
+                                         EnvironmentHelper.KuduVersion.Value,
+                                         EnvironmentHelper.AppServiceVersion.Value);
         }
     }
 }

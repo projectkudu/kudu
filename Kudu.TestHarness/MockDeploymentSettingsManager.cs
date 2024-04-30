@@ -41,5 +41,10 @@ namespace Kudu.Core.Test
         {
             get { return new ISettingsProvider[0]; }
         }
+
+        public string GetHostingConfiguration(string key, string defaultValue)
+        {
+            return defaultValue;
+        }
     }
 }

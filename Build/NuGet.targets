@@ -61,10 +61,20 @@
                <![CDATA[
                try {
                    OutputFilename = Path.GetFullPath(OutputFilename);
+                   
+                   // this is hack to workaround SSL/TLS issue from https://dist.nuget.org/.
+                   string cachedFile = Path.GetFullPath(Environment.ExpandEnvironmentVariables(@"%SystemDrive%\nuget.exe"));
+                   if (File.Exists(cachedFile))
+                   {
+                       File.Copy(cachedFile, OutputFilename, overwrite: true);
+                       return true;
+                   }
 
-                   Log.LogMessage("Downloading NuGet.exe version 4.6...");
+                   Log.LogMessage("Downloading NuGet.exe latest version ...");
                    WebClient webClient = new WebClient();
-                   webClient.DownloadFile("https://dist.nuget.org/win-x86-commandline/latest/nuget.exe", OutputFilename);
+                   webClient.DownloadFile("https://dist.nuget.org/win-x86-commandline/v6.3.1/nuget.exe", OutputFilename);
+                   // issue with nuget 6.4.0 error MSB4066: The attribute "Version" in element <PackageReference> is unrecognized.
+                   // webClient.DownloadFile("https://dist.nuget.org/win-x86-commandline/latest/nuget.exe", OutputFilename);
 
                    return true;
                }

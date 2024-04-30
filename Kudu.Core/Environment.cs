@@ -22,7 +22,7 @@ namespace Kudu.Core
         private readonly string _locksPath;
         private readonly string _sshKeyPath;
         private readonly string _tempPath;
-        private readonly string _zipTempPath;
+        private readonly string _zipTempDirectoryPath;
         private readonly string _scriptPath;
         private readonly string _nodeModulesPath;
         private string _repositoryPath;
@@ -42,7 +42,7 @@ namespace Kudu.Core
                 string rootPath,
                 string siteRootPath,
                 string tempPath,
-                string zipTempPath,
+                string zipTempDirectoryPath,
                 string repositoryPath,
                 string webRootPath,
                 string deploymentsPath,
@@ -65,7 +65,7 @@ namespace Kudu.Core
             SiteRootPath = siteRootPath;
             _tempPath = tempPath;
             _repositoryPath = repositoryPath;
-            _zipTempPath = zipTempPath;
+            _zipTempDirectoryPath = zipTempDirectoryPath;
             _webRootPath = webRootPath;
             _deploymentsPath = deploymentsPath;
             _deploymentToolsPath = Path.Combine(_deploymentsPath, Constants.DeploymentToolsPath);
@@ -102,9 +102,15 @@ namespace Kudu.Core
 
             SiteRootPath = Path.Combine(rootPath, Constants.SiteFolder);
 
+            // tempPath per apppool to avoid collision and cleanup
             _tempPath = Path.GetTempPath();
+            if (string.IsNullOrEmpty(System.Environment.GetEnvironmentVariable("WEBSITE_INSTANCE_ID")))
+            {
+                _tempPath = Path.Combine(_tempPath, System.Environment.GetEnvironmentVariable("APP_POOL_ID") ?? string.Empty);
+            }
+
             _repositoryPath = repositoryPath;
-            _zipTempPath = Path.Combine(_tempPath, Constants.ZipTempPath);
+            _zipTempDirectoryPath = Path.Combine(_tempPath, Constants.ZipTempDirectoryName);
             _webRootPath = Path.Combine(SiteRootPath, Constants.WebRoot);
             _deploymentsPath = Path.Combine(SiteRootPath, Constants.DeploymentCachePath);
             _deploymentToolsPath = Path.Combine(_deploymentsPath, Constants.DeploymentToolsPath);
@@ -232,7 +238,7 @@ namespace Kudu.Core
         {
             get
             {
-                return FileSystemHelpers.EnsureDirectory(_zipTempPath);
+                return FileSystemHelpers.EnsureDirectory(_zipTempDirectoryPath);
             }
         }
 
@@ -371,6 +377,14 @@ namespace Kudu.Core
             return !String.IsNullOrEmpty(System.Environment.GetEnvironmentVariable("WEBSITE_INSTANCE_ID"));
         }
 
+        public static bool ShouldShowInstanceUI()
+        {
+            var sku = System.Environment.GetEnvironmentVariable("WEBSITE_SKU");
+            return !string.IsNullOrEmpty(sku)
+                && !string.Equals(sku, "Free", StringComparison.OrdinalIgnoreCase)
+                && !string.Equals(sku, "Dynamic", StringComparison.OrdinalIgnoreCase);
+        }
+
         public static bool SkipSslValidation
         {
             get
@@ -399,6 +413,8 @@ namespace Kudu.Core
             }
         }
 
+        public static bool SkipAseSslValidation => System.Environment.GetEnvironmentVariable(SettingsKeys.SkipAseSslValidation) == "1";
+
         public static string GetFreeSpaceHtml(string path)
         {
             try
@@ -417,7 +433,7 @@ namespace Kudu.Core
             }
         }
 
-        static void GetDiskFreeSpace(string path, out ulong freeBytes, out ulong totalBytes)
+        public static void GetDiskFreeSpace(string path, out ulong freeBytes, out ulong totalBytes)
         {
             ulong diskFreeBytes;
             if (!EnvironmentNativeMethods.GetDiskFreeSpaceEx(path, out freeBytes, out totalBytes, out diskFreeBytes))

@@ -1,12 +1,16 @@
-
-<img src="http://azuredeploy.net/kudu.svg" height="100" width="100">
-
 ### Kudu
 
 Kudu is the engine behind [git deployments in Azure App Service](https://azure.microsoft.com/en-us/documentation/articles/web-sites-publish-source-control/). It can also run outside of Azure.
 
-![KuduDebugConsole](https://cloud.githubusercontent.com/assets/6472374/18506877/99d39f24-7a76-11e6-86a7-f3ac62b0199c.png)
+| :exclamation: This project is deprecated. Kudu will continue in Azure App Service. However, this repo will no longer be maintained. |
+|-------------------------------------------------------------------------------------------------------------------------------------|
 
+### Issues
+
+Please file incidents in Azure, so we can better track issues and assist you.
+[Create an Azure support request](https://learn.microsoft.com/en-us/azure/azure-portal/supportability/how-to-create-azure-support-request)
+
+Soon, we will turn off the issues feature for this repo.
 
 ### Documentation
 
