@@ -107,7 +107,7 @@ namespace Kudu.Core.Deployment
                 if (message.IndexOf(pair.Key, StringComparison.OrdinalIgnoreCase) != -1)
                 {
                     throw new FormatException(
-                        string.Format("Serialized log of type '{0}' => '{1}' contains an invalid sequance '{2}' for a logEntry in a StructuredTextDocument",
+                        string.Format("Serialized log of type '{0}' => '{1}' contains an invalid sequence '{2}' for a logEntry in a StructuredTextDocument",
                         typeof(T).Name,
                         message,
                         pair.Value));
