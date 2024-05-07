@@ -361,7 +361,7 @@ namespace Kudu.Core.Jobs
             {
                 if (_continuousJobThread != null)
                 {
-                    _continuousJobThread.KuduAbort(String.Format("Dispoing {0} {1} job", JobName, GetJobType()));
+                    _continuousJobThread.KuduAbort(String.Format("Disposing {0} {1} job", JobName, GetJobType()));
                     _continuousJobThread = null;
                 }
 
