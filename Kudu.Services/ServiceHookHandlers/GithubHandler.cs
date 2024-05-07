@@ -20,10 +20,10 @@ namespace Kudu.Services.ServiceHookHandlers
             _environment = null;
         }
 
-        public GitHubHandler(IEnvironment enviromentInject, IRepositoryFactory repositoryFactory)
+        public GitHubHandler(IEnvironment environmentInject, IRepositoryFactory repositoryFactory)
             : base(repositoryFactory)
         {
-            _environment = enviromentInject;
+            _environment = environmentInject;
         }
 
         protected override bool ParserMatches(HttpRequestBase request, JObject payload, string targetBranch)
