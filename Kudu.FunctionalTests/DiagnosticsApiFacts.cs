@@ -111,7 +111,7 @@ namespace Kudu.FunctionalTests
                             Assert.NotNull(minidump);
                             await minidump.CopyToAsync(stream);
                         }
-                        TestTracer.Trace("Test minidump lenth={0}", stream.Length);
+                        TestTracer.Trace("Test minidump length={0}", stream.Length);
                         Assert.True(stream.Length > 0);
                     }
                 }
@@ -299,14 +299,14 @@ namespace Kudu.FunctionalTests
                             Assert.NotNull(dump);
                             await dump.CopyToAsync(zipStream);
                         }
-                        TestTracer.Trace("zipStream lenth={0}", zipStream.Length);
+                        TestTracer.Trace("zipStream length={0}", zipStream.Length);
                         Assert.True(zipStream.Length > 0);
 
                         zipStream.Position = 0;
                         using (var targetStream = new MemoryStream())
                         {
                             ZipUtils.Unzip(zipStream, targetStream);
-                            TestTracer.Trace("targetStream lenth={0}", targetStream.Length);
+                            TestTracer.Trace("targetStream length={0}", targetStream.Length);
                             Assert.True(targetStream.Length > 0);
                         }
                     }
