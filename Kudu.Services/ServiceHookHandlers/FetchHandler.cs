@@ -87,7 +87,7 @@ namespace Kudu.Services
 
                 switch (response)
                 {
-                    case FetchDeploymentRequestResult.RunningAynschronously:
+                    case FetchDeploymentRequestResult.RunningAsynchronously:
                         // to avoid regression, only set location header if isAsync
                         if (asyncRequested)
                         {
