@@ -3,7 +3,7 @@
 Kudu is the engine behind [git deployments in Azure App Service](https://azure.microsoft.com/en-us/documentation/articles/web-sites-publish-source-control/). It can also run outside of Azure.
 
 > [!WARNING]  
-> This repo will be archived soon and is no longer maintained.
+> This repo has been archived and is no longer maintained.
 
 > [!IMPORTANT]  
 > Kudu continues in Azure App Service, so please file incidents or questions using [Azure support request](https://learn.microsoft.com/en-us/azure/azure-portal/supportability/how-to-create-azure-support-request)
