@@ -289,7 +289,7 @@
     <value>Applying {0} changes ...</value>
   </data>
   <data name="OneDriveApplyResult" xml:space="preserve">
-    <value>{0} successed, {1} failed.</value>
+    <value>{0} succeeded, {1} failed.</value>
   </data>
   <data name="OneDriveDeletedDirectory" xml:space="preserve">
     <value>Deleted directory {0} ...</value>
