@@ -57,6 +57,7 @@ namespace Kudu.TestHarness
             SiteExtensionManager = new RemoteSiteExtensionManager(site.ServiceUrl + "api", credentials);
             ZipDeploymentManager = new RemotePushDeploymentManager(site.ServiceUrl + "api/zipdeploy", credentials);
             WarDeploymentManager = new RemotePushDeploymentManager(site.ServiceUrl + "api/wardeploy", credentials);
+            OneDeployManager = new RemotePushDeploymentManager(site.ServiceUrl + "api/publish", credentials);
 
             var repositoryInfo = RepositoryManager.GetRepositoryInfo().Result;
             GitUrl = repositoryInfo.GitUrl.OriginalString;
@@ -198,6 +199,12 @@ namespace Kudu.TestHarness
             private set;
         }
 
+        public RemotePushDeploymentManager OneDeployManager
+        {
+            get;
+            private set;
+        }
+
         public string GitUrl
         {
             get;
@@ -224,17 +231,18 @@ namespace Kudu.TestHarness
             File.WriteAllText(fullPath, content);
         }
 
-        public string GetKuduUpTime()
+        public async Task<string> GetKuduUpTimeAsync()
         {
             const string pattern = @"<div class=""col-xs-2"">\s*<strong>Site up time</strong>\s*</div>\s*<div>([^<]*)</div>";
 
-            string content = OperationManager.Attempt<string>(() =>
+            string content = await OperationManager.AttemptAsync<string>(async () =>
             {
                 using (HttpClient client = HttpClientHelper.CreateClient(this.ServiceUrl, this.DeploymentManager.Credentials))
                 {
-                    using (HttpResponseMessage response = client.GetAsync(String.Empty).Result.EnsureSuccessStatusCode())
+                    using (HttpResponseMessage response = await client.GetAsync(String.Empty))
                     {
-                        return response.Content.ReadAsStringAsync().Result;
+                        response.EnsureSuccessStatusCode();
+                        return await response.Content.ReadAsStringAsync();
                     }
                 }
             }, 3, 1000);

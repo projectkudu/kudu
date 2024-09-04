@@ -14,7 +14,7 @@
 > Normally this include a stack trace, error code and some more information.
 
 ### Debug your Azure website remotely.
-> it is recommanded that you share your Web App name, directly or [indirectly](https://github.com/projectkudu/kudu/wiki/Reporting-your-site-name-without-posting-it-publicly)
+> it is recommended that you share your Web App name, directly or [indirectly](https://github.com/projectkudu/kudu/wiki/Reporting-your-site-name-without-posting-it-publicly)
 > we can take a look at what's going on.
 
 ### Mention any other details that might be useful.

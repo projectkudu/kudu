@@ -44,6 +44,18 @@ namespace Kudu.Services.Arm
                    request.Headers.Contains(GeoLocationHeaderKey);
         }
 
+        public static bool IsAzureResourceManagerUserAgent(HttpRequestMessage request)
+        {
+            return null != request?.Headers?.UserAgent?.FirstOrDefault(u => u.Product != null && u.Product.Name != null
+                && u.Product.Name.IndexOf("azure-resource-manager", StringComparison.OrdinalIgnoreCase) >= 0);
+        }
+
+        public static bool IsVSTSDevOpsUserAgent(HttpRequestMessage request)
+        {
+            return null != request?.Headers?.UserAgent?.FirstOrDefault(u => u.Product != null && u.Product.Name != null
+                && u.Product.Name.IndexOf("VSTS_", StringComparison.OrdinalIgnoreCase) >= 0);
+        }
+
         public static bool IsRbacContributorRequest(HttpRequestMessage request)
         {
             IEnumerable<string> headerValues;

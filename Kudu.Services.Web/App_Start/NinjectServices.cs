@@ -39,6 +39,7 @@ using Kudu.Services.Performance;
 using Kudu.Services.ServiceHookHandlers;
 using Kudu.Services.SSHKey;
 using Kudu.Services.Web.Infrastructure;
+using Kudu.Services.Web.Infrastruture;
 using Kudu.Services.Web.Services;
 using Kudu.Services.Web.Tracing;
 using Microsoft.AspNet.SignalR;
@@ -65,6 +66,7 @@ namespace Kudu.Services.Web.App_Start
 
         // Due to a bug in Ninject we can't use Dispose to clean up LockFile so we shut it down manually
         private static DeploymentLockFile _deploymentLock;
+        private static LockFile _hooksLock;
 
         private static event Action Shutdown;
 
@@ -85,7 +87,7 @@ namespace Kudu.Services.Web.App_Start
             {
                 // trace initialization error
                 KuduEventSource.Log.KuduException(
-                    ServerConfiguration.GetApplicationName(),
+                    ServerConfiguration.GetRuntimeSiteName(),
                     "NinjectServices.Start",
                     string.Empty,
                     string.Empty,
@@ -173,23 +175,7 @@ namespace Kudu.Services.Web.App_Start
             TraceServices.SetTraceFactory(createTracerThunk);
 
             // Setup the deployment lock
-            string lockPath = Path.Combine(environment.SiteRootPath, Constants.LockPath);
-            string deploymentLockPath = Path.Combine(lockPath, Constants.DeploymentLockFile);
-            string statusLockPath = Path.Combine(lockPath, Constants.StatusLockFile);
-            string sshKeyLockPath = Path.Combine(lockPath, Constants.SSHKeyLockFile);
-            string hooksLockPath = Path.Combine(lockPath, Constants.HooksLockFile);
-
-            _deploymentLock = new DeploymentLockFile(deploymentLockPath, kernel.Get<ITraceFactory>());
-            _deploymentLock.InitializeAsyncLocks();
-
-            var statusLock = new LockFile(statusLockPath, kernel.Get<ITraceFactory>());
-            var sshKeyLock = new LockFile(sshKeyLockPath, kernel.Get<ITraceFactory>());
-            var hooksLock = new LockFile(hooksLockPath, kernel.Get<ITraceFactory>());
-
-            kernel.Bind<IOperationLock>().ToConstant(sshKeyLock).WhenInjectedInto<SSHKeyController>();
-            kernel.Bind<IOperationLock>().ToConstant(statusLock).WhenInjectedInto<DeploymentStatusManager>();
-            kernel.Bind<IOperationLock>().ToConstant(hooksLock).WhenInjectedInto<WebHooksManager>();
-            kernel.Bind<IOperationLock>().ToConstant(_deploymentLock);
+            BindLockFiles(environment.SiteRootPath, kernel);
 
             var shutdownDetector = new ShutdownDetector();
             shutdownDetector.Initialize();
@@ -219,11 +205,17 @@ namespace Kudu.Services.Web.App_Start
             // Trace shutdown event
             // Cannot use shutdownDetector.Token.Register because of race condition
             // with NinjectServices.Stop via WebActivator.ApplicationShutdownMethodAttribute
-            Shutdown += () => TraceShutdown(environment, noContextDeploymentsSettingsManager);
+            Shutdown += () =>
+            {
+                BackgroundTask.Shutdown();
+                TraceShutdown(environment, noContextDeploymentsSettingsManager);
+            };
+
+            BackgroundTask.Start();
 
             // LogStream service
             // The hooks and log stream start endpoint are low traffic end-points. Re-using it to avoid creating another lock
-            var logStreamManagerLock = hooksLock;
+            var logStreamManagerLock = _hooksLock;
             kernel.Bind<LogStreamManager>().ToMethod(context => new LogStreamManager(Path.Combine(environment.RootPath, Constants.LogFilesPath),
                                                                                      context.Kernel.Get<IEnvironment>(),
                                                                                      context.Kernel.Get<IDeploymentSettingsManager>(),
@@ -280,6 +272,8 @@ namespace Kudu.Services.Web.App_Start
 
             OperationManager.SafeExecute(continuousJobManager.CleanupDeletedJobs);
 
+            PostDeploymentHelper.RemoveAppOfflineIfLeft(environment, _deploymentLock, GetTracer(kernel));
+
             kernel.Bind<IContinuousJobsManager>().ToConstant(continuousJobManager)
                                  .InTransientScope();
 
@@ -328,7 +322,9 @@ namespace Kudu.Services.Web.App_Start
             kernel.Bind<IServiceHookHandler>().To<OneDriveHandler>().InRequestScope();
 
             // SiteExtensions
-            kernel.Bind<ISiteExtensionManager>().To<SiteExtensionManager>().InRequestScope();
+            kernel.Bind<SiteExtensionManager>().To<SiteExtensionManager>().InRequestScope();
+            kernel.Bind<SiteExtensionManagerV2>().To<SiteExtensionManagerV2>().InRequestScope();
+            kernel.Bind<ISiteExtensionManager>().ToMethod(context => GetSiteExtensionManager(context.Kernel)).InRequestScope();
 
             // Functions
             kernel.Bind<IFunctionManager>().To<FunctionManager>().InRequestScope();
@@ -337,12 +333,8 @@ namespace Kudu.Services.Web.App_Start
             kernel.Bind<ICommandExecutor>().To<CommandExecutor>().InRequestScope();
 
             MigrateSite(environment, noContextDeploymentsSettingsManager);
-            RemoveOldTracePath(environment);
-            RemoveTempFileFromUserDrive(environment);
 
-            // Temporary fix for https://github.com/npm/npm/issues/5905
-            EnsureNpmGlobalDirectory();
-            EnsureUserProfileDirectory();
+            CleanupOrEnsureDirectories(environment);
 
             // Skip SSL Certificate Validate
             if (Kudu.Core.Environment.SkipSslValidation)
@@ -370,6 +362,43 @@ namespace Kudu.Services.Web.App_Start
                     kernel.Get<IAnalytics>(),
                     kernel.Get<ITraceFactory>()));
             GlobalConfiguration.Configuration.Filters.Add(new EnsureRequestIdHandlerAttribute());
+        }
+
+        private static void BindLockFiles(string siteRootPath, IKernel kernel)
+        {
+            // Setup the deployment lock
+            string lockPath = Path.Combine(siteRootPath, Constants.LockPath);
+            string deploymentLockPath = Path.Combine(lockPath, Constants.DeploymentLockFile);
+            string statusLockPath = Path.Combine(lockPath, Constants.StatusLockFile);
+            string sshKeyLockPath = Path.Combine(lockPath, Constants.SSHKeyLockFile);
+            string hooksLockPath = Path.Combine(lockPath, Constants.HooksLockFile);
+
+            _deploymentLock = new DeploymentLockFile(deploymentLockPath, kernel.Get<ITraceFactory>());
+            _deploymentLock.InitializeAsyncLocks();
+
+            var statusLock = new LockFile(statusLockPath, kernel.Get<ITraceFactory>(), traceLock: false);
+            var sshKeyLock = new LockFile(sshKeyLockPath, kernel.Get<ITraceFactory>());
+            _hooksLock = new LockFile(hooksLockPath, kernel.Get<ITraceFactory>());
+
+            kernel.Bind<IOperationLock>().ToConstant(sshKeyLock).WhenInjectedInto<SSHKeyController>();
+            kernel.Bind<IOperationLock>().ToConstant(statusLock).WhenInjectedInto<DeploymentStatusManager>();
+            kernel.Bind<IOperationLock>().ToConstant(_hooksLock).WhenInjectedInto<WebHooksManager>();
+            kernel.Bind<IOperationLock>().ToConstant(_deploymentLock);
+        }
+
+        private static void CleanupOrEnsureDirectories(IEnvironment environment)
+        {
+            RemoveOldTracePath(environment);
+            RemoveTempFileFromUserDrive(environment);
+
+            // Temporary fix for https://github.com/npm/npm/issues/5905
+            EnsureNpmGlobalDirectory();
+            EnsureUserProfileDirectory();
+            
+            if(ScmHostingConfigurations.EnsureGitSafeDirectoryEnabled)
+            {
+                EnsureGitConfigFileWithSafeDirectoryConfig(environment);
+            }
         }
 
         public static class SignalRStartup
@@ -451,8 +480,12 @@ namespace Kudu.Services.Web.App_Start
 
             // Zip push deployment
             routes.MapHttpRouteDual("zip-push-deploy", "zipdeploy", new { controller = "PushDeployment", action = "ZipPushDeploy" }, new { verb = new HttpMethodConstraint("POST", "PUT") });
+            routes.MapHttpRouteDual("validate-zip-deploy", "zipdeploy/validate", new { controller = "PushDeployment", action = "ValidateZipDeploy" }, new { verb = new HttpMethodConstraint("POST") });
             routes.MapHttpRoute("zip-war-deploy", "api/wardeploy", new { controller = "PushDeployment", action = "WarPushDeploy" }, new { verb = new HttpMethodConstraint("POST") });
 
+            //OneDeploy
+            routes.MapHttpRouteDual("onedeploy", "publish", new { controller = "PushDeployment", action = "OneDeploy" }, new { verb = new HttpMethodConstraint("POST", "PUT") });
+            
             // Live Command Line
             routes.MapHttpRouteDual("execute-command", "command", new { controller = "Command", action = "ExecuteCommand" }, new { verb = new HttpMethodConstraint("POST") });
 
@@ -495,8 +528,13 @@ namespace Kudu.Services.Web.App_Start
             // Enable these for Linux and Windows Containers.
             if (!OSDetector.IsOnWindows() || (OSDetector.IsOnWindows() && EnvironmentHelper.IsWindowsContainers()))
             {
-                routes.MapHttpRoute("current-docker-logs-zip", "api/logs/docker/zip", new { controller = "Diagnostics", action = "GetDockerLogsZip" }, new { verb = new HttpMethodConstraint("GET") });
-                routes.MapHttpRoute("current-docker-logs", "api/logs/docker", new { controller = "Diagnostics", action = "GetDockerLogs" }, new { verb = new HttpMethodConstraint("GET") });
+                // New endpoints.
+                routes.MapHttpRoute("current-container-logs-zip", "api/logs/container/zip", new { controller = "Diagnostics", action = "GetContainerLogsZip" }, new { verb = new HttpMethodConstraint("GET") });
+                routes.MapHttpRoute("current-container-logs", "api/logs/container", new { controller = "Diagnostics", action = "GetContainerLogs" }, new { verb = new HttpMethodConstraint("GET") });
+
+                // Legacy endpoints for backward compatibility.
+                routes.MapHttpRoute("current-docker-logs-zip", "api/logs/docker/zip", new { controller = "Diagnostics", action = "GetContainerLogsZip" }, new { verb = new HttpMethodConstraint("GET") });
+                routes.MapHttpRoute("current-docker-logs", "api/logs/docker", new { controller = "Diagnostics", action = "GetContainerLogs" }, new { verb = new HttpMethodConstraint("GET") });
             }
             
             var processControllerName = OSDetector.IsOnWindows() ? "Process" : "LinuxProcess";
@@ -504,7 +542,8 @@ namespace Kudu.Services.Web.App_Start
             // Processes
             routes.MapHttpProcessesRoute("all-processes", "", new { controller = processControllerName, action = "GetAllProcesses" }, new { verb = new HttpMethodConstraint("GET") });
             routes.MapHttpProcessesRoute("one-process-get", "/{id}", new { controller = processControllerName, action = "GetProcess" }, new { verb = new HttpMethodConstraint("GET") });
-            routes.MapHttpProcessesRoute("one-process-delete", "/{id}", new { controller = processControllerName, action = "KillProcess" }, new { verb = new HttpMethodConstraint("DELETE") });
+            routes.MapHttpProcessesRoute("one-process-kill", "/{id}", new { controller = processControllerName, action = "KillProcess" }, new { verb = new HttpMethodConstraint("DELETE") });
+            routes.MapHttpProcessesRoute("one-process-stop", "/{id}/stop", new { controller = processControllerName, action = "KillProcess" }, new { verb = new HttpMethodConstraint("POST") });
             routes.MapHttpProcessesRoute("one-process-dump", "/{id}/dump", new { controller = processControllerName, action = "MiniDump" }, new { verb = new HttpMethodConstraint("GET") });
             routes.MapHttpProcessesRoute("start-process-profile", "/{id}/profile/start", new { controller = processControllerName, action = "StartProfileAsync" }, new { verb = new HttpMethodConstraint("POST") });
             routes.MapHttpProcessesRoute("stop-process-profile", "/{id}/profile/stop", new { controller = processControllerName, action = "StopProfileAsync" }, new { verb = new HttpMethodConstraint("GET") });
@@ -512,6 +551,7 @@ namespace Kudu.Services.Web.App_Start
             routes.MapHttpProcessesRoute("one-process-thread", "/{processId}/threads/{threadId}", new { controller = processControllerName, action = "GetThread" }, new { verb = new HttpMethodConstraint("GET") });
             routes.MapHttpProcessesRoute("all-modules", "/{id}/modules", new { controller = processControllerName, action = "GetAllModules" }, new { verb = new HttpMethodConstraint("GET") });
             routes.MapHttpProcessesRoute("one-process-module", "/{id}/modules/{baseAddress}", new { controller = processControllerName, action = "GetModule" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpProcessesRoute("all-envs", "/{id}/environments/{filter}", new { controller = processControllerName, action = "GetEnvironments" }, new { verb = new HttpMethodConstraint("GET") });
 
             // Runtime
             routes.MapHttpRouteDual("runtime", "diagnostics/runtime", new { controller = "Runtime", action = "GetRuntimeVersions" }, new { verb = new HttpMethodConstraint("GET") });
@@ -574,7 +614,6 @@ namespace Kudu.Services.Web.App_Start
             if (!OSDetector.IsOnWindows() || (OSDetector.IsOnWindows() && EnvironmentHelper.IsWindowsContainers()))
             {
                 routes.MapHttpRoute("docker", "docker/hook", new { controller = "Docker", action = "ReceiveHook" }, new { verb = new HttpMethodConstraint("POST") });
-                routes.MapHttpRoute("container", "container/webhook", new { controller = "Docker", action = "ReceiveHook" }, new { verb = new HttpMethodConstraint("POST") });
             }
 
             // catch all unregistered url to properly handle not found
@@ -592,6 +631,23 @@ namespace Kudu.Services.Web.App_Start
         private static void RemoveTempFileFromUserDrive(IEnvironment environment)
         {
             FileSystemHelpers.DeleteDirectorySafe(Path.Combine(environment.RootPath, "data", "Temp"), ignoreErrors: true);
+        }
+
+        // add/update gitconfig file to be equivalent of running
+        // git config --global --add safe.directory "*"
+        private static void EnsureGitConfigFileWithSafeDirectoryConfig(IEnvironment environment)
+        {
+            var markerFilePath = Path.Combine(environment.RootPath, "gitsafedirectory.marker");
+            if (File.Exists(markerFilePath))
+            {
+                return;
+            }
+            OperationManager.SafeExecute(() =>
+            {
+                var gitConfigPath = Path.Combine(environment.RootPath, ".gitconfig");
+                File.AppendAllLines(gitConfigPath, new[] {"[safe]", "    directory = *" });
+                File.WriteAllText(markerFilePath, string.Empty);
+            });
         }
 
         // Perform migration tasks to deal with legacy sites that had different file layout
@@ -660,6 +716,21 @@ namespace Kudu.Services.Web.App_Start
             });
         }
 
+        private static ISiteExtensionManager GetSiteExtensionManager(IKernel kernel)
+        {
+            var settings = kernel.Get<IDeploymentSettingsManager>();
+            if (settings.GetUseSiteExtensionV2())
+            {
+                if (!string.IsNullOrEmpty(settings.GetSiteExtensionRemoteUrl(out bool isDefault))
+                    && isDefault)
+                {
+                    return kernel.Get<SiteExtensionManagerV2>();
+                }
+            }
+
+            return kernel.Get<SiteExtensionManager>();
+        }
+
         private static ITracer GetTracer(IKernel kernel)
         {
             IEnvironment environment = kernel.Get<IEnvironment>();
@@ -709,12 +780,13 @@ namespace Kudu.Services.Web.App_Start
             OperationManager.SafeExecute(() =>
             {
                 KuduEventSource.Log.GenericEvent(
-                    ServerConfiguration.GetApplicationName(),
+                    ServerConfiguration.GetRuntimeSiteName(),
                     string.Format("Shutdown pid:{0}, domain:{1}", Process.GetCurrentProcess().Id, AppDomain.CurrentDomain.Id),
                     string.Empty,
                     string.Empty,
                     string.Empty,
-                    string.Empty);
+                    EnvironmentHelper.KuduVersion.Value,
+                    EnvironmentHelper.AppServiceVersion.Value);
             });
         }
 
@@ -841,7 +913,7 @@ namespace Kudu.Services.Web.App_Start
 
                     // trace initialization error
                     KuduEventSource.Log.KuduException(
-                        ServerConfiguration.GetApplicationName(),
+                        ServerConfiguration.GetRuntimeSiteName(),
                         "NinjectServices.Start",
                         string.Empty,
                         string.Empty,

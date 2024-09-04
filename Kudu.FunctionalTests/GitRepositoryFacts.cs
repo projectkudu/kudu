@@ -51,7 +51,7 @@ namespace Kudu.FunctionalTests
                 gitRepo.Initialize();
 
                 // Assert
-                Assert.Equal(expected, File.ReadAllText(postCommitHookPath));
+                Assert.Equal(NormalizeLineEnding(expected), NormalizeLineEnding(File.ReadAllText(postCommitHookPath)));
             }
         }
 
@@ -231,6 +231,11 @@ namespace Kudu.FunctionalTests
 
             PathHelper.EnsureDirectory(repoPath);
             return new TestRepository(repoPath, obliterateOnDispose: true);
+        }
+
+        private static string NormalizeLineEnding(string content)
+        {
+            return content.Replace("\r\n", "\n");
         }
 
         public void Dispose()

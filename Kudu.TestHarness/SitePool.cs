@@ -65,23 +65,16 @@ namespace Kudu.TestHarness
             if (site != null)
             {
                 TestTracer.Trace("{0} Site already exists at {1}. Reusing site", operationName, site.SiteUrl);
+
+                TestTracer.Trace("{0} Reset existing site content", operationName);
+                await siteManager.ResetSiteContent(applicationName);
+
+                RunAgainstCustomKuduUrlIfRequired(site);
+
                 var appManager = new ApplicationManager(siteManager, site, applicationName)
                 {
                     SitePoolIndex = siteIndex
                 };
-
-                // In site reuse mode, clean out the existing site so we start clean
-                // Enumrate all w3wp processes and make sure to kill any process with an open handle to klr.host.dll
-                foreach (var process in (await appManager.ProcessManager.GetProcessesAsync()).Where(p => p.Name.Equals("w3wp", StringComparison.OrdinalIgnoreCase)))
-                {
-                    var extendedProcess = await appManager.ProcessManager.GetProcessAsync(process.Id);
-                    if (extendedProcess.OpenFileHandles.Any(h => h.IndexOf("dnx.host.dll", StringComparison.OrdinalIgnoreCase) != -1))
-                    {
-                        await appManager.ProcessManager.KillProcessAsync(extendedProcess.Id, throwOnError:false);
-                    }
-                }
-
-                await appManager.RepositoryManager.Delete(deleteWebRoot: true, ignoreErrors: true);
 
                 // Make sure we start with the correct default file as some tests expect it
                 WriteIndexHtml(appManager);
@@ -115,6 +108,8 @@ namespace Kudu.TestHarness
                     }
 
                     site = siteManager.CreateSiteAsync(applicationName).Result;
+
+                    RunAgainstCustomKuduUrlIfRequired(site);
                 }
 
                 TestTracer.Trace("{0} Created new site at {1}", operationName, site.SiteUrl);
@@ -125,6 +120,13 @@ namespace Kudu.TestHarness
             }
         }
 
+        private static void RunAgainstCustomKuduUrlIfRequired(Site site)
+        {
+            if (!string.IsNullOrWhiteSpace(KuduUtils.CustomKuduUrl))
+            {
+                site.ServiceUrls = new List<string> { KuduUtils.CustomKuduUrl };
+            }
+        }
 
         private static ISiteManager GetSiteManager(IKuduContext context)
         {
@@ -148,11 +150,11 @@ namespace Kudu.TestHarness
                     string upTime = null;
                     try
                     {
-                        upTime = appManager.GetKuduUpTime();
+                        upTime = appManager.GetKuduUpTimeAsync().Result;
                     }
                     catch (Exception exception)
                     {
-                        TestTracer.Trace("GetKuduUpTime failed with exception\n{0}", exception);
+                        TestTracer.Trace("GetKuduUpTimeAsync failed with exception\n{0}", exception);
                     }
 
                     if (!String.IsNullOrEmpty(upTime))

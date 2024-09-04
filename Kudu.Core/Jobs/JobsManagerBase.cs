@@ -107,13 +107,19 @@ namespace Kudu.Core.Jobs
             _jobsTypePath = jobsTypePath;
             JobsBinariesPath = Path.Combine(basePath, jobsTypePath);
             JobsDataPath = Path.Combine(Environment.JobsDataPath, jobsTypePath);
-            JobsWatcher = new JobsFileWatcher(JobsBinariesPath, OnJobChanged, null, ListJobNames, traceFactory, analytics, jobsTypePath);
+            JobsWatcher = new JobsFileWatcher(JobsBinariesPath, OnJobChanged, null, ListJobNames, traceFactory, analytics, GetJobType());
             HostingEnvironment.RegisterObject(this);
         }
 
         protected virtual IEnumerable<string> ListJobNames(bool forceRefreshCache)
         {
             return ListJobs(forceRefreshCache).Select(job => job.Name);
+        }
+
+        protected string GetJobType()
+        {
+            // jobType can be triggered, continuous, triggered/SDK or continuous/SDK
+            return IsUsingSdk(JobsDataPath) ? $"{_jobsTypePath}/SDK" : _jobsTypePath;
         }
 
         public void RegisterExtraEventHandlerForFileChange(Action<string> action)

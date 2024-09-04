@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Kudu.Core.Settings;
+using Kudu.Core.SiteExtensions;
 using SystemEnvironment = System.Environment;
 
 namespace Kudu.Core.Infrastructure
@@ -14,11 +16,13 @@ namespace Kudu.Core.Infrastructure
         /// The version of node.exe that would be on PATH, when the user does not specify/specifies invalid node versions.
         /// </summary>
         private const string DefaultNodeVersion = "0.10.28";
+        private const string DefaultNode18Version = "18.12.1";
 
         /// <summary>
         /// Maps to the version of NPM that shipped with the DefaultNodeVersion
         /// </summary>
         private const string DefaultNpmVersion = "1.4.9";
+        private const string DefaultNPM8Version = "8.19.2";
 
         // this api is used to add git path to %path% and pick git.exe to be used for GitExecutable
         internal override string ResolveGitPath()
@@ -72,6 +76,11 @@ namespace Kudu.Core.Infrastructure
             return Path.Combine(gitPath, "bin", "bash.exe");
         }
 
+        public override string ResolveLocalSitePath()
+        {
+            return System.Environment.ExpandEnvironmentVariables("%SystemDrive%\\local");
+        }
+
         internal override string ResolveNpmJsPath()
         {
             string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);
@@ -101,20 +110,112 @@ namespace Kudu.Core.Infrastructure
 
         internal override string ResolveMSBuild15Dir()
         {
+            if (ScmHostingConfigurations.UseLatestMSBuild16InsteadOfMSBuild15)
+            {
+                return ResolveLatestMSBuild16Dir();
+            }
+
             string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);
-            string[] probPaths = new[]{
+            List<string> probPaths = new List<string>
+            {
                 Path.Combine(programFiles, "Microsoft Visual Studio", "2017", "Enterprise", "MSBuild", "15.0", "Bin"), // visual studio Enterprise
                 Path.Combine(programFiles, "Microsoft Visual Studio", "2017", "Professional", "MSBuild", "15.0", "Bin"), // visual studio Professional
                 Path.Combine(programFiles, "Microsoft Visual Studio", "2017", "Community", "MSBuild", "15.0", "Bin"), // visual studio Community
-                Path.Combine(programFiles, "Microsoft Visual Studio", "2017", "BuildTools", "MSBuild", "15.0", "Bin"), // msbuild tools
+                Path.Combine(programFiles, "Microsoft Visual Studio", "2017", "BuildTools", "MSBuild", "15.0", "Bin") // msbuild tools
                 // above is for public kudu, below is for azure
-                Path.Combine(programFiles, "MSBuild-15.3.409.57025", "MSBuild", "15.0", "Bin")
-                };
+            };
+            probPaths.Add(Path.Combine(programFiles, "MSBuild-15.9.21.664", "MSBuild", "MSBuild", "15.0", "Bin"));
+
             return probPaths.FirstOrDefault(path => Directory.Exists(path));
+        }
+
+        internal override string ResolveMSBuild16Dir(string targetFramework)
+        {
+            string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);
+            List<string> probPaths = new List<string>
+            {
+                Path.Combine(programFiles, "Microsoft Visual Studio", "2019", "Enterprise",   "MSBuild", "Current", "Bin"), // visual studio Enterprise
+                Path.Combine(programFiles, "Microsoft Visual Studio", "2019", "Professional", "MSBuild", "Current", "Bin"), // visual studio Professional
+                Path.Combine(programFiles, "Microsoft Visual Studio", "2019", "Community",    "MSBuild", "Current", "Bin"), // visual studio Community
+                Path.Combine(programFiles, "Microsoft Visual Studio", "2019", "BuildTools",   "MSBuild", "Current", "Bin"), // msbuild tools
+                // above is for public kudu, below is for azure
+            };
+
+            if (VsHelper.IsDotNet31Version(targetFramework) && ScmHostingConfigurations.UseMSBuild167ForDotnet31)
+            {
+                probPaths.Add(Path.Combine(programFiles, "MSBuilds", "16.7.0", "MSBuild", "Current", "Bin"));
+            }
+            else if (VsHelper.IsDotNet7Version(targetFramework) || VsHelper.IsDotNet8Version(targetFramework))
+            {
+                // Using ResolveLatestMSBuildDir as it's picking the latest MSBuild version.
+                probPaths.Add(ResolveLatestMSBuildDir());
+            }
+
+            probPaths.Add(Path.Combine(programFiles, "MSBuild-16.4", "MSBuild", "Current", "Bin"));
+
+            return probPaths.FirstOrDefault(path => Directory.Exists(path));
+        }
+
+        internal override string ResolveLatestMSBuildDir()
+        {
+            string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);
+            List<string> probPaths = new List<string>
+            {
+                Path.Combine(programFiles, "Microsoft Visual Studio", "2019", "Enterprise",   "MSBuild", "Current", "Bin"), // visual studio Enterprise
+                Path.Combine(programFiles, "Microsoft Visual Studio", "2019", "Professional", "MSBuild", "Current", "Bin"), // visual studio Professional
+                Path.Combine(programFiles, "Microsoft Visual Studio", "2019", "Community",    "MSBuild", "Current", "Bin"), // visual studio Community
+                Path.Combine(programFiles, "Microsoft Visual Studio", "2019", "BuildTools",   "MSBuild", "Current", "Bin"), // msbuild tools
+                // above is for public kudu, below is for azure
+            };
+
+            if (FileSystemHelpers.DirectoryExists(Path.Combine(programFiles, "MSBuilds")))
+            {
+                // Iterate through MSbuild versions inside Program Files (x86)\MSBuilds and fetch the latest one
+                string latestMsBuildStr = null;
+                SemanticVersion latestMsBuild = null;
+                foreach (string msBuild in FileSystemHelpers.GetDirectories(Path.Combine(programFiles, "MSBuilds")))
+                {
+                    var versionStr = Path.GetFileName(msBuild);
+                    if (SemanticVersion.TryParse(versionStr, out SemanticVersion currVersion))
+                    {
+                        if (latestMsBuild == null || currVersion.CompareTo(latestMsBuild) > 0)
+                        {
+                            latestMsBuildStr = versionStr;
+                            latestMsBuild = currVersion;
+                        }
+                    }
+                }
+
+                var pinnedVersion = VsHelper.MSBuildVersion;
+                var pinnedPath = string.IsNullOrEmpty(pinnedVersion) ? null : Path.Combine(programFiles, "MSBuilds", pinnedVersion, "MSBuild", "Current", "Bin");
+                if (FileSystemHelpers.DirectoryExists(pinnedPath))
+                {
+                    probPaths.Add(pinnedPath);
+                }
+                else if (!string.IsNullOrEmpty(latestMsBuildStr))
+                {
+                    string latestMsBuildPath = Path.Combine(programFiles, "MSBuilds", latestMsBuildStr, "MSBuild", "Current", "Bin");
+                    if (FileSystemHelpers.DirectoryExists(latestMsBuildPath))
+                    {
+                        probPaths.Add(latestMsBuildPath);
+                    }
+                }
+            }
+
+            // TODO: Remove this after ANT93
+            // Fallback to 16.8.0 if present
+            probPaths.Add(Path.Combine(programFiles, "MSBuild-16.8.0", "MSBuild", "Current", "Bin"));
+
+            return probPaths.FirstOrDefault(path => FileSystemHelpers.DirectoryExists(path));
         }
 
         internal override string ResolveMSBuildPath()
         {
+            if (ScmHostingConfigurations.UseLatestMSBuild16InsteadOfMSBuild14)
+            {
+                return Path.Combine(ResolveLatestMSBuild16Dir(), "MSBuild.exe");
+            }
+
             string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);
             return Path.Combine(programFiles, "MSBuild", "14.0", "Bin", "MSBuild.exe");
         }
@@ -172,6 +273,12 @@ namespace Kudu.Core.Infrastructure
             throw new InvalidOperationException(Resources.Error_FailedToLocateGit);
         }
 
+        private static string ResolveLatestMSBuild16Dir()
+        {
+            string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);
+            return Path.Combine(programFiles, "MSBuilds", "16.11.2", "MSBuild", "Current", "Bin");
+        }
+
         private static string ResolveNodeVersion()
         {
             bool fromAppSetting;
@@ -192,7 +299,7 @@ namespace Kudu.Core.Infrastructure
             else
             {
                 fromAppSetting = false;
-                return DefaultNodeVersion;
+                return GetDefaultNodejsVersion();
             }
         }
 
@@ -219,7 +326,7 @@ namespace Kudu.Core.Infrastructure
             {
                 string npmTxtPath = Path.Combine(programFiles, "nodejs", nodeVersion, "npm.txt");
 
-                return FileSystemHelpers.FileExists(npmTxtPath) ? FileSystemHelpers.ReadAllTextFromFile(npmTxtPath).Trim() : DefaultNpmVersion;
+                return FileSystemHelpers.FileExists(npmTxtPath) ? FileSystemHelpers.ReadAllTextFromFile(npmTxtPath).Trim() : GetDefaultNpmVersion();
             }
         }
 
@@ -316,6 +423,26 @@ namespace Kudu.Core.Infrastructure
             }
 
             return path;
+        }
+
+        private static string GetDefaultNodejsVersion()
+        {
+            if (ScmHostingConfigurations.UseNodeJs18AsDefaultNodeVersion)
+            {
+                return DefaultNode18Version;
+            }
+
+            return DefaultNodeVersion;
+        }
+
+        private static string GetDefaultNpmVersion()
+        {
+            if (ScmHostingConfigurations.UseNodeJs18AsDefaultNodeVersion)
+            {
+                return DefaultNPM8Version;
+            }
+
+            return DefaultNpmVersion;
         }
     }
 }

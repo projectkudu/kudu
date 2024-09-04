@@ -1,5 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="..\packages\Microsoft.CodeAnalysis.Analyzers.2.9.8\build\Microsoft.CodeAnalysis.Analyzers.props" Condition="Exists('..\packages\Microsoft.CodeAnalysis.Analyzers.2.9.8\build\Microsoft.CodeAnalysis.Analyzers.props')" />
   <Import Project="..\packages\LibGit2Sharp.0.21.0.176\build\net40\LibGit2Sharp.props" Condition="Exists('..\packages\LibGit2Sharp.0.21.0.176\build\net40\LibGit2Sharp.props')" />
   <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory),Kudu.sln))\Build\Kudu.targets" />
   <PropertyGroup>
@@ -8,14 +9,15 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Kudu.Core</RootNamespace>
     <AssemblyName>Kudu.Core</AssemblyName>
-    <NuGetPackageImportStamp>2da09ae7</NuGetPackageImportStamp>
     <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
     <TargetFrameworkProfile />
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <AnalysisMode>AllEnabledByDefault</AnalysisMode>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Ionic.Zip, Version=1.9.1.8, Culture=neutral, PublicKeyToken=edbe51ad942a3f5c, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\DotNetZip.1.9.1.8\lib\net20\Ionic.Zip.dll</HintPath>
+    <Reference Include="DotNetZip, Version=1.15.0.0, Culture=neutral, PublicKeyToken=6583c7c814667745, processorArchitecture=MSIL">
+      <HintPath>..\packages\DotNetZip.1.15.0\lib\net40\DotNetZip.dll</HintPath>
     </Reference>
     <Reference Include="LibGit2Sharp, Version=0.21.0.176, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\LibGit2Sharp.0.21.0.176\lib\net40\LibGit2Sharp.dll</HintPath>
@@ -194,9 +196,9 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="System.Web.Extensions" />
-    <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Web" />
     <Reference Include="System.Xml" />
+    <Reference Include="System.Xml.Linq" />
     <Reference Include="WindowsBase" />
     <Reference Include="XmlSettings, Version=0.1.3.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -211,11 +213,19 @@
     <Compile Include="Deployment\CascadeLogger.cs" />
     <Compile Include="Deployment\BuildPropertyProvider.cs" />
     <Compile Include="Deployment\DeploymentInfo.cs" />
+    <Compile Include="Deployment\DeploymentLogger.cs" />
     <Compile Include="Deployment\DeploymentStatusFileExtensions.cs" />
     <Compile Include="Deployment\DeploymentStatusManager.cs" />
     <Compile Include="Deployment\FetchDeploymentManager.cs" />
+    <Compile Include="Deployment\Generator\AspNetCoreMSBuild1607Builder.cs" />
+    <Compile Include="Deployment\Generator\OneDeployBuilder.cs" />
+    <Compile Include="Deployment\Generator\DotNetConsoleMSBuild1607Builder.cs" />
+    <Compile Include="Deployment\Generator\FunctionMSBuild1607Builder.cs" />
     <Compile Include="Deployment\Generator\FunctionMsbuildBuilder.cs" />
     <Compile Include="Deployment\Generator\DotNetConsoleBuilder.cs" />
+    <Compile Include="Deployment\Generator\AspNetCoreMSBuild16Builder.cs" />
+    <Compile Include="Deployment\Generator\FunctionMSBuild16Builder.cs" />
+    <Compile Include="Deployment\Generator\DotNetConsoleMSBuild16Builder.cs" />
     <Compile Include="Deployment\Generator\CustomGeneratorCommandSiteBuilder.cs" />
     <Compile Include="Deployment\Generator\ExternalCommandFactory.cs" />
     <Compile Include="Deployment\Generator\FunctionBasicBuilder.cs" />
@@ -242,17 +252,21 @@
     <Compile Include="Deployment\StructuredTextDocument.cs" />
     <Compile Include="Deployment\StructuredTextDocumentEntry.cs" />
     <Compile Include="Deployment\StructuredTextLogger.cs" />
-    <Compile Include="Deployment\ZipDeploymentInfo.cs" />
+    <Compile Include="Deployment\ArtifactDeploymentInfo.cs" />
     <Compile Include="Functions\FunctionManager.cs" />
     <Compile Include="Helpers\EnvironmentHelper.cs" />
+    <Compile Include="Helpers\DeploymentCompletedInfo.cs" />
+    <Compile Include="Helpers\KeyVaultReferenceHelper.cs" />
     <Compile Include="Helpers\OSDetector.cs" />
     <Compile Include="Helpers\PermissionHelper.cs" />
     <Compile Include="Helpers\PostDeploymentHelper.cs" />
     <Compile Include="Helpers\PostDeploymentTraceListener.cs" />
     <Compile Include="Helpers\ProjectGuidParser.cs" />
     <Compile Include="Helpers\SimpleWebTokenHelper.cs" />
+    <Compile Include="Helpers\SiteTokenHelper.cs" />
     <Compile Include="Hooks\WebHooksManager.cs" />
     <Compile Include="Infrastructure\AspNetCoreHelper.cs" />
+    <Compile Include="Infrastructure\FileSystemCache.cs" />
     <Compile Include="Infrastructure\FunctionAppHelper.cs" />
     <Compile Include="Infrastructure\FileSystemWatcherWrapper.cs" />
     <Compile Include="Infrastructure\IFileSystemWatcher.cs" />
@@ -269,6 +283,7 @@
     <Compile Include="Infrastructure\PathUtils\PathWindowsUtility.cs" />
     <Compile Include="Infrastructure\ServerConfiguration.cs" />
     <Compile Include="Infrastructure\SettingsProcessor.cs" />
+    <Compile Include="Infrastructure\ShutdownDelaySemaphore.cs" />
     <Compile Include="Infrastructure\ZipArchiveExtensions.cs" />
     <Compile Include="Jobs\AggregateContinuousJobsManager.cs" />
     <Compile Include="Jobs\AggregateJobsManagerBase.cs" />
@@ -307,9 +322,11 @@
     <Compile Include="Settings\DiagnosticsSettingsManager.cs" />
     <Compile Include="SiteExtensions\DummyReference.cs" />
     <Compile Include="SiteExtensions\FeedExtensions.cs" />
+    <Compile Include="SiteExtensions\FeedExtensionsV2.cs" />
     <Compile Include="SiteExtensions\SiteExtensionBatchUpdateStatusLock.cs" />
     <Compile Include="SiteExtensions\SiteExtensionInstallationLock.cs" />
     <Compile Include="SiteExtensions\SemanticVersion.cs" />
+    <Compile Include="SiteExtensions\SiteExtensionManagerV2.cs" />
     <Compile Include="SiteExtensions\SiteExtensionStatus.cs" />
     <Compile Include="SiteExtensions\SiteExtensionManager.cs" />
     <Compile Include="SourceControl\Git\IGitRepository.cs" />
@@ -352,6 +369,7 @@
     <Compile Include="Settings\DeploymentSettingsManager.cs" />
     <Compile Include="Settings\JsonSettings.cs" />
     <Compile Include="Settings\SettingsProvidersPriority.cs" />
+    <Compile Include="Settings\ScmHostingConfigurations.cs" />
     <Compile Include="SourceControl\NullRepository.cs" />
     <Compile Include="SourceControl\Git\KnownEnvironment.cs" />
     <Compile Include="SourceControl\RepositoryExtensions.cs" />
@@ -465,7 +483,10 @@
       <SubType>Designer</SubType>
     </EmbeddedResource>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Analyzer Include="..\packages\Microsoft.CodeAnalysis.Analyzers.2.9.8\analyzers\dotnet\cs\Microsoft.CodeAnalysis.Analyzers.dll" />
+    <Analyzer Include="..\packages\Microsoft.CodeAnalysis.Analyzers.2.9.8\analyzers\dotnet\cs\Microsoft.CodeAnalysis.CSharp.Analyzers.dll" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="BeforeBuild">
     <!-- Ensure NuGet.exe exists in the Build directory prior to building this project. -->
@@ -479,6 +500,7 @@
     <Error Condition="!Exists('..\packages\Microsoft.Diagnostics.Tracing.EventRegister.1.0.26\build\Microsoft.Diagnostics.Tracing.EventRegister.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Diagnostics.Tracing.EventRegister.1.0.26\build\Microsoft.Diagnostics.Tracing.EventRegister.targets'))" />
     <Error Condition="!Exists('..\packages\Microsoft.Bcl.Build.1.0.21\build\Microsoft.Bcl.Build.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Bcl.Build.1.0.21\build\Microsoft.Bcl.Build.targets'))" />
     <Error Condition="!Exists('..\packages\LibGit2Sharp.0.21.0.176\build\net40\LibGit2Sharp.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\LibGit2Sharp.0.21.0.176\build\net40\LibGit2Sharp.props'))" />
+    <Error Condition="!Exists('..\packages\Microsoft.CodeAnalysis.Analyzers.2.9.8\build\Microsoft.CodeAnalysis.Analyzers.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.CodeAnalysis.Analyzers.2.9.8\build\Microsoft.CodeAnalysis.Analyzers.props'))" />
   </Target>
   <Import Project="..\packages\Microsoft.Bcl.Build.1.0.21\build\Microsoft.Bcl.Build.targets" Condition="Exists('..\packages\Microsoft.Bcl.Build.1.0.21\build\Microsoft.Bcl.Build.targets')" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

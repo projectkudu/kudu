@@ -91,13 +91,13 @@ namespace Kudu.Services.Infrastructure
             }
         }
 
-        public static bool TryHandleRequest(HttpRequestMessage request, string path, out HttpResponseMessage response)
+        public static bool TryHandleRequest(HttpRequestMessage request, string path, bool useOriginalHost, out HttpResponseMessage response)
         {
             response = null;
             if (String.Equals(path, SystemDrivePath, StringComparison.OrdinalIgnoreCase))
             {
                 response = request.CreateResponse(HttpStatusCode.TemporaryRedirect);
-                UriBuilder location = new UriBuilder(UriHelper.GetRequestUri(request));
+                UriBuilder location = new UriBuilder(request.GetRequestUri(useOriginalHost));
                 location.Path += "/";
                 response.Headers.Location = location.Uri;
             }

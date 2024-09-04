@@ -10,6 +10,14 @@
     <link rel="stylesheet" href="~/content/Styles/jquery-ui-1.10.0.custom.css" type="text/css" />
     <link href="/Content/Styles/font-awesome.css" rel="stylesheet" />
 }
+<script>
+    @{
+        bool isHidden = String.IsNullOrEmpty(Request.Params["hideSecrets"]) || ("true").Equals(Request.Params["hideSecrets"]); // Hide by default
+    }
+    // Whether secrets are hidden. Used when processing environment variables in ProcessExplorer.js
+    var secretsHidden = '@isHidden' == 'True';
+</script>
+
 <div id="main" class="container">
     <div id="generalModal" title="Basic dialog">
         <p class="content">This is the default dialog which is useful for displaying information. The dialog window can be moved, resized and closed with the 'x' icon.</p>

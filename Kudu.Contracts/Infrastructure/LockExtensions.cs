@@ -67,6 +67,40 @@ namespace Kudu.Contracts.Infrastructure
             return result;
         }
 
+        public static T LockOperationIfNeccessary<T>(this IOperationLock lockObj, Func<T> operation, string operationName, TimeSpan timeout)
+        {
+            try
+            {
+                return operation();
+            }
+            catch (Exception)
+            {
+                return lockObj.LockOperation(operation, operationName, timeout);
+            }
+        }
+
+        public static void LockOperationWithRetry(this IOperationLock lockObj, Action operation, string operationName, TimeSpan timeout)
+        {
+            lockObj.LockOperation(() =>
+            {
+                for (int i = 0; i < 3; ++i)
+                {
+                    try
+                    {
+                        operation();
+                        return;
+                    }
+                    catch (Exception)
+                    {
+                    }
+
+                    Thread.Sleep(250);
+                }
+
+                operation();
+            }, operationName, timeout);
+        }
+
         public static async Task LockOperationAsync(this IOperationLock lockObj, Func<Task> operation, string operationName, TimeSpan timeout)
         {
             bool isLocked = await WaitToLockAsync(lockObj, operationName, timeout);

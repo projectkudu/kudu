@@ -203,10 +203,15 @@ namespace Kudu.FunctionalTests.Jobs
 
                     PushAndVerifyConsoleWorker(appManager, testRepository, new string[] { ExpectedVerificationFileContent });
 
-                    TestTracer.Trace("Make sure process is up");
-                    var processes = appManager.ProcessManager.GetProcessesAsync().Result;
-                    var workerProcess = processes.FirstOrDefault(p => String.Equals("ConsoleWorker", p.Name, StringComparison.OrdinalIgnoreCase));
-                    Assert.NotNull(workerProcess);
+                    WaitUntilAssertVerified(
+                        "Make sure process is up",
+                        TimeSpan.FromSeconds(30),
+                        () =>
+                        {
+                            var processes = appManager.ProcessManager.GetProcessesAsync().Result;
+                            var workerProcess = processes.FirstOrDefault(p => String.Equals("ConsoleWorker", p.Name, StringComparison.OrdinalIgnoreCase));
+                            Assert.NotNull(workerProcess);
+                        });
 
                     TestTracer.Trace("Disable this job");
                     appManager.JobsManager.DisableContinuousJobAsync("deployedJob").Wait();
@@ -220,13 +225,13 @@ namespace Kudu.FunctionalTests.Jobs
 
                     TestTracer.Trace("Disable all WebJobs");
                     appManager.SettingsManager.SetValue(SettingsKeys.WebJobsStopped, "1").Wait();
-                    RestartServiceSite(appManager);
+                    RestartServiceSite(appManager, useStop: true);
 
                     VerifyContinuousJobDisabled(appManager);
 
                     TestTracer.Trace("Enable all WebJobs");
                     appManager.SettingsManager.SetValue(SettingsKeys.WebJobsStopped, "0").Wait();
-                    RestartServiceSite(appManager);
+                    RestartServiceSite(appManager, useStop: false);
 
                     VerifyContinuousJobEnabled(appManager);
                 }
@@ -497,8 +502,10 @@ namespace Kudu.FunctionalTests.Jobs
             RunScenario("InPlaceJobRunsInPlace", appManager =>
             {
                 const string jobName = "joba";
-                const string expectedTempStr = "Temp\\jobs\\triggered\\" + jobName;
-                const string expectedAppDataStr = "App_Data\\jobs\\triggered\\" + jobName;
+                var expectedTempStr = appManager.ServiceUrl.Contains("localhost")
+                    ? $@"Temp\{appManager.ApplicationName}\jobs\triggered\{jobName}"
+                    : $@"Temp\jobs\triggered\{jobName}";
+                var expectedAppDataStr = $@"App_Data\jobs\triggered\{jobName}";
 
                 TestTracer.Trace("Create the triggered WebJob");
                 appManager.JobsManager.CreateTriggeredJobAsync(jobName, "run.cmd", "cd\n").Wait();
@@ -763,11 +770,18 @@ namespace Kudu.FunctionalTests.Jobs
             });
         }
 
-        private static void RestartServiceSite(ApplicationManager appManager)
+        private static void RestartServiceSite(ApplicationManager appManager, bool useStop)
         {
             try
             {
-                appManager.ProcessManager.KillProcessAsync(0).Wait();
+                if (useStop)
+                {
+                    appManager.ProcessManager.StopProcessAsync(0).Wait();
+                }
+                else
+                {
+                    appManager.ProcessManager.KillProcessAsync(0).Wait();
+                }
             }
             catch
             {
@@ -778,7 +792,7 @@ namespace Kudu.FunctionalTests.Jobs
         {
             WaitUntilAssertVerified(
                 "continuous job enabled",
-                TimeSpan.FromSeconds(30),
+                TimeSpan.FromSeconds(60),
                 () =>
                 {
                     var jobs = appManager.JobsManager.ListContinuousJobsAsync().Result;
@@ -788,7 +802,7 @@ namespace Kudu.FunctionalTests.Jobs
 
             WaitUntilAssertVerified(
                 "make sure process is up",
-                TimeSpan.FromSeconds(30),
+                TimeSpan.FromSeconds(60),
                 () =>
                 {
                     var allProcesses = appManager.ProcessManager.GetProcessesAsync().Result;
@@ -801,7 +815,7 @@ namespace Kudu.FunctionalTests.Jobs
         {
             WaitUntilAssertVerified(
                 "continuous job disabled",
-                TimeSpan.FromSeconds(40),
+                TimeSpan.FromSeconds(60),
                 () =>
                 {
                     var jobs = appManager.JobsManager.ListContinuousJobsAsync().Result;
@@ -811,7 +825,7 @@ namespace Kudu.FunctionalTests.Jobs
 
             WaitUntilAssertVerified(
                 "make sure process is down",
-                TimeSpan.FromSeconds(40),
+                TimeSpan.FromSeconds(60),
                 () =>
                 {
                     var allProcesses = appManager.ProcessManager.GetProcessesAsync().Result;
@@ -942,7 +956,9 @@ namespace Kudu.FunctionalTests.Jobs
                 TimeSpan.FromSeconds(60),
                 () =>
                 {
+                    TestTracer.Trace($"CleanupTest: Delete {JobsBinPath}");
                     appManager.VfsManager.Delete(JobsBinPath, recursive: true);
+                    TestTracer.Trace($"CleanupTest: Delete {JobsDataPath}");
                     appManager.VfsManager.Delete(JobsDataPath, recursive: true);
 
                     var logFiles = appManager.VfsManager.ListAsync("LogFiles").Result;
@@ -951,8 +967,21 @@ namespace Kudu.FunctionalTests.Jobs
                         if (logFile.Name.StartsWith("appSettings.txt", StringComparison.OrdinalIgnoreCase) ||
                             logFile.Name.StartsWith("verification.txt", StringComparison.OrdinalIgnoreCase))
                         {
+                            TestTracer.Trace($"CleanupTest: Delete LogFiles/{logFile.Name}");
                             appManager.VfsManager.Delete("LogFiles/" + logFile.Name);
                         }
+                    }
+
+                    foreach (var job in appManager.JobsManager.ListTriggeredJobsAsync().Result)
+                    {
+                        TestTracer.Trace($"CleanupTest: DeleteTriggeredJobAsync {job.Name}");
+                        appManager.JobsManager.DeleteTriggeredJobAsync(job.Name).Wait();
+                    }
+
+                    foreach (var job in appManager.JobsManager.ListContinuousJobsAsync().Result)
+                    {
+                        TestTracer.Trace($"CleanupTest: DeleteContinuousJobAsync {job.Name}");
+                        appManager.JobsManager.DeleteContinuousJobAsync(job.Name).Wait();
                     }
                 });
         }

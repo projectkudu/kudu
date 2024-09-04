@@ -8,6 +8,8 @@
         public const string WebRootPath = "WEBROOT_PATH";
         public const string MSBuildPath = "MSBUILD_PATH";
         public const string MSBuild15Dir = "MSBUILD_15_DIR";
+        public const string MSBuild16Dir = "MSBUILD_16_DIR";
+        public const string MSBuild1670Dir = "MSBUILD_1670_DIR";
         public const string KuduSyncCommandKey = "KUDU_SYNC_CMD";
         public const string NuGetExeCommandKey = "NUGET_EXE";
         public const string SelectNodeVersionCommandKey = "KUDU_SELECT_NODE_VERSION_CMD";

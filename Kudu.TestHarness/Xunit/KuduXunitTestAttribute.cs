@@ -6,5 +6,6 @@ namespace Kudu.TestHarness.Xunit
     public sealed class KuduXunitTestAttribute : Attribute
     {
         public bool PrivateOnly { get; set; }
+        public int MinAntaresVersion { get; set; }
     }
 }

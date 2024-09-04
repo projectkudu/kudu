@@ -16,6 +16,8 @@ namespace Kudu.Contracts.Settings
         string GetValue(string key, bool onlyPerSite);
         void DeleteValue(string key);
 
+        string GetHostingConfiguration(string key, string defaultValue);
+
         IEnumerable<ISettingsProvider> SettingsProviders { get; }
     }
 }

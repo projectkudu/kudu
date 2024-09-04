@@ -5,15 +5,16 @@ using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
-using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Web;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
+using Kudu.Core.Helpers;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Tracing;
 using Kudu.Services.Infrastructure;
+using Kudu.Services.Web.Infrastruture;
 
 namespace Kudu.Services.Web.Tracing
 {
@@ -24,14 +25,6 @@ namespace Kudu.Services.Web.Tracing
         private static int _traceStartup;
         private static DateTime _lastRequestDateTime;
 
-        private static DateTime _nextHeartbeatDateTime = DateTime.MinValue; 
-        private static Lazy<string> _kuduVersion = new Lazy<string>(() =>
-        {
-            var assembly = Assembly.GetExecutingAssembly();
-            var fvi = FileVersionInfo.GetVersionInfo(assembly.Location);
-            return fvi.FileVersion;
-        });
-
         // (/|$) means either "/" or end-of-line
         // {0,2} means repeat pattern 0 to 2 times
         private static Regex[] _rbacWhiteListPaths = new[]
@@ -40,6 +33,14 @@ namespace Kudu.Services.Web.Tracing
             new Regex(@"^/api/functions((/|$)([^/]*|$)){0,2}(/|$)$", RegexOptions.IgnoreCase),
             new Regex(@"^/api/deployments((/|$)([^/]*|$)){0,2}(/|$)$", RegexOptions.IgnoreCase),
             new Regex(@"^/api/(processes|webjobs|triggeredwebjobs|continuouswebjobs)((/|$)([^/]*|$)){0,1}(/|$)$", RegexOptions.IgnoreCase),
+        };
+
+        // list of paths returning potentially sensitive data
+        private static readonly string[] DisallowedPaths = new string[]
+        {
+            "/api/functions/admin/masterkey",
+            "/api/functions/admin/token",
+            "/api/functions/admin/download"
         };
 
         public static TimeSpan UpTime
@@ -97,9 +98,6 @@ namespace Kudu.Services.Web.Tracing
             // Always trace the startup request.
             ITracer tracer = TraceStartup(httpContext);
 
-            // Trace heartbeat periodically
-            TraceHeartbeat();
-
             // Skip certain paths
             if (TraceExtensions.ShouldSkipRequest(httpRequest))
             {
@@ -153,7 +151,8 @@ namespace Kudu.Services.Web.Tracing
 
         public static bool IsRbacWhiteListPaths(string path)
         {
-            return _rbacWhiteListPaths.Any(r => r.IsMatch(path));
+            path = path.ToLower();
+            return !DisallowedPaths.Any(p => path.Contains(p.ToLower())) && _rbacWhiteListPaths.Any(r => r.IsMatch(path));
         }
 
         private static void OnEndRequest(object sender, EventArgs e)
@@ -236,7 +235,7 @@ namespace Kudu.Services.Web.Tracing
                 httpContext.Items[Constants.RequestIdHeader] = requestId;
                 httpContext.Items[Constants.RequestDateTimeUtc] = DateTime.UtcNow;
                 KuduEventSource.Log.ApiEvent(
-                    ServerConfiguration.GetApplicationName(),
+                    ServerConfiguration.GetRuntimeSiteName(),
                     "OnBeginRequest",
                     request.RawUrl,
                     request.HttpMethod,
@@ -257,7 +256,7 @@ namespace Kudu.Services.Web.Tracing
                 var requestTime = (DateTime)httpContext.Items[Constants.RequestDateTimeUtc];
                 var latencyInMilliseconds = (long)(DateTime.UtcNow - requestTime).TotalMilliseconds;
                 KuduEventSource.Log.ApiEvent(
-                    ServerConfiguration.GetApplicationName(),
+                    ServerConfiguration.GetRuntimeSiteName(),
                     "OnEndRequest",
                     request.RawUrl,
                     request.HttpMethod,
@@ -278,7 +277,7 @@ namespace Kudu.Services.Web.Tracing
                 var requestTime = (DateTime)httpContext.Items[Constants.RequestDateTimeUtc];
                 var latencyInMilliseconds = (long)(DateTime.UtcNow - requestTime).TotalMilliseconds;
                 KuduEventSource.Log.ApiEvent(
-                    ServerConfiguration.GetApplicationName(),
+                    ServerConfiguration.GetRuntimeSiteName(),
                     $"OnErrorRequest {ex}",
                     request.RawUrl,
                     request.HttpMethod,
@@ -331,36 +330,17 @@ namespace Kudu.Services.Web.Tracing
                 {
                     var requestId = (string)httpContext.Items[Constants.RequestIdHeader];
                     KuduEventSource.Log.GenericEvent(
-                        ServerConfiguration.GetApplicationName(),
-                        string.Format("StartupRequest pid:{0}, domain:{1}", Process.GetCurrentProcess().Id, AppDomain.CurrentDomain.Id),
+                        ServerConfiguration.GetRuntimeSiteName(),
+                        string.Format("StartupRequest pid:{0}, domain:{1}, UseSiteExtensionV1:{2}", Process.GetCurrentProcess().Id, AppDomain.CurrentDomain.Id, DeploymentSettingsExtension.UseSiteExtensionV1.Value),
                         requestId,
                         Environment.GetEnvironmentVariable(SettingsKeys.ScmType),
                         Environment.GetEnvironmentVariable(SettingsKeys.WebSiteSku),
-                        _kuduVersion.Value);
+                        EnvironmentHelper.KuduVersion.Value,
+                        EnvironmentHelper.AppServiceVersion.Value);
                 });
             }
 
             return tracer;
-        }
-
-        private static void TraceHeartbeat()
-        {
-            var now = DateTime.UtcNow;
-            if (_nextHeartbeatDateTime < now)
-            {
-                _nextHeartbeatDateTime = now.AddHours(1);
-
-                OperationManager.SafeExecute(() =>
-                {
-                    KuduEventSource.Log.GenericEvent(
-                        ServerConfiguration.GetApplicationName(),
-                        string.Format("Heartbeat pid:{0}, domain:{1}", Process.GetCurrentProcess().Id, AppDomain.CurrentDomain.Id),
-                        string.Empty,
-                        Environment.GetEnvironmentVariable(SettingsKeys.ScmType),
-                        Environment.GetEnvironmentVariable(SettingsKeys.WebSiteSku),
-                        _kuduVersion.Value);
-                });
-            }
         }
 
         private static Dictionary<string, string> GetTraceAttributes(HttpContext httpContext)
@@ -390,6 +370,7 @@ namespace Kudu.Services.Web.Tracing
                 if (!string.Equals("AlwaysOn", request.UserAgent, StringComparison.OrdinalIgnoreCase))
                 {
                     System.Environment.SetEnvironmentVariable(Constants.HttpHost, request.Url.Host);
+                    System.Environment.SetEnvironmentVariable(Constants.HttpAuthority, request.Url.Authority);
                 }
             }
             catch

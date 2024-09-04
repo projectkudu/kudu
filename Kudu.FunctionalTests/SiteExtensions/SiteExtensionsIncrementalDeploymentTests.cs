@@ -1,11 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
+﻿using System.Globalization;
 using System.Net;
 using System.Net.Http;
-using System.Text;
 using System.Threading.Tasks;
+using Kudu.Contracts.Settings;
 using Kudu.Contracts.SiteExtensions;
 using Kudu.TestHarness;
 using Kudu.TestHarness.Xunit;
@@ -16,8 +13,10 @@ namespace Kudu.FunctionalTests.SiteExtensions
     [KuduXunitTestClass]
     public class SiteExtensionsIncrementalDeploymentTests
     {
-        [Fact]
-        public async Task CanInstallAndUpdate()
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public async Task CanInstallAndUpdate(bool useSiteExtensionV1)
         {
             const string appName = "IncrementalDeploymentTests";
             const string packageId = "IncrementalDeployment";
@@ -27,6 +26,11 @@ namespace Kudu.FunctionalTests.SiteExtensions
 
             await ApplicationManager.RunAsync(appName, async appManager =>
             {
+                if (useSiteExtensionV1)
+                {
+                    await appManager.SettingsManager.SetValue(SettingsKeys.UseSiteExtensionV1, "1");
+                }
+
                 var manager = appManager.SiteExtensionManager;
                 await SiteExtensionApiFacts.CleanSiteExtensions(manager);
 
@@ -65,8 +69,10 @@ namespace Kudu.FunctionalTests.SiteExtensions
             });
         }
 
-        [Fact]
-        public async Task CanInstallAndUpdateWithoutType()
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public async Task CanInstallAndUpdateWithoutType(bool useSiteExtensionV1)
         {
             const string appName = "IncrementalDeploymentTests";
             const string packageId = "IncrementalDeployment";
@@ -76,6 +82,11 @@ namespace Kudu.FunctionalTests.SiteExtensions
 
             await ApplicationManager.RunAsync(appName, async appManager =>
             {
+                if (useSiteExtensionV1)
+                {
+                    await appManager.SettingsManager.SetValue(SettingsKeys.UseSiteExtensionV1, "1");
+                }
+
                 var manager = appManager.SiteExtensionManager;
                 await SiteExtensionApiFacts.CleanSiteExtensions(manager);
 
@@ -118,8 +129,10 @@ namespace Kudu.FunctionalTests.SiteExtensions
         /// <para>Test package that are not zip by nuget tool</para>
         /// <para>Differences are, package zip by nuget tool will not include 'folder', others might</para>
         /// </summary>
-        [Fact]
-        public async Task CanInstallAndUpdateWithAbnormalPackage()
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public async Task CanInstallAndUpdateWithAbnormalPackage(bool useSiteExtensionV1)
         {
             const string appName = "IncrementalDeploymentWithComplexPackageTests";
             const string packageId = "microsoft.com.azuremediaservicesconnector";
@@ -130,6 +143,11 @@ namespace Kudu.FunctionalTests.SiteExtensions
 
             await ApplicationManager.RunAsync(appName, async appManager =>
             {
+                if (useSiteExtensionV1)
+                {
+                    await appManager.SettingsManager.SetValue(SettingsKeys.UseSiteExtensionV1, "1");
+                }
+
                 var manager = appManager.SiteExtensionManager;
                 await SiteExtensionApiFacts.CleanSiteExtensions(manager);
 

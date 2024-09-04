@@ -152,7 +152,7 @@ namespace Kudu.Core.SiteExtensions
                         catch (Exception ex)
                         {
                             analytics.UnexpectedException(ex, trace: false);
-                            tracer.TraceError(ex, "Failed to query {0} under {1}, continus to check others ...", _statusSettingsFileName, dir);
+                            tracer.TraceError(ex, "Failed to query {0} under {1}, continuos to check others ...", _statusSettingsFileName, dir);
                         }
                     }
                 }

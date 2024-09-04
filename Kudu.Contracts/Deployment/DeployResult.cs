@@ -9,6 +9,8 @@ namespace Kudu.Core.Deployment
     [DebuggerDisplay("{Id} {Status}")]
     public class DeployResult : INamedObject
     {
+        public readonly static DeployResult PendingResult = new DeployResult { Status = DeployStatus.Pending, ProvisioningState = Constants.SiteExtensionProvisioningStateInProgress };
+
         [JsonIgnore]
         [SuppressMessage("Microsoft.Design", "CA1033:InterfaceMethodsShouldBeCallableByChildTypes", Justification = "to provide ARM specific name")]
         string INamedObject.Name { get { return Id; } }
@@ -71,6 +73,25 @@ namespace Kudu.Core.Deployment
         public string SiteName { get; set; }
 
         [JsonProperty(PropertyName = "provisioningState")]
-        public string ProvisioningState { get; set; }
+        public string ProvisioningState
+        {
+            get
+            {
+                switch (Status)
+                {
+                    case DeployStatus.Building:
+                    case DeployStatus.Deploying:
+                    case DeployStatus.Pending:
+                        return Constants.SiteExtensionProvisioningStateInProgress;
+                    case DeployStatus.Failed:
+                        return Constants.SiteExtensionProvisioningStateFailed;
+                    case DeployStatus.Success:
+                        return Constants.SiteExtensionProvisioningStateSucceeded;
+                    default:
+                        return $"{Status}";
+                }
+            }
+            set { }
+        }
     }
 }

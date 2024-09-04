@@ -27,6 +27,9 @@ namespace Kudu.Core.Infrastructure
         // file system readonly or disk full period.
         private readonly bool _ensureLock;
 
+        // trace lock acquired and released
+        private readonly bool _traceLock;
+
         private ConcurrentQueue<QueueItem> _lockRequestQueue;
         private FileSystemWatcher _lockFileWatcher;
 
@@ -37,11 +40,12 @@ namespace Kudu.Core.Infrastructure
         {
         }
 
-        public LockFile(string path, ITraceFactory traceFactory, bool ensureLock = false)
+        public LockFile(string path, ITraceFactory traceFactory, bool ensureLock = false, bool traceLock = true)
         {
             _path = Path.GetFullPath(path);
             _traceFactory = traceFactory;
             _ensureLock = ensureLock;
+            _traceLock = traceLock;
         }
 
         public OperationLockInfo LockInfo
@@ -144,6 +148,7 @@ namespace Kudu.Core.Infrastructure
         public bool Lock(string operationName)
         {
             Stream lockStream = null;
+            var ignoreCloseStreamException = false;
             try
             {
                 FileSystemHelpers.EnsureDirectory(Path.GetDirectoryName(_path));
@@ -157,6 +162,11 @@ namespace Kudu.Core.Infrastructure
                 _lockStream = lockStream;
                 lockStream = null;
 
+                if (_traceLock)
+                {
+                    _traceFactory.GetTracer().Trace($"LockFile '{_path}' acquired");
+                }
+
                 return true;
             }
             catch (UnauthorizedAccessException)
@@ -169,7 +179,8 @@ namespace Kudu.Core.Infrastructure
                     //      There is one drawback, previously for write action, even acquire lock will fail with UnauthorizedAccessException,
                     //      there will be retry within given timeout. so if exception is temporary, previous`s implementation will still go thru.
                     //      While right now will end up failure. But it is a extreme edge case, should be ok to ignore.
-                    return FileSystemHelpers.IsFileSystemReadOnly();
+                    ignoreCloseStreamException = FileSystemHelpers.IsFileSystemReadOnly();
+                    return ignoreCloseStreamException;
                 }
             }
             catch (IOException ex)
@@ -178,7 +189,8 @@ namespace Kudu.Core.Infrastructure
                 {
                     // if not enough disk space, no one has the lock.
                     // let the operation thru and fail where it would try to get the file
-                    return ex.Message.Contains(NotEnoughSpaceText);
+                    ignoreCloseStreamException = ex.Message.Contains(NotEnoughSpaceText);
+                    return ignoreCloseStreamException;
                 }
             }
             catch (Exception ex)
@@ -189,7 +201,7 @@ namespace Kudu.Core.Infrastructure
             {
                 if (lockStream != null)
                 {
-                    lockStream.Close();
+                    OperationManager.CriticalExecute("LockFile.Lock.Finally", () => lockStream.Close(), _ => !ignoreCloseStreamException);
                 }
             }
 
@@ -270,9 +282,17 @@ namespace Kudu.Core.Infrastructure
                 return;
             }
 
-            var temp = _lockStream;
-            _lockStream = null;
-            temp.Close();
+            OperationManager.CriticalExecute("LockFile.Release", () =>
+            {
+                var temp = _lockStream;
+                _lockStream = null;
+                temp.Close();
+
+                if (_traceLock)
+                {
+                    _traceFactory.GetTracer().Trace($"LockFile '{_path}' released");
+                }
+            });
 
             // cleanup inactive lock file.  technically, it is not needed
             // we just want to see the lock folder is clean, if no active lock.

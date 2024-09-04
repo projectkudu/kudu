@@ -156,7 +156,15 @@ namespace Kudu.Core.Jobs
                 return null;
             }
 
-            return jobHistoryDirectory.GetDirectories("*", SearchOption.TopDirectoryOnly);
+            try
+            {
+                return jobHistoryDirectory.GetDirectories("*", SearchOption.TopDirectoryOnly);
+            }
+            catch (Exception ex)
+            {
+                Analytics.UnexpectedException(ex);
+                return null;
+            }
         }
 
         private TriggeredJobRun BuildJobRun(DirectoryInfoBase jobRunDirectory, string jobName, bool isLatest)

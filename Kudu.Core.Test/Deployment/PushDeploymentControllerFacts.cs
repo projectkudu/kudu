@@ -6,6 +6,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
+using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Deployment;
@@ -28,6 +29,7 @@ namespace Kudu.Core.Test.Deployment
             var tracer = new Mock<ITracer>();
             var traceFactory = new Mock<ITraceFactory>();
             var settings = new Mock<IDeploymentSettingsManager>();
+            var deploymentLock = new Mock<IOperationLock>();
             var fileSystem = new Mock<IFileSystem>();
             var fileBase = new Mock<FileBase>();
             var directoryBase = new Mock<DirectoryBase>();
@@ -57,15 +59,18 @@ namespace Kudu.Core.Test.Deployment
             FileSystemHelpers.Instance = fileSystem.Object;
 
             deploymentManager
-                .Setup(m => m.FetchDeploy(It.IsAny<ZipDeploymentInfo>(), It.IsAny<bool>(), It.IsAny<Uri>(), It.IsAny<string>()))
+                .Setup(m => m.FetchDeploy(It.IsAny<ArtifactDeploymentInfo>(), It.IsAny<bool>(), It.IsAny<Uri>(), It.IsAny<string>()))
                 .Returns(Task.FromResult(FetchDeploymentRequestResult.RanSynchronously));
+
+            deploymentLock.Setup(f => f.Lock(It.IsAny<string>())).Returns(true);
 
             var controller = new PushDeploymentController(
                 environment.Object,
                 deploymentManager.Object,
                 tracer.Object,
                 traceFactory.Object,
-                settings.Object)
+                settings.Object,
+                deploymentLock.Object)
             {
                 Request = new HttpRequestMessage(HttpMethod.Post, "https://localhost/zipDeploy")
                 {
@@ -74,18 +79,37 @@ namespace Kudu.Core.Test.Deployment
             };
 
             // Act
-            var response = await controller.ZipPushDeploy();
+            var response = await controller.ZipPushDeploy(clean: true);
 
             // Assert
             deploymentManager
-                .Verify(m => m.FetchDeploy(It.Is<ZipDeploymentInfo>(di =>
-                    !string.IsNullOrEmpty(di.ZipName) && !string.IsNullOrEmpty(di.SyncFunctionsTriggersPath)),
+                .Verify(m => m.FetchDeploy(It.Is<ArtifactDeploymentInfo>(di =>
+                    !string.IsNullOrEmpty(di.ArtifactFileName) && !string.IsNullOrEmpty(di.SyncFunctionsTriggersPath) && di.CleanupTargetDirectory == true),
                     It.IsAny<bool>(),
                     It.IsAny<Uri>(),
                     It.IsAny<string>()
                 ));
 
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        }
+
+        [Theory]
+        [InlineData(
+            "https://management.azure.com/subscriptions/sub-id/resourcegroups/rg-name/providers/Microsoft.Web/sites/site-name/extensions/zipdeploy?api-version=2016-03-01",
+            "https://management.azure.com/subscriptions/sub-id/resourcegroups/rg-name/providers/Microsoft.Web/sites/site-name"
+            )]
+        [InlineData(
+            "https://management.azure.com/subscriptions/sub-id/resourcegroups/rg-name/providers/Microsoft.Web/sites/site-name/slots/staging/extensions/zipdeploy?api-version=2016-03-01",
+            "https://management.azure.com/subscriptions/sub-id/resourcegroups/rg-name/providers/Microsoft.Web/sites/site-name/slots/staging"
+            )]
+        [InlineData(
+            "https://management.azure.com/subscriptions/sub-id/resourcegroups/rg-name/providers/Microsoft.Web/sites",
+            null
+            )]
+        public void ZipDeployGetAsyncLocation(string referer, string expected)
+        {
+            var actual = PushDeploymentController.GetStatusUrl(new Uri(referer));
+            Assert.Equal(expected, actual);
         }
     }
 }

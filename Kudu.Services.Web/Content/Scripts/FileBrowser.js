@@ -743,7 +743,7 @@ $.connection.hub.start().done(function () {
             $(".show-on-hover").removeClass('upload-unzip-hover');
         });
 
-    var defaults = { fileList: '40%', console: '45%' };
+    var defaults = { fileList: '35%', console: '45%' };
     $('#resizeHandle .down')
         .on('click', function (e) {
             var fileList = $('#fileList'),

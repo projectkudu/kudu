@@ -11,10 +11,12 @@ using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Deployment;
 using Kudu.Core.Infrastructure;
+using Kudu.Core.Settings;
 using Kudu.Core.Tracing;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -24,6 +26,9 @@ namespace Kudu.Core.Helpers
     public static class PostDeploymentHelper
     {
         public const string AutoSwapLockFile = "autoswap.lock";
+        public const int RestartRetryIntervalInMilliSeconds = 5 * 1000; // 5 seconds
+        public const int RestartRetryCount = 5;
+
 
         private static Lazy<ProductInfoHeaderValue> _userAgent = new Lazy<ProductInfoHeaderValue>(() =>
         {
@@ -38,7 +43,18 @@ namespace Kudu.Core.Helpers
         // for mocking or override behavior
         public static Func<HttpClient> HttpClientFactory
         {
-            get { return _httpClientFactory ?? new Func<HttpClient>(() => new HttpClient()); }
+            get
+            {
+                return _httpClientFactory ?? new Func<HttpClient>(() =>
+                {
+                    if (Environment.SkipSslValidation || Environment.SkipAseSslValidation)
+                    {
+                        return new HttpClient(new WebRequestHandler { ServerCertificateValidationCallback = delegate { return true; } });
+                    }
+
+                    return new HttpClient();
+                });
+            }
             set { _httpClientFactory = value; }
         }
 
@@ -51,6 +67,12 @@ namespace Kudu.Core.Helpers
         private static string HttpHost
         {
             get { return System.Environment.GetEnvironmentVariable(Constants.HttpHost); }
+        }
+
+        // HTTP_AUTHORITY = host:port. Port is optional. Example: site.scm.azurewebsites.net or localhost:11212
+        private static string HttpAuthority
+        {
+            get { return System.Environment.GetEnvironmentVariable(Constants.HttpAuthority); }
         }
 
         // WEBSITE_SWAP_SLOTNAME = Production
@@ -89,12 +111,17 @@ namespace Kudu.Core.Helpers
             get { return System.Environment.GetEnvironmentVariable("WEBSITE_HOME_STAMPNAME"); }
         }
 
+        private static bool IsLocalHost
+        {
+            get { return HttpHost.Equals("localhost", StringComparison.OrdinalIgnoreCase); }
+        }
+
         /// <summary>
         /// This common codes is to invoke post deployment operations.
         /// It is written to require least dependencies but framework assemblies.
         /// Caller is responsible for synchronization.
         /// </summary>
-        [SuppressMessage("Microsoft.Usage", "CA1801:Parameter 'siteRestrictedJwt' is never used", 
+        [SuppressMessage("Microsoft.Usage", "CA1801:Parameter 'siteRestrictedJwt' is never used",
             Justification = "Method signature has to be the same because it's called via reflections from web-deploy")]
         public static async Task Run(string requestId, string siteRestrictedJwt, TraceListener tracer)
         {
@@ -110,12 +137,32 @@ namespace Kudu.Core.Helpers
         {
             RunPostDeploymentScripts(tracer);
 
-            await SyncFunctionsTriggers(requestId, tracer);
+            await SyncTriggersIfFunctionsSite(requestId, tracer);
 
             await PerformAutoSwap(requestId, tracer);
         }
 
-        public static async Task SyncFunctionsTriggers(string requestId, TraceListener tracer, string functionsPath = null)
+        /// <summary>
+        /// This common codes is to invoke post deployment operations.
+        /// It is written to require least dependencies but framework assemblies.
+        /// Caller is responsible for synchronization.
+        /// </summary>
+        /// <param name="kind">MSDeploy, ZipDeploy, Git, ..</param>
+        /// <param name="requestId">for correlation</param>
+        /// <param name="status">Success or fail</param>
+        /// <param name="details">deployment specific json</param>
+        /// <param name="tracer">tracing</param>
+        public static async Task InvokeWithDetails(string kind, string requestId, string status, string details, TraceListener tracer)
+        {
+            DeploymentCompletedInfo.Persist(System.Environment.GetEnvironmentVariable("WEBSITE_SITE_NAME"), kind, requestId, status, details, string.Empty, string.Empty, details);
+
+            if (string.Equals("Success", status, StringComparison.OrdinalIgnoreCase))
+            {
+                await Invoke(requestId, tracer);
+            }
+        }
+
+        public static async Task SyncTriggersIfFunctionsSite(string requestId, TraceListener tracer, string functionsPath = null, string tracePath = null)
         {
             _tracer = tracer;
 
@@ -127,6 +174,148 @@ namespace Kudu.Core.Helpers
 
             VerifyEnvironments();
 
+            await SyncFunctionsTriggers(requestId, functionsPath, tracePath);
+
+            // this couples with sync function triggers
+            await SyncLogicAppJson(requestId, tracer);
+        }
+
+        private static async Task SyncFunctionsTriggers(string requestId, string functionsPath, string tracePath)
+        {
+            int syncTriggersDelaySeconds = ScmHostingConfigurations.FunctionsSyncTriggersDelaySeconds;
+
+            if (syncTriggersDelaySeconds == 0)
+            {
+                Trace(TraceEventType.Verbose, "Sync triggers without delay");
+                await AttemptSyncTriggerAndSetTriggers(requestId, functionsPath);
+                return;
+            }
+
+            if (ScmHostingConfigurations.FunctionsSyncTriggersDelayBackground)
+            {
+                await NotifyFrontEndOfFunctionsUpdate(requestId);
+
+                Trace(TraceEventType.Verbose, "Scheduling background sync triggers after delay");
+
+                // create background tracer independent of request lifetime if possible
+                ITracer bgTracer = null;
+                if (!string.IsNullOrEmpty(tracePath))
+                {
+                    bgTracer = new CascadeTracer(new XmlTracer(tracePath, TraceLevel.Verbose), new ETWTracer(requestId, "POST"));
+                }
+
+                // schedule sync triggers call in the background
+                _ = ScheduleBackgroundSyncTriggers(syncTriggersDelaySeconds, requestId, functionsPath, bgTracer);
+            }
+            else
+            {
+                await NotifyFrontEndOfFunctionsUpdate(requestId);
+                await WaitForFunctionsSiteRestart(syncTriggersDelaySeconds);
+                Trace(TraceEventType.Verbose, "Sync triggers with delay");
+                await AttemptSyncTriggerAndSetTriggers(requestId, functionsPath);
+            }
+        }
+
+        private static Task ScheduleBackgroundSyncTriggers(int syncTriggersDelaySeconds, string requestId, string functionsPath, ITracer bgTracer = null)
+        {
+            return Task.Run(async () =>
+            {
+                using (bgTracer?.Step(XmlTracer.BackgroundTrace, new Dictionary<string, string>() {
+                    {"url", "synctriggers-operation"},
+                    {"method", "POST"}
+                }) ?? DisposableAction.Noop)
+                {
+                    bool shutdownSemaphoreAcquired = false;
+                    try
+                    {
+                        if (bgTracer != null)
+                        {
+                            _tracer = new PostDeploymentTraceListener(bgTracer);
+                        }
+
+                        // best effort
+                        shutdownSemaphoreAcquired = ShutdownDelaySemaphore.GetInstance().Acquire(bgTracer);
+                        await WaitForFunctionsSiteRestart(syncTriggersDelaySeconds);
+                        await AttemptSyncTriggerAndSetTriggers(requestId, functionsPath);
+                    }
+                    catch (Exception ex)
+                    {
+                        bgTracer?.TraceError(ex);
+                    }
+                    finally
+                    {
+                        if (shutdownSemaphoreAcquired)
+                        {
+                            ShutdownDelaySemaphore.GetInstance().Release(bgTracer);
+                        }
+                    }
+                }
+            });
+        }
+
+        private static Task NotifyFrontEndOfFunctionsUpdate(string requestId)
+        {
+            return PerformEmptySettriggers(requestId);
+        }
+
+        private static Task PerformEmptySettriggers(string requestId)
+        {
+            return PostAsync(Constants.SetTriggersApiPath, requestId, content: "");
+        }
+
+        private static Task WaitForFunctionsSiteRestart(int seconds = 60)
+        {
+            var delaySpan = TimeSpan.FromSeconds(seconds);
+            Trace(TraceEventType.Information, $"Delaying '{delaySpan}' for Functions site to restart.");
+            return Task.Delay(delaySpan);
+        }
+
+        private static async Task AttemptSyncTriggerAndSetTriggers(string requestId, string functionsPath)
+        {
+            if (!await TryFunctionsRuntimeSyncTriggers(requestId))
+            {
+                Trace(TraceEventType.Information, "Attempting to perform settriggers call directly.");
+                await PerformSettriggers(requestId, functionsPath);
+            }
+        }
+
+        private static async Task<bool> TryFunctionsRuntimeSyncTriggers(string requestId)
+        {
+            Exception exception = null;
+
+            try
+            {
+                var scmHostName = IsLocalHost ? HttpAuthority : HttpHost;
+
+                var scmSplit = scmHostName.Split('.');
+
+                if (!(scmSplit.Length > 1 && scmSplit[1].Equals("scm", StringComparison.OrdinalIgnoreCase)))
+                {
+                    return false;
+                }
+
+                var functionsSiteHostName = string.Join(".", scmSplit.Where((el, idx) => idx != 1));
+
+                await OperationManager.AttemptAsync(async () => await PostAsync(Constants.FunctionsSyncTriggersApiPath, requestId,
+                    hostName: functionsSiteHostName, audience: SiteTokenHelper.FunctionSiteAudience.Value), retries: 3, delayBeforeRetry: 1000);
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                exception = ex;
+                return false;
+            }
+            finally
+            {
+                Trace(TraceEventType.Information,
+                      "Syncing function triggers by calling the functions runtime site {0}",
+                      exception == null ? "successful." : ("failed. " + exception));
+            }
+        }
+
+        private static async Task PerformSettriggers(string requestId, string functionsPath = null)
+        {
             functionsPath = !string.IsNullOrEmpty(functionsPath)
                 ? functionsPath
                 : System.Environment.ExpandEnvironmentVariables(@"%HOME%\site\wwwroot");
@@ -179,11 +368,18 @@ namespace Kudu.Core.Helpers
                 }
             }
 
-            var content = JsonConvert.SerializeObject(triggers);
+            var triggersArray = new JArray(triggers);
+
+            JObject result = new JObject
+            {
+                { "triggers", triggersArray }
+            };
+
+            var content = JsonConvert.SerializeObject(result);
             Exception exception = null;
             try
             {
-                await PostAsync("/operations/settriggers", requestId, content);
+                await PostAsync(Constants.SetTriggersApiPath, requestId, content: content);
             }
             catch (Exception ex)
             {
@@ -198,9 +394,6 @@ namespace Kudu.Core.Helpers
                       content.Length,
                       exception == null ? "successful." : ("failed with " + exception));
             }
-
-            // this couples with sync function triggers
-            await SyncLogicAppJson(requestId, tracer);
         }
 
         public static async Task SyncLogicAppJson(string requestId, TraceListener tracer)
@@ -280,6 +473,35 @@ namespace Kudu.Core.Helpers
         public static bool IsAutoSwapEnabled()
         {
             return !string.IsNullOrEmpty(WebSiteSwapSlotName);
+        }
+
+        public static async Task RestartMainSiteAsync(string requestId, TraceListener tracer)
+        {
+            Trace(tracer, TraceEventType.Information, "Requesting site restart");
+
+            VerifyEnvironments();
+
+            int attemptCount = 0;
+
+            try
+            {
+                await OperationManager.AttemptAsync(async () =>
+                {
+                    attemptCount++;
+
+                    Trace(tracer, TraceEventType.Information, $"Requesting site restart. Attempt #{attemptCount}");
+
+                    await PostAsync(Constants.RestartApiPath, requestId);
+
+                    Trace(tracer, TraceEventType.Information, $"Successfully requested a restart. Attempt #{attemptCount}");
+
+                }, RestartRetryCount, RestartRetryIntervalInMilliSeconds);
+            }
+            catch
+            {
+                // failed to restart, we will just trace not breaking deployment
+                Trace(tracer, TraceEventType.Warning, $"Failed to request a restart. Number of attempts: {attemptCount}");
+            }
         }
 
         public static async Task PerformAutoSwap(string requestId, TraceListener tracer)
@@ -414,29 +636,42 @@ namespace Kudu.Core.Helpers
             }
         }
 
-        private static async Task PostAsync(string path, string requestId, string content = null)
+        // Throws on failure
+        public static async Task PostAsync(string path, string requestId, string hostName = null, string content = null, string audience = null)
         {
-            var host = HttpHost;
-            var ipAddress = await GetAlternativeIPAddress(host);
+            var hostOrAuthority = IsLocalHost ? HttpAuthority : HttpHost;
+            hostName = hostName ?? hostOrAuthority;
+
+            var ipAddress = await GetAlternativeIPAddress(hostOrAuthority);
+
+            var scheme = IsLocalHost ? "http" : "https";
             var statusCode = default(HttpStatusCode);
+            string resContent = "";
             try
             {
                 using (var client = HttpClientFactory())
                 {
                     if (ipAddress == null)
                     {
-                        Trace(TraceEventType.Verbose, "Begin HttpPost https://{0}{1}, x-ms-request-id: {2}", host, path, requestId);
-                        client.BaseAddress = new Uri(string.Format("https://{0}", host));
+                        Trace(TraceEventType.Verbose, "Begin HttpPost {0}://{1}{2}, x-ms-request-id: {3}", scheme, hostName, path, requestId);
+                        client.BaseAddress = new Uri(string.Format("{0}://{1}", scheme, hostName));
                     }
                     else
                     {
-                        Trace(TraceEventType.Verbose, "Begin HttpPost https://{0}{1}, host: {2}, x-ms-request-id: {3}", ipAddress, path, host, requestId);
-                        client.BaseAddress = new Uri(string.Format("https://{0}", ipAddress));
-                        client.DefaultRequestHeaders.Host = host;
+                        Trace(TraceEventType.Verbose, "Begin HttpPost {0}://{1}{2}, host: {3}, x-ms-request-id: {4}", scheme, ipAddress, path, hostName, requestId);
+                        client.BaseAddress = new Uri(string.Format("{0}://{1}", scheme, ipAddress));
+                        client.DefaultRequestHeaders.Host = hostName;
                     }
 
                     client.DefaultRequestHeaders.UserAgent.Add(_userAgent.Value);
-                    client.DefaultRequestHeaders.Add(Constants.SiteRestrictedToken, SimpleWebTokenHelper.CreateToken(DateTime.UtcNow.AddMinutes(5)));
+                    if (SiteTokenHelper.ShouldAddSiteRestrictedToken())
+                    {
+                        client.DefaultRequestHeaders.Add(Constants.SiteRestrictedToken, SimpleWebTokenHelper.CreateToken(DateTime.UtcNow.AddMinutes(5)));
+                    }
+                    if (SiteTokenHelper.ShouldAddSiteToken())
+                    {
+                        client.DefaultRequestHeaders.Add(SiteTokenHelper.SiteTokenHeader, SiteTokenHelper.IssueToken(validity: TimeSpan.FromMinutes(5), audience: audience));
+                    }
                     client.DefaultRequestHeaders.Add(Constants.RequestIdHeader, requestId);
 
                     var payload = new StringContent(content ?? string.Empty, Encoding.UTF8, "application/json");
@@ -444,7 +679,45 @@ namespace Kudu.Core.Helpers
                     {
                         statusCode = response.StatusCode;
                         response.EnsureSuccessStatusCode();
+
+                        if (path.Equals(Constants.UpdateDeployStatusPath) && response.Content != null)
+                        {
+                            resContent = await response.Content.ReadAsStringAsync();
+                        }
                     }
+
+                    if (path.Equals(Constants.UpdateDeployStatusPath))
+                    {
+                        if (resContent.Contains("Excessive SCM Site operation requests. Retry after 5 seconds"))
+                        {
+                            // Request was throttled throw an exception
+                            // If max retries aren't reached, this request will be retried
+                            Trace(TraceEventType.Information, $"Call to {path} was throttled. Setting statusCode to {HttpStatusCode.NotAcceptable}");
+
+                            statusCode = HttpStatusCode.NotAcceptable;
+                            throw new HttpRequestException();
+                        }
+                        else if (resContent.Contains("Needs fallback to another restart method from Kudu"))
+                        {
+                            // Reuqest failed because HostingConfig might be set to false for deployment status posting
+                            // In that case, fail the request
+                            statusCode = HttpStatusCode.NotImplemented;
+                            throw new HttpRequestException($"Response contains '{resContent}'");
+                        }
+                    }
+                }
+            }
+            catch (HttpRequestException ex)
+            {
+                if (path.Equals(Constants.UpdateDeployStatusPath) && statusCode == HttpStatusCode.NotFound)
+                {
+                    // Fail silently if 404 is encountered.
+                    // This will only happen transiently during a platform upgrade if new bits aren't on the FrontEnd yet.
+                    Trace(TraceEventType.Warning, $"Call to {path} ended in 404. {ex}");
+                }
+                else
+                {
+                    throw;
                 }
             }
             finally
@@ -462,6 +735,15 @@ namespace Kudu.Core.Helpers
         {
             try
             {
+                if (!IsLocalHost)
+                {
+                    var ilbAddress = ScmHostingConfigurations.ILBVip;
+                    if (ilbAddress != null)
+                    {
+                        return ilbAddress;
+                    }
+                }
+
                 // if resolved successfully, return null to not use alternative ipAddress
                 await Dns.GetHostEntryAsync(host);
                 return null;
@@ -676,19 +958,52 @@ namespace Kudu.Core.Helpers
 
         private static void Trace(TraceEventType eventType, string format, params object[] args)
         {
-            var tracer = _tracer;
+            Trace(_tracer, eventType, format, args);
+        }
+
+        private static void Trace(TraceListener tracer, TraceEventType eventType, string format, params object[] args)
+        {
             if (tracer != null)
             {
                 tracer.TraceEvent(null, "PostDeployment", eventType, (int)eventType, format, args);
             }
         }
 
-        public static async Task UpdateSiteVersion(ZipDeploymentInfo deploymentInfo, IEnvironment environment, ITracer tracer)
+        public static async Task UpdateSiteVersion(ArtifactDeploymentInfo deploymentInfo, IEnvironment environment, ITracer tracer)
         {
             var siteVersionPath = Path.Combine(environment.SitePackagesPath, Constants.PackageNameTxt);
-            using (tracer.Step($"Updating {siteVersionPath} with deployment {deploymentInfo.ZipName}"))
+            using (tracer.Step($"Updating {siteVersionPath} with deployment {deploymentInfo.ArtifactFileName}"))
             {
-                await FileSystemHelpers.WriteAllTextToFileAsync(siteVersionPath, deploymentInfo.ZipName);
+                await OperationManager.AttemptAsync(() => FileSystemHelpers.WriteAllTextToFileAsync(siteVersionPath, deploymentInfo.ArtifactFileName));
+            }
+        }
+
+        public static void RemoveAppOfflineIfLeft(IEnvironment environment, IOperationLock deploymentLock, ITracer tracer)
+        {
+            string appOfflineFile = null;
+            try
+            {
+                appOfflineFile = Path.Combine(environment.WebRootPath, Constants.AppOfflineFileName);
+                if (FileSystemHelpers.FileExists(appOfflineFile))
+                {
+                    var appOfflineContent = OperationManager.Attempt(() => FileSystemHelpers.ReadAllText(appOfflineFile));
+                    if (appOfflineContent.Contains(Constants.AppOfflineKuduContent))
+                    {
+                        if (deploymentLock != null && deploymentLock.IsHeld)
+                        {
+                            tracer.Trace($"Deployment lock is held, will not remove {appOfflineFile}");
+                        }
+                        else
+                        {
+                            tracer.Trace($"Removing leftover {appOfflineFile}");
+                            OperationManager.Attempt(() => FileSystemHelpers.DeleteFile(appOfflineFile));
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                tracer.TraceError($"Error removing leftover {appOfflineFile} with {ex}");
             }
         }
     }

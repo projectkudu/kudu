@@ -17,7 +17,7 @@ namespace Kudu.Core.Test
             // Arrange
             var executable = new Mock<IExecutable>();
             executable.Setup(e => e.EnvironmentVariables).Returns(new Dictionary<string, string>());
-            executable.Setup(e => e.Execute(It.IsAny<ITracer>(), "pull {0} --branch {1} --noninteractive", It.IsAny<object[]>()))
+            executable.Setup(e => e.Execute(It.IsAny<ITracer>(), "pull '{0}' --branch '{1}' --noninteractive", It.IsAny<object[]>()))
                       .Throws(new CommandLineException("hg.exe", "", "Fetching\r\nabort: abandoned transaction found - run hg recover!\r\n") { ExitCode = 255 })
                       .Verifiable();
             executable.Setup(e => e.Execute(It.IsAny<ITracer>(), "recover"))
@@ -28,7 +28,7 @@ namespace Kudu.Core.Test
 
             // Act and Assert
             Assert.Throws<CommandLineException>(() => hgRepository.FetchWithoutConflict("https://some-remote", "default"));
-            executable.Verify(e => e.Execute(It.IsAny<ITracer>(), "pull {0} --branch {1} --noninteractive", It.IsAny<object[]>()), Times.Exactly(2));
+            executable.Verify(e => e.Execute(It.IsAny<ITracer>(), "pull '{0}' --branch '{1}' --noninteractive", It.IsAny<object[]>()), Times.Exactly(2));
             executable.Verify(e => e.Execute(It.IsAny<ITracer>(), "recover", It.IsAny<object[]>()), Times.Once());
         }
 
@@ -38,7 +38,7 @@ namespace Kudu.Core.Test
             // Arrange
             var executable = new Mock<IExecutable>();
             executable.Setup(e => e.EnvironmentVariables).Returns(new Dictionary<string, string>());
-            executable.Setup(e => e.Execute(It.IsAny<ITracer>(), "pull {0} --branch {1} --noninteractive", It.IsAny<object[]>()))
+            executable.Setup(e => e.Execute(It.IsAny<ITracer>(), "pull '{0}' --branch '{1}' --noninteractive", It.IsAny<object[]>()))
                       .Returns(Tuple.Create("foo", "bar"))
                       .Verifiable();
             executable.Setup(e => e.Execute(It.IsAny<ITracer>(), "recover"))
@@ -51,7 +51,7 @@ namespace Kudu.Core.Test
             hgRepository.FetchWithoutConflict("https://some-remote", "default");
 
             // Assert
-            executable.Verify(e => e.Execute(It.IsAny<ITracer>(), "pull {0} --branch {1} --noninteractive", It.IsAny<object[]>()), Times.Once());
+            executable.Verify(e => e.Execute(It.IsAny<ITracer>(), "pull '{0}' --branch '{1}' --noninteractive", It.IsAny<object[]>()), Times.Once());
             executable.Verify(e => e.Execute(It.IsAny<ITracer>(), "recover", It.IsAny<object[]>()), Times.Never());
         }
 
@@ -61,7 +61,7 @@ namespace Kudu.Core.Test
             // Arrange
             var executable = new Mock<IExecutable>();
             executable.Setup(e => e.EnvironmentVariables).Returns(new Dictionary<string, string>());
-            executable.Setup(e => e.Execute(It.IsAny<ITracer>(), "pull {0} --branch {1} --noninteractive", It.IsAny<object[]>()))
+            executable.Setup(e => e.Execute(It.IsAny<ITracer>(), "pull '{0}' --branch '{1}' --noninteractive", It.IsAny<object[]>()))
                       .Callback((ITracer tracer, string arguments, object[] args) => { throw new CommandLineException("hg.exe", "pull", "abort: unknown branch 'default'!"); });
 
             var hgRepository = new HgRepository(executable.Object, @"x:\some-path", Mock.Of<ITraceFactory>());

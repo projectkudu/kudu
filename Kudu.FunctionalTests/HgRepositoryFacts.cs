@@ -32,7 +32,9 @@ namespace Kudu.FunctionalTests
             }
         }
 
-        [Fact]
+        // bitbucket.org no longer support mercurial
+        // https://bitbucket.org/blog/sunsetting-mercurial-support-in-bitbucket
+        // [Fact]
         public void HgExecutableClonesRepository()
         {
             const string expectedId = "e2ff43634d31a70383142a4b3940baff8b6386ee";
@@ -55,7 +57,9 @@ namespace Kudu.FunctionalTests
             }
         }
 
-        [Fact]
+        // bitbucket.org no longer support mercurial
+        // https://bitbucket.org/blog/sunsetting-mercurial-support-in-bitbucket
+        // [Fact]
         public void HgRepositoryCanFetchBranchFromRemoteRepository()
         {
             const string repositoryName = "fetchTest";
@@ -114,7 +118,9 @@ namespace Kudu.FunctionalTests
             }
         }
 
-        [Fact]
+        // bitbucket.org no longer support mercurial
+        // https://bitbucket.org/blog/sunsetting-mercurial-support-in-bitbucket
+        // [Fact]
         public void FetchWithoutConflictOnEmptyRepoReturnsFalse()
         {
             using (TestRepository testRepository = GetRepository())
@@ -128,7 +134,9 @@ namespace Kudu.FunctionalTests
             }
         }
 
-        [Fact]
+        // bitbucket.org no longer support mercurial
+        // https://bitbucket.org/blog/sunsetting-mercurial-support-in-bitbucket
+        // [Fact]
         public void FetchWithoutConflictMessageMatchesEmbeddedErrorString()
         {
             // This test verifies if the embedded string matches the exception message mercurial throws.

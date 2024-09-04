@@ -197,9 +197,24 @@ namespace Kudu.Core.Test
                 return Mock.Of<ILogger>();
             }
 
+            public ILogger GetLogger(string id, ITracer tracer, DeploymentInfoBase deploymentInfo)
+            {
+                return Mock.Of<ILogger>();
+            }
+
             public string GetDeploymentScriptContent()
             {
                 return null;
+            }
+
+            public Task SendDeployStatusUpdate(DeployStatusApiResult updateStatusObj)
+            {
+                return Task.FromResult(1);
+            }
+
+            Task<bool> IDeploymentManager.SendDeployStatusUpdate(DeployStatusApiResult updateStatusObj)
+            {
+                throw new NotImplementedException();
             }
 
             public class NoopDisposable : IDisposable
