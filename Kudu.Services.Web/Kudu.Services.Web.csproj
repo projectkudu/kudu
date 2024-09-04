@@ -209,9 +209,9 @@
     </Compile>
     <Compile Include="App_Start\TraceDeprecatedActionAttribute.cs" />
     <Compile Include="SafeOnePerRequestHttpModule.cs" />
-    <Compile Include="Infrastruture\BackgroundTask.cs" />
-    <Compile Include="Infrastruture\HttpHandlerRouteHandler.cs" />
-    <Compile Include="Infrastruture\RouteCollectionExtensions.cs" />
+    <Compile Include="Infrastructure\BackgroundTask.cs" />
+    <Compile Include="Infrastructure\HttpHandlerRouteHandler.cs" />
+    <Compile Include="Infrastructure\RouteCollectionExtensions.cs" />
     <Compile Include="SafeOnePerRequestNinjectModule.cs" />
     <Compile Include="Security\BlockLocalhostModule.cs" />
     <Compile Include="Services\DeploymentEnvironment.cs" />
