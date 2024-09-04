@@ -13,8 +13,6 @@ Kudu is the engine behind [git deployments in Azure App Service](https://azure.m
 Please file incidents in Azure, so we can better track issues and assist you.
 [Create an Azure support request](https://learn.microsoft.com/en-us/azure/azure-portal/supportability/how-to-create-azure-support-request)
 
-Soon, we will turn off the issues feature for this repo.
-
 ### Documentation
 
 See the [documentation](https://github.com/projectkudu/kudu/wiki)
@@ -29,6 +27,6 @@ See the [documentation](https://github.com/projectkudu/kudu/wiki)
 
 ### Questions?
 
-You can use the [forum](http://social.msdn.microsoft.com/Forums/en-US/azuregit/threads), [StackOverflow](https://stackoverflow.com/), or open issues in this repository.
+You can use the [forum](http://social.msdn.microsoft.com/Forums/en-US/azuregit/threads), [StackOverflow](https://stackoverflow.com/).
 
 This project is under the benevolent umbrella of the [.NET Foundation](http://www.dotnetfoundation.org/).
